@@ -1,9 +1,6 @@
 {
-	"extends": "./tsconfig.base.json",
+	"extends": "./tsconfig.json",
 	"compilerOptions": {
-		"declaration": true,
-		"noEmit": false
-	},
-	"include": ["**/*.ts", "**/*.d.ts", "**/*.json", "**/*.vue"],
-	"exclude": ["**/*.test.ts", "**/__mocks__/**/*.ts", "./server/**"]
+		"declaration": false
+	}
 }

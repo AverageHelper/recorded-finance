@@ -1,8 +1,14 @@
 {
 	"compilerOptions": {
-		"target": "esnext",
-		"lib": ["esnext", "dom"],
-		"module": "esnext",
+		/**
+      TypeScript doesn't know about import usages in the template because it only sees the
+      script of a Svelte file. Therefore preserve all value imports. Requires TS 4.5 or higher.
+     */
+		"preserveValueImports": true,
+
+		"target": "es2017",
+		"lib": ["esnext", "dom", "DOM.Iterable"],
+		"module": "ES2020",
 		"moduleResolution": "node",
 		"jsx": "preserve",
 		"useDefineForClassFields": true,
@@ -14,12 +20,13 @@
 		"baseUrl": "./src",
 		"outDir": "./dist",
 		"isolatedModules": true,
-		"strict": true,
+		"strict": true, // FIXME: Svelte files ignore this bit
 		"noFallthroughCasesInSwitch": true,
 		"noImplicitReturns": true,
 		"noPropertyAccessFromIndexSignature": true,
 		"noUncheckedIndexedAccess": true,
 		"useUnknownInCatchVariables": true,
+		"importsNotUsedAsValues": "error",
 		"esModuleInterop": true,
 		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true,

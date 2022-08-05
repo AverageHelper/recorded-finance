@@ -1,8 +1,8 @@
 # Accountable
 
-[![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/AverageHelper/accountable-vue.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/AverageHelper/accountable-vue/context:javascript) [![Total alerts](https://img.shields.io/lgtm/alerts/g/AverageHelper/accountable-vue.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/AverageHelper/accountable-vue/alerts/)
+[![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/AverageHelper/accountable-svelte.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/AverageHelper/accountable-svelte/context:javascript) [![Total alerts](https://img.shields.io/lgtm/alerts/g/AverageHelper/accountable-svelte.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/AverageHelper/accountable-svelte/alerts/)
 
-A Vue app for managing monetary assets. All data is encrypted client-side and stored on a server that you control.
+A Svelte app for managing monetary assets. All data is encrypted client-side and stored on a server that you control.
 
 > This project is undergoing rapid development and should be considered experimental. Use it at your own risk. 🤙
 
@@ -19,6 +19,7 @@ The aim of Accountable is to be cross-platform and portable. Eventually, I plan 
 ### Prerequesites
 
 To run the app in your browser, you'll need one of the following browsers and versions:
+
 - Chrome >=87
 - Firefox >=78
 - Safari >=13
@@ -63,7 +64,7 @@ If you're hosting the Accountable server on the same machine that hosts the Acco
 Using `localhost` for this will cause clients to try _themselves_ as the Accountable server, and that's usually not what you want.
 
 ```sh
-$ cd accountable-vue          # Be in the root directory
+$ cd accountable-svelte          # Be in the root directory
 $ npm ci                      # Install dependencies
 $ npm run build:client:quick  # Compile the client
 $ npm run dev:client          # Start a local webserver
@@ -73,7 +74,7 @@ $ npm run dev:client          # Start a local webserver
 
 The webserver will print a URL in your terminal to paste into your browser. It should look something like [http://127.0.0.1:5173](http://127.0.0.1:5173). Give that a go, and you're off to the races!
 
-I recommend you deploy the client (the contents of the `accountable-vue/dist` folder) on a webserver like [nginx](https://nginx.org/en/).
+I recommend you deploy the client (the contents of the `accountable-svelte/dist` folder) on a webserver like [nginx](https://nginx.org/en/).
 
 DO NOT FORGET your Accountable ACCOUNT ID or PASSWORD. If you do, your data is irretrievably lost. You have been warned. :)
 
@@ -83,6 +84,6 @@ DO NOT FORGET your Accountable ACCOUNT ID or PASSWORD. If you do, your data is i
 
 ## Contributing
 
-This project is entirely open source. Do with it what you will. If you're willing to help me improve this project, consider [filing an issue](https://github.com/AverageHelper/accountable-vue/issues/new/choose).
+This project is entirely open source. Do with it what you will. If you're willing to help me improve this project, consider [filing an issue](https://github.com/AverageHelper/accountable-svelte/issues/new/choose).
 
 See [CONTRIBUTING.md](/CONTRIBUTING.md) for ways to contribute.

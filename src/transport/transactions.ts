@@ -27,16 +27,28 @@ export function transactionFromSnapshot(
 	dek: HashStore
 ): Transaction {
 	const { id, record } = recordFromSnapshot(doc, dek, isTransactionRecord);
-	return transaction({ ...record, id });
+	return transaction({
+		id,
+		accountId: record.accountId,
+		amount: record.amount,
+		attachmentIds: record.attachmentIds.slice(),
+		createdAt: record.createdAt,
+		isReconciled: record.isReconciled,
+		locationId: record.locationId,
+		notes: record.notes,
+		objectType: "Transaction",
+		tagIds: record.tagIds.slice(),
+		title: record.title,
+	});
 }
 
 export async function getTransactionsForAccount(
 	account: Account,
 	dek: HashStore
-): Promise<Dictionary<Transaction>> {
+): Promise<Record<string, Transaction>> {
 	const snap = await getDocs<TransactionRecordPackage>(transactionsCollection());
 
-	const result: Dictionary<Transaction> = {};
+	const result: Record<string, Transaction> = {};
 	for (const doc of snap.docs) {
 		const transaction = transactionFromSnapshot(doc, dek);
 		if (transaction.accountId === account.id) {
@@ -58,7 +70,19 @@ export async function createTransaction(
 	} else {
 		await setDoc(ref, pkg);
 	}
-	return transaction({ ...record, id: ref.id });
+	return transaction({
+		id: ref.id,
+		accountId: record.accountId,
+		amount: record.amount,
+		attachmentIds: record.attachmentIds.slice(),
+		createdAt: record.createdAt,
+		isReconciled: record.isReconciled,
+		locationId: record.locationId,
+		notes: record.notes,
+		objectType: "Transaction",
+		tagIds: record.tagIds.slice(),
+		title: record.title,
+	});
 }
 
 export async function updateTransaction(

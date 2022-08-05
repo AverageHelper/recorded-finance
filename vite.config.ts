@@ -1,17 +1,45 @@
 import { defineConfig } from "vite";
+import { svelte } from "@sveltejs/vite-plugin-svelte";
 import analyze from "rollup-plugin-analyzer";
 import autoprefixer from "autoprefixer";
-import path from "path";
+import path from "node:path";
+import sveltePreprocess from "svelte-preprocess";
 import tsconfigPaths from "vite-tsconfig-paths";
-import vue from "@vitejs/plugin-vue";
-// import vueI18n from "@intlify/vite-plugin-vue-i18n";
+import typescript from "@rollup/plugin-typescript";
+
+console.warn(`process.env.NODE_ENV: ${process.env.NODE_ENV ?? "undefined"}`);
+const isProduction = process.env.NODE_ENV === "production";
 
 export default defineConfig({
 	plugins: [
-		vue(),
-		// vueI18n({
-		// 	include: path.resolve(__dirname, "./src/i18n/lang"),
-		// }),
+		svelte({
+			emitCss: true,
+			preprocess: sveltePreprocess({
+				sourceMap: !isProduction,
+				typescript: {
+					tsconfigFile: "./tsconfig.prod.json",
+				},
+			}),
+			onwarn(warning, handler) {
+				// Skip "Unused CSS selector" warnings.
+				// We specify the same in settings and svelte-check CLI using "--compiler-warnings 'css-unused-selector:ignore'"
+				if (warning.code === "css-unused-selector") return;
+
+				// Skip "A form label must be associated with a control" warnings.
+				// We specify the same in settings and svelte-check CLI using "--compiler-warnings 'a11y-label-has-associated-control:ignore'"
+				// These are usually unnecessary when the control is a custom component, which isn't on the "list" of control elements.
+				// See also https://github.com/sveltejs/svelte/issues/6469
+				if (warning.code === "a11y-label-has-associated-control") return;
+
+				// Handle all other warnings
+				if (handler) handler(warning);
+			},
+		}),
+		typescript({
+			// VS Code uses `tsconfig.json` at dev time.
+			// Vite uses `tsconfig.prod.json` in production builds:
+			tsconfig: path.resolve(__dirname, "./tsconfig.prod.json"),
+		}),
 		tsconfigPaths({ projects: ["./tsconfig.prod.json"] }),
 		analyze({
 			onAnalysis: () => {
@@ -23,16 +51,15 @@ export default defineConfig({
 				// Decide which modules are important enough to warn about:
 				return (
 					// Only modules that themselves take >8% of the bundle
-					module.percent > 8 &&
-					// Not Vue (that's bound to be big no matter what)
-					module.id !== "/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js"
+					module.percent > 8
 				);
 			},
 		}),
 	],
+	// See https://www.npmjs.com/package/svelte-navigator#faq
+	optimizeDeps: { exclude: ["svelte-navigator"] },
 	resolve: {
 		alias: {
-			// "vue-i18n": "vue-i18n/dist/vue-i18n.runtime.esm-bundler.js",
 			"@": path.resolve(__dirname, "/src"),
 			"~bootstrap": "bootstrap",
 		},
