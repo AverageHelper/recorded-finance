@@ -1,15 +1,16 @@
-import type { Component } from "vue";
-import AccountIcon from "../../icons/IdCard.vue";
-import FileIcon from "../../icons/File.vue";
-import LocationIcon from "../../icons/Location.vue";
-import TagIcon from "../../icons/Tag.vue";
+import type { ComponentType } from "svelte";
 import { accountsPath, attachmentsPath, locationsPath, tagsPath } from "router";
+import AccountIcon from "../../icons/IdCard.svelte";
+import FileIcon from "../../icons/File.svelte";
+import LocationIcon from "../../icons/Location.svelte";
+import TagIcon from "../../icons/Tag.svelte";
 
 export const appTabs = ["accounts", "attachments", "locations", "tags"] as const;
 
 export type Tab = typeof appTabs[number];
 
-export function isAppTab(tbd: string): tbd is Tab {
+export function isAppTab(tbd: string | null | undefined): tbd is Tab {
+	if (!(tbd ?? "")) return false; // nullish values don't count as `Tab` values lol
 	return appTabs.includes(tbd as Tab);
 }
 
@@ -33,7 +34,7 @@ export function routeForTab(tab: Tab): `/${typeof tab}` | "#" {
 	}
 }
 
-export function iconForTab(tab: Tab): Component | null {
+export function iconForTab(tab: Tab): ComponentType | null {
 	switch (tab) {
 		case "accounts":
 			return AccountIcon;

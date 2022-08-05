@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- Nothing, yet!
+- Port everything to Svelte.
 
 ## [0.9.1] - 2022-07-12
 ### Fixed
@@ -218,34 +218,34 @@ Just some re-working to make our vendor bundle fit within the recommended 500 Ki
 ### Added
 - Initial commit
 
-[Unreleased]: https://github.com/AverageHelper/accountable-vue/compare/v0.9.1...HEAD
-[0.9.1]: https://github.com/AverageHelper/accountable-vue/compare/v0.9.0...v0.9.1
-[0.9.0]: https://github.com/AverageHelper/accountable-vue/compare/v0.8.1...v0.9.0
-[0.8.1]: https://github.com/AverageHelper/accountable-vue/compare/v0.8.0...v0.8.1
-[0.8.0]: https://github.com/AverageHelper/accountable-vue/compare/v0.7.0...v0.8.0
-[0.7.0]: https://github.com/AverageHelper/accountable-vue/compare/v0.6.4...v0.7.0
-[0.6.4]: https://github.com/AverageHelper/accountable-vue/compare/v0.6.3...v0.6.4
-[0.6.3]: https://github.com/AverageHelper/accountable-vue/compare/v0.6.2...v0.6.3
-[0.6.2]: https://github.com/AverageHelper/accountable-vue/compare/v0.6.1...v0.6.2
-[0.6.1]: https://github.com/AverageHelper/accountable-vue/compare/v0.6.0...v0.6.1
-[0.6.0]: https://github.com/AverageHelper/accountable-vue/compare/v0.5.7...v0.6.0
-[0.5.7]: https://github.com/AverageHelper/accountable-vue/compare/v0.5.6...v0.5.7
-[0.5.6]: https://github.com/AverageHelper/accountable-vue/compare/v0.5.5...v0.5.6
-[0.5.5]: https://github.com/AverageHelper/accountable-vue/compare/v0.5.4...v0.5.5
-[0.5.4]: https://github.com/AverageHelper/accountable-vue/compare/v0.5.3...v0.5.4
-[0.5.3]: https://github.com/AverageHelper/accountable-vue/compare/v0.5.2...v0.5.3
-[0.5.2]: https://github.com/AverageHelper/accountable-vue/compare/v0.5.1...v0.5.2
-[0.5.1]: https://github.com/AverageHelper/accountable-vue/compare/v0.5.0...v0.5.1
-[0.5.0]: https://github.com/AverageHelper/accountable-vue/compare/v0.4.3...v0.5.0
-[0.4.3]: https://github.com/AverageHelper/accountable-vue/compare/v0.4.2...v0.4.3
-[0.4.2]: https://github.com/AverageHelper/accountable-vue/compare/v0.4.1...v0.4.2
-[0.4.1]: https://github.com/AverageHelper/accountable-vue/compare/v0.4.0...v0.4.1
-[0.4.0]: https://github.com/AverageHelper/accountable-vue/compare/v0.3.4...v0.4.0
-[0.3.4]: https://github.com/AverageHelper/accountable-vue/compare/v0.3.3...v0.3.4
-[0.3.3]: https://github.com/AverageHelper/accountable-vue/compare/v0.3.2...v0.3.3
-[0.3.2]: https://github.com/AverageHelper/accountable-vue/compare/v0.3.1...v0.3.2
-[0.3.1]: https://github.com/AverageHelper/accountable-vue/compare/v0.3.0...v0.3.1
-[0.3.0]: https://github.com/AverageHelper/accountable-vue/compare/v0.2.0...v0.3.0
-[0.2.0]: https://github.com/AverageHelper/accountable-vue/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/AverageHelper/accountable-vue/releases/tag/v0.1.0
-[Initial commit]: https://github.com/AverageHelper/accountable-vue/commit/959ea3d235490742897b4bae8f26b36e957a0eeb
+[Unreleased]: https://github.com/AverageHelper/accountable-svelte/compare/v0.9.1...HEAD
+[0.9.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.9.0...v0.9.1
+[0.9.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.8.1...v0.9.0
+[0.8.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.8.0...v0.8.1
+[0.8.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.7.0...v0.8.0
+[0.7.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.6.4...v0.7.0
+[0.6.4]: https://github.com/AverageHelper/accountable-svelte/compare/v0.6.3...v0.6.4
+[0.6.3]: https://github.com/AverageHelper/accountable-svelte/compare/v0.6.2...v0.6.3
+[0.6.2]: https://github.com/AverageHelper/accountable-svelte/compare/v0.6.1...v0.6.2
+[0.6.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.6.0...v0.6.1
+[0.6.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.5.7...v0.6.0
+[0.5.7]: https://github.com/AverageHelper/accountable-svelte/compare/v0.5.6...v0.5.7
+[0.5.6]: https://github.com/AverageHelper/accountable-svelte/compare/v0.5.5...v0.5.6
+[0.5.5]: https://github.com/AverageHelper/accountable-svelte/compare/v0.5.4...v0.5.5
+[0.5.4]: https://github.com/AverageHelper/accountable-svelte/compare/v0.5.3...v0.5.4
+[0.5.3]: https://github.com/AverageHelper/accountable-svelte/compare/v0.5.2...v0.5.3
+[0.5.2]: https://github.com/AverageHelper/accountable-svelte/compare/v0.5.1...v0.5.2
+[0.5.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.5.0...v0.5.1
+[0.5.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.4.3...v0.5.0
+[0.4.3]: https://github.com/AverageHelper/accountable-svelte/compare/v0.4.2...v0.4.3
+[0.4.2]: https://github.com/AverageHelper/accountable-svelte/compare/v0.4.1...v0.4.2
+[0.4.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.4.0...v0.4.1
+[0.4.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.3.4...v0.4.0
+[0.3.4]: https://github.com/AverageHelper/accountable-svelte/compare/v0.3.3...v0.3.4
+[0.3.3]: https://github.com/AverageHelper/accountable-svelte/compare/v0.3.2...v0.3.3
+[0.3.2]: https://github.com/AverageHelper/accountable-svelte/compare/v0.3.1...v0.3.2
+[0.3.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/AverageHelper/accountable-svelte/releases/tag/v0.1.0
+[Initial commit]: https://github.com/AverageHelper/accountable-svelte/commit/959ea3d235490742897b4bae8f26b36e957a0eeb
