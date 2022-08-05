@@ -8,7 +8,7 @@
 
 	void loadServerVersion();
 
-	const repositoryUrl = `https://github.com/AverageHelper/accountable-vue/tree/v${clientVersion}`;
+	const repositoryUrl = `https://github.com/AverageHelper/accountable-svelte/tree/v${clientVersion}`;
 </script>
 
 <OutLink to={repositoryUrl} class={$$props["class"]}

@@ -12,7 +12,7 @@
 		<I18N keypath="footer.license">
 			<!-- name -->
 			<OutLink
-				to="https://github.com/AverageHelper/accountable-vue/blob/main/LICENSE"
+				to="https://github.com/AverageHelper/accountable-svelte/blob/main/LICENSE"
 				title={$_("footer.view-license")}>{$_("footer.license-name")}</OutLink
 			>
 		</I18N>
@@ -20,15 +20,20 @@
 	<p>
 		<I18N keypath="footer.pr">
 			<!-- issue -->
-			<OutLink to="https://github.com/AverageHelper/accountable-vue/issues/new/choose"
+			<OutLink to="https://github.com/AverageHelper/accountable-svelte/issues/new/choose"
 				>{$_("footer.issue")}</OutLink
 			>
 			<!-- github -->
-			<OutLink to="https://github.com/AverageHelper/accountable-vue">{$_("footer.github")}</OutLink>
+			<OutLink to="https://github.com/AverageHelper/accountable-svelte"
+				>{$_("footer.github")}</OutLink
+			>
 		</I18N>
 	</p>
 	<p>
-		<OutLink to="https://github.com/AverageHelper/accountable-vue" title={$_("footer.view-source")}>
+		<OutLink
+			to="https://github.com/AverageHelper/accountable-svelte"
+			title={$_("footer.view-source")}
+		>
 			<GitHubIcon class="icon" alt={$_("footer.view-github")} title={$_("footer.view-github")} />
 		</OutLink>
 	</p>

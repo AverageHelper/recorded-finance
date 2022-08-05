@@ -25,7 +25,7 @@
 	<p>
 		<I18N keypath="install.self.p1">
 			<!-- readme -->
-			<OutLink to="https://github.com/AverageHelper/accountable-vue/tree/main#setup"
+			<OutLink to="https://github.com/AverageHelper/accountable-svelte/tree/main#setup"
 				>{$_("install.self.readme")}</OutLink
 			>
 		</I18N>

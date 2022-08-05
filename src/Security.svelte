@@ -50,7 +50,7 @@
 			>
 			<!-- source -->
 			<OutLink
-				to="https://github.com/AverageHelper/accountable-vue/blob/main/src/transport/cryption.ts"
+				to="https://github.com/AverageHelper/accountable-svelte/blob/main/src/transport/cryption.ts"
 				>{$_("security-faq.where-keys.source")}</OutLink
 			>
 		</I18N>
@@ -89,7 +89,8 @@
 				>{$_("security-faq.passphrase-handling.bcrypt")}</OutLink
 			>
 			<!-- source -->
-			<OutLink to="https://github.com/AverageHelper/accountable-vue/blob/main/server/auth/index.ts"
+			<OutLink
+				to="https://github.com/AverageHelper/accountable-svelte/blob/main/server/auth/index.ts"
 				>{$_("security-faq.passphrase-handling.source")}</OutLink
 			>
 		</I18N>

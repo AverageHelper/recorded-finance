@@ -8,7 +8,7 @@ The machine that stores stuff.
 
 This server doesn't do much on its own once you're authenticated. You give it data, and you ask for that data back. If you want to encrypt that data, do that yourself before you send it.
 
-The API is documented using [OpenAPI](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/AverageHelper/accountable-vue/main/server/openapi.yaml).
+The API is documented using [OpenAPI](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/AverageHelper/accountable-svelte/main/server/openapi.yaml).
 
 ## Setup
 
@@ -47,7 +47,7 @@ MAX_BYTES={the total number of bytes that Accountable attachments are permitted 
 Run these commands to compile and run
 
 ```sh
-$ cd accountable-vue/server  # Be in the server directory (if you aren't already)
+$ cd accountable-svelte/server  # Be in the server directory (if you aren't already)
 $ npm ci                     # Install dependencies
 $ npm run build              # Compile the server
 $ node .                     # Start the server in development mode
@@ -57,6 +57,6 @@ I recommend using something like [PM2](https://pm2.keymetrics.io) to run the ser
 
 ## Contributing
 
-This project is entirely open source. Do with it what you will. If you're willing to help me improve this project, consider [filing an issue](https://github.com/AverageHelper/accountable-vue/issues/new/choose).
+This project is entirely open source. Do with it what you will. If you're willing to help me improve this project, consider [filing an issue](https://github.com/AverageHelper/accountable-svelte/issues/new/choose).
 
 See [CONTRIBUTING.md](/CONTRIBUTING.md) for ways to contribute.
