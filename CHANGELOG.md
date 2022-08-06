@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 - Nothing, yet!
 
+## [0.10.1] - 2022-08-05
+### Fixed
+- Fixed annoying flashing text when entering the login screen.
+
 ## [0.10.0] - 2022-08-05
 ### Changed
 - Ported front-end code from Vue to Svelte. It's [pretty cool](https://svelte.dev/).
