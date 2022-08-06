@@ -5,6 +5,9 @@
 		"noEmit": false,
 		"types": ["vite/client", "svelte"]
 	},
+	"ts-node": {
+		"esm": true
+	},
 	"include": ["src/**/*", "*.svelte"],
 	"exclude": [
 		"node_modules/*",

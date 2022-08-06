@@ -5,6 +5,9 @@
 		"noEmit": false,
 		"types": ["node", "jest", "jest-extended", "svelte"]
 	},
+	"ts-node": {
+		"esm": true
+	},
 	"include": ["./*.ts", "./*.cjs", "**/*.ts", "**/*.d.ts", "**/*.json", "**/*.svelte"],
 	"exclude": []
 }

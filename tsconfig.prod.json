@@ -3,9 +3,11 @@
 	"compilerOptions": {
 		"declaration": false
 	},
+	"ts-node": {
+		"esm": true
+	},
 	"exclude": [
-		"./src/stories/**",
-		"./src/**/*.stories.svelte",
+		"./src/**/*.stories.*",
 		"**/*.mdx",
 		"**/*.test.*",
 		"node_modules/*",

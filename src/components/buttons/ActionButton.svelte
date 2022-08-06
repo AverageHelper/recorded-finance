@@ -1,14 +1,21 @@
+<script lang="ts" context="module">
+	export const ActionButtonTypes = ["button", "submit", "reset"] as const;
+
+	export const ActionButtonKinds = [
+		"plain",
+		"bordered",
+		"bordered-destructive",
+		"bordered-primary",
+		"bordered-primary-green",
+		"bordered-secondary",
+	] as const;
+</script>
+
 <script lang="ts">
 	import { createEventDispatcher } from "svelte";
 
-	type ActionButtonType = "button" | "submit" | "reset";
-	type ActionButtonKind =
-		| "plain"
-		| "bordered"
-		| "bordered-destructive"
-		| "bordered-primary"
-		| "bordered-primary-green"
-		| "bordered-secondary";
+	type ActionButtonType = typeof ActionButtonTypes[number];
+	type ActionButtonKind = typeof ActionButtonKinds[number];
 
 	const dispatch = createEventDispatcher<{
 		click: MouseEvent;
