@@ -5,7 +5,7 @@
 		"noEmit": false,
 		"types": ["vite/client", "svelte"]
 	},
-	"include": ["src/**/*"],
+	"include": ["src/**/*", "*.svelte"],
 	"exclude": [
 		"node_modules/*",
 		"__sapper__/*",

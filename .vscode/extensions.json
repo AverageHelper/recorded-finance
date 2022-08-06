@@ -5,6 +5,7 @@
 		"dbaeumer.vscode-eslint",
 		"mikestead.dotenv",
 		"mrmlnc.vscode-scss",
-		"Lokalise.i18n-ally"
+		"Lokalise.i18n-ally",
+		"silvenon.mdx"
 	]
 }
