@@ -5,7 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- Port everything to Svelte.
+- Nothing, yet!
+
+## [0.10.0] - 2022-08-05
+### Changed
+- Ported front-end code from Vue to Svelte. It's [pretty cool](https://svelte.dev/).
+  - I want to experiment with Accountable under different front-end paradigms. So far, I've used [Flutter](https://github.com/AverageHelper/accountable-flutter), [Vue](https://github.com/AverageHelper/accountable-vue), and now [Svelte](https://github.com/AverageHelper/accountable-svelte). This version is the Svelte port.
+	- Svelte differs from Vue in that Svelte is a compiler, not a runtime. The bundled output contains only code needed for each component to work. There's no virtual DOM, but there's also no helpful front-end safety net.
+	- Eventually, I plan to separate the back-end code from the front-end, so I'm not duplicating that part across several front-end repositories.
 
 ## [0.9.1] - 2022-07-12
 ### Fixed
@@ -218,7 +225,8 @@ Just some re-working to make our vendor bundle fit within the recommended 500 Ki
 ### Added
 - Initial commit
 
-[Unreleased]: https://github.com/AverageHelper/accountable-svelte/compare/v0.9.1...HEAD
+[Unreleased]: https://github.com/AverageHelper/accountable-svelte/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.9.1...0.10.0
 [0.9.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.8.1...v0.9.0
 [0.8.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.8.0...v0.8.1
