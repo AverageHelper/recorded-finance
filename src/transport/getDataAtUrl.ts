@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import atob from "atob-lite";
 
 export async function getDataAtUrl(url: string, contentType?: string): Promise<string> {
@@ -26,12 +27,12 @@ export function dataUriToBlob(dataUri: string): Blob {
 	// doesn't handle URLEncoded DataURIs - see SO answer #6850276 for code that does this
 	const encodedByteString = dataUri.split(",")[1];
 	if (encodedByteString === undefined)
-		throw new TypeError("Invalid Data URI: Could not get byte string"); // TODO: I18N?
+		throw new TypeError(t("error.fs.invalid-uri-no-byte-string"));
 	const byteString = atob(encodedByteString);
 
 	// separate out the mime component
-	const mimeString = dataUri.split(",")[0]?.split(":")[1]?.split(";")[0];
-	if (mimeString === undefined) throw new TypeError("Invalid Data URI: Could not get MIME string"); // TODO: I18N?
+	const type = dataUri.split(",")[0]?.split(":")[1]?.split(";")[0];
+	if (type === undefined) throw new TypeError(t("error.fs.invalid-uri-no-mime-string"));
 
 	// write the bytes of the string to an ArrayBuffer
 	const ab = new ArrayBuffer(byteString.length);
@@ -45,8 +46,7 @@ export function dataUriToBlob(dataUri: string): Blob {
 	}
 
 	// write the ArrayBuffer to a blob, and you're done
-	const blob = new Blob([ab], { type: mimeString });
-	return blob;
+	return new Blob([ab], { type });
 }
 
 async function dataFromBlob(file: Blob, type: "dataUrl" | "text"): Promise<string> {
@@ -57,7 +57,7 @@ async function dataFromBlob(file: Blob, type: "dataUrl" | "text"): Promise<strin
 			if (typeof result === "string") {
 				resolve(result);
 			} else {
-				reject(new TypeError(`Expected string result, got ${typeof result}`)); // TODO: I18N?
+				reject(new TypeError(t("error.fs.expected-string", { values: { type: typeof result } })));
 			}
 		});
 		reader.addEventListener("error", error => {

@@ -1,10 +1,11 @@
 import type { CollectionReference, DocumentReference } from "./db.js";
 import type { DocumentData } from "./schemas";
 import type { Query } from "./db";
-import { AccountableError, UnexpectedResponseError, UnreachableError } from "./errors/index.js";
+import { AccountableError, UnexpectedResponseError, UnreachableCaseError } from "./errors/index.js";
 import { collection, doc as docRef } from "./db.js";
 import { databaseCollection, databaseDocument } from "./api-types/index.js";
 import { isRawServerResponse } from "./schemas";
+import { t } from "../i18n";
 import isArray from "lodash/isArray";
 import isString from "lodash/isString";
 
@@ -339,8 +340,8 @@ export function onSnapshot<T>(
 			message = JSON.parse((res.data as { toString: () => string }).toString()) as unknown;
 		} catch (error) {
 			throw new UnexpectedResponseError(
-				`The message could not be parsed as JSON: ${JSON.stringify(error)}`
-			); // TODO: I18N
+				t("error.ws.not-json", { values: { message: JSON.stringify(error) } })
+			);
 		}
 
 		if (message === "ARE_YOU_STILL_THERE") {
@@ -351,19 +352,21 @@ export function onSnapshot<T>(
 
 		if (!isRawServerResponse(message))
 			throw new UnexpectedResponseError(
-				`Invalid server response: ${JSON.stringify(message, undefined, "  ")}`
-			); // TODO: I18N
+				t("error.ws.invalid-response", {
+					values: { response: JSON.stringify(message, undefined, "  ") },
+				})
+			);
 		const data = message.data;
-		if (data === undefined) throw new UnexpectedResponseError("Message data is undefined"); // TODO: I18N
+		if (data === undefined) throw new UnexpectedResponseError(t("error.ws.message-data-undefined"));
 
 		// console.debug(`Got ${type} message from ${url}`);
 		if (type === "collection") {
-			if (!data || !isArray(data)) throw new UnexpectedResponseError("Data is not an array"); // TODO: I18N
+			if (!data || !isArray(data)) throw new UnexpectedResponseError(t("error.ws.data-not-array"));
 			const collectionRef = collection(db, queryOrReference.id);
 			const snaps: Array<QueryDocumentSnapshot<T>> = data.map(doc => {
 				const id = doc["_id"];
 				if (!isString(id)) {
-					const err = new TypeError("Expected ID to be string"); // TODO: I18N
+					const err = new TypeError(t("error.server.id-not-string"));
 					onErrorCallback(err);
 					throw err;
 				}
@@ -375,7 +378,7 @@ export function onSnapshot<T>(
 
 			return;
 		} else if (type === "document") {
-			if (isArray(data)) throw new UnexpectedResponseError("Data is an array"); // TODO: I18N
+			if (isArray(data)) throw new UnexpectedResponseError(t("error.ws.data-is-array"));
 			const collectionRef = collection(db, queryOrReference.parent.id);
 			const ref = docRef(collectionRef.db, collectionRef.id, queryOrReference.id);
 			const snap = new QueryDocumentSnapshot<T>(ref, data as T | null);
@@ -383,11 +386,15 @@ export function onSnapshot<T>(
 			return;
 		}
 
-		throw new UnreachableError(type);
+		throw new UnreachableCaseError(type);
 	});
 
 	ws.addEventListener("close", event => {
-		console.debug(`Websocket closed with code ${event.code}: ${event.reason || "No reason given"}`);
+		console.debug(
+			t("error.ws.closed-with-code-reason", {
+				values: { code: event.code, reason: event.reason || t("error.ws.no-reason-given") },
+			})
+		);
 
 		const WS_NORMAL = 1000;
 		const WS_GOING_AWAY = 1001;
@@ -395,20 +402,28 @@ export function onSnapshot<T>(
 
 		// Connection closed. Find out why
 		if (event.code !== WS_NORMAL) {
-			let message = `WebSocket closed with code ${event.code}`;
-			// TODO: Abstract these cases into Error subclasses so we can do i18n
+			const code = event.code;
+			let reason: string | null = null;
+
 			if (event.reason?.trim()) {
-				message += `: ${event.reason}`;
+				reason = event.reason;
 			} else if (!navigator.onLine) {
 				// Offline status could cause a 1006, so we handle this case first
 				// TODO: Show some UI or smth to indicate online status, and add a way to manually reconnect.
-				message += ": Internet connection lost";
+				reason = t("error.ws.internet-gone");
 			} else if (event.code === WS_UNKNOWN) {
-				message += ": The server closed the connection without telling us why";
+				reason = t("error.ws.server-closed-without-reason");
 			} else if (event.code === WS_GOING_AWAY) {
-				message += ": Endpoint(s) closing down for now";
+				reason = t("error.ws.endpoints-closing-down");
 			}
-			onErrorCallback(new Error(message));
+
+			if (reason !== null && reason) {
+				onErrorCallback(
+					new Error(t("error.ws.closed-with-code-reason", { values: { code, reason } }))
+				);
+			} else {
+				onErrorCallback(new Error(t("error.ws.closed-with-code", { values: { code } })));
+			}
 		}
 	});
 

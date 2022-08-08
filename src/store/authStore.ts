@@ -1,8 +1,10 @@
 import type { DatabaseSchema } from "../model/DatabaseSchema";
 import type { HashStore, KeyMaterial, Unsubscribe, UserPreferences } from "../transport";
 import type { User } from "../transport/auth.js";
+import { AccountableError } from "../transport/errors";
 import { bootstrap, updateUserStats } from "./uiStore";
 import { get, writable } from "svelte/store";
+import { t } from "../i18n";
 import { UnauthorizedError } from "../../server/errors";
 import { v4 as uuid } from "uuid";
 import {
@@ -164,10 +166,10 @@ export async function login(accountId: string, password: string): Promise<void> 
 
 export async function getDekMaterial(this: void): Promise<KeyMaterial> {
 	const user = auth.currentUser;
-	if (!user) throw new Error("You must sign in first"); // TODO: I18N
+	if (!user) throw new Error(t("error.auth.unauthenticated"));
 
 	const material = await getAuthMaterial(user.uid);
-	if (!material) throw new Error("You must create an accout first"); // TODO: I18N
+	if (!material) throw new Error(t("error.auth.create-account-first"));
 	return material;
 }
 
@@ -204,7 +206,7 @@ export function clearNewLoginStatus(): void {
 }
 
 export async function destroyVault(password: string): Promise<void> {
-	if (!auth.currentUser) throw new Error("Not signed in to any account."); // TODO: I18N
+	if (!auth.currentUser) throw new Error(t("error.auth.unauthenticated"));
 
 	const { deleteAllAccounts } = await import("./accountsStore");
 	const { deleteAllAttachments } = await import("./attachmentsStore");
@@ -228,8 +230,8 @@ export async function destroyVault(password: string): Promise<void> {
 export async function updateUserPreferences(prefs: Partial<UserPreferences>): Promise<void> {
 	const userId = get(uid);
 	const key = get(pKey);
-	if (key === null) throw new Error("No decryption key"); // TODO: I18N
-	if (userId === null) throw new Error("Sign in first"); // TODO: I18N
+	if (key === null) throw new Error(t("error.cryption.missing-pek"));
+	if (userId === null) throw new Error(t("error.auth.unauthenticated"));
 
 	const { dekMaterial } = await getDekMaterial();
 	const dek = deriveDEK(key, dekMaterial);
@@ -240,7 +242,7 @@ export async function updateUserPreferences(prefs: Partial<UserPreferences>): Pr
 export async function regenerateAccountId(currentPassword: string): Promise<void> {
 	const user = auth.currentUser;
 	if (user === null) {
-		throw new Error("Not logged in"); // TODO: I18N
+		throw new Error(t("error.auth.unauthenticated"));
 	}
 
 	const newAccountId = createAccountId();
@@ -252,13 +254,13 @@ export async function regenerateAccountId(currentPassword: string): Promise<void
 export async function updatePassword(oldPassword: string, newPassword: string): Promise<void> {
 	const user = auth.currentUser;
 	if (user === null) {
-		throw new Error("Not logged in"); // TODO: I18N
+		throw new AccountableError("auth/unauthenticated");
 	}
 
 	// Get old DEK material
 	const oldMaterial = await getAuthMaterial(user.uid);
 	if (!oldMaterial) {
-		throw new Error("Create an account first"); // TODO: I18N
+		throw new Error(t("error.auth.create-account-first"));
 	}
 
 	// Generate new pKey
@@ -293,8 +295,8 @@ export async function logout(): Promise<void> {
 export async function getAllUserDataAsJson(): Promise<DatabaseSchema> {
 	const userId = get(uid);
 	const key = get(pKey);
-	if (key === null) throw new Error("No decryption key"); // TODO: I18N
-	if (userId === null) throw new Error("Sign in first"); // TODO: I18N
+	if (key === null) throw new Error(t("error.cryption.missing-pek"));
+	if (userId === null) throw new Error(t("error.auth.unauthenticated"));
 
 	const { getAllAccountsAsJson } = await import("./accountsStore");
 	const { getAllAttachmentsAsJson } = await import("./attachmentsStore");

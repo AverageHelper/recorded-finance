@@ -1,5 +1,38 @@
-import { addMessages, init, getLocaleFromNavigator } from "svelte-i18n";
+import type { FormatXMLElementFn } from "intl-messageformat";
+import { _, addMessages, init, getLocaleFromNavigator } from "svelte-i18n";
+import { get } from "svelte/store";
 import enUS from "./locales/en-US.json";
+
+// Copied from `svelte-i18n`
+type InterpolationValues =
+	| Record<
+			string,
+			string | number | boolean | Date | FormatXMLElementFn<unknown> | null | undefined
+	  >
+	| undefined;
+
+// Copied from `svelte-i18n`
+interface MessageObject {
+	id: string;
+	locale?: string;
+	format?: string;
+	default?: string;
+	values?: InterpolationValues;
+}
+
+/**
+ * Internationalizes the given `keypath` based on the current locale.
+ * Use this function in imperative environments outside of Svelte components.
+ *
+ * @important Avoid using this function in declarative contexts. Instead,
+ * subscribe to the `_` store.
+ */
+export function t(keypath: string | MessageObject, options?: Omit<MessageObject, "id">): string {
+	return get(_)(keypath, options);
+}
+
+// Use this store instead of the `t` function in Svelte components.
+export { _ } from "svelte-i18n";
 
 // Formatter consumers should import from here, not svelte-i18n directly,
 // so that the formatter gets properly initialized in unit tests.

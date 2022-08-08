@@ -35,12 +35,40 @@
 		"required": "(required)"
 	},
 	"error": {
+		"auth": {
+			"account-already-exists": "That account already exists",
+			"internal": "Internal auth error",
+			"invalid-argument": "Invalid auth argument",
+			"invalid-credential": "Invalid account ID or password",
+			"create-account-first": "You must create an accout first",
+			"unauthenticated": "You must sign in first"
+		},
 		"cryption": {
+			"empty-result": "Result was empty",
+			"plaintext-not-json": "Decrypted plaintext did not parse as valid JSON: {error}: '{plaintext}'",
+			"malformed-key": "Decrypted key is malformed",
 			"missing-pek": "No decryption key"
+		},
+		"db": {
+			"account-has-transactions": "Cannot delete an account that has transactions.",
+			"could-not-parse-document": "Failed to parse record from server document {id}",
+			"failed-precondition": "Failed precondition",
+			"internal": "Internal database error",
+			"invalid-argument": "Invalid database argument",
+			"record-does-not-match-guard": "Record does not match '{guard}' type guard",
+			"batch": {
+				"op-limit": "Cannot batch more than {limit} write operations.",
+				"one-db": "Must use exactly one database in a write batch"
+			}
 		},
 		"form": {
 			"missing-required-fields": "Please fill out the required fields",
 			"password-mismatch": "Those passwords need to match"
+		},
+		"fs": {
+			"invalid-uri-no-byte-string": "Invalid Data URI: Could not get byte string",
+			"invalid-uri-no-mime-string": "Invalid Data URI: Could not get MIME string",
+			"expected-string": "Expected string output, got {type}"
 		},
 		"network": {
 			"account-conflict": "An account with that ID already exists",
@@ -54,6 +82,44 @@
 			"too-many-requests": "You are being throttled",
 			"wrong-credentials": "Incorrect account ID or passphrase",
 			"unknown": "Not sure what went wrong. Try again maybe?"
+		},
+		"sanity": {
+			"empty-param": "{name} parameter cannot be empty",
+			"missing-env-var": "No value found for environment variable {key}",
+			"missing-constructor-property": "Missing property in constructor",
+			"unreachable-case": "Unreachable case: {value}"
+		},
+		"server": {
+			"id-not-string": "Expected ID to be string",
+			"missing-access-token": "Expected access token from server, but got none",
+			"no-data": "Expected data from server, but got none",
+			"no-version": "No version string found",
+			"throttled": "You are being throttled",
+			"too-few-documents": "Expected an array of documents from server, but got one document",
+			"too-many-documents": "Expected a single document from server, but got an array",
+			"unexpected-response": "Server response was unexpected: {message}"
+		},
+		"storage": {
+			"internal": "Internal storage error",
+			"invalid-argument": "Invalid storage argument",
+			"invalid-checksum": "The uploaded file does not match the provided checksum. Please reupload",
+			"invalid-ref-path": "Invalid storage ref: {path}",
+			"malformed-payload": "Improperly formatted payload.",
+			"no-data-found": "No data found at the ref",
+			"server-file-wrong-size": "The uploaded file does not match the provided file size. Please reupload"
+		},
+		"ws": {
+			"closed-with-code-reason": "Websocket closed with code {code}: {reason}",
+			"closed-with-code": "Websocket closed with code {code}",
+			"data-not-array": "Data is not an array",
+			"data-is-array": "Data is an array",
+			"endpoints-closing-down": "Endpoint(s) closing down for now",
+			"invalid-response": "Invalid server response: {response}",
+			"internet-gone": "Internet connection lost",
+			"message-data-undefined": "Message data is undefined",
+			"no-reason-given": "No reason given",
+			"not-json": "The message could not be parsed as JSON: {message}",
+			"server-closed-without-reason": "The server closed the connection without telling us why"
 		}
 	},
 	"debug": {

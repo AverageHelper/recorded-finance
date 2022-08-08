@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import atob from "atob-lite";
 import btoa from "btoa-lite";
 import CryptoJS from "crypto-js";
@@ -113,7 +114,7 @@ export async function derivePKey(password: string, salt: string): Promise<HashSt
 
 export function deriveDEK(pKey: HashStore, ciphertext: string): HashStore {
 	const dekObject = decrypt({ ciphertext }, pKey);
-	if (!isString(dekObject)) throw new TypeError("Decrypted key is malformatted"); // TODO: I18N?
+	if (!isString(dekObject)) throw new TypeError(t("error.cryption.malformed-key"));
 
 	return new HashStore(atob(dekObject));
 }
@@ -175,7 +176,6 @@ export function encrypt<T extends string>(
 	return { ciphertext, objectType, cryption: "v0" };
 }
 
-// TODO: I18N?
 class DecryptionError extends Error {
 	private constructor(message: string) {
 		super(message);
@@ -183,17 +183,20 @@ class DecryptionError extends Error {
 	}
 
 	static resultIsEmpty(): DecryptionError {
-		return new DecryptionError("Result was empty");
+		return new DecryptionError(t("error.cryption.empty-result"));
 	}
 
 	static parseFailed(error: unknown, plaintext: string): DecryptionError {
+		let message: string;
 		if (error instanceof Error) {
-			return new DecryptionError(
-				`Decrypted plaintext did not parse as valid JSON: ${error.message}: '${plaintext}'`
-			);
+			message = error.message;
+		} else {
+			message = JSON.stringify(error);
 		}
 		return new DecryptionError(
-			`Decrypted plaintext did not parse as valid JSON: ${JSON.stringify(error)}: '${plaintext}'`
+			t("error.cryption.plaintext-not-json", {
+				values: { error: message, plaintext },
+			})
 		);
 	}
 }

@@ -6,6 +6,7 @@ import { attachment, recordFromAttachment } from "../model/Attachment";
 import { BlobWriter } from "@zip.js/zip.js";
 import { derived, get, writable } from "svelte/store";
 import { getDekMaterial, pKey, uid } from "./authStore";
+import { t } from "../i18n";
 import { updateUserStats } from "./uiStore";
 import chunk from "lodash/chunk";
 import {
@@ -56,7 +57,7 @@ export async function watchAttachments(force: boolean = false): Promise<void> {
 	}
 
 	const key = get(pKey);
-	if (key === null) throw new Error("No decryption key"); // TODO: I18N
+	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 	const { dekMaterial } = await getDekMaterial();
 	const dek = deriveDEK(key, dekMaterial);
 
@@ -114,8 +115,8 @@ export async function createAttachment(
 ): Promise<Attachment> {
 	const userId = get(uid);
 	const key = get(pKey);
-	if (key === null) throw new Error("No decryption key"); // TODO: I18N
-	if (userId === null) throw new Error("Sign in first"); // TODO: I18N
+	if (key === null) throw new Error(t("error.cryption.missing-pek"));
+	if (userId === null) throw new Error(t("error.auth.unauthenticated"));
 
 	const { dekMaterial } = await getDekMaterial();
 	const dek = deriveDEK(key, dekMaterial);
@@ -132,8 +133,8 @@ export async function createAttachment(
 export async function updateAttachment(attachment: Attachment, file?: File): Promise<void> {
 	const userId = get(uid);
 	const key = get(pKey);
-	if (key === null) throw new Error("No decryption key"); // TODO: I18N
-	if (userId === null) throw new Error("Sign in first"); // TODO: I18N
+	if (key === null) throw new Error(t("error.cryption.missing-pek"));
+	if (userId === null) throw new Error(t("error.auth.unauthenticated"));
 
 	const { dekMaterial } = await getDekMaterial();
 	const dek = deriveDEK(key, dekMaterial);
@@ -148,7 +149,7 @@ export async function updateAttachment(attachment: Attachment, file?: File): Pro
 
 export async function deleteAttachment(attachment: Attachment, batch?: WriteBatch): Promise<void> {
 	const userId = get(uid);
-	if (userId === null) throw new Error("Sign in first"); // TODO: I18N
+	if (userId === null) throw new Error(t("error.auth.unauthenticated"));
 
 	const { allTransactions, removeAttachmentFromTransaction } = await import("./transactionsStore");
 
@@ -189,8 +190,8 @@ export async function imageDataFromFile(
 
 	const userId = get(uid);
 	const key = get(pKey);
-	if (key === null) throw new Error("No decryption key"); // TODO: I18N
-	if (userId === null) throw new Error("Sign in first"); // TODO: I18N
+	if (key === null) throw new Error(t("error.cryption.missing-pek"));
+	if (userId === null) throw new Error(t("error.auth.unauthenticated"));
 
 	const { dekMaterial } = await getDekMaterial();
 	const dek = deriveDEK(key, dekMaterial);
@@ -210,7 +211,7 @@ export async function imageDataFromFile(
 
 export async function getAllAttachmentsAsJson(): Promise<Array<AttachmentSchema>> {
 	const key = get(pKey);
-	if (key === null) throw new Error("No decryption key"); // TODO: I18N
+	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 
 	const { dekMaterial } = await getDekMaterial();
 	const dek = deriveDEK(key, dekMaterial);
