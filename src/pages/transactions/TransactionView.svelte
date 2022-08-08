@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Tag as TagObject, TagRecordParams } from "../../model/Tag";
 	import type { Attachment } from "../../model/Attachment";
-	import { _ } from "svelte-i18n";
+	import { _ } from "../../i18n";
 	import { accountPath } from "../../router";
 	import { addTagToTransaction, addAttachmentToTransaction } from "../../model/Transaction";
 	import { intlFormat, toTimestamp } from "../../transformers";

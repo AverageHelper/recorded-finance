@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { _ } from "svelte-i18n";
+	import { _ } from "./i18n";
 	import { isLoginEnabled } from "./store";
 	import { Link } from "svelte-navigator";
 	import { loginPath } from "./router";

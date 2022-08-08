@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { _ } from "svelte-i18n";
+	import { _ } from "../i18n";
 	import { accountId } from "../store";
 	import { createEventDispatcher } from "svelte";
 	import ActionButton from "./buttons/ActionButton.svelte";

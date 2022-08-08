@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { _ } from "svelte-i18n";
+	import { _ } from "../../i18n";
 	import { accountsPath, loginPath, signupPath } from "../../router";
 	import { onMount } from "svelte";
 	import { useLocation, useNavigate } from "svelte-navigator";

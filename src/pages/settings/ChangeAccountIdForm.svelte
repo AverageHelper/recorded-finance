@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { _ } from "svelte-i18n";
+	import { _ } from "../../i18n";
 	import { accountId, regenerateAccountId as _regenerateAccountId } from "../../store/authStore";
 	import { handleError } from "../../store";
 	import { toast } from "@zerodevx/svelte-toast";

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { _ } from "svelte-i18n";
+	import { _ } from "../i18n";
 	import { simplifiedByteCount } from "../transformers";
 	import { totalSpace, usedSpace } from "../store";
 

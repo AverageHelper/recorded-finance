@@ -39,7 +39,7 @@
 	```
  -->
 <script lang="ts">
-	import { _ } from "svelte-i18n";
+	import { _ } from "../i18n";
 	import { onMount, tick } from "svelte";
 
 	export let tag: keyof HTMLElementTagNameMap = "span";

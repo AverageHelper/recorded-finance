@@ -2,7 +2,7 @@
 	import type { Account } from "../../model/Account";
 	import type { Location, PendingLocation } from "../../model/Location";
 	import type { Transaction, TransactionRecordParams } from "../../model/Transaction";
-	import { _ } from "svelte-i18n";
+	import { _ } from "../../i18n";
 	import { createEventDispatcher, onMount } from "svelte";
 	import { equal, isNegative, isZero, toSnapshot } from "dinero.js";
 	import { recordFromLocation } from "../../model/Location";

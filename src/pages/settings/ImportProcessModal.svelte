@@ -4,7 +4,7 @@
 	import type { Entry } from "@zip.js/zip.js";
 	import { account as newAccount } from "../../model/Account";
 	import { createEventDispatcher, tick } from "svelte";
-	import { getNumberFormatter } from "svelte-i18n";
+	import { getNumberFormatter } from "../../i18n";
 	import { toast } from "@zerodevx/svelte-toast";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
 	import AccountListItem from "../../pages/accounts/AccountListItem.svelte";

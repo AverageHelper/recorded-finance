@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { ColorID } from "../../model/Color";
-	import { _ } from "svelte-i18n";
+	import { _ } from "../../i18n";
 	import { createEventDispatcher } from "svelte";
 
 	const dispatch = createEventDispatcher<{

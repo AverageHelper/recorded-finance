@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { _ } from "svelte-i18n";
+	import { _ } from "./i18n";
 	import I18N from "./components/I18N.svelte";
 	import Footer from "./Footer.svelte";
 	import OutLink from "./components/OutLink.svelte";

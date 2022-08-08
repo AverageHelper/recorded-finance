@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { _ } from "svelte-i18n";
+	import { _ } from "./i18n";
 	import AppVersion from "./components/AppVersion.svelte";
 	import GitHubIcon from "./icons/GitHub.svelte";
 	import I18N from "./components/I18N.svelte";

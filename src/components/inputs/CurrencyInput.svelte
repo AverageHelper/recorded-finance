@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Dinero } from "dinero.js";
-	import { _ } from "svelte-i18n";
+	import { _ } from "../../i18n";
 	import { createEventDispatcher } from "svelte";
 	import { dinero } from "dinero.js";
 	import { intlFormat } from "../../transformers";

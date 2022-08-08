@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Attachment } from "../../model/Attachment";
-	import { _ } from "svelte-i18n";
+	import { _ } from "../../i18n";
 	import { downloadFileAtUrl } from "../../transport";
 	import { files } from "../../store";
 	import ActionButton from "./ActionButton.svelte";

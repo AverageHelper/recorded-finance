@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { _ } from "svelte-i18n";
+	import { _ } from "../../i18n";
 	import { handleError } from "../../store";
 	import { toast } from "@zerodevx/svelte-toast";
 	import { updatePassword } from "../../store/authStore";

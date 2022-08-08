@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { _ } from "svelte-i18n";
+	import { _ } from "../../i18n";
 	import { accountId, destroyVault, handleError } from "../../store";
 	import { logoutPath } from "../../router";
 	import { useNavigate } from "svelte-navigator";

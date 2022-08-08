@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { ComponentType } from "svelte";
-	import { _ } from "svelte-i18n";
+	import { _ } from "../i18n";
 	import { appTabs, iconForTab, labelIdForTab, routeForTab } from "../model/ui/tabs";
 	import { Link } from "svelte-navigator";
 	import { lockPath, logoutPath, settingsPath } from "../router";

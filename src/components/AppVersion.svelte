@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { _ } from "svelte-i18n";
+	import { _ } from "../i18n";
 	import { loadServerVersion, serverLoadingError, serverVersion } from "../store";
 	import { version as clientVersion } from "../version";
 	import OutLink from "./OutLink.svelte";

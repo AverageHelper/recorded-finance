@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Account } from "../../model/Account";
-	import { _ } from "svelte-i18n";
+	import { _ } from "../../i18n";
 	import { account as newAccount } from "../../model/Account";
 	import { createEventDispatcher, onMount } from "svelte";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
