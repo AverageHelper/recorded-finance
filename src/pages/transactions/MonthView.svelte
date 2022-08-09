@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { _ } from "../../i18n";
 	import { accounts, transactionsForAccountByMonth } from "../../store";
 	import AddRecordListItem from "../accounts/AddRecordListItem.svelte";
 	import List from "../../components/List.svelte";
@@ -47,14 +48,18 @@
 			{/each}
 			<li>
 				<p class="footer">
-					<!-- TODO: I18N -->
-					<span>{monthTransactions?.length ?? 0}</span>
-					transaction{#if monthTransactions?.length !== 1}s{/if}
+					{#if monthTransactions?.length === 1}
+						{$_("transactions.count.transaction")}
+					{:else}
+						{$_("transactions.count.transactions", {
+							values: { n: monthTransactions?.length ?? 0 },
+						})}
+					{/if}
 				</p>
 			</li>
 		</List>
 	{:else}
-		<p>{month} does not match a month identifier pattern</p>
+		<p>{$_("months.does-not-match-pattern", { values: { month } })}</p>
 	{/if}
 </main>
 

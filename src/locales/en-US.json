@@ -179,6 +179,15 @@
 			"explanation": "This attachment somehow got lost in the mix, possibly due to an import bug. Select the correct file below:"
 		}
 	},
+	"locations": {
+		"list": {
+			"heading": "Locations",
+			"how-to-create": "To add a location, set a location on a transaction."
+		}
+	},
+	"months": {
+		"does-not-match-pattern": "{month} does not match a month identifier pattern"
+	},
 	"transactions": {
 		"self-with-unknown-title": "this transaction",
 		"count": {
