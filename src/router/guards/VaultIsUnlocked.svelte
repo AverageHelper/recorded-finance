@@ -1,8 +1,9 @@
 <script lang="ts">
+	import { _ } from "../../i18n";
 	import { fetchSession, pKey, uid } from "../../store";
+	import { lockPath } from "router/routes";
 	import { onMount } from "svelte";
 	import { useFocus, useNavigate } from "svelte-navigator";
-	import { lockPath } from "router/routes";
 
 	const registerFocus = useFocus();
 	const navigate = useNavigate();
@@ -26,5 +27,5 @@
 {#if !isChecking && isVaultUnlocked}
 	<slot {registerFocus} />
 {:else}
-	<p>Checking lock state...</p>
+	<p>{$_("login.checking-lock-state")}</p>
 {/if}

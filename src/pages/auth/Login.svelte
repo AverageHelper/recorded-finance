@@ -184,7 +184,7 @@
 				type="submit"
 				kind={isSignupMode ? "bordered-primary-green" : "bordered-primary"}
 				disabled={isLoading}
-				>{$_(isSignupMode ? "login.create-account" : "login.log-in")}</ActionButton
+				>{isSignupMode ? $_("login.create-account") : $_("login.log-in")}</ActionButton
 			>
 
 			{#if !$loginProcessState}

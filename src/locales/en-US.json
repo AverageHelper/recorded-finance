@@ -193,6 +193,14 @@
 		"list": {
 			"heading": "Locations",
 			"how-to-create": "To add a location, set a location on a transaction."
+		},
+		"meta": {
+			"id": "ID: {id}",
+			"title": "Title: {title}",
+			"subtitle": "Subtitle: {subtitle}",
+			"last-used-time": "Last Used: {lastUsed}",
+			"latitude-short": "Lat: {lat}",
+			"longitude-short": "Lng: {lng}"
 		}
 	},
 	"months": {
@@ -341,6 +349,7 @@
 	},
 	"input": {
 		"required": "(required)",
+		"search": "Search",
 		"location": {
 			"self": "location",
 			"title": "location title",
@@ -392,8 +401,10 @@
 	},
 	"login": {
 		"account-id": "account ID",
+		"checking-lock-state": "Checking lock state...",
 		"current-account-id": "current account ID",
 		"current-passphrase": "current passphrase",
+		"logging-out": "Logging out...",
 		"new-passphrase": "new passphrase",
 		"new-passphrase-repeat": "new passphrase again",
 		"passphrase": "passphrase",
@@ -434,7 +445,12 @@
 	},
 	"locked": {
 		"heading": "You're logged in, but your ledger is locked. Enter your passphrase to unlock the ledger.",
+		"locking": "Locking...",
 		"unlock": "Unlock"
+	},
+	"404": {
+		"heading": "404",
+		"subheading": "Nothing to see here"
 	},
 	"install": {
 		"service": {
