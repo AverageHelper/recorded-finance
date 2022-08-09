@@ -5,23 +5,25 @@
 		"flag": "🇺🇸"
 	},
 	"common": {
-		"count": {
-			"account": "1 account",
-			"accounts": "{n} accounts"
-		},
 		"accountable": "Accountable",
+		"cancel": "Cancel",
 		"client": "Client",
+		"details": "Details",
 		"current-aside": "(current)",
+		"delete-imperative": "Delete",
 		"disk-usage": "Used {used} of {total}",
 		"download-action": "Download",
 		"learn-more": "Learn More",
 		"loading-in-progress": "Loading...",
+		"saving-in-progress": "Saving...",
 		"yes": "Yes",
 		"no": "No",
 		"not-yet": "Not yet",
+		"save-imperative": "Save",
 		"server": "Server"
 	},
 	"actions": {
+		"add-new-noun": "Add a new {noun}",
 		"location": {
 			"clear": "Clear location",
 			"get-current": "Get current location"
@@ -128,6 +130,19 @@
 		"count-one-transaction": "There is 1 transaction in the cache.",
 		"count-all-transactions": "There are {n} transactions in the cache."
 	},
+	"accounts": {
+		"noun": "Account",
+		"count": {
+			"account": "1 account",
+			"accounts": "{n} accounts"
+		},
+		"numbered": "Account {number}",
+		"unknown-title": "Unknown",
+		"cannot-delete-none-found": "No account to delete",
+		"create": "Create Account",
+		"edit-titled": "Edit {title}",
+		"delete-titled": "Delete {title}"
+	},
 	"files": {
 		"does-not-exist": "This file does not exist. Sorry.",
 		"item-alt": "Stored file",
@@ -138,10 +153,12 @@
 		},
 		"count": {
 			"file": "1 file",
-			"files": "{n} files"
+			"files": "{n} files",
+			"attachment": "1 attachment",
+			"attachments": "{n} attachments"
 		},
+		"numbered": "Attachment {number}",
 		"delete": {
-			"imperative": "Delete",
 			"remove-dead-ref": "Remove this dead reference",
 			"confirm": "Are you sure you want to delete {title}? This cannot be undone."
 		},
@@ -162,6 +179,42 @@
 			"explanation": "This attachment somehow got lost in the mix, possibly due to an import bug. Select the correct file below:"
 		}
 	},
+	"transactions": {
+		"self-with-unknown-title": "this transaction",
+		"count": {
+			"transaction": "1 transaction",
+			"transactions": "{n} transactions"
+		},
+		"n-of-n-count": "{c} of {t} transactions",
+		"delete": {
+			"detach-first": "You must delete attachments before you may delete this transaction.",
+			"confirm": "Are you sure you want to delete {title}? This cannot be undone."
+		},
+		"create": {
+			"expense": "Create Expense",
+			"income": "Create Income"
+		},
+		"edit": {
+			"expense": "Edit Expense",
+			"income": "Edit Income"
+		},
+		"attach-file": "Attach a file",
+		"meta": {
+			"account": "Account",
+			"account-aria-label": "Transaction Account",
+			"amount": "Amount",
+			"amount-aria-label": "Transaction Amount",
+			"location": "Location",
+			"location-aria-label": "Transaction Location",
+			"notes": "Notes",
+			"notes-aria-label": "Transaction Notes",
+			"reconciled": "Reconciled",
+			"reconciled-aria-label": "Is this transaction reconciled?",
+			"timestamp": "Timestamp",
+			"timestamp-aria-label": "Transaction Timestamp",
+			"title": "Title"
+		}
+	},
 	"app": {
 		"nav": {
 			"accounts": "Accounts",
@@ -176,7 +229,9 @@
 	},
 	"example": {
 		"business-name": "ACME Co.",
-		"city-country": "Swahilli, New Guinnea"
+		"city-country": "Swahilli, New Guinnea",
+		"income-transaction-title": "Bank Money",
+		"transaction-note": "This is a thing"
 	},
 	"input": {
 		"required": "(required)",

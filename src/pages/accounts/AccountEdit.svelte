@@ -79,7 +79,7 @@
 
 		try {
 			if (account === null) {
-				throw new Error("No account to delete"); // TODO: I18N
+				throw new Error($_("accounts.cannot-delete-none-found"));
 			}
 
 			await _deleteAccount(account);
@@ -94,36 +94,43 @@
 </script>
 
 <form class="form-d8a5e2ee" on:submit|preventDefault={submit}>
-	<!-- TODO: I18N -->
 	{#if isCreatingAccount}
-		<h1>Create Account</h1>
+		<h1>{$_("accounts.create")}</h1>
 	{:else}
-		<h1>Edit {account?.title ?? "Account"}</h1>
+		<h1
+			>{$_("accounts.edit-titled", {
+				values: { title: account?.title ?? $_("accounts.noun") },
+			})}</h1
+		>
 	{/if}
 
 	<TextField
 		bind:this={titleField}
 		value={title}
 		label="title"
-		placeholder="Bank Money"
+		placeholder={$_("example.income-transaction-title")}
 		required
 		on:input={e => (title = e.detail)}
 	/>
 	<TextAreaField
 		value={notes}
 		label="notes"
-		placeholder="This is a thing"
+		placeholder={$_("example.transaction-note")}
 		on:input={e => (notes = e.detail)}
 	/>
 
-	<ActionButton type="submit" kind="bordered-primary" disabled={isLoading}>Save</ActionButton>
+	<ActionButton type="submit" kind="bordered-primary" disabled={isLoading}
+		>{$_("common.save-imperative")}</ActionButton
+	>
 	{#if !isCreatingAccount && numberOfTransactions === 0}
 		<ActionButton kind="bordered-destructive" disabled={isLoading} on:click={deleteAccount}
-			>Delete {account?.title ?? "Account"}</ActionButton
+			>{$_("accounts.delete-titled", {
+				values: { title: account?.title ?? $_("accounts.noun") },
+			})}</ActionButton
 		>
 	{/if}
 	{#if isLoading}
-		<p>Saving...</p>
+		<p>{$_("common.saving-in-progress")}</p>
 	{/if}
 </form>
 

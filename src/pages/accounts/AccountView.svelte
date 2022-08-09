@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Transaction } from "../../model/Transaction";
+	import { _ } from "../../i18n";
 	import { intlFormat } from "../../transformers";
 	import { isNegative as isDineroNegative } from "dinero.js";
 	import { reverseChronologically } from "../../model/utility/sort";
@@ -94,8 +95,7 @@
 <main class="content">
 	<div class="heading">
 		<div class="account-title-1dfc4112">
-			<!-- TODO: I18N -->
-			<h1>{account?.title || "Account"}</h1>
+			<h1>{account?.title || $_("accounts.noun")}</h1>
 			<ActionButton class="edit" on:click={startEditingAccount}>
 				<EditIcon />
 			</ActionButton>
@@ -119,11 +119,11 @@
 				</li>
 			{/each}
 			<li>
-				<p class="footer">
-					<span>{filteredTransactions.length}</span> of
-					<span>{theseTransactions.length}</span>
-					transaction{#if theseTransactions.length !== 1}s{/if}
-				</p>
+				<p class="footer"
+					>{$_("transactions.n-of-n-count", {
+						values: { c: filteredTransactions.length, t: theseTransactions.length },
+					})}</p
+				>
 			</li>
 		</List>
 

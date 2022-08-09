@@ -13,5 +13,5 @@ export function toTitleCase(str: string | null | undefined): string | null | und
 	}
 
 	const rest = str.slice(1);
-	return `${first.toUpperCase()}${rest}`;
+	return `${first.toLocaleUpperCase()}${rest}`;
 }

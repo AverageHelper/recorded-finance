@@ -69,8 +69,8 @@
 				<li>
 					<p class="footer"
 						>{$numberOfAccounts === 1
-							? $_("common.count.account")
-							: $_("common.count.accounts", { values: { n: $numberOfAccounts } })}</p
+							? $_("accounts.count.account")
+							: $_("accounts.count.accounts", { values: { n: $numberOfAccounts } })}</p
 					>
 				</li>
 			{/if}

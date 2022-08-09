@@ -25,7 +25,7 @@
 		t => file !== null && t.attachmentIds.includes(file?.id)
 	);
 	$: transactionCount = linkedTransactions.length;
-	$: timestamp = !file ? $_("date-time.now").toLowerCase() : toTimestamp(file.createdAt);
+	$: timestamp = !file ? $_("date-time.now").toLocaleLowerCase() : toTimestamp(file.createdAt);
 
 	async function loadNewData(file: Attachment) {
 		try {
@@ -113,7 +113,7 @@
 
 	{#if file}
 		<ActionButton class="delete" kind="bordered-destructive" on:click={askToDelete}>
-			<TrashIcon /> {$_("files.delete.imperative")}</ActionButton
+			<TrashIcon /> {$_("common.delete-imperative")}</ActionButton
 		>
 	{:else}
 		<ActionButton class="delete" kind="bordered" on:click={askToDelete}>

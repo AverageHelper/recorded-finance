@@ -1,4 +1,5 @@
 import type { Model } from "./utility/Model";
+import { t } from "../i18n";
 import isDate from "lodash/isDate";
 import isString from "lodash/isString";
 
@@ -26,7 +27,9 @@ export function attachment(params: Omit<Attachment, "objectType">): Attachment {
 		notes: (params.notes?.trim() ?? "") || null,
 		objectType: "Attachment",
 		storagePath: params.storagePath,
-		title: params.title.trim() || `Attachment ${Math.floor(Math.random() * 10) + 1}`, // TODO: I18N
+		title:
+			params.title.trim() ||
+			t("files.numbered", { values: { number: Math.floor(Math.random() * 10) + 1 } }),
 		type: params.type || "unknown",
 	};
 }

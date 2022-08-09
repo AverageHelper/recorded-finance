@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Account } from "../../model/Account";
+	import { _ } from "../../i18n";
 	import { accountPath } from "../../router";
 	import { currentBalance, getTransactionsForAccount, transactionsForAccount } from "../../store";
 	import { intlFormat } from "../../transformers";
@@ -11,7 +12,7 @@
 	export let link: boolean = true;
 	export let count: number | null = null;
 
-	$: accountRoute = link ? accountPath(account.id) : "#"; // TODO: I18N
+	$: accountRoute = link ? accountPath(account.id) : "#";
 	$: theseTransactions = $transactionsForAccount[account.id];
 
 	$: remainingBalance = $currentBalance[account.id] ?? null;
@@ -23,9 +24,10 @@
 			: count ?? Object.keys(theseTransactions).length;
 
 	$: notes = account.notes?.trim() ?? "";
-	$: countString = `${numberOfTransactions ?? "?"} transaction${
-		numberOfTransactions === 1 ? "" : "s"
-	}`; // TODO: I18N
+	$: countString =
+		numberOfTransactions === 1
+			? $_("transactions.count.transaction")
+			: $_("transactions.count.transactions", { values: { n: numberOfTransactions ?? "?" } });
 	$: subtitle = !notes
 		? countString
 		: numberOfTransactions === null

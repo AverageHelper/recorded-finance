@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Transaction } from "../../model/Transaction";
+	import { _ } from "../../i18n";
 	import { allBalances, attachments, handleError, updateTransaction } from "../../store";
 	import { isNegative as isDineroNegative } from "dinero.js";
 	import { intlFormat, toTimestamp } from "../../transformers";
@@ -80,6 +81,7 @@
 			}}
 		/>
 		{#if isChangingReconciled}
+			<!-- TODO: Make a loading spinner for this -->
 			<span class="loading" style="min-height: 33pt">...</span>
 		{/if}
 	</div>
@@ -90,12 +92,11 @@
 				<LocationIcon />
 			</div>
 		{/if}
-		<!-- TODO: I18N -->
 		{#if hasAttachments}
 			<div
-				title={`${transaction.attachmentIds.length} attachment${
-					transaction.attachmentIds.length === 1 ? "" : "s"
-				}`}
+				title={transaction.attachmentIds.length === 1
+					? $_("files.count.attachment")
+					: $_("files.count.attachments", { values: { n: transaction.attachmentIds.length } })}
 			>
 				{#if isAttachmentBroken}
 					<strong>?</strong>
