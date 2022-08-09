@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { ColorID } from "../../model/Color";
 	import type { Tag as TagObject, TagRecordParams } from "../../model/Tag";
+	import { _ } from "../../i18n";
 	import { createEventDispatcher } from "svelte";
 	import { allTags as _allTags, deleteTag, removeTagFromAllTransactions } from "../../store";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
@@ -74,8 +75,7 @@
 	}
 </script>
 
-<!-- TODO: I18N -->
-<h2>Choose a Tag</h2>
+<h2>{$_("tags.choose-existing")}</h2>
 <form on:submit|preventDefault={save}>
 	<div class="name-input-72aa686e">
 		<TextField

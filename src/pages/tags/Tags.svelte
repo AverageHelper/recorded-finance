@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { _ } from "../../i18n";
 	import { allTags } from "../../store";
 	import List from "../../components/List.svelte";
 	import Tag from "./Tag.svelte";
@@ -8,9 +9,8 @@
 
 <main class="content">
 	<div class="heading">
-		<!-- TODO: I18N -->
-		<h1>Tags</h1>
-		<p>To add a tag, go to one of your transactions.</p>
+		<h1>{$_("tags.list.heading")}</h1>
+		<p>{$_("tags.list.how-to-create")}</p>
 	</div>
 
 	<List>
@@ -28,7 +28,9 @@
 		{#if numberOfTags > 0}
 			<li>
 				<p class="footer"
-					>{numberOfTags} tag{#if numberOfTags !== 1}<span>s</span>{/if}</p
+					>{#if numberOfTags === 1}{$_("tags.count.tag")}{:else}{$_("tags.count.tags", {
+							values: { n: numberOfTags },
+						})}{/if}</p
 				>
 			</li>
 		{/if}

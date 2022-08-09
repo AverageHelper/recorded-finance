@@ -188,6 +188,24 @@
 	"months": {
 		"does-not-match-pattern": "{month} does not match a month identifier pattern"
 	},
+	"tags": {
+		"count": {
+			"tag": "1 tag",
+			"tags": "{n} tags"
+		},
+		"create": "Add tag",
+		"choose-existing": "Choose a Tag",
+		"delete": {
+			"action-cannot-be-undone": "This cannot be undone.",
+			"confirm": "Are you sure you want to delete {name}?",
+			"removed-from-transactions": "This tag will be removed from {count}."
+		},
+		"list": {
+			"heading": "Tags",
+			"how-to-create": "To add a tag, go to one of your transactions."
+		},
+		"self-with-unknown-title": "this tag"
+	},
 	"transactions": {
 		"self-with-unknown-title": "this transaction",
 		"count": {
