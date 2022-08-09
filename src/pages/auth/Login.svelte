@@ -141,7 +141,7 @@
 					value={$_("login.value-will-be-generated")}
 					disabled={isSignupMode && !isLoading}
 					label={$_("login.account-id")}
-					placeholder="b4dcb93bc0c04251a930541e1a3c9a80"
+					placeholder={$_("example.account-id")}
 					autocomplete="username"
 				/>
 			{:else}
@@ -151,7 +151,7 @@
 					on:input={onUpdateAccountId}
 					disabled={isSignupMode && !isLoading}
 					label={$_("login.account-id")}
-					placeholder="b4dcb93bc0c04251a930541e1a3c9a80"
+					placeholder={$_("example.account-id")}
 					autocomplete="username"
 					showsRequired={false}
 					required
@@ -162,7 +162,7 @@
 				value={password}
 				on:input={onUpdatePassphrase}
 				type="password"
-				label={$_(isSignupMode ? "login.new-passphrase" : "login.current-passphrase")}
+				label={isSignupMode ? $_("login.new-passphrase-imperative") : $_("login.passphrase")}
 				placeholder="********"
 				autocomplete={isSignupMode ? "new-password" : "current-password"}
 				showsRequired={false}

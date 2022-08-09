@@ -2,6 +2,7 @@
 	import type { Account } from "../../model/Account";
 	import type { DatabaseSchema } from "../../model/DatabaseSchema";
 	import type { Entry } from "@zip.js/zip.js";
+	import { _ } from "../../i18n";
 	import { account as newAccount } from "../../model/Account";
 	import { createEventDispatcher, tick } from "svelte";
 	import { getNumberFormatter } from "../../i18n";
@@ -80,13 +81,17 @@
 	});
 
 	$: if (hasDb && importedAccounts.length === 0) {
-		toast.push(`${fileName || "That file"} contains no financial data.`); // TODO: I18N
+		toast.push(
+			$_("settings.import.file-has-no-financial-data", {
+				values: { file: fileName || $_("settings.import.given-file-name-unknown") },
+			})
+		);
 		forgetDb();
 	}
 
 	function toggleAccount(event: Event, account: Account) {
 		event.preventDefault();
-		if (isImporting) return; // Don't modify import while we're importing
+		if (isImporting) return; // Don't modify import state while we're importing
 
 		if (accountIdsToImport.has(account.id)) {
 			accountIdsToImport.delete(account.id);
@@ -132,7 +137,7 @@
 			itemsImported += numberOfAttachmentsToImport;
 			await tick();
 
-			toast.push("Imported all the things!", { classes: ["toast-success"] }); // TODO: I18N
+			toast.push($_("settings.import.success"), { classes: ["toast-success"] });
 			dispatch("finished");
 		} catch (error) {
 			handleError(error);
@@ -143,12 +148,11 @@
 </script>
 
 <Modal open={hasDb} closeModal={forgetDb}>
-	<!-- TODO: I18N -->
-	<h1>Select Accounts from &quot;{fileName}&quot;</h1>
+	<h1>{$_("settings.import.heading", { values: { fileName } })}</h1>
 
 	{#if newAccounts.length > 0}
 		<div>
-			<h4>New Accounts</h4>
+			<h4>{$_("settings.import.new-accounts")}</h4>
 			<List>
 				{#each newAccounts as account (account.id)}
 					<li class="importable-9d959f76">
@@ -170,11 +174,8 @@
 
 	{#if duplicateAccounts.length > 0}
 		<div>
-			<h4>Duplicate Accounts</h4>
-			<p
-				>These entries seem to match an account you already have. Would you like to overwrite the
-				account and transactions we have stored with what you gave us here?</p
-			>
+			<h4>{$_("settings.import.duplicate-accounts")}</h4>
+			<p>{$_("settings.import.duplicates-explanation")}</p>
 			<List>
 				{#each duplicateAccounts as account (account.id)}
 					<li class="importable-9d959f76">
@@ -195,11 +196,36 @@
 	{/if}
 
 	<div>
-		<h4>Everything Else</h4>
+		<h4>{$_("settings.import.miscellaneous-items")}</h4>
 		<List>
-			<li class="importable-9d959f76">{numberOfLocationsToImport} locations <Checkmark /></li>
-			<li class="importable-9d959f76">{numberOfTagsToImport} tags <Checkmark /></li>
-			<li class="importable-9d959f76">{numberOfAttachmentsToImport} attachments <Checkmark /></li>
+			<li class="importable-9d959f76">
+				{#if numberOfLocationsToImport === 1}
+					{$_("locations.count.location")}
+				{:else}
+					{$_("locations.count.locations", {
+						values: { n: numberOfLocationsToImport },
+					})}
+				{/if}
+				<Checkmark />
+			</li>
+			<li class="importable-9d959f76">
+				{#if numberOfTagsToImport === 1}
+					{$_("tags.count.tag")}
+				{:else}
+					{$_("tags.count.tags", {
+						values: { n: numberOfTagsToImport },
+					})}
+				{/if}
+				<Checkmark />
+			</li>
+			<li class="importable-9d959f76">
+				{#if numberOfAttachmentsToImport === 1}
+					{$_("files.count.attachment")}
+				{:else}
+					{$_("files.count.attachments", { values: { n: numberOfAttachmentsToImport } })}
+				{/if}
+				<Checkmark />
+			</li>
 		</List>
 	</div>
 
@@ -211,9 +237,11 @@
 			on:click={beginImport}
 		>
 			{#if isImporting}
-				<span>Importing... ({importProgressPercent})</span>
+				<span
+					>{$_("settings.import.in-progress", { values: { percent: importProgressPercent } })}</span
+				>
 			{:else}
-				<span>Begin Import</span>
+				<span>{$_("settings.import.begin")}</span>
 			{/if}
 		</ActionButton>
 	</div>

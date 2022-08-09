@@ -1,11 +1,13 @@
 <script lang="ts">
 	import type { AttachmentSchema } from "../../model/DatabaseSchema";
 	import type { Attachment } from "../../model/Attachment";
+	import { _ } from "../../i18n";
 	import { attachment as newAttachment } from "../../model/Attachment";
 	import { asyncMap, dataUriToBlob, downloadFileAtUrl } from "../../transport";
 	import { BlobReader, Data64URIWriter, TextReader, ZipWriter } from "@zip.js/zip.js";
 	import { getAllUserDataAsJson, handleError, imageDataFromFile } from "../../store";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
+	import I18N from "../../components/I18N.svelte";
 
 	let isLoading = false;
 
@@ -86,13 +88,15 @@
 </script>
 
 <form on:submit|preventDefault>
-	<!-- TODO: I18N -->
-	<h3>Export</h3>
-	<p
-		>Exports an <strong>unencrypted</strong> copy of all your data in JSON format. (Except attachments
-		of course, those will come as Accountable got them).</p
-	>
+	<h3>{$_("settings.export.meta.heading")}</h3>
+	<p>
+		<I18N keypath="settings.export.meta.description">
+			<!-- unencrypted -->
+			<strong>{$_("settings.export.meta.unencrypted")}</strong>
+		</I18N>
+	</p>
 	{#if false}
+		<!-- TODO: I18N -->
 		<p
 			>This export might get big, and about 1/3 of it is spacing to make the JSON more
 			human-readable. If you don't care about that, then we can just export the raw JSON data as
@@ -101,14 +105,14 @@
 	{/if}
 	<div class="buttons-6933f502">
 		<ActionButton kind="bordered" disabled={isLoading} on:click={e => downloadStuff(e, false)}
-			>Export Everything</ActionButton
+			>{$_("settings.export.actions.export-all")}</ActionButton
 		>
 		{#if false}
 			<ActionButton kind="bordered" disabled={isLoading} on:click={e => downloadStuff(e, true)}
-				>Export Everything</ActionButton
+				>{$_("settings.export.actions.export-all")}</ActionButton
 			>
 			<ActionButton kind="bordered" disabled={isLoading} on:click={e => downloadStuff(e, false)}
-				>Export Everything with nice spacing</ActionButton
+				>{$_("settings.export.actions.export-all-nicely")}</ActionButton
 			>
 		{/if}
 	</div>

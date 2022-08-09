@@ -73,7 +73,7 @@
 				value={password}
 				on:input={onPasswordInput}
 				type="password"
-				label={$_("login.current-passphrase")}
+				label={$_("login.passphrase")}
 				placeholder="********"
 				autocomplete="current-password"
 				showsRequired={false}

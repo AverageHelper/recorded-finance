@@ -32,7 +32,7 @@
 			isLoading = true;
 
 			await updatePassword(currentPassword, newPassword);
-			toast.push("Your passphrase has been updated!", { classes: ["toast-success"] }); // TODO: I18N
+			toast.push($_("settings.auth.passphrase-updated"), { classes: ["toast-success"] });
 			reset();
 		} catch (error) {
 			handleError(error);
@@ -42,13 +42,12 @@
 </script>
 
 <form on:submit|preventDefault={submitNewPassword}>
-	<!-- TODO: I18N -->
-	<h3>Change Passphrase</h3>
+	<h3>{$_("settings.auth.passphrase-heading")}</h3>
 	<TextField
 		value={currentPassword}
 		on:input={e => (currentPassword = e.detail)}
 		type="password"
-		label="current passphrase"
+		label={$_("login.current-passphrase")}
 		placeholder="********"
 		autocomplete="current-password"
 		showsRequired={false}
@@ -58,7 +57,7 @@
 		value={newPassword}
 		on:input={e => (newPassword = e.detail)}
 		type="password"
-		label="new passphrase"
+		label={$_("login.new-passphrase")}
 		placeholder="************"
 		autocomplete="new-password"
 		showsRequired={false}
@@ -68,7 +67,7 @@
 		value={newPasswordRepeat}
 		on:input={e => (newPasswordRepeat = e.detail)}
 		type="password"
-		label="new passphrase again"
+		label={$_("login.new-passphrase-repeat")}
 		placeholder="************"
 		autocomplete="new-password"
 		showsRequired={false}
@@ -76,10 +75,12 @@
 	/>
 	<div class="buttons-47e1be0c">
 		<ActionButton type="submit" kind="bordered-primary" disabled={!hasChanges || isLoading}
-			>Change passphrase</ActionButton
+			>{$_("settings.auth.update-passphrase")}</ActionButton
 		>
 		{#if hasChanges}
-			<ActionButton kind="bordered" disabled={isLoading} on:click={reset}>Reset</ActionButton>
+			<ActionButton kind="bordered" disabled={isLoading} on:click={reset}
+				>{$_("common.reset")}</ActionButton
+			>
 		{/if}
 	</div>
 </form>

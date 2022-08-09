@@ -5,6 +5,7 @@
 	import { useNavigate } from "svelte-navigator";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
 	import ConfirmDeleteEverything from "./ConfirmDeleteEverything.svelte";
+	import I18N from "../../components/I18N.svelte";
 	import TextField from "../../components/inputs/TextField.svelte";
 
 	const navigate = useNavigate();
@@ -45,21 +46,25 @@
 </script>
 
 <form on:submit|preventDefault={askToDeleteEverything}>
-	<!-- TODO: I18N -->
-	<h3>Delete Everything</h3>
-	<p>You have the option to delete all of your data on Accountable.</p>
+	<h3>{$_("settings.delete-all.heading")}</h3>
+	<p>
+		<I18N keypath="settings.delete-all.description">
+			<!-- platform -->
+			<span>{$_("common.accountable")}</span>
+		</I18N>
+	</p>
 
 	<TextField
-		value={$accountId ?? "b4dcb93bc0c04251a930541e1a3c9a80"}
+		value={$accountId ?? $_("example.account-id")}
 		type="text"
-		label="account ID"
+		label={$_("login.account-id")}
 		disabled
 	/>
 	<TextField
 		value={password}
 		on:input={e => (password = e.detail)}
 		type="password"
-		label="current passphrase"
+		label={$_("login.current-passphrase")}
 		placeholder="********"
 		autocomplete="current-password"
 		showsRequired={false}
@@ -69,13 +74,15 @@
 	<div class="buttons-5655e1fc">
 		<ActionButton type="submit" kind="bordered-destructive" disabled={!hasChanges || isDeleting}>
 			{#if isDeleting}
-				<span>Deleting...</span>
+				<span>{$_("settings.delete-all.in-progress")}</span>
 			{:else}
-				<span>Delete Everything</span>
+				<span>{$_("settings.delete-all.start-imperative")}</span>
 			{/if}
 		</ActionButton>
 		{#if hasChanges}
-			<ActionButton kind="bordered" disabled={isDeleting} on:click={reset}>Reset</ActionButton>
+			<ActionButton kind="bordered" disabled={isDeleting} on:click={reset}
+				>{$_("common.reset")}</ActionButton
+			>
 		{/if}
 	</div>
 </form>

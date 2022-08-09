@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { LocationPref } from "../../transport";
+	import { _ } from "../../i18n";
 	import { handleError } from "../../store";
 	import { locationPrefs as sensitivityOptions } from "../../transport";
 	import { onMount } from "svelte";
@@ -7,6 +8,7 @@
 	import { toast } from "@zerodevx/svelte-toast";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
 	import Checkmark from "../../icons/Checkmark.svelte";
+	import I18N from "../../components/I18N.svelte";
 	import OutLink from "../../components/OutLink.svelte";
 
 	let isLoading = false;
@@ -31,8 +33,11 @@
 	async function submitNewLocationPref() {
 		try {
 			if (!sensitivityOptions.includes(selectedSensitivity)) {
-				// TODO: I18N
-				throw new Error(`${selectedSensitivity} is not a valid location preference.`);
+				throw new Error(
+					$_("error.settings.invalid-location-preference", {
+						values: { pref: selectedSensitivity },
+					})
+				);
 			}
 
 			isLoading = true;
@@ -40,7 +45,7 @@
 			await updateUserPreferences({
 				locationSensitivity: selectedSensitivity,
 			});
-			toast.push("Your preferences have been updated!", { classes: ["toast-success"] }); // TODO: I18N
+			toast.push($_("settings.update-successful"), { classes: ["toast-success"] });
 			reset();
 		} catch (error) {
 			handleError(error);
@@ -50,12 +55,8 @@
 </script>
 
 <form on:submit|preventDefault={submitNewLocationPref}>
-	<!-- TODO: I18N -->
-	<h3>Location Service</h3>
-	<p
-		>By default, we don't talk to any external location APIs. However, if you want Accountable to
-		prefill transaction location fields, you'll need to select a different option below.</p
-	>
+	<h3>{$_("settings.location.heading")}</h3>
+	<p>{$_("settings.location.api-disclaimer")}</p>
 
 	<div class="options-b0a38164">
 		{#each sensitivityOptions as option}
@@ -77,36 +78,39 @@
 
 				<div class="option-details">
 					{#if option === "none"}
-						<span>None</span>
+						<span>{$_("settings.location.preference.none")}</span>
 					{:else if option === "vague"}
-						<span>Imprecise</span>
+						<span>{$_("settings.location.preference.imprecise")}</span>
 					{:else if option === "specific"}
-						<span>Precise</span>
+						<span>{$_("settings.location.preference.precise")}</span>
 					{/if}
 
 					{#if option === "none"}
-						<p>No location services.</p>
+						<p>{$_("settings.location.preference.none-description")}</p>
 					{:else if option === "vague"}
-						<p>Get, on-demand, a locale based on your IP address.</p>
+						<p>{$_("settings.location.preference.imprecise-description")}</p>
 					{:else if option === "specific"}
-						<p>Get the best-available location information.</p>
+						<p>{$_("settings.location.preference.precise-description")}</p>
 					{/if}
 				</div>
 			</ActionButton>
 		{/each}
 	</div>
-	<p style="font-size: small"
-		>Note that we have no "automatic" location features. We only fetch your current location when
-		you press a button to request it. We use the
-		<OutLink to="https://www.iplocate.io">IPLocate</OutLink> API to obtain vague location data.</p
-	>
+	<p style="font-size: small">
+		<I18N keypath="settings.location.manual-disclaimer">
+			<!-- iplocate -->
+			<OutLink to="https://www.iplocate.io">{$_("settings.location.iplocate")}</OutLink>
+		</I18N>
+	</p>
 
 	<div class="buttons">
 		<ActionButton type="submit" kind="bordered-primary" disabled={!hasChanges || isLoading}
-			>Confirm preference</ActionButton
+			>{$_("settings.location.actions.confirm")}</ActionButton
 		>
 		{#if hasChanges}
-			<ActionButton kind="bordered" disabled={isLoading} on:click={reset}>Reset</ActionButton>
+			<ActionButton kind="bordered" disabled={isLoading} on:click={reset}
+				>{$_("common.reset")}</ActionButton
+			>
 		{/if}
 	</div>
 </form>

@@ -19,6 +19,7 @@
 		"yes": "Yes",
 		"no": "No",
 		"not-yet": "Not yet",
+		"reset": "Reset",
 		"save-imperative": "Save",
 		"server": "Server"
 	},
@@ -37,10 +38,11 @@
 	},
 	"error": {
 		"auth": {
-			"account-already-exists": "That account already exists",
+			"account-already-exists": "Someone already has an account with that ID.",
 			"internal": "Internal auth error",
 			"invalid-argument": "Invalid auth argument",
-			"invalid-credential": "Invalid account ID or password",
+			"invalid-credential": "Invalid account ID or passphrase",
+			"invalid-email": "That doesn't quite look like an email address.",
 			"create-account-first": "You must create an accout first",
 			"unauthenticated": "You must sign in first"
 		},
@@ -64,7 +66,7 @@
 		},
 		"form": {
 			"missing-required-fields": "Please fill out the required fields",
-			"password-mismatch": "Those passwords need to match"
+			"password-mismatch": "Those passphrases need to match"
 		},
 		"fs": {
 			"invalid-uri-no-byte-string": "Invalid Data URI: Could not get byte string",
@@ -99,6 +101,10 @@
 			"too-few-documents": "Expected an array of documents from server, but got one document",
 			"too-many-documents": "Expected a single document from server, but got an array",
 			"unexpected-response": "Server response was unexpected: {message}"
+		},
+		"settings": {
+			"missing-db-file": "{filename} not present at root of zip",
+			"invalid-location-preference": "{pref} is not a valid location preference."
 		},
 		"storage": {
 			"internal": "Internal storage error",
@@ -180,6 +186,10 @@
 		}
 	},
 	"locations": {
+		"count": {
+			"location": "1 location",
+			"locations": "{n} locations"
+		},
 		"list": {
 			"heading": "Locations",
 			"how-to-create": "To add a location, set a location on a transaction."
@@ -187,6 +197,74 @@
 	},
 	"months": {
 		"does-not-match-pattern": "{month} does not match a month identifier pattern"
+	},
+	"settings": {
+		"heading": "Settings",
+		"update-successful": "Your preferences have been updated!",
+		"auth": {
+			"account-id-heading": "Change Account ID",
+			"account-id-description": "Somebody bothering you with your account ID? You can change it with one click:",
+			"account-id-updated": "Your account ID has been updated!",
+			"get-new-account-id": "Regenerate account ID",
+			"passphrase-heading": "Change Passphrase",
+			"passphrase-updated": "Your passphrase has been updated!",
+			"update-passphrase": "Change passphrase"
+		},
+		"delete-all": {
+			"heading": "Delete Everything",
+			"description": "You have the option to delete all of your data on {platform}.",
+			"in-progress": "Deleting...",
+			"start-imperative": "Delete Everything",
+			"confirm": "Are you sure you want to delete {everything}? This cannot be undone.",
+			"really-everything": "all of your data"
+		},
+		"export": {
+			"actions": {
+				"export-all": "Export Everything",
+				"export-all-nicely": "Export Everything with nice spacing"
+			},
+			"meta": {
+				"heading": "Export",
+				"description": "Exports an {unencrypted} copy of all your data in JSON format. (Except attachments of course, those will come as Accountable got them).",
+				"unencrypted": "unencrypted"
+			}
+		},
+		"import": {
+			"meta": {
+				"heading": "Import",
+				"description": "Import a JSON file describing one or more accounts."
+			},
+			"begin": "Begin Import",
+			"duplicate-accounts": "Duplicate Accounts",
+			"duplicates-explanation": "These entries seem to match an account you already have. Would you like to overwrite the account and transactions we have stored with what you gave us here?",
+			"given-file-name-unknown": "That file",
+			"file-has-no-financial-data": "{file} contains no financial data.",
+			"heading": "Select Accounts from \"{fileName}\"",
+			"in-progress": "Importing... ({percent})",
+			"loading-file": "Loading {name}",
+			"loading-file-progress": "Loading {name}: {percent}",
+			"miscellaneous-items": "Everything Else",
+			"new-accounts": "New Accounts",
+			"start-imperative": "Import",
+			"success": "Imported all the things!"
+		},
+		"location": {
+			"heading": "Location Service",
+			"api-disclaimer": "By default, we don't talk to any external location APIs. However, if you want Accountable to prefill transaction location fields, you'll need to select a different option below.",
+			"iplocate": "IPLocate",
+			"manual-disclaimer": "Note that we have no \"automatic\" location features. We only fetch your current location when you press a button to request it. We use the {iplocate} API to obtain vague location data.",
+			"actions": {
+				"confirm": "Confirm preference"
+			},
+			"preference": {
+				"none": "None",
+				"none-description": "No location services.",
+				"imprecise": "Imprecise",
+				"imprecise-description": "Get, on-demand, a locale based on your IP address.",
+				"precise": "Precise",
+				"precise-description": "Get the best-available location information."
+			}
+		}
 	},
 	"tags": {
 		"count": {
@@ -255,6 +333,7 @@
 		}
 	},
 	"example": {
+		"account-id": "b4dcb93bc0c04251a930541e1a3c9a80",
 		"business-name": "ACME Co.",
 		"city-country": "Swahilli, New Guinnea",
 		"income-transaction-title": "Bank Money",
@@ -313,9 +392,13 @@
 	},
 	"login": {
 		"account-id": "account ID",
-		"current-passphrase": "passphrase",
+		"current-account-id": "current account ID",
+		"current-passphrase": "current passphrase",
+		"new-passphrase": "new passphrase",
+		"new-passphrase-repeat": "new passphrase again",
+		"passphrase": "passphrase",
 		"repeat-passphrase": "passphrase again",
-		"new-passphrase": "Create a strong passphrase",
+		"new-passphrase-imperative": "Create a strong passphrase",
 		"value-will-be-generated": "to be generated...",
 		"log-in": "Log in",
 		"create-account": "Create an account",
