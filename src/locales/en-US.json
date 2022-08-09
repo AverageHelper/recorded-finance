@@ -15,7 +15,9 @@
 		"disk-usage": "Used {used} of {total}",
 		"download-action": "Download",
 		"learn-more": "Learn More",
+		"loading-in-progress": "Loading...",
 		"yes": "Yes",
+		"no": "No",
 		"not-yet": "Not yet",
 		"server": "Server"
 	},
@@ -30,9 +32,6 @@
 	},
 	"date-time": {
 		"now": "Now"
-	},
-	"text-input": {
-		"required": "(required)"
 	},
 	"error": {
 		"auth": {
@@ -129,6 +128,40 @@
 		"count-one-transaction": "There is 1 transaction in the cache.",
 		"count-all-transactions": "There are {n} transactions in the cache."
 	},
+	"files": {
+		"does-not-exist": "This file does not exist. Sorry.",
+		"item-alt": "Stored file",
+		"self-with-unknown-title": "this file",
+		"list": {
+			"heading": "Files",
+			"how-to-create": "To add a file, attach it to a transaction."
+		},
+		"count": {
+			"file": "1 file",
+			"files": "{n} files"
+		},
+		"delete": {
+			"imperative": "Delete",
+			"remove-dead-ref": "Remove this dead reference",
+			"confirm": "Are you sure you want to delete {title}? This cannot be undone."
+		},
+		"meta": {
+			"name": "Name: {name}",
+			"file-type": "Type: {type}",
+			"timestamp": "Timestamp: {timestamp}",
+			"linked-transaction": "Linked Transaction",
+			"linked-transactions": "Linked Transactions"
+		},
+		"upload": {
+			"imperative": "Upload a file",
+			"choose": "Choose a file"
+		},
+		"reference": {
+			"broken": "Broken reference",
+			"heading": "Fix broken reference",
+			"explanation": "This attachment somehow got lost in the mix, possibly due to an import bug. Select the correct file below:"
+		}
+	},
 	"app": {
 		"nav": {
 			"accounts": "Accounts",
@@ -146,6 +179,7 @@
 		"city-country": "Swahilli, New Guinnea"
 	},
 	"input": {
+		"required": "(required)",
 		"location": {
 			"self": "location",
 			"title": "location title",

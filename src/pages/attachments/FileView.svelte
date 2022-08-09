@@ -1,11 +1,13 @@
 <script lang="ts">
 	import type { Attachment } from "../../model/Attachment";
+	import { _ } from "../../i18n";
 	import { allTransactions, imageDataFromFile } from "../../store";
 	import { createEventDispatcher } from "svelte";
 	import { toTimestamp } from "../../transformers";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
 	import DownloadButton from "../../components/buttons/DownloadButton.svelte";
 	import ErrorNotice from "../../components/ErrorNotice.svelte";
+	import I18N from "../../components/I18N.svelte";
 	import List from "../../components/List.svelte";
 	import TransactionListItem from "../transactions/TransactionListItem.svelte";
 	import TrashIcon from "../../icons/Trash.svelte";
@@ -23,7 +25,7 @@
 		t => file !== null && t.attachmentIds.includes(file?.id)
 	);
 	$: transactionCount = linkedTransactions.length;
-	$: timestamp = !file ? "now" : toTimestamp(file.createdAt);
+	$: timestamp = !file ? $_("date-time.now").toLowerCase() : toTimestamp(file.createdAt);
 
 	async function loadNewData(file: Attachment) {
 		try {
@@ -51,31 +53,48 @@
 	}
 </script>
 
-<!-- TODO: I18N -->
-
 <div class="main-5978c5a2">
 	{#if !file}
-		<p>This file does not exist. Sorry.</p>
+		<p>{$_("files.does-not-exist")}</p>
 	{:else if imageLoadError}
 		<ErrorNotice error={imageLoadError} />
 	{:else if !imageUrl}
-		<p>Loading...</p>
+		<p>{$_("common.loading-in-progress")}</p>
 	{:else}
-		<img src={imageUrl} alt="Stored file" />
+		<img src={imageUrl} alt={$_("files.item-alt")} />
 	{/if}
 </div>
 
 <div>
 	{#if file}
-		<p>Name: <strong>{file.title}</strong></p>
-		<p>Type: <strong>{file.type}</strong></p>
-		<p>Timestamp: <strong>{timestamp}</strong></p>
+		<p>
+			<I18N keypath="files.meta.name">
+				<!-- name -->
+				<strong>{file.title}</strong>
+			</I18N>
+		</p>
+		<p>
+			<I18N keypath="files.meta.file-type">
+				<!-- type -->
+				<strong>{file.type}</strong>
+			</I18N>
+		</p>
+		<p>
+			<I18N keypath="files.meta.timestamp">
+				<!-- timestamp -->
+				<strong>{timestamp}</strong>
+			</I18N>
+		</p>
 	{/if}
 </div>
 
 {#if transactionCount > 0}
 	<div>
-		<h3>Linked Transaction{transactionCount !== 1 ? "s" : ""}</h3>
+		{#if transactionCount === 1}
+			<h3>{$_("files.meta.linked-transaction")}</h3>
+		{:else}
+			<h3>{$_("files.meta.linked-transactions")}</h3>
+		{/if}
 		<List class="files-5978c5a2">
 			{#each linkedTransactions as transaction (transaction.id)}
 				<li>
@@ -94,11 +113,11 @@
 
 	{#if file}
 		<ActionButton class="delete" kind="bordered-destructive" on:click={askToDelete}>
-			<TrashIcon /> Delete</ActionButton
+			<TrashIcon /> {$_("files.delete.imperative")}</ActionButton
 		>
 	{:else}
 		<ActionButton class="delete" kind="bordered" on:click={askToDelete}>
-			<TrashIcon /> Remove this dead reference</ActionButton
+			<TrashIcon /> {$_("files.delete.remove-dead-ref")}</ActionButton
 		>
 	{/if}
 </div>
