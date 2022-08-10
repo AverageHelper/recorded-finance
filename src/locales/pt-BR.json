@@ -332,31 +332,31 @@
 	},
 	"app": {
 		"nav": {
-			"accounts": "Accounts",
-			"attachments": "Files",
-			"locations": "Locations",
-			"lock": "Lock",
-			"log-out": "Log out",
-			"generic-page": "Page",
-			"settings": "Settings",
+			"accounts": "Contas",
+			"attachments": "Arquivos",
+			"locations": "Localizações",
+			"lock": "Trancar",
+			"log-out": "Sair",
+			"generic-page": "Página",
+			"settings": "Definições",
 			"tags": "Tags"
 		}
 	},
 	"example": {
 		"account-id": "b4dcb93bc0c04251a930541e1a3c9a80",
 		"business-name": "ACME Co.",
-		"city-country": "Swahilli, New Guinnea",
-		"income-transaction-title": "Bank Money",
-		"transaction-note": "This is a thing"
+		"city-country": "Suaíli, Nova Guiné",
+		"income-transaction-title": "Dinheiro do banco",
+		"transaction-note": "Isso é uma coisa"
 	},
 	"input": {
-		"required": "(required)",
-		"search": "Search",
+		"required": "(necessário)",
+		"search": "Pesquisa",
 		"location": {
-			"self": "location",
-			"title": "location title",
-			"unknown": "Unknown",
-			"subtitle": "location subtitle"
+			"self": "localização",
+			"title": "título do localização",
+			"unknown": "Desconhecida",
+			"subtitle": "legenda do localização"
 		},
 		"locations": {
 			"recent": "Recent Locations",

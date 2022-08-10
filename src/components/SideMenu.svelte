@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { ComponentType } from "svelte";
-	import { _ } from "../i18n";
+	import { _, locale as currentLocale, locales, setLocale, type LocaleCode } from "../i18n";
 	import { appTabs, iconForTab, labelIdForTab, routeForTab } from "../model/ui/tabs";
 	import { Link } from "svelte-navigator";
 	import { lockPath, logoutPath, settingsPath } from "../router";
@@ -14,6 +14,7 @@
 	import Lock from "../icons/Lock.svelte";
 	import LogOut from "../icons/LogOut.svelte";
 	import MenuIcon from "../icons/Menu.svelte";
+	import NopLink from "./NopLink.svelte";
 	import Portal from "svelte-portal";
 
 	interface MenuItem {
@@ -31,6 +32,14 @@
 
 	let windowWidth = window.innerWidth;
 	$: isTabletWidth = windowWidth < 768;
+
+	let isSelectingLanguage = false;
+	$: $currentLocale && (isSelectingLanguage = false); // stop selecting when locale changes
+
+	async function onSelectLocale(code: LocaleCode) {
+		await setLocale(code);
+		isSelectingLanguage = false;
+	}
 
 	function isNotNull<T>(tbd: T | null): tbd is T {
 		return tbd !== null;
@@ -84,6 +93,7 @@
 
 	function close() {
 		isMenuOpen = false;
+		isSelectingLanguage = false;
 	}
 
 	function onResize() {
@@ -111,24 +121,49 @@
 	{/if}
 	{#if isMenuOpen}
 		<List class="side-menu-cb187fca">
-			{#each settingsItems as item (item.id)}
-				{#if !item.requiresLogin || isLoggedIn}
+			{#if isSelectingLanguage}
+				<!-- Language Selector -->
+				<li>
+					<NopLink on:click={() => (isSelectingLanguage = false)}>
+						<!-- TODO: Use a proper "back" icon here -->
+						<span class="icon">&lt;</span>
+					</NopLink>
+				</li>
+				{#each locales as locale (locale.code)}
 					<li>
-						<Link to={item.path} on:click={close}>
-							{#if item.icon}
-								<svelte:component this={item.icon} />
-							{/if}
-							<span>{$_(item.id)}</span>
-						</Link>
+						<NopLink on:click={() => onSelectLocale(locale.code)}>
+							<span class="icon">{locale.flag}</span>
+							<span>{locale.shortName}</span>
+						</NopLink>
 					</li>
-				{/if}
-			{/each}
-			<li>
-				<AppVersion class="app-version" />
-			</li>
-			<li>
-				<DiskUsage />
-			</li>
+				{/each}
+			{:else}
+				<!-- Navigation -->
+				{#each settingsItems as item (item.id)}
+					{#if !item.requiresLogin || isLoggedIn}
+						<li>
+							<Link to={item.path} on:click={close}>
+								{#if item.icon}
+									<svelte:component this={item.icon} />
+								{/if}
+								<span>{$_(item.id)}</span>
+							</Link>
+						</li>
+					{/if}
+				{/each}
+				<li>
+					<NopLink on:click={() => (isSelectingLanguage = true)}>
+						<span class="icon">{$currentLocale.flag}</span>
+						<span>{$currentLocale.shortName}</span>
+					</NopLink>
+				</li>
+				<li>
+					<AppVersion class="app-version" />
+				</li>
+				<li>
+					<DiskUsage />
+				</li>
+			{/if}
 		</List>
 	{/if}
 </Portal>
