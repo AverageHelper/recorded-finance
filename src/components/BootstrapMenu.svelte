@@ -1,12 +1,13 @@
 <script lang="ts">
-	import { _ } from "../i18n";
+	import { _, locale } from "../i18n";
 	import { aboutPath, homePath, installPath, loginPath, securityPath } from "../router";
 	import { isLoginEnabled } from "../store";
 	import { link, useLocation } from "svelte-navigator";
+	import LocaleSelector from "./LocaleSelector.svelte";
 
 	interface Page {
 		path: string;
-		titleKey: string;
+		titleKey: `home.nav.${"home" | "about" | "security" | "install" | "log-in"}`;
 	}
 
 	let isNavButtonOpen = false; // This is exactly what Bootstrap does lol
@@ -18,11 +19,11 @@
 	}
 
 	const pages: Array<Page> = [
-		{ path: homePath(), titleKey: "home.nav.home" },
-		{ path: aboutPath(), titleKey: "home.nav.about" },
-		{ path: securityPath(), titleKey: "home.nav.security" },
-		{ path: installPath(), titleKey: "home.nav.install" },
-		isLoginEnabled ? { path: loginPath(), titleKey: "home.nav.log-in" } : null,
+		{ path: homePath(), titleKey: "home.nav.home" } as const,
+		{ path: aboutPath(), titleKey: "home.nav.about" } as const,
+		{ path: securityPath(), titleKey: "home.nav.security" } as const,
+		{ path: installPath(), titleKey: "home.nav.install" } as const,
+		isLoginEnabled ? ({ path: loginPath(), titleKey: "home.nav.log-in" } as const) : null,
 	].filter(isNotNull);
 
 	const location = useLocation();
@@ -60,10 +61,12 @@
 	</button>
 
 	<div id="navbarNav" class="collapse navbar-collapse {isNavButtonOpen ? 'show' : ''}">
+		<span class="visually-hidden"
+			>{$_("common.current-language", { values: { code: $locale.code } })}</span
+		>
+		<LocaleSelector class="locale" />
 		<ul class="navbar-nav mr-auto">
-			<!-- <li class="nav-item">
-				<span class="visually-hidden">Current Language: {$locale}</span>
-				<p class="flag-icon">{$locale}</p>
+			<!-- <li class="nav-item locale">
 			</li> -->
 			{#each pages as page (page.path)}
 				<li class="nav-item {currentPath === page.path ? 'active' : ''}">
@@ -97,7 +100,7 @@
 	@import "bootstrap/scss/navbar";
 	@import "bootstrap/scss/helpers/_visually-hidden.scss";
 
-	$change: 575px;
+	$change: 575px; // Bootstrap's change position
 
 	.navbar-brand-9794720e {
 		display: block;
@@ -156,12 +159,9 @@
 			font-weight: bold;
 		}
 
-		.flag-icon {
-			margin: 0;
-			padding: 0;
-		}
-
 		.nav-item {
+			margin: auto 0;
+
 			&.active {
 				color: color($link);
 			}

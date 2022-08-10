@@ -1,27 +1,27 @@
 {
 	"meta": {
-		"code": "en-US",
-		"language": "United States English",
-		"flag": "🇺🇸"
+		"code": "pt-BR",
+		"language": "Portugues do Brasil",
+		"flag": "🇧🇷"
 	},
 	"common": {
 		"accountable": "Accountable",
-		"cancel": "Cancel",
-		"application": "Client",
+		"cancel": "Cancelar",
+		"application": "Aplicativo",
 		"current-language": "Current Language: {code}",
 		"details": "Details",
 		"current-aside": "(current)",
-		"delete-imperative": "Delete",
+		"delete-imperative": "Excluir",
 		"disk-usage": "Used {used} of {total}",
 		"download-action": "Download",
-		"learn-more": "Learn More",
-		"loading-in-progress": "Loading...",
-		"saving-in-progress": "Saving...",
-		"yes": "Yes",
-		"no": "No",
-		"not-yet": "Not yet",
-		"reset": "Reset",
-		"save-imperative": "Save",
+		"learn-more": "Saber Mais",
+		"loading-in-progress": "Carregando...",
+		"saving-in-progress": "Armazenando...",
+		"yes": "Sim",
+		"no": "Não",
+		"not-yet": "Ainda não",
+		"reset": "Recompor",
+		"save-imperative": "Armazenar",
 		"server": "Server"
 	},
 	"actions": {
@@ -147,8 +147,8 @@
 		"unknown-title": "Unknown",
 		"cannot-delete-none-found": "No account to delete",
 		"create": "Create Account",
-		"edit-titled": "Edit {title}",
-		"delete-titled": "Delete {title}"
+		"edit-titled": "Editar {title}",
+		"delete-titled": "Excluir {title}"
 	},
 	"files": {
 		"does-not-exist": "This file does not exist. Sorry.",
@@ -373,37 +373,37 @@
 		"view-source": "View this project's source code"
 	},
 	"home": {
-		"sign-up-now": "Get Started",
-		"coming-soon": "Coming Soon",
+		"sign-up-now": "Comece agora",
+		"coming-soon": "Em Breve",
 		"tagline": "Respectful digital financial records.",
 		"nav": {
-			"about": "About",
-			"home": "Home",
-			"install": "Install",
-			"log-in": "Login",
-			"security": "Security"
+			"about": "Sobre",
+			"home": "Principal",
+			"install": "Instalar",
+			"log-in": "Conecte-se",
+			"security": "Segurança"
 		},
 		"accountability": {
-			"heading": "Accountable To Yourself.",
+			"heading": "Responsável Por Si Mesmo.",
 			"p1": "Keep a close eye on your spending. Never lose a dime again! If you're the sort to obsess about where your money is going, {tool}.",
 			"tool": "this might be the tool for you"
 		},
 		"encrypted": {
-			"heading": "Your Ledger, Not Mine.",
+			"heading": "Seu Livro-razão De Dinheiro, Não O Meu.",
 			"p1": "Accountable, by design, cannot see your data, even on our own servers. We don't need or want to see what you do with your money. That's not my job. {legal}",
 			"legal": "(I'd rather you {not} do illegal stuff with this.)",
-			"not": "not"
+			"not": "não"
 		},
 		"open-source": {
-			"heading": "Keep Me Accountable.",
+			"heading": "Mantenha-me Responsável.",
 			"open": "All of Accountable's source code is open to read.",
 			"let-me-know": "Let me know if anything needs fixed."
 		}
 	},
 	"login": {
-		"account-id": "account ID",
+		"account-id": "ID da conta",
 		"checking-lock-state": "Checking lock state...",
-		"current-account-id": "current account ID",
+		"current-account-id": "ID da conta atual",
 		"current-passphrase": "current passphrase",
 		"logging-out": "Logging out...",
 		"new-passphrase": "new passphrase",

@@ -1,19 +1,21 @@
 import type { FormatXMLElementFn } from "intl-messageformat";
-import { _, addMessages, init, getLocaleFromNavigator } from "svelte-i18n";
-import { get } from "svelte/store";
+import { _, addMessages, getLocaleFromNavigator, init, locale as _locale } from "svelte-i18n";
+import { derived, get } from "svelte/store";
 
 // ** Language files **
 import enUS from "./locales/en-US.json";
+import ptBR from "./locales/pt-BR.json";
 
 const messages = {
 	"en-US": enUS,
+	"pt-BR": ptBR,
 } as const;
 
 export type LocaleCode = keyof typeof messages;
 
 /** Returns `true` if the given string is a supported locale code. */
-export function isSupportedLocaleCode(tbd: string | null): tbd is LocaleCode {
-	if (tbd === null) return false;
+export function isSupportedLocaleCode(tbd: string | null | undefined): tbd is LocaleCode {
+	if (tbd === null || tbd === undefined) return false;
 	return Object.keys(messages).includes(tbd);
 }
 
@@ -25,10 +27,18 @@ export interface LocaleDescriptor {
 	 */
 	readonly code: LocaleCode;
 
-	/** An emoji flag representing the locale. @example `"🇺🇸"` */
+	/**
+	 * An emoji flag representing the locale.
+	 *
+	 * @example "🇺🇸"
+	 */
 	readonly flag: string;
 
-	/** A string describing the locale to visually-impaired readers. @example `"English (United States)"` */
+	/**
+	 * A string describing the locale to visually-impaired readers.
+	 *
+	 * @example "United States English"
+	 */
 	readonly language: string;
 }
 
@@ -67,6 +77,20 @@ export { _ } from "svelte-i18n";
 // so that the formatter gets properly initialized in unit tests.
 export { getNumberFormatter } from "svelte-i18n";
 
+/** Metadata about the current locale. */
+export const locale = derived(_locale, $locale => {
+	if (isSupportedLocaleCode($locale)) {
+		return messages[$locale].meta;
+	}
+	return messages["en-US"].meta;
+});
+
+/** Set the current locale. */
+export async function setLocale(code: LocaleCode): Promise<void> {
+	await _locale.set(code);
+	console.debug(`User manually selected locale ${code}`);
+}
+
 /** The list of supported locales. */
 export const locales: ReadonlyArray<LocaleDescriptor> = Object.entries(messages) //
 	.map(([code, strings]) => ({
@@ -80,13 +104,6 @@ export const locales: ReadonlyArray<LocaleDescriptor> = Object.entries(messages)
 // **
 
 const fallbackLocale: LocaleCode = "en-US";
-
-// TODO: Read ?lang query to get preferred locale
-// const LOCALE_PARAM = "lang";
-// const initialLocale =
-// 	typeof location !== "undefined" // `location` is undefined in Jest
-// 		? new URLSearchParams(location.search).get(LOCALE_PARAM)
-// 		: fallbackLocale;
 
 const initialLocale = getLocaleFromNavigator();
 console.debug(`Navigator locale: ${initialLocale ?? "null"}`);
