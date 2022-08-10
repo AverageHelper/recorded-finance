@@ -64,7 +64,6 @@
 
 	let root: HTMLElement | undefined;
 	let leftovers: HTMLSpanElement | undefined;
-	let oldLeftovers: HTMLSpanElement | undefined; // useful for when language changes
 
 	$: rawText = $_(keypath);
 	$: if (debug) console.debug(`text for keypath ${keypath}: "${rawText}"`);
@@ -133,10 +132,6 @@
 	async function processSlots() {
 		await tick();
 		if (!leftovers || !root) return;
-		if (oldLeftovers) {
-			leftovers = oldLeftovers;
-		}
-		oldLeftovers = leftovers.cloneNode(false) as HTMLSpanElement;
 
 		const slots = Array.from(leftovers.children);
 		const targets = Array.from(root.children).filter(hasDataset);
