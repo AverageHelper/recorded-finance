@@ -1,14 +1,15 @@
 {
 	"meta": {
 		"code": "pt-BR",
-		"language": "Portugues do Brasil",
+		"name": "Portugues do Brasil",
+		"shortName": "Portugues (BR)",
 		"flag": "🇧🇷"
 	},
 	"common": {
 		"platform": "Accountable",
 		"cancel": "Cancelar",
 		"application": "Aplicativo",
-		"current-language": "Idioma Atual: {code}",
+		"current-language": "Idioma Atual: {name}",
 		"details": "Detalhes",
 		"current-aside": "(atual)",
 		"delete-imperative": "Excluir",

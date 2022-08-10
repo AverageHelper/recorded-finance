@@ -35,11 +35,18 @@ export interface LocaleDescriptor {
 	readonly flag: string;
 
 	/**
-	 * A string describing the locale to visually-impaired readers.
+	 * A string describing the locale, especially for visually-impaired readers.
 	 *
 	 * @example "United States English"
 	 */
-	readonly language: string;
+	readonly name: string;
+
+	/**
+	 * A brief string describing the locale.
+	 *
+	 * @example "English (USA)"
+	 */
+	readonly shortName: string;
 }
 
 // Copied from `svelte-i18n`
@@ -95,7 +102,8 @@ export async function setLocale(code: LocaleCode): Promise<void> {
 export const locales: ReadonlyArray<LocaleDescriptor> = Object.entries(messages) //
 	.map(([code, strings]) => ({
 		code: code as LocaleCode,
-		language: strings.meta.language,
+		name: strings.meta.name,
+		shortName: strings.meta.shortName,
 		flag: strings.meta.flag,
 	}));
 

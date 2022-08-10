@@ -11,10 +11,10 @@
 	}
 </script>
 
-<label aria-label={$_("common.current-language", { values: { code: $current.code } })}>
+<label aria-label={$_("common.current-language", { values: { name: $current.name } })}>
 	<select value={$current.code} on:change={onSelectChange}>
 		{#each locales as locale (locale.code)}
-			<option value={locale.code}>{locale.flag} {locale.language}</option>
+			<option value={locale.code}>{locale.flag} {locale.shortName}</option>
 		{/each}
 	</select>
 </label>
@@ -22,31 +22,21 @@
 <style lang="scss">
 	@use "styles/colors" as *;
 
-	label {
-		height: 100%;
-		width: fit-content;
-		display: flex;
-		flex-flow: row nowrap;
-		align-items: center;
-		padding: 0 4pt;
+	select {
+		all: unset; // remove browser's default styles in favor of a plainer look
 		border-radius: 4pt;
 		border: 1pt solid color($clear);
 		cursor: pointer;
+		padding: 0 4pt;
+		font-size: x-large;
+		max-width: 1.35em; // approximate width of a flag emoji
+		transition: opacity 0.3s;
+		transition-property: opacity, transform;
 
 		@media (hover: hover) {
 			&:hover {
 				border-color: color($separator);
 			}
 		}
-	}
-
-	select {
-		all: unset;
-		height: 100%;
-		color: color($secondary-label);
-		max-width: 1.7em;
-		width: fit-content;
-		transition: opacity 0.3s;
-		transition-property: opacity, transform;
 	}
 </style>

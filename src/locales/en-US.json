@@ -1,14 +1,15 @@
 {
 	"meta": {
 		"code": "en-US",
-		"language": "United States English",
+		"name": "United States English",
+		"shortName": "English (USA)",
 		"flag": "🇺🇸"
 	},
 	"common": {
 		"platform": "Accountable",
 		"cancel": "Cancel",
 		"application": "Client",
-		"current-language": "Current Language: {code}",
+		"current-language": "Current Language: {name}",
 		"details": "Details",
 		"current-aside": "(current)",
 		"delete-imperative": "Delete",

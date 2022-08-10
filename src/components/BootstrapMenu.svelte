@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { _ } from "../i18n";
+	import { _, locale } from "../i18n";
 	import { aboutPath, homePath, installPath, loginPath, securityPath } from "../router";
 	import { isLoginEnabled } from "../store";
 	import { link, useLocation } from "svelte-navigator";
@@ -36,9 +36,11 @@
 	function close() {
 		isNavButtonOpen = false;
 	}
+
+	$: $locale && close(); // Close the nav when locale changes
 </script>
 
-<nav class="navbar-147f68de navbar navbar-expand-sm navbar-dark">
+<nav class="navbar-147f68de navbar navbar-expand-md navbar-dark">
 	<a
 		href={homeRoute}
 		class="navbar-brand-9794720e"
@@ -61,12 +63,7 @@
 	</button>
 
 	<div id="navbarNav" class="collapse navbar-collapse {isNavButtonOpen ? 'show' : ''}">
-		<ul class="navbar-nav mr-auto">
-			<li class="nav-item">
-				<div class="locale">
-					<LanguageSelector />
-				</div>
-			</li>
+		<ul class="navbar-nav">
 			{#each pages as page (page.path)}
 				<li class="nav-item {currentPath === page.path ? 'active' : ''}">
 					<a
@@ -81,6 +78,11 @@
 					</a>
 				</li>
 			{/each}
+			<li class="nav-item">
+				<div class="locale">
+					<LanguageSelector />
+				</div>
+			</li>
 		</ul>
 	</div>
 </nav>
@@ -99,7 +101,8 @@
 	@import "bootstrap/scss/navbar";
 	@import "bootstrap/scss/helpers/_visually-hidden.scss";
 
-	$change: 575px; // Bootstrap's change position
+	// $change: 575px; // Bootstrap's 'sm' change position
+	$change: 767px; // Bootstrap's 'md' change position
 
 	.navbar-brand-9794720e {
 		display: block;
@@ -144,11 +147,10 @@
 
 				&-nav {
 					z-index: 100;
-					margin-right: 0;
-					margin-top: 22pt;
+					margin-top: 20pt;
 					padding: 0 8pt;
 					text-align: right;
-					width: 100%;
+					min-width: 100vw;
 					background-color: color($navbar-background);
 				}
 			}
