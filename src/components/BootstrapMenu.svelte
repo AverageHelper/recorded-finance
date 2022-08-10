@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { _, locale } from "../i18n";
+	import { _ } from "../i18n";
 	import { aboutPath, homePath, installPath, loginPath, securityPath } from "../router";
 	import { isLoginEnabled } from "../store";
 	import { link, useLocation } from "svelte-navigator";
-	import LocaleSelector from "./LocaleSelector.svelte";
+	import LanguageSelector from "./LanguageSelector.svelte";
 
 	interface Page {
 		path: string;
@@ -61,13 +61,8 @@
 	</button>
 
 	<div id="navbarNav" class="collapse navbar-collapse {isNavButtonOpen ? 'show' : ''}">
-		<span class="visually-hidden"
-			>{$_("common.current-language", { values: { code: $locale.code } })}</span
-		>
-		<LocaleSelector class="locale" />
+		<LanguageSelector class="locale" />
 		<ul class="navbar-nav mr-auto">
-			<!-- <li class="nav-item locale">
-			</li> -->
 			{#each pages as page (page.path)}
 				<li class="nav-item {currentPath === page.path ? 'active' : ''}">
 					<a

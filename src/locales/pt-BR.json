@@ -434,20 +434,20 @@
 			}
 		},
 		"new-account": {
-			"heading": "Your New Account",
+			"heading": "Sua Nova Conta",
 			"p1": "This is your new account ID. You will need it and your passphrase to log in later.",
-			"remember-this": "REMEMBER THIS: {accountId}",
-			"write-it-down": "Write it down. (Try a {manager}.)",
-			"manager": "password manager",
+			"remember-this": "LEMBRE-SE DESTA PALAVRA: {accountId}",
+			"write-it-down": "Anotá-la. (tente um {manager}.)",
+			"manager": "gerenciador de senhas",
 			"no-recovery": "If you lose it, we won't be able to get it back for you.",
 			"is-account-id-safe": "Do you have your account ID ({accountId}) written down somewhere safe?",
-			"acknowledge": "Got it"
+			"acknowledge": "Entendi"
 		}
 	},
 	"locked": {
 		"heading": "You're logged in, but your ledger is locked. Enter your passphrase to unlock the ledger.",
-		"locking": "Locking...",
-		"unlock": "Unlock"
+		"locking": "Bloqueio...",
+		"unlock": "Desbloquear"
 	},
 	"404": {
 		"heading": "404",
@@ -499,12 +499,12 @@
 	},
 	"security-faq": {
 		"heading": "Perguntas frequentes sobre segurança",
-		"summary": "{tldr} Your data is unreadable by anyone but you (as far as I know.)",
+		"summary": "{tldr} Seus dados são ilegíveis por qualquer pessoa, exceto você (até onde sei.)",
 		"tldr": "Em resumo:",
 		"encryption-kind": {
-			"question": "What sort of encryption does Accountable do?",
-			"answer": "We use only the best {mge} everyone else uses.",
-			"mge": "\"military-grade encryption\""
+			"question": "Que tipo de criptografia Accountable faz?",
+			"answer": "Usamos apenas o melhor {mge} como todos os outros.",
+			"mge": "\"criptografia de nível militar\""
 		},
 		"where-keys": {
 			"question": "Who holds the encryption keys?",
