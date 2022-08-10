@@ -5,9 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- UI to manually select a preferred language.
+- Some Brazilian Portuguese translations.
+- New info in [CONTRIBUTING.md](CONTRIBUTING.md) about how to contribute translations.
+
 ### Changed
-- More i18n. I think I found all of the user-facing strings reasonably enough for now. Testing and experience will tell for sure.
-- Added info in [CONTRIBUTING.md](CONTRIBUTING.md) about how to contribute translations.
+- More user-facing strings refactored into i18n keys. I think I found all of the user-facing strings reasonably enough now, though testing and experience will tell for sure if I missed anything.
 
 ## [0.10.1] - 2022-08-05
 ### Fixed
