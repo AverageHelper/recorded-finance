@@ -11,10 +11,7 @@
 	}
 </script>
 
-<label
-	class={$$props["class"]}
-	aria-label={$_("common.current-language", { values: { code: $current.code } })}
->
+<label aria-label={$_("common.current-language", { values: { code: $current.code } })}>
 	<select value={$current.code} on:change={onSelectChange}>
 		{#each locales as locale (locale.code)}
 			<option value={locale.code}>{locale.flag} {locale.language}</option>
@@ -27,10 +24,10 @@
 
 	label {
 		height: 100%;
+		width: fit-content;
 		display: flex;
 		flex-flow: row nowrap;
 		align-items: center;
-		margin: auto 2pt;
 		padding: 0 4pt;
 		border-radius: 4pt;
 		border: 1pt solid color($clear);

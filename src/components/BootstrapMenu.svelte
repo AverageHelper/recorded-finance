@@ -61,8 +61,12 @@
 	</button>
 
 	<div id="navbarNav" class="collapse navbar-collapse {isNavButtonOpen ? 'show' : ''}">
-		<LanguageSelector class="locale" />
 		<ul class="navbar-nav mr-auto">
+			<li class="nav-item">
+				<div class="locale">
+					<LanguageSelector />
+				</div>
+			</li>
 			{#each pages as page (page.path)}
 				<li class="nav-item {currentPath === page.path ? 'active' : ''}">
 					<a
@@ -156,6 +160,11 @@
 
 		.nav-item {
 			margin: auto 0;
+
+			> .locale {
+				width: fit-content;
+				margin-left: auto;
+			}
 
 			&.active {
 				color: color($link);
