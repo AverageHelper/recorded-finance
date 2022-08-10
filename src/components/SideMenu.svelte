@@ -123,7 +123,7 @@
 		<List class="side-menu-cb187fca">
 			{#if isSelectingLanguage}
 				<!-- Language Selector -->
-				<li>
+				<li aria-label={$_("common.select-language")}>
 					<NopLink on:click={() => (isSelectingLanguage = false)}>
 						<!-- TODO: Use a proper "back" icon here -->
 						<span class="icon">&lt;</span>
@@ -151,7 +151,7 @@
 						</li>
 					{/if}
 				{/each}
-				<li>
+				<li aria-label={$_("common.current-language", { values: { name: $currentLocale.name } })}>
 					<NopLink on:click={() => (isSelectingLanguage = true)}>
 						<span class="icon">{$currentLocale.flag}</span>
 						<span>{$currentLocale.shortName}</span>
