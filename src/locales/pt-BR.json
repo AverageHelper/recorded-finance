@@ -22,20 +22,20 @@
 		"not-yet": "Ainda não",
 		"reset": "Recompor",
 		"save-imperative": "Armazenar",
-		"server": "Server"
+		"server": "Servidor"
 	},
 	"actions": {
-		"add-new-noun": "Add a new {noun}",
+		"add-new-noun": "Adicionar um novo {noun}",
 		"location": {
-			"clear": "Clear location",
-			"get-current": "Get current location"
+			"clear": "Apagar local",
+			"get-current": "Obter localização atual"
 		}
 	},
 	"currency": {
 		"positive-or-negative": "+/-"
 	},
 	"date-time": {
-		"now": "Now"
+		"now": "Agora"
 	},
 	"error": {
 		"auth": {
@@ -138,15 +138,15 @@
 		"count-all-transactions": "There are {n} transactions in the cache."
 	},
 	"accounts": {
-		"noun": "Account",
+		"noun": "Conta",
 		"count": {
-			"account": "1 account",
-			"accounts": "{n} accounts"
+			"account": "1 conta",
+			"accounts": "{n} contas"
 		},
-		"numbered": "Account {number}",
-		"unknown-title": "Unknown",
+		"numbered": "Conta {number}",
+		"unknown-title": "Desconhecida",
 		"cannot-delete-none-found": "No account to delete",
-		"create": "Create Account",
+		"create": "Criar Conta",
 		"edit-titled": "Editar {title}",
 		"delete-titled": "Excluir {title}"
 	},
@@ -188,18 +188,18 @@
 	},
 	"locations": {
 		"count": {
-			"location": "1 location",
-			"locations": "{n} locations"
+			"location": "1 localização",
+			"locations": "{n} localizações"
 		},
 		"list": {
-			"heading": "Locations",
+			"heading": "Localizações",
 			"how-to-create": "To add a location, set a location on a transaction."
 		},
 		"meta": {
 			"id": "ID: {id}",
-			"title": "Title: {title}",
-			"subtitle": "Subtitle: {subtitle}",
-			"last-used-time": "Last Used: {lastUsed}",
+			"title": "Título: {title}",
+			"subtitle": "Legenda: {subtitle}",
+			"last-used-time": "Usado Anteriormente: {lastUsed}",
 			"latitude-short": "Lat: {lat}",
 			"longitude-short": "Lng: {lng}"
 		}
@@ -208,7 +208,7 @@
 		"does-not-match-pattern": "{month} does not match a month identifier pattern"
 	},
 	"settings": {
-		"heading": "Settings",
+		"heading": "Definições",
 		"update-successful": "Your preferences have been updated!",
 		"auth": {
 			"account-id-heading": "Change Account ID",
@@ -220,12 +220,12 @@
 			"update-passphrase": "Change passphrase"
 		},
 		"delete-all": {
-			"heading": "Delete Everything",
-			"description": "You have the option to delete all of your data on {platform}.",
-			"in-progress": "Deleting...",
-			"start-imperative": "Delete Everything",
-			"confirm": "Are you sure you want to delete {everything}? This cannot be undone.",
-			"really-everything": "all of your data"
+			"heading": "Excluir Tudo",
+			"description": "Você tem a opção de excluir todos os seus dados no {platform}.",
+			"in-progress": "Deletando...",
+			"start-imperative": "Excluir Tudo",
+			"confirm": "Tem certeza de que deseja excluir {everything}? Essa ação não pode ser desfeita.",
+			"really-everything": "todos os seus dados"
 		},
 		"export": {
 			"actions": {
@@ -266,7 +266,7 @@
 				"confirm": "Confirm preference"
 			},
 			"preference": {
-				"none": "None",
+				"none": "Nenhum",
 				"none-description": "No location services.",
 				"imprecise": "Imprecise",
 				"imprecise-description": "Get, on-demand, a locale based on your IP address.",
@@ -277,10 +277,10 @@
 	},
 	"tags": {
 		"count": {
-			"tag": "1 tag",
+			"tag": "1 marcação",
 			"tags": "{n} tags"
 		},
-		"create": "Add tag",
+		"create": "Adicionar etiqueta",
 		"choose-existing": "Choose a Tag",
 		"delete": {
 			"action-cannot-be-undone": "This cannot be undone.",
@@ -291,15 +291,15 @@
 			"heading": "Tags",
 			"how-to-create": "To add a tag, go to one of your transactions."
 		},
-		"self-with-unknown-title": "this tag"
+		"self-with-unknown-title": "esta etiqueta"
 	},
 	"transactions": {
-		"self-with-unknown-title": "this transaction",
+		"self-with-unknown-title": "esta transação",
 		"count": {
-			"transaction": "1 transaction",
-			"transactions": "{n} transactions"
+			"transaction": "1 transação",
+			"transactions": "{n} transações"
 		},
-		"n-of-n-count": "{c} of {t} transactions",
+		"n-of-n-count": "{c} de {t} transações",
 		"delete": {
 			"detach-first": "You must delete attachments before you may delete this transaction.",
 			"confirm": "Are you sure you want to delete {title}? This cannot be undone."
@@ -363,14 +363,14 @@
 		}
 	},
 	"footer": {
-		"license": "This project is licensed under the {name}.",
+		"license": "Este projeto está licenciado sob a licença {name}.",
 		"license-name": "GNU General Public License v3.0",
-		"view-license": "View the full license",
-		"pr": "Feel free to {issue} or submit a pull request on this project's {github}.",
-		"issue": "open an issue",
-		"github": "GitHub page",
-		"view-github": "Check out my GitHub",
-		"view-source": "View this project's source code"
+		"view-license": "Veja a licença completa",
+		"pr": "Fique a vontade para {issue} ou envie um pull request no {github} deste projeto.",
+		"issue": "abra um problema",
+		"github": "página do GitHub",
+		"view-github": "Confira meu GitHub",
+		"view-source": "Ver o código fonte deste projeto"
 	},
 	"home": {
 		"sign-up-now": "Comece agora",
@@ -402,35 +402,35 @@
 	},
 	"login": {
 		"account-id": "ID da conta",
-		"checking-lock-state": "Checking lock state...",
+		"checking-lock-state": "Verificando o estado de bloqueio...",
 		"current-account-id": "ID da conta atual",
-		"current-passphrase": "current passphrase",
-		"logging-out": "Logging out...",
-		"new-passphrase": "new passphrase",
-		"new-passphrase-repeat": "new passphrase again",
-		"passphrase": "passphrase",
-		"repeat-passphrase": "passphrase again",
-		"new-passphrase-imperative": "Create a strong passphrase",
-		"value-will-be-generated": "to be generated...",
-		"log-in": "Log in",
-		"create-account": "Create an account",
+		"current-passphrase": "senha atual",
+		"logging-out": "Saindo...",
+		"new-passphrase": "nova senha",
+		"new-passphrase-repeat": "nova senha novamente",
+		"passphrase": "senha",
+		"repeat-passphrase": "senha novamente",
+		"new-passphrase-imperative": "Crie uma senha forte",
+		"value-will-be-generated": "será gerado...",
+		"log-in": "Conecte-se",
+		"create-account": "Crie a sua conta aqui",
 		"cookie-disclaimer": "Logging in will set one cookie, which contains your login token. This cookie lets your browser securely remember that you were logged in without Accountable needing to keep your login token someplace unsafe.",
 		"process": {
-			"authenticating": "Authenticating...",
-			"reauthenticating": "Re-authenticating...",
-			"generating-keys": "Generating keys...",
-			"fetching-keys": "Fetching keys...",
-			"deriving-pkey": "Deriving key from passphrase..."
+			"authenticating": "Autenticação...",
+			"reauthenticating": "Autenticando novamente...",
+			"generating-keys": "Gerando chaves...",
+			"fetching-keys": "Buscando chaves...",
+			"deriving-pkey": "Derivando a chave da senha..."
 		},
 		"new-account-prompt": {
-			"open-soon": "Don't have an account? We'll be open for new accounts soon™",
+			"open-soon": "Você não tem uma conta? Estaremos abertos em breve para novas contas",
 			"create": {
-				"question": "Need to create an account?",
-				"action": "Create one!"
+				"question": "Você precisa criar uma conta?",
+				"action": "Crie sua conta aqui!"
 			},
 			"already-have": {
-				"question": "Already have an account?",
-				"action": "Log in!"
+				"question": "Você já tem uma conta??",
+				"action": "Conecte-se!"
 			}
 		},
 		"new-account": {
@@ -451,7 +451,7 @@
 	},
 	"404": {
 		"heading": "404",
-		"subheading": "Nothing to see here"
+		"subheading": "Não há nada para ver aqui"
 	},
 	"install": {
 		"service": {
@@ -468,13 +468,13 @@
 	},
 	"about": {
 		"goals": {
-			"heading": "Goals",
+			"heading": "Metas",
 			"p1": "The aim of Accountable is to be a cross-platform and portable spot to keep your transaction records and receipts. I plan to have proper mobile clients eventually. The {selfhost} option will always be available, and I intend for this project to always be {opensource}. You will always have access to the financial records that you give to Accountable, and Accountable cannot share those records with anyone else.",
 			"selfhost": "self-host",
 			"opensource": "open-source"
 		},
 		"alternatives": {
-			"heading": "Alternatives",
+			"heading": "Alternativas",
 			"p1": "There are a few {alts} out there, but none I've found that I like. Lots of proprietary ones, too. Feel free to use them if you'd like, I'm not sponsored by any of them. Their respective names are trademarks of their owners:",
 			"alts": "open-source desktop balance keepers",
 
@@ -498,9 +498,9 @@
 		}
 	},
 	"security-faq": {
-		"heading": "Security FAQs",
+		"heading": "Perguntas frequentes sobre segurança",
 		"summary": "{tldr} Your data is unreadable by anyone but you (as far as I know.)",
-		"tldr": "TL;DR",
+		"tldr": "Em resumo:",
 		"encryption-kind": {
 			"question": "What sort of encryption does Accountable do?",
 			"answer": "We use only the best {mge} everyone else uses.",

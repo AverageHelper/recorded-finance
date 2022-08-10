@@ -224,7 +224,7 @@
 			"description": "You have the option to delete all of your data on {platform}.",
 			"in-progress": "Deleting...",
 			"start-imperative": "Delete Everything",
-			"confirm": "Are you sure you want to delete {everything}? This cannot be undone.",
+			"confirm": "Are you sure you want to delete {everything}? This action cannot be undone.",
 			"really-everything": "all of your data"
 		},
 		"export": {
