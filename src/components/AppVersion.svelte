@@ -15,7 +15,7 @@
 </script>
 
 <OutLink to={repositoryUrl} class={$$props["class"]}
-	>{$_("common.accountable")}
+	>{$_("common.platform")}
 	{$_("common.application")} v{clientVersion},
 	{$_("common.server")}
 	{#if isLoading}

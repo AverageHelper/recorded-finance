@@ -50,7 +50,7 @@
 	<p>
 		<I18N keypath="settings.delete-all.description">
 			<!-- platform -->
-			<span>{$_("common.accountable")}</span>
+			<span>{$_("common.platform")}</span>
 		</I18N>
 	</p>
 

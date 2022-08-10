@@ -5,7 +5,7 @@
 		"flag": "🇺🇸"
 	},
 	"common": {
-		"accountable": "Accountable",
+		"platform": "Accountable",
 		"cancel": "Cancel",
 		"application": "Client",
 		"current-language": "Current Language: {code}",

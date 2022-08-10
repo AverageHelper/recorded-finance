@@ -43,8 +43,8 @@
 		href={homeRoute}
 		class="navbar-brand-9794720e"
 		role="heading"
-		aria-label={$_("common.accountable")}
-		title={$_("common.accountable")}
+		aria-label={$_("common.platform")}
+		title={$_("common.platform")}
 		use:link>A&cent;countable</a
 	>
 	<button
