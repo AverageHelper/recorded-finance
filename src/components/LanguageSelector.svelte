@@ -38,5 +38,9 @@
 				border-color: color($separator);
 			}
 		}
+
+		&:focus-visible {
+			outline: solid 2pt color($link);
+		}
 	}
 </style>

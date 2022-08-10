@@ -111,11 +111,18 @@
 		z-index: 50;
 		margin-left: 16pt;
 		text-decoration: none;
+		border-radius: 4pt;
 		color: color($label);
 
-		&:hover {
-			color: color($link);
-			text-decoration: underline;
+		@media (hover: hover) {
+			&:hover {
+				color: color($link);
+				text-decoration: underline;
+			}
+		}
+
+		&:focus-visible {
+			outline: 2pt solid color($link);
 		}
 	}
 
@@ -125,6 +132,8 @@
 		width: 100%;
 
 		#navbarNav {
+			z-index: 100;
+
 			@include mq($until: $change) {
 				position: absolute;
 				top: 1.8em;
@@ -170,6 +179,14 @@
 
 			&.active {
 				color: color($link);
+			}
+
+			.nav-link {
+				border-radius: 4pt;
+
+				&:focus-visible {
+					outline: 2pt solid color($link);
+				}
 			}
 
 			@media (hover: hover) {
