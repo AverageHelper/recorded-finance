@@ -64,64 +64,67 @@
 
 	let root: HTMLElement | undefined;
 	let leftovers: HTMLSpanElement | undefined;
+	let oldLeftovers: HTMLSpanElement | undefined; // useful for when language changes
 
 	$: rawText = $_(keypath);
 	$: if (debug) console.debug(`text for keypath ${keypath}: "${rawText}"`);
 
 	let items: Array<Item> = [];
 
-	onMount(async () => {
-		{
-			// TODO: Unit test this
-			// Parse out text and variable names
-			const newItems: Array<Item> = [];
+	async function compute() {
+		// TODO: Unit test this
+		// Parse out text and variable names
+		const newItems: Array<Item> = [];
 
-			let mode: "discovery" | "text" | "slot" = "discovery";
-			let text = "";
-			for (const char of rawText) {
-				if (char === "{" && mode !== "slot") {
-					if (mode === "text") {
-						// Finish text node
-						newItems.push({ isVar: false, text });
-					}
-					// Start variable name
-					text = "";
-					mode = "slot";
-				} else if (char === "}" && mode === "slot") {
-					// We've hit the end of a variable name
-					if (text === "") {
-						// but the brackets were empty. Treat that as a text node
-						newItems.push({ isVar: false, text: "{}" });
-					} else {
-						newItems.push({ isVar: true, name: text });
-					}
-					text = "";
-					mode = "discovery";
-				} else if (mode === "slot") {
-					// Continue variable name
-					text += char;
-				} else {
-					// Continue text
-					text += char;
-					mode = "text";
-				}
-			}
-			if (text !== "") {
+		let mode: "discovery" | "text" | "slot" = "discovery";
+		let text = "";
+		for (const char of rawText) {
+			if (char === "{" && mode !== "slot") {
 				if (mode === "text") {
-					// Finished, but there's some string left
-					newItems.push({ isVar: false, text });
-				} else if (mode === "slot") {
-					// Finished, but we ended with an incomplete variable. Push it as text
-					text = `{${text}`; // make sure to include the variable starter
+					// Finish text node
 					newItems.push({ isVar: false, text });
 				}
+				// Start variable name
+				text = "";
+				mode = "slot";
+			} else if (char === "}" && mode === "slot") {
+				// We've hit the end of a variable name
+				if (text === "") {
+					// but the brackets were empty. Treat that as a text node
+					newItems.push({ isVar: false, text: "{}" });
+				} else {
+					newItems.push({ isVar: true, name: text });
+				}
+				text = "";
+				mode = "discovery";
+			} else if (mode === "slot") {
+				// Continue variable name
+				text += char;
+			} else {
+				// Continue text
+				text += char;
+				mode = "text";
 			}
-
-			items = newItems;
-			if (debug) console.debug("Items:", items);
-			await processSlots();
 		}
-	});
+		if (text !== "") {
+			if (mode === "text") {
+				// Finished, but there's some string left
+				newItems.push({ isVar: false, text });
+			} else if (mode === "slot") {
+				// Finished, but we ended with an incomplete variable. Push it as text
+				text = `{${text}`; // make sure to include the variable starter
+				newItems.push({ isVar: false, text });
+			}
+		}
+
+		items = newItems;
+		if (debug) console.debug("Items:", items);
+		await processSlots();
+	}
+
+	onMount(compute); // run once on load
+
+	$: rawText && void compute(); // run every time rawText changes
 
 	function hasDataset(tbd: Element): tbd is HTMLElement {
 		return (tbd as HTMLElement).dataset["i18nKey"] !== undefined;
@@ -130,6 +133,10 @@
 	async function processSlots() {
 		await tick();
 		if (!leftovers || !root) return;
+		if (oldLeftovers) {
+			leftovers = oldLeftovers;
+		}
+		oldLeftovers = leftovers.cloneNode(false) as HTMLSpanElement;
 
 		const slots = Array.from(leftovers.children);
 		const targets = Array.from(root.children).filter(hasDataset);
