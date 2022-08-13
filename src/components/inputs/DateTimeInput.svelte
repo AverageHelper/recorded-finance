@@ -63,7 +63,6 @@
 			padding: 0.4em 0;
 			margin: 0.6em 0;
 			margin-left: 1em;
-			width: -moz-fit-content;
 			width: fit-content;
 		}
 
