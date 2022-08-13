@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - More user-facing strings refactored into i18n keys. I think I found all of the user-facing strings reasonably enough now, though testing and experience will tell for sure if I missed anything.
+- The hamburger menu closes when the user selects a language.
 
 ## [0.10.1] - 2022-08-05
 ### Fixed

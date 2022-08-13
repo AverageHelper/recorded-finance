@@ -4,7 +4,7 @@
 	import { appTabs, iconForTab, labelIdForTab, routeForTab } from "../model/ui/tabs";
 	import { Link } from "svelte-navigator";
 	import { lockPath, logoutPath, settingsPath } from "../router";
-	import { onDestroy, onMount } from "svelte";
+	import { onDestroy, onMount, tick } from "svelte";
 	import { pKey, uid } from "../store";
 	import ActionButton from "./buttons/ActionButton.svelte";
 	import AppVersion from "./AppVersion.svelte";
@@ -37,8 +37,10 @@
 	$: $currentLocale && (isSelectingLanguage = false); // stop selecting when locale changes
 
 	async function onSelectLocale(code: LocaleCode) {
+		await tick();
 		await setLocale(code);
 		isSelectingLanguage = false;
+		isMenuOpen = false;
 	}
 
 	function isNotNull<T>(tbd: T | null): tbd is T {
@@ -138,6 +140,13 @@
 					</li>
 				{/each}
 			{:else}
+				<!-- Language -->
+				<li aria-label={$_("common.current-language", { values: { name: $currentLocale.name } })}>
+					<NopLink on:click={() => (isSelectingLanguage = true)}>
+						<span class="icon">{$currentLocale.flag}</span>
+						<span>{$currentLocale.shortName}</span>
+					</NopLink>
+				</li>
 				<!-- Navigation -->
 				{#each settingsItems as item (item.id)}
 					{#if !item.requiresLogin || isLoggedIn}
@@ -151,12 +160,6 @@
 						</li>
 					{/if}
 				{/each}
-				<li aria-label={$_("common.current-language", { values: { name: $currentLocale.name } })}>
-					<NopLink on:click={() => (isSelectingLanguage = true)}>
-						<span class="icon">{$currentLocale.flag}</span>
-						<span>{$currentLocale.shortName}</span>
-					</NopLink>
-				</li>
 				<li>
 					<AppVersion class="app-version" />
 				</li>
