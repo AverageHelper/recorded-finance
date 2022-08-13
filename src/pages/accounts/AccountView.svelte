@@ -1,9 +1,9 @@
 <script lang="ts">
 	import type { Transaction } from "../../model/Transaction";
-	import { _ } from "../../i18n";
-	import { intlFormat } from "../../transformers";
+	import { _, locale } from "../../i18n";
 	import { isNegative as isDineroNegative } from "dinero.js";
 	import { reverseChronologically } from "../../model/utility/sort";
+	import { toCurrency } from "../../transformers";
 	import { useLocation, useNavigate } from "svelte-navigator";
 	import { zeroDinero } from "../../helpers/dineroHelpers";
 	import AccountEdit from "./AccountEdit.svelte";
@@ -104,7 +104,9 @@
 		{#if remainingBalance === null}
 			<p class="account-balance">--</p>
 		{:else}
-			<p class="account-balance {isNegative ? 'negative' : ''}">{intlFormat(remainingBalance)}</p>
+			<p class="account-balance {isNegative ? 'negative' : ''}"
+				>{toCurrency($locale.code, remainingBalance)}</p
+			>
 		{/if}
 	</div>
 

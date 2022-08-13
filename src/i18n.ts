@@ -1,6 +1,8 @@
-import type { FormatXMLElementFn } from "intl-messageformat";
+import type { Readable } from "svelte/store";
 import { _, addMessages, getLocaleFromNavigator, init, locale as _locale } from "svelte-i18n";
 import { derived, get } from "svelte/store";
+import { isRecord } from "./transport/schemas";
+import isString from "lodash/isString";
 
 // ** Language files **
 import enUS from "./locales/en-US.json";
@@ -14,9 +16,8 @@ const messages = {
 export type LocaleCode = keyof typeof messages;
 
 /** Returns `true` if the given string is a supported locale code. */
-export function isSupportedLocaleCode(tbd: string | null | undefined): tbd is LocaleCode {
-	if (tbd === null || tbd === undefined) return false;
-	return Object.keys(messages).includes(tbd);
+export function isSupportedLocaleCode(tbd: unknown): tbd is LocaleCode {
+	return Object.keys(messages).includes(tbd as string);
 }
 
 export interface LocaleDescriptor {
@@ -49,22 +50,26 @@ export interface LocaleDescriptor {
 	readonly shortName: string;
 }
 
-// Copied from `svelte-i18n`
-type InterpolationValues =
-	| Record<
-			string,
-			string | number | boolean | Date | FormatXMLElementFn<unknown> | null | undefined
-	  >
-	| undefined;
-
-// Copied from `svelte-i18n`
-interface MessageObject {
-	id: string;
-	locale?: string;
-	format?: string;
-	default?: string;
-	values?: InterpolationValues;
+function isLocaleDescriptor(tbd: unknown): tbd is LocaleDescriptor {
+	return (
+		isRecord(tbd) &&
+		"code" in tbd &&
+		"flag" in tbd &&
+		"name" in tbd &&
+		"shortName" in tbd &&
+		isSupportedLocaleCode(tbd["code"]) &&
+		isString(tbd["flag"]) &&
+		isString(tbd["name"]) &&
+		isString(tbd["shortName"])
+	);
 }
+
+function assertLocaleDescriptor(tbd: unknown): asserts tbd is LocaleDescriptor {
+	if (!isLocaleDescriptor(tbd))
+		throw new TypeError(`Value is not a LocaleDescriptor: ${JSON.stringify(tbd)}`);
+}
+
+type StoreValue<T> = T extends Readable<infer S> ? S : never;
 
 /**
  * Internationalizes the given `keypath` based on the current locale.
@@ -73,23 +78,25 @@ interface MessageObject {
  * @important Avoid using this function in declarative contexts. Instead,
  * subscribe to the `_` store.
  */
-export function t(keypath: string | MessageObject, options?: Omit<MessageObject, "id">): string {
+export function t(...[keypath, options]: Parameters<StoreValue<typeof _>>): string {
 	return get(_)(keypath, options);
 }
 
 // Use this store instead of the `t` function in Svelte components.
 export { _ } from "svelte-i18n";
 
-// Formatter consumers should import from here, not svelte-i18n directly,
-// so that the formatter gets properly initialized in unit tests.
-export { getNumberFormatter } from "svelte-i18n";
+// Ensure metadata is valid
+for (const locale of Object.values(messages)) {
+	assertLocaleDescriptor(locale.meta);
+}
 
 /** Metadata about the current locale. */
-export const locale = derived(_locale, $locale => {
+export const locale = derived<typeof _locale, LocaleDescriptor>(_locale, $locale => {
 	if (isSupportedLocaleCode($locale)) {
-		return messages[$locale].meta;
+		const meta = messages[$locale].meta;
+		if (isLocaleDescriptor(meta)) return meta;
 	}
-	return messages["en-US"].meta;
+	return messages["en-US"].meta as LocaleDescriptor; // ASSUMPTION: we've already asserted this case
 });
 
 /** Set the current locale. */

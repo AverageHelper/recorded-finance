@@ -1,9 +1,9 @@
 <script lang="ts">
 	import type { Dinero } from "dinero.js";
-	import { _ } from "../../i18n";
+	import { _, locale } from "../../i18n";
 	import { createEventDispatcher } from "svelte";
 	import { dinero } from "dinero.js";
-	import { intlFormat } from "../../transformers";
+	import { toCurrency } from "../../transformers";
 	import { USD } from "@dinero.js/currencies";
 	import { zeroDinero } from "../../helpers/dineroHelpers";
 	import ActionButton from "../buttons/ActionButton.svelte";
@@ -16,8 +16,8 @@
 
 	let isIncome = false;
 
-	const zeroValue = intlFormat(zeroDinero, "standard");
-	$: presentableValue = intlFormat(value, "standard");
+	$: zeroValue = toCurrency($locale.code, zeroDinero, "standard");
+	$: presentableValue = toCurrency($locale.code, value, "standard");
 
 	function onInput(event: CustomEvent<string>) {
 		const rawValue = event.detail;

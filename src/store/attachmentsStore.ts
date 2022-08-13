@@ -238,7 +238,7 @@ export async function importAttachment(
 		return; // no blob? leave the reference broken.
 	}
 
-	const blobToImport = (await fileRef?.getData(new BlobWriter())) as Blob;
+	const blobToImport = await fileRef?.getData(new BlobWriter());
 	const fileToImport = new File([blobToImport], attachmentToImport.title.trim(), {
 		type: attachmentToImport.type?.trim(),
 	});

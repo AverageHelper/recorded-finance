@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { DatabaseSchema } from "../../model/DatabaseSchema";
 	import type { Entry } from "@zip.js/zip.js";
-	import { _, getNumberFormatter } from "../../i18n";
+	import { _, locale } from "../../i18n";
 	import { accountsPath } from "../../router";
 	import { BlobReader, TextWriter, ZipReader } from "@zip.js/zip.js";
 	import { create } from "superstruct";
@@ -42,7 +42,9 @@
 				onprogress: progressRaw => {
 					// FIXME: We may be using this callback incorrectly
 					// See https://gildas-lormeau.github.io/zip.js/api/interfaces/ZipReaderGetEntriesOptions.html#onprogress
-					const percent = getNumberFormatter({ style: "percent" }).format(progressRaw / 100);
+					const percent = Intl.NumberFormat($locale.code, { style: "percent" }).format(
+						progressRaw / 100
+					);
 					msg = $_("settings.import.loading-file-progress", {
 						values: { name: file.name, percent },
 					});

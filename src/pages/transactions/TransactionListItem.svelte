@@ -1,10 +1,10 @@
 <script lang="ts">
 	import type { Transaction } from "../../model/Transaction";
-	import { _ } from "../../i18n";
+	import { _, locale } from "../../i18n";
 	import { allBalances, attachments, handleError, updateTransaction } from "../../store";
 	import { isNegative as isDineroNegative } from "dinero.js";
-	import { intlFormat, toTimestamp } from "../../transformers";
 	import { onMount } from "svelte";
+	import { toCurrency, toTimestamp } from "../../transformers";
 	import { transaction as newTransaction } from "../../model/Transaction";
 	import { transactionPath } from "../../router";
 	import Checkbox from "../../components/inputs/Checkbox.svelte";
@@ -20,7 +20,7 @@
 
 	let isAttachmentBroken: boolean | "unknown" = "unknown";
 	$: hasLocation = transaction.locationId !== null;
-	$: timestamp = toTimestamp(transaction.createdAt);
+	$: timestamp = toTimestamp($locale.code, transaction.createdAt);
 
 	$: accountBalanceSoFar = ($allBalances[transaction.accountId] ?? {})[transaction.id] ?? null;
 
@@ -65,8 +65,8 @@
 	to={transactionRoute}
 	title={transaction.title ?? "--"}
 	subtitle={timestamp}
-	count={intlFormat(transaction.amount)}
-	subCount={accountBalanceSoFar ? intlFormat(accountBalanceSoFar) : "--"}
+	count={toCurrency($locale.code, transaction.amount)}
+	subCount={accountBalanceSoFar ? toCurrency($locale.code, accountBalanceSoFar) : "--"}
 	negative={isNegative}
 >
 	<div slot="icon" class="checkbox-b9eab07a">

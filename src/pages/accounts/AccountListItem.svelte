@@ -1,11 +1,11 @@
 <script lang="ts">
 	import type { Account } from "../../model/Account";
-	import { _ } from "../../i18n";
+	import { _, locale } from "../../i18n";
 	import { accountPath } from "../../router";
 	import { currentBalance, getTransactionsForAccount, transactionsForAccount } from "../../store";
-	import { intlFormat } from "../../transformers";
 	import { isNegative as isDineroNegative } from "dinero.js";
 	import { onMount } from "svelte";
+	import { toCurrency } from "../../transformers";
 	import ListItem from "../../components/ListItem.svelte";
 
 	export let account: Account;
@@ -43,7 +43,7 @@
 	to={accountRoute}
 	title={account.title}
 	{subtitle}
-	count={remainingBalance ? intlFormat(remainingBalance) : "--"}
+	count={remainingBalance ? toCurrency($locale.code, remainingBalance) : "--"}
 	negative={isBalanceNegative}
 	class={$$props["class"]}
 	on:click

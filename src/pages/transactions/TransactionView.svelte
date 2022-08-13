@@ -1,12 +1,12 @@
 <script lang="ts">
 	import type { Tag as TagObject, TagRecordParams } from "../../model/Tag";
 	import type { Attachment } from "../../model/Attachment";
-	import { _ } from "../../i18n";
+	import { _, locale } from "../../i18n";
 	import { accountPath } from "../../router";
 	import { addTagToTransaction, addAttachmentToTransaction } from "../../model/Transaction";
-	import { intlFormat, toTimestamp } from "../../transformers";
 	import { isNegative } from "dinero.js";
 	import { link, useNavigate } from "svelte-navigator";
+	import { toCurrency, toTimestamp } from "../../transformers";
 	import ConfirmDestroyFile from "../attachments/ConfirmDestroyFile.svelte";
 	import EditButton from "../../components/buttons/EditButton.svelte";
 	import FileInput from "../attachments/FileInput.svelte";
@@ -53,7 +53,7 @@
 	$: locationId = transaction?.locationId ?? null;
 	$: location = locationId !== null ? $locations[locationId] ?? null : null;
 
-	$: timestamp = transaction ? toTimestamp(transaction.createdAt) : "";
+	$: timestamp = transaction ? toTimestamp($locale.code, transaction.createdAt) : "";
 
 	$: accountRoute = accountPath(accountId);
 
@@ -167,7 +167,7 @@
 		<div class="key-value-pair" aria-label={$_("transactions.meta.amount-aria-label")}>
 			<span class="key">{$_("transactions.meta.amount")}</span>
 			<span class="value amount {isNegative(transaction.amount) ? 'negative' : ''}"
-				>{intlFormat(transaction.amount, "standard")}</span
+				>{toCurrency($locale.code, transaction.amount, "standard")}</span
 			>
 		</div>
 		<!-- Timestamp -->

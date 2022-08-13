@@ -209,7 +209,8 @@ export async function watchTransactions(account: Account, force: boolean = false
 								transaction.createdAt.getFullYear(),
 								transaction.createdAt.getMonth()
 							),
-							id: transaction.createdAt.toLocaleDateString(undefined, {
+							// TODO: This code should be based on the user's current locale, or something idk
+							id: transaction.createdAt.toLocaleDateString("en-US", {
 								month: "short",
 								year: "numeric",
 							}),

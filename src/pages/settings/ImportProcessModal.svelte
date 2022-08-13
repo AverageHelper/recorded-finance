@@ -2,10 +2,9 @@
 	import type { Account } from "../../model/Account";
 	import type { DatabaseSchema } from "../../model/DatabaseSchema";
 	import type { Entry } from "@zip.js/zip.js";
-	import { _ } from "../../i18n";
+	import { _, locale } from "../../i18n";
 	import { account as newAccount } from "../../model/Account";
 	import { createEventDispatcher, tick } from "svelte";
-	import { getNumberFormatter } from "../../i18n";
 	import { toast } from "@zerodevx/svelte-toast";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
 	import AccountListItem from "../../pages/accounts/AccountListItem.svelte";
@@ -55,7 +54,7 @@
 		totalItemsToImport === 0 //
 			? 1
 			: itemsImported / totalItemsToImport;
-	$: importProgressPercent = getNumberFormatter({ style: "percent" }) //
+	$: importProgressPercent = Intl.NumberFormat($locale.code, { style: "percent" }) //
 		.format(importProgress);
 
 	$: hasDb = db !== null;

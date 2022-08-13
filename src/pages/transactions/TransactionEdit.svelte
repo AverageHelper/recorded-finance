@@ -2,7 +2,7 @@
 	import type { Account } from "../../model/Account";
 	import type { Location, PendingLocation } from "../../model/Location";
 	import type { Transaction, TransactionRecordParams } from "../../model/Transaction";
-	import { _ } from "../../i18n";
+	import { _, locale } from "../../i18n";
 	import { createEventDispatcher, onMount } from "svelte";
 	import { equal, isNegative, isZero, toSnapshot } from "dinero.js";
 	import { recordFromLocation } from "../../model/Location";
@@ -242,7 +242,7 @@
 		<CurrencyInput
 			value={amount}
 			class="currency"
-			label={$_("transactions.meta.amount").toLocaleLowerCase()}
+			label={$_("transactions.meta.amount").toLocaleLowerCase($locale.code)}
 			on:input={e => (amount = e.detail)}
 		/>
 		<Checkbox
@@ -254,7 +254,7 @@
 	</div>
 	<TextField
 		value={title}
-		label={$_("transactions.meta.title").toLocaleLowerCase()}
+		label={$_("transactions.meta.title").toLocaleLowerCase($locale.code)}
 		placeholder={$_("example.income-transaction-title")}
 		required
 		on:input={e => (title = e.detail)}
@@ -262,7 +262,7 @@
 	<LocationField value={locationData} on:change={onLocationUpdate} />
 	<TextAreaField
 		value={notes}
-		label={$_("transactions.meta.notes").toLocaleLowerCase()}
+		label={$_("transactions.meta.notes").toLocaleLowerCase($locale.code)}
 		placeholder={$_("example.transaction-note")}
 		on:input={e => (notes = e.detail)}
 	/>

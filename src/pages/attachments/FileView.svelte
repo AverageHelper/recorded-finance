@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Attachment } from "../../model/Attachment";
-	import { _ } from "../../i18n";
+	import { _, locale } from "../../i18n";
 	import { allTransactions, imageDataFromFile } from "../../store";
 	import { createEventDispatcher } from "svelte";
 	import { toTimestamp } from "../../transformers";
@@ -25,7 +25,9 @@
 		t => file !== null && t.attachmentIds.includes(file?.id)
 	);
 	$: transactionCount = linkedTransactions.length;
-	$: timestamp = !file ? $_("date-time.now").toLocaleLowerCase() : toTimestamp(file.createdAt);
+	$: timestamp = !file
+		? $_("date-time.now").toLocaleLowerCase($locale.code)
+		: toTimestamp($locale.code, file.createdAt);
 
 	async function loadNewData(file: Attachment) {
 		try {

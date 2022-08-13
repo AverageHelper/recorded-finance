@@ -1,4 +1,4 @@
-import { getNumberFormatter } from "../i18n";
+import type { LocaleCode } from "../i18n";
 
 /**
  * Creates a human-readable string from a given byte count.
@@ -6,7 +6,7 @@ import { getNumberFormatter } from "../i18n";
  * @example
  * ```ts
  * const bytes = 1000;
- * const str = simplifiedByteCount(bytes);
+ * const str = simplifiedByteCount("en-US", bytes);
  * // str === "1 kB"
  * ```
  *
@@ -14,7 +14,7 @@ import { getNumberFormatter } from "../i18n";
  *
  * @returns A user-readable string representing the byte count.
  */
-export function simplifiedByteCount(num: number): string {
+export function simplifiedByteCount(locale: LocaleCode, num: number): string {
 	if (typeof num !== "number" || Number.isNaN(num)) {
 		throw new TypeError("Expected a non-NaN number");
 	}
@@ -42,7 +42,7 @@ export function simplifiedByteCount(num: number): string {
 	// ASSUMPTION: The `units` array is never empty
 
 	// Set up a unit formatter for the selected locale
-	const formatter = getNumberFormatter({
+	const formatter = Intl.NumberFormat(locale, {
 		style: "unit",
 		unit,
 		maximumFractionDigits: 2,
