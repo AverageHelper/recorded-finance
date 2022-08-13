@@ -197,10 +197,12 @@
 			<div class="key-value-pair" aria-label={$_("transactions.meta.location-aria-label")}>
 				<span class="key">{$_("transactions.meta.location")}</span>
 				{#if location?.coordinate ?? location?.subtitle}
-					<NopLink class="value" on:click={() => (isViewingLocation = true)}
-						>{location?.title ?? locationId}
-						{#if location?.coordinate}<LocationIcon />{/if}
-					</NopLink>
+					<span class="value">
+						<NopLink on:click={() => (isViewingLocation = true)}
+							>{location?.title ?? locationId}
+							{#if location?.coordinate}<LocationIcon />{/if}
+						</NopLink>
+					</span>
 				{:else}
 					<span class="value">&quot;{location?.title ?? locationId}&quot;</span>
 				{/if}

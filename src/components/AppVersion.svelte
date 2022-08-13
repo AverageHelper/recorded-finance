@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { _ } from "../i18n";
+	import { repo as repositoryUrl } from "../platformMeta";
 	import { loadServerVersion, serverLoadingError, serverVersion } from "../store";
 	import { onMount } from "svelte";
 	import { version as clientVersion } from "../version";
@@ -10,8 +11,6 @@
 	onMount(async () => {
 		await loadServerVersion();
 	});
-
-	const repositoryUrl = `https://github.com/AverageHelper/accountable-svelte/tree/v${clientVersion}`;
 </script>
 
 <OutLink to={repositoryUrl} class={$$props["class"]}

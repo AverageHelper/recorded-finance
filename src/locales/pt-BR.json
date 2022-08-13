@@ -28,6 +28,7 @@
 	},
 	"actions": {
 		"add-new-noun": "Adicionar um novo {noun}",
+		"more-info-about": "Leia mais informações sobre {topic}",
 		"location": {
 			"clear": "Apagar local",
 			"get-current": "Obter localização atual"
@@ -311,29 +312,29 @@
 			"confirm": "Are you sure you want to delete {title}? This cannot be undone."
 		},
 		"create": {
-			"expense": "Create Expense",
-			"income": "Create Income"
+			"expense": "Criar Despesa",
+			"income": "Criar Renda"
 		},
 		"edit": {
-			"expense": "Edit Expense",
-			"income": "Edit Income"
+			"expense": "Editar Despesa",
+			"income": "Editar Renda"
 		},
-		"attach-file": "Attach a file",
+		"attach-file": "Anexar um arquivo",
 		"meta": {
-			"account": "Account",
-			"account-aria-label": "Transaction Account",
-			"amount": "Amount",
-			"amount-aria-label": "Transaction Amount",
+			"account": "Conta",
+			"account-aria-label": "Conta de transações",
+			"amount": "Valor",
+			"amount-aria-label": "Valor da transação",
 			"date": "encontro",
-			"location": "Location",
-			"location-aria-label": "Transaction Location",
-			"notes": "Notes",
-			"notes-aria-label": "Transaction Notes",
-			"reconciled": "Reconciled",
-			"reconciled-aria-label": "Is this transaction reconciled?",
-			"timestamp": "Timestamp",
-			"timestamp-aria-label": "Transaction Timestamp",
-			"title": "Title"
+			"location": "Localização",
+			"location-aria-label": "Local da transação",
+			"notes": "Notas",
+			"notes-aria-label": "Notas de transação",
+			"reconciled": "Reconciliada",
+			"reconciled-aria-label": "Esta transação é reconciliada?",
+			"timestamp": "Encontro",
+			"timestamp-aria-label": "Data da transação",
+			"title": "Título"
 		}
 	},
 	"app": {
@@ -366,7 +367,7 @@
 			"subtitle": "legenda do localização"
 		},
 		"locations": {
-			"recent": "Recent Locations",
+			"recent": "Locais recentes",
 			"disclaimer": "To get your current location, you'll need to enable the location service in {settings}."
 		}
 	},
@@ -422,7 +423,9 @@
 		"value-will-be-generated": "será gerado...",
 		"log-in": "Conecte-se",
 		"create-account": "Crie a sua conta aqui",
-		"cookie-disclaimer": "Logging in will set one cookie, which contains your login token. This cookie lets your browser securely remember that you were logged in without Accountable needing to keep your login token someplace unsafe.",
+		"cookie-disclaimer-header": "How our cookies work",
+		"cookie-disclaimer": "Logging in will set two cookies, which together contain information that declares your access to your data. These cookies let your browser securely remember that you are logged in. The alternative is for us to recall your login information with JavaScript, which is not a safe place to keep thing. {more}",
+		"cookie-more": "More info.",
 		"process": {
 			"authenticating": "Autenticação...",
 			"reauthenticating": "Autenticando novamente...",

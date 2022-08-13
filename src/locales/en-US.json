@@ -28,6 +28,7 @@
 	},
 	"actions": {
 		"add-new-noun": "Add a new {noun}",
+		"more-info-about": "Read more information about {topic}",
 		"location": {
 			"clear": "Clear location",
 			"get-current": "Get current location"
@@ -422,7 +423,9 @@
 		"value-will-be-generated": "to be generated...",
 		"log-in": "Log in",
 		"create-account": "Create an account",
-		"cookie-disclaimer": "Logging in will set one cookie, which contains your login token. This cookie lets your browser securely remember that you were logged in without Accountable needing to keep your login token someplace unsafe.",
+		"cookie-disclaimer-header": "How our cookies work",
+		"cookie-disclaimer": "Logging in will set two cookies, which together contain information that declares your access to your data. These cookies let your browser securely remember that you are logged in. The alternative is for us to recall your login information with JavaScript, which is not a safe place to keep thing. {more}",
+		"cookie-more": "More info.",
 		"process": {
 			"authenticating": "Authenticating...",
 			"reauthenticating": "Re-authenticating...",

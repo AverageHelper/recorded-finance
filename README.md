@@ -87,3 +87,25 @@ DO NOT FORGET your Accountable ACCOUNT ID or PASSWORD. If you do, your data is i
 This project is entirely open source. Do with it what you will. If you're willing to help me improve this project, consider [filing an issue](https://github.com/AverageHelper/accountable-svelte/issues/new/choose).
 
 See [CONTRIBUTING.md](/CONTRIBUTING.md) for ways to contribute.
+
+## FAQ
+
+Some questions I've asked myself while developing this. You might have these questions too!
+
+### Why use cookies?
+
+JavaScript is not a safe spot to store cookies. The nascent versions of Accountable's front-end client stored the user's login token in a JavaScript variable. I later learned a better way: don't handle the token myself, let the browser handle it with [standard cookie security APIs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#restrict_access_to_cookies).
+
+Accountable's back-end server still responds to successful login requests with the token in the response body, but the server also now asks requesting clients to set the token as a cookie with the following attributes:
+- `HttpOnly` - According to [MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#restrict_access_to_cookies): "A cookie with the HttpOnly attribute is inaccessible to the JavaScript [`Document.cookie`](https://developer.mozilla.org/en-US/docs/Web/API/Document/cookie) API; it's only sent to the server. For example, cookies that persist in server-side sessions _don't need to be available to JavaScript_ and should have the `HttpOnly` attribute. This precaution helps mitigate cross-site scripting ([XSS](https://developer.mozilla.org/en-US/docs/Web/Security/Types_of_attacks#cross-site_scripting_(xss))) attacks." (emphasis mine)
+- `Secure` - Not set if the server is running on `localhost`. According to [MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#restrict_access_to_cookies): "A cookie with the Secure attribute is only sent to the server with an encrypted request over the HTTPS protocol."
+
+If create your own Accountable client, please don't mishandle the token. If you dig back in our git history to find and use a version that uses the old JavaScript way, know that you may be getting into avoidable security vulnerabilities.
+
+### Why disclose cookies?
+
+I've heard that GDPR doesn't care about "session" cookies, and therefore don't need to be disclosed.
+
+While our cookies indeed deal with the user's login "session," [GDPR.edu](https://gdpr.eu/cookies/) defines "session cookies" as cookies that "are temporary and expire once you close your browser (or once your session ends)." Since our cookies persist between browser sessions, I need to disclose them.
+
+`Secure` cookies are also hidden to most browsers' devtools. (I might post screenshots later of what I mean by this). This means that most users won't see our cookies on their browser. However, our cookies are not set with the `Secure` attribute if the login request comes from an HTTP source, such as `localhost`. These cookies _will_ appear in some browsers' devtools. To avoid confusion, and as a point of principle, I want to make clear to savvy users what's happening here.
