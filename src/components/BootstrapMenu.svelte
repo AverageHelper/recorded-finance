@@ -56,7 +56,7 @@
 		data-bs-target="#navbarNav"
 		aria-controls="navbarNav"
 		aria-expanded={isNavButtonOpen}
-		aria-label="Toggle navigation"
+		aria-label={$_("app.toggle-nav")}
 		on:click={toggle}
 	>
 		<span class="navbar-toggler-icon" />

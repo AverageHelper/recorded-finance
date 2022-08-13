@@ -233,7 +233,11 @@
 
 	<span>Account: {account.title ?? $_("accounts.unknown-title")}</span>
 
-	<DateTimeInput value={createdAt} label="date" on:input={e => (createdAt = e.detail)} />
+	<DateTimeInput
+		value={createdAt}
+		label={$_("transactions.meta.date")}
+		on:input={e => (createdAt = e.detail)}
+	/>
 	<div class="moneys">
 		<CurrencyInput
 			value={amount}

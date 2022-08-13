@@ -107,14 +107,14 @@
 	<TextField
 		bind:this={titleField}
 		value={title}
-		label="title"
+		label={$_("accounts.meta.title")}
 		placeholder={$_("example.income-transaction-title")}
 		required
 		on:input={e => (title = e.detail)}
 	/>
 	<TextAreaField
 		value={notes}
-		label="notes"
+		label={$_("accounts.meta.notes")}
 		placeholder={$_("example.transaction-note")}
 		on:input={e => (notes = e.detail)}
 	/>
