@@ -98,6 +98,18 @@
 		isSelectingLanguage = false;
 	}
 
+	function open() {
+		isMenuOpen = true;
+	}
+
+	function toggle() {
+		if (isMenuOpen) {
+			close();
+		} else {
+			open();
+		}
+	}
+
 	function onResize() {
 		windowWidth = window.innerWidth;
 	}
@@ -112,7 +124,7 @@
 </script>
 
 {#if hasItems}
-	<ActionButton on:click={() => (isMenuOpen = !isMenuOpen)}>
+	<ActionButton on:click={toggle}>
 		<MenuIcon />
 	</ActionButton>
 {/if}
@@ -175,7 +187,7 @@
 	@use "styles/colors" as *;
 
 	.side-menu-cb187fca {
-		position: absolute; // assumes our portal target is positioned
+		position: fixed; // assumes our portal target is positioned
 		top: 4.5em;
 		right: 0;
 		background-color: color($secondary-fill);
@@ -189,7 +201,7 @@
 		pointer-events: auto; // assumes our portal target has pointer-events: none;
 
 		&__backdrop {
-			position: absolute;
+			position: fixed;
 			top: 0;
 			bottom: 0;
 			left: 0;
