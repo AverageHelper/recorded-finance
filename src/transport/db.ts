@@ -10,8 +10,8 @@ import { forgetJobQueue, useJobQueue } from "@averagehelper/job-queue";
 import { isPrimitive } from "./schemas.js";
 import { t } from "../i18n";
 import { v4 as uuid } from "uuid";
-import isArray from "lodash/isArray";
-import isString from "lodash/isString";
+import isArray from "lodash-es/isArray";
+import isString from "lodash-es/isString";
 import {
 	databaseBatchWrite,
 	databaseCollection,

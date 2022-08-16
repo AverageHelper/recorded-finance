@@ -7,7 +7,7 @@ import { location, recordFromLocation } from "../model/Location";
 import { t } from "../i18n";
 import { transaction } from "../model/Transaction";
 import { updateUserStats } from "./uiStore";
-import chunk from "lodash/chunk";
+import chunk from "lodash-es/chunk";
 import {
 	createLocation as _createLocation,
 	deriveDEK,

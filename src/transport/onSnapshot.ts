@@ -6,8 +6,8 @@ import { collection, doc as docRef } from "./db.js";
 import { databaseCollection, databaseDocument } from "./api-types/index.js";
 import { isRawServerResponse } from "./schemas";
 import { t } from "../i18n";
-import isArray from "lodash/isArray";
-import isString from "lodash/isString";
+import isArray from "lodash-es/isArray";
+import isString from "lodash-es/isString";
 
 export class DocumentSnapshot<T = DocumentData> {
 	#data: T | null;

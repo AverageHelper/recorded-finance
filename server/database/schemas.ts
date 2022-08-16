@@ -1,5 +1,5 @@
 import type { ValueIteratorTypeGuard } from "lodash";
-import isArray from "lodash/isArray.js";
+import isArray from "lodash-es/isArray.js";
 import Joi from "joi";
 import "joi-extract-type";
 

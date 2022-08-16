@@ -14,8 +14,8 @@ import { getDocs } from "../transport/index.js";
 import { handleError, updateUserStats } from "./uiStore";
 import { t } from "../i18n";
 import { zeroDinero } from "../helpers/dineroHelpers";
-import chunk from "lodash/chunk";
-import groupBy from "lodash/groupBy";
+import chunk from "lodash-es/chunk";
+import groupBy from "lodash-es/groupBy";
 import {
 	recordFromTransaction,
 	removeAttachmentIdFromTransaction,

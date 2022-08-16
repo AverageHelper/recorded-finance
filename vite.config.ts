@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
+import { visualizer } from "rollup-plugin-visualizer";
 import analyze from "rollup-plugin-analyzer";
 import autoprefixer from "autoprefixer";
 import path from "node:path";
@@ -55,6 +56,7 @@ export default defineConfig({
 				);
 			},
 		}),
+		visualizer(),
 	],
 	// See https://www.npmjs.com/package/svelte-navigator#faq
 	optimizeDeps: { exclude: ["svelte-navigator"] },

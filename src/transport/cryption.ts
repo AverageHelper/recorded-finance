@@ -2,7 +2,7 @@ import { t } from "../i18n";
 import atob from "atob-lite";
 import btoa from "btoa-lite";
 import CryptoJS from "crypto-js";
-import isString from "lodash/isString";
+import isString from "lodash-es/isString";
 
 /**
  * User-level encryption material that lives on the server.
