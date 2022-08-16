@@ -1,7 +1,7 @@
 import type { CollectionID } from "./db";
 import type { Infer } from "superstruct";
-import isArray from "lodash-es/isArray";
-import isObject from "lodash-es/isObject";
+import { isArray } from "../helpers/isArray";
+import { isObject } from "../helpers/isObject";
 import {
 	array,
 	boolean,

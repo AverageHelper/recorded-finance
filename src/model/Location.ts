@@ -1,7 +1,7 @@
 import type { Model } from "./utility/Model";
-import isDate from "lodash-es/isDate";
-import isNumber from "lodash-es/isNumber";
-import isString from "lodash-es/isString";
+import { isDate } from "../helpers/isDate";
+import { isNumber } from "../helpers/isNumber";
+import { isString } from "../helpers/isString";
 
 function isStringOrNull(tbd: unknown): tbd is string | null {
 	return tbd === null || isString(tbd);

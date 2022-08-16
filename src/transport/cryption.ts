@@ -1,4 +1,5 @@
 import type CryptoJS from "crypto-js";
+import { isString } from "../helpers/isString";
 import { t } from "../i18n";
 import "crypto-js/sha512"; // to keep SHA512 algo from tree-shaking away
 import AES from "crypto-js/aes";
@@ -7,7 +8,6 @@ import btoa from "btoa-lite";
 import CryptoJSCore from "crypto-js/core";
 import EncBase64 from "crypto-js/enc-base64";
 import EncUtf8 from "crypto-js/enc-utf8";
-import isString from "lodash-es/isString";
 import PBKDF2 from "crypto-js/pbkdf2";
 import WordArray from "crypto-js/lib-typedarrays";
 

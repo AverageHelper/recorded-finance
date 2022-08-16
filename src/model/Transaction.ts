@@ -2,11 +2,11 @@ import type { Attachment } from "./Attachment";
 import type { Currency, Dinero, DineroSnapshot } from "dinero.js";
 import type { Model } from "./utility/Model";
 import type { Tag } from "./Tag";
-import isBoolean from "lodash-es/isBoolean";
-import isDate from "lodash-es/isDate";
-import isNumber from "lodash-es/isNumber";
-import isString from "lodash-es/isString";
 import { dinero, toSnapshot } from "dinero.js";
+import { isBoolean } from "../helpers/isBoolean";
+import { isDate } from "../helpers/isDate";
+import { isNumber } from "../helpers/isNumber";
+import { isString } from "../helpers/isString";
 import { USD } from "@dinero.js/currencies";
 
 function isStringOrNull(tbd: unknown): tbd is string | null {

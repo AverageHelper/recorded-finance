@@ -2,7 +2,7 @@ import type { Readable } from "svelte/store";
 import { _, addMessages, getLocaleFromNavigator, init, locale as _locale } from "svelte-i18n";
 import { derived, get } from "svelte/store";
 import { isRecord } from "./transport/schemas";
-import isString from "lodash-es/isString";
+import { isString } from "./helpers/isString";
 
 // ** Language files **
 import enUS from "./locales/en-US.json";

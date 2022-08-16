@@ -1,7 +1,13 @@
-import type { ValueIteratorTypeGuard } from "lodash";
-import isArray from "lodash-es/isArray.js";
 import Joi from "joi";
 import "joi-extract-type";
+
+// Copied from lodash
+type ValueIteratorTypeGuard<T, S extends T> = (value: T) => value is S;
+
+function isArray(tbd: unknown): tbd is Array<unknown> {
+	// Compare with lodash
+	return Array.isArray(tbd);
+}
 
 export function isArrayOf<T>(
 	tbd: unknown,
