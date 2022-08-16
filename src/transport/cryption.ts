@@ -1,8 +1,15 @@
+import type CryptoJS from "crypto-js";
 import { t } from "../i18n";
+import "crypto-js/sha512"; // to keep SHA512 algo from tree-shaking away
+import AES from "crypto-js/aes";
 import atob from "atob-lite";
 import btoa from "btoa-lite";
-import CryptoJS from "crypto-js";
+import CryptoJSCore from "crypto-js/core";
+import EncBase64 from "crypto-js/enc-base64";
+import EncUtf8 from "crypto-js/enc-utf8";
 import isString from "lodash-es/isString";
+import PBKDF2 from "crypto-js/pbkdf2";
+import WordArray from "crypto-js/lib-typedarrays";
 
 /**
  * User-level encryption material that lives on the server.
@@ -48,15 +55,15 @@ const Protocols = {
 		keySizeBits: 8192, // my first aim was 256 bits, but that was actually WORDS, so this is the number of bits I was doing
 		saltSizeBytes: 32,
 		iterations: 10000,
-		keyEncoding: CryptoJS.enc.Base64,
-		dataEncoding: CryptoJS.enc.Utf8,
-		hasher: CryptoJS.algo.SHA512,
-		cipher: CryptoJS.AES,
-		derivation: CryptoJS.PBKDF2,
+		keyEncoding: EncBase64,
+		dataEncoding: EncUtf8,
+		hasher: CryptoJSCore.algo.SHA512,
+		cipher: AES,
+		derivation: PBKDF2,
 
 		/** Generates a cryptographically-secure random value. */
 		randomValue(byteCount: number): string {
-			return CryptoJS.lib.WordArray.random(byteCount).toString(CryptoJS.enc.Base64);
+			return WordArray.random(byteCount).toString(EncBase64);
 		},
 	},
 } as const;
