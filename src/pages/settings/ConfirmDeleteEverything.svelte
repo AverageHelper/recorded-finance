@@ -1,7 +1,9 @@
 <script lang="ts">
+	import { _ } from "../../i18n";
 	import { createEventDispatcher } from "svelte";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
 	import Confirm from "../../components/Confirm.svelte";
+	import I18N from "../../components/I18N.svelte";
 
 	const dispatch = createEventDispatcher<{
 		yes: void;
@@ -20,11 +22,17 @@
 </script>
 
 <Confirm {isOpen} closeModal={no}>
-	<!-- TODO: I18N -->
-	<span slot="message"
-		>Are you sure you want to delete <strong>all of your data</strong>? This cannot be undone.</span
-	>
+	<span slot="message">
+		<I18N keypath="settings.delete-all.confirm">
+			<!-- everything -->
+			<strong>{$_("settings.delete-all.really-everything")}</strong>
+		</I18N>
+	</span>
 
-	<ActionButton slot="primary-action" kind="bordered-destructive" on:click={yes}>Yes</ActionButton>
-	<ActionButton slot="secondary-action" kind="bordered-primary" on:click={no}>No</ActionButton>
+	<ActionButton slot="primary-action" kind="bordered-destructive" on:click={yes}
+		>{$_("common.yes")}</ActionButton
+	>
+	<ActionButton slot="secondary-action" kind="bordered-primary" on:click={no}
+		>{$_("common.no")}</ActionButton
+	>
 </Confirm>

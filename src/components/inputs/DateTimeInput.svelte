@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { _ } from "svelte-i18n";
+	import { _ } from "../../i18n";
 	import { createEventDispatcher } from "svelte";
 	import ActionButton from "../buttons/ActionButton.svelte";
 	import formatDate from "date-fns/format";
@@ -63,7 +63,6 @@
 			padding: 0.4em 0;
 			margin: 0.6em 0;
 			margin-left: 1em;
-			width: -moz-fit-content;
 			width: fit-content;
 		}
 

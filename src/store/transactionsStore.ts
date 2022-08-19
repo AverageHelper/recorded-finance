@@ -12,6 +12,7 @@ import { derived, get, writable } from "svelte/store";
 import { getDekMaterial, pKey } from "./authStore";
 import { getDocs } from "../transport/index.js";
 import { handleError, updateUserStats } from "./uiStore";
+import { t } from "../i18n";
 import { zeroDinero } from "../helpers/dineroHelpers";
 import chunk from "lodash/chunk";
 import groupBy from "lodash/groupBy";
@@ -122,7 +123,7 @@ export async function watchTransactions(account: Account, force: boolean = false
 
 	// Get decryption key ready
 	const key = get(pKey);
-	if (key === null) throw new Error("No decryption key");
+	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 	const { dekMaterial } = await getDekMaterial();
 	const dek = deriveDEK(key, dekMaterial);
 
@@ -208,7 +209,8 @@ export async function watchTransactions(account: Account, force: boolean = false
 								transaction.createdAt.getFullYear(),
 								transaction.createdAt.getMonth()
 							),
-							id: transaction.createdAt.toLocaleDateString(undefined, {
+							// TODO: This code should be based on the user's current locale, or something idk
+							id: transaction.createdAt.toLocaleDateString("en-US", {
 								month: "short",
 								year: "numeric",
 							}),
@@ -245,7 +247,7 @@ export async function watchTransactions(account: Account, force: boolean = false
 
 export async function getTransactionsForAccount(account: Account): Promise<void> {
 	const key = get(pKey);
-	if (key === null) throw new Error("No decryption key"); // TODO: I18N
+	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 
 	const { dekMaterial } = await getDekMaterial();
 	const dek = deriveDEK(key, dekMaterial);
@@ -328,7 +330,7 @@ export async function createTransaction(
 	batch?: WriteBatch
 ): Promise<Transaction> {
 	const key = get(pKey);
-	if (key === null) throw new Error("No decryption key"); // TODO: I18N
+	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 
 	const { dekMaterial } = await getDekMaterial();
 	const dek = deriveDEK(key, dekMaterial);
@@ -342,7 +344,7 @@ export async function updateTransaction(
 	batch?: WriteBatch
 ): Promise<void> {
 	const key = get(pKey);
-	if (key === null) throw new Error("No decryption key"); // TODO: I18N
+	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 
 	const { dekMaterial } = await getDekMaterial();
 	const dek = deriveDEK(key, dekMaterial);
@@ -417,7 +419,7 @@ export async function getAllTransactionsAsJson(
 	account: Account
 ): Promise<Array<TransactionSchema>> {
 	const key = get(pKey);
-	if (key === null) throw new Error("No decryption key"); // TODO: I18N
+	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 
 	const { dekMaterial } = await getDekMaterial();
 	const dek = deriveDEK(key, dekMaterial);

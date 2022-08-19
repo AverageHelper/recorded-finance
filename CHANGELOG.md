@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 - Nothing, yet!
 
+## [0.10.2] - 2022-08-13
+### Added
+- UI to manually select a preferred language.
+- Some Brazilian Portuguese translations.
+- New info in [CONTRIBUTING.md](CONTRIBUTING.md) about how to contribute translations.
+
+### Changed
+- More user-facing strings refactored into i18n keys. I think I found all of the user-facing strings reasonably enough now, though testing and experience will tell for sure if I missed anything.
+- The hamburger menu closes when the user selects a language.
+- Improved the cookie disclaimer.
+
 ## [0.10.1] - 2022-08-05
 ### Fixed
 - Fixed annoying flashing text when entering the login screen.
@@ -229,7 +240,9 @@ Just some re-working to make our vendor bundle fit within the recommended 500 Ki
 ### Added
 - Initial commit
 
-[Unreleased]: https://github.com/AverageHelper/accountable-svelte/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/AverageHelper/accountable-svelte/compare/v0.10.2...HEAD
+[0.10.2]: https://github.com/AverageHelper/accountable-svelte/compare/v0.10.1...v0.10.2
+[0.10.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.10.0...v0.10.1
 [0.10.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.9.1...v0.10.0
 <!-- [0.9.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.9.0...v0.9.1 doesn't exist -->
 [0.9.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.8.1...v0.9.1

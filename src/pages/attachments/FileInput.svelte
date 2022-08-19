@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { _ } from "../../i18n";
 	import { createEventDispatcher } from "svelte";
 
 	export let accept: string = "image/*";
@@ -28,8 +29,7 @@
 <label class="file-input">
 	<input bind:this={inputElement} type="file" {accept} {disabled} on:change={onFileChanged} />
 	<span>
-		<!-- TODO: I18N -->
-		<slot {click}>Choose a file</slot>
+		<slot {click}>{$_("files.upload.choose")}</slot>
 	</span>
 </label>
 

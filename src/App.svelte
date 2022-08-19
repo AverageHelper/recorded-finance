@@ -34,7 +34,6 @@
 		padding: 16pt 24pt;
 		overflow-y: scroll;
 		overflow-x: hidden;
-		height: calc(100vh - 44pt);
 
 		.error {
 			color: color($red);

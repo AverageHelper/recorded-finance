@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { ColorID } from "../../model/Color";
-	import { _ } from "svelte-i18n";
+	import { _ } from "../../i18n";
 	import { createEventDispatcher } from "svelte";
 
 	const dispatch = createEventDispatcher<{
@@ -94,7 +94,7 @@
 	<div class="text-input-c8d2e7c2__label" on:click={focus}>
 		{label}
 		{#if required && showsRequired}
-			<span class="text-input-c8d2e7c2__required">{$_("text-input.required")}</span>
+			<span class="text-input-c8d2e7c2__required">{$_("input.required")}</span>
 		{/if}
 	</div>
 	{#if disabled}

@@ -24,9 +24,11 @@
 	{#if open}
 		<div transition:fly class="modal-6ca181ee__wrapper" on:click|self={onClose}>
 			{#if closeModal}
-				<NopLink class="modal-6ca181ee__close-button" on:click={closeModal}>
-					<XIcon />
-				</NopLink>
+				<span class="modal-6ca181ee__close-button">
+					<NopLink white on:click={closeModal}>
+						<XIcon />
+					</NopLink>
+				</span>
 			{/if}
 			<div class="modal-6ca181ee">
 				<slot />
@@ -64,7 +66,6 @@
 
 		&__close-button {
 			margin: 0.5em 0.25em 0 0;
-			color: color($white);
 			text-decoration: none;
 			font-size: 2em;
 			line-height: 0.95em;

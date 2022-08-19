@@ -1,5 +1,5 @@
 import { dinero, toSnapshot } from "dinero.js";
-import { intlFormat } from "../transformers";
+import { toCurrency } from "../transformers";
 import { transaction } from "./Transaction";
 import { USD } from "@dinero.js/currencies";
 
@@ -32,7 +32,7 @@ describe("Transaction record", () => {
 		});
 
 		test(`currency format returns '${formatted}'`, () => {
-			expect(intlFormat(txn.amount)).toBe(formatted);
+			expect(toCurrency("en-US", txn.amount)).toBe(formatted);
 		});
 	});
 });

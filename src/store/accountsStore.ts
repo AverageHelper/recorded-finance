@@ -2,10 +2,10 @@ import type { Account, AccountRecordParams } from "../model/Account";
 import type { AccountRecordPackage, Unsubscribe, WriteBatch } from "../transport";
 import type { AccountSchema } from "../model/DatabaseSchema";
 import type { Dinero } from "dinero.js";
-import { _ } from "svelte-i18n";
 import { account, recordFromAccount } from "../model/Account";
 import { derived, get, writable } from "svelte/store";
 import { getDekMaterial, pKey } from "./authStore";
+import { t } from "../i18n";
 import { updateUserStats } from "./uiStore";
 import chunk from "lodash/chunk";
 import {
@@ -20,8 +20,6 @@ import {
 	watchAllRecords,
 	writeBatch,
 } from "../transport";
-
-const t = get(_);
 
 export const accounts = writable<Record<string, Account>>({}); // Account.id -> Account
 export const currentBalance = writable<Record<string, Dinero<number>>>({}); // Account.id -> Dinero
@@ -132,7 +130,7 @@ export async function deleteAccount(account: Account, batch?: WriteBatch): Promi
 	const accountTransactions = get(transactionsForAccount)[account.id] ?? {};
 	const transactionCount = Object.keys(accountTransactions).length;
 	if (transactionCount !== 0) {
-		throw new Error("Cannot delete an account that has transactions."); // TODO: I18N
+		throw new Error(t("error.db.account-has-transactions"));
 	}
 
 	await _deleteAccount(account, batch);

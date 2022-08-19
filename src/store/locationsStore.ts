@@ -4,6 +4,7 @@ import type { LocationSchema } from "../model/DatabaseSchema";
 import { derived, get, writable } from "svelte/store";
 import { getDekMaterial, pKey, uid } from "./authStore";
 import { location, recordFromLocation } from "../model/Location";
+import { t } from "../i18n";
 import { transaction } from "../model/Transaction";
 import { updateUserStats } from "./uiStore";
 import chunk from "lodash/chunk";
@@ -48,7 +49,7 @@ export async function watchLocations(force: boolean = false): Promise<void> {
 	}
 
 	const key = get(pKey);
-	if (key === null) throw new Error("No decryption key"); // TODO: I18N
+	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 	const { dekMaterial } = await getDekMaterial();
 	const dek = deriveDEK(key, dekMaterial);
 
@@ -96,8 +97,8 @@ export async function createLocation(
 ): Promise<Location> {
 	const userId = get(uid);
 	const key = get(pKey);
-	if (key === null) throw new Error("No decryption key"); // TODO: I18N
-	if (userId === null) throw new Error("Sign in first"); // TODO: I18N
+	if (key === null) throw new Error(t("error.cryption.missing-pek"));
+	if (userId === null) throw new Error(t("error.auth.unauthenticated"));
 
 	const { dekMaterial } = await getDekMaterial();
 	const dek = deriveDEK(key, dekMaterial);
@@ -128,8 +129,8 @@ export async function createLocation(
 export async function updateLocation(location: Location, batch?: WriteBatch): Promise<void> {
 	const userId = get(uid);
 	const key = get(pKey);
-	if (key === null) throw new Error("No decryption key"); // TODO: I18N
-	if (userId === null) throw new Error("Sign in first"); // TODO: I18N
+	if (key === null) throw new Error(t("error.cryption.missing-pek"));
+	if (userId === null) throw new Error(t("error.auth.unauthenticated"));
 
 	const { dekMaterial } = await getDekMaterial();
 	const dek = deriveDEK(key, dekMaterial);
@@ -165,7 +166,7 @@ export async function deleteLocation(location: Location, batch?: WriteBatch): Pr
 
 export async function getAllLocations(): Promise<void> {
 	const key = get(pKey);
-	if (key === null) throw new Error("No decryption key"); // TODO: I18N
+	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 
 	const { dekMaterial } = await getDekMaterial();
 	const dek = deriveDEK(key, dekMaterial);
@@ -185,7 +186,7 @@ export async function getAllLocations(): Promise<void> {
 
 export async function getAllLocationsAsJson(): Promise<Array<LocationSchema>> {
 	const key = get(pKey);
-	if (key === null) throw new Error("No decryption key"); // TODO: I18N
+	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 
 	const { dekMaterial } = await getDekMaterial();
 	const dek = deriveDEK(key, dekMaterial);

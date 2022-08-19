@@ -4,6 +4,7 @@ import type { TagSchema } from "../model/DatabaseSchema";
 import { derived, get, writable } from "svelte/store";
 import { getDekMaterial, pKey } from "./authStore";
 import { recordFromTag, tag } from "../model/Tag";
+import { t } from "../i18n";
 import { updateUserStats } from "./uiStore";
 import chunk from "lodash/chunk";
 import {
@@ -52,7 +53,7 @@ export async function watchTags(force: boolean = false): Promise<void> {
 	}
 
 	const key = get(pKey);
-	if (key === null) throw new Error("No decryption key"); // TODO: I18N
+	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 	const { dekMaterial } = await getDekMaterial();
 	const dek = deriveDEK(key, dekMaterial);
 
@@ -101,7 +102,7 @@ export async function createTag(record: TagRecordParams, batch?: WriteBatch): Pr
 
 	// Otherwise, go ahead and make one
 	const key = get(pKey);
-	if (key === null) throw new Error("No decryption key");
+	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 
 	const { dekMaterial } = await getDekMaterial();
 	const dek = deriveDEK(key, dekMaterial);
@@ -117,7 +118,7 @@ export async function createTag(record: TagRecordParams, batch?: WriteBatch): Pr
 
 export async function updateTag(tag: Tag, batch?: WriteBatch): Promise<void> {
 	const key = get(pKey);
-	if (key === null) throw new Error("No decryption key"); // TODO: I18N
+	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 
 	const { dekMaterial } = await getDekMaterial();
 	const dek = deriveDEK(key, dekMaterial);
@@ -150,7 +151,7 @@ export async function deleteAllTags(): Promise<void> {
 
 export async function getAllTagsAsJson(): Promise<Array<TagSchema>> {
 	const key = get(pKey);
-	if (key === null) throw new Error("No decryption key"); // TODO: I18N
+	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 
 	const { dekMaterial } = await getDekMaterial();
 	const dek = deriveDEK(key, dekMaterial);

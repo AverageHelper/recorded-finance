@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { _ } from "svelte-i18n";
+	import { _ } from "./i18n";
+	import { repoFile } from "./platformMeta";
 	import I18N from "./components/I18N.svelte";
 	import Footer from "./Footer.svelte";
 	import OutLink from "./components/OutLink.svelte";
@@ -49,8 +50,7 @@
 				>{$_("security-faq.where-keys.pbkdf2")}</OutLink
 			>
 			<!-- source -->
-			<OutLink
-				to="https://github.com/AverageHelper/accountable-svelte/blob/main/src/transport/cryption.ts"
+			<OutLink to={repoFile("src/transport/cryption.ts")}
 				>{$_("security-faq.where-keys.source")}</OutLink
 			>
 		</I18N>
@@ -89,8 +89,7 @@
 				>{$_("security-faq.passphrase-handling.bcrypt")}</OutLink
 			>
 			<!-- source -->
-			<OutLink
-				to="https://github.com/AverageHelper/accountable-svelte/blob/main/server/auth/index.ts"
+			<OutLink to={repoFile("server/auth/index.ts")}
 				>{$_("security-faq.passphrase-handling.source")}</OutLink
 			>
 		</I18N>
