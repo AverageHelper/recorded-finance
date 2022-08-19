@@ -8,12 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Nothing, yet!
 
 ## [0.10.2] - 2022-08-13
+### Fixed
+- Fixed the "Add a Transaction" button adding erroneously to the navigation stack, which incorrectly required the user to press Back more times the more transactions they created in order to return to the Accounts list.
+
 ### Added
 - UI to manually select a preferred language.
 - Some Brazilian Portuguese translations.
 - New info in [CONTRIBUTING.md](CONTRIBUTING.md) about how to contribute translations.
 
 ### Changed
+- Shrunk the deployable bundle by removing unused dependencies and properly tree-shaking the remaining dependencies.
 - More user-facing strings refactored into i18n keys. I think I found all of the user-facing strings reasonably enough now, though testing and experience will tell for sure if I missed anything.
 - The hamburger menu closes when the user selects a language.
 - Improved the cookie disclaimer.
