@@ -1,7 +1,7 @@
 import type { ColorID } from "./Color";
 import type { Model } from "./utility/Model";
+import { isString } from "../helpers/isString";
 import { randomColor, isColorId } from "./Color";
-import isString from "lodash/isString";
 
 export interface Tag extends Model<"Tag"> {
 	readonly name: string;

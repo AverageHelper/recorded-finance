@@ -7,11 +7,11 @@ import type { ValueIteratorTypeGuard } from "lodash";
 import { AccountableError } from "./errors/index.js";
 import { decrypt } from "./cryption.js";
 import { forgetJobQueue, useJobQueue } from "@averagehelper/job-queue";
+import { isArray } from "../helpers/isArray";
 import { isPrimitive } from "./schemas.js";
+import { isString } from "../helpers/isString";
 import { t } from "../i18n";
 import { v4 as uuid } from "uuid";
-import isArray from "lodash/isArray";
-import isString from "lodash/isString";
 import {
 	databaseBatchWrite,
 	databaseCollection,

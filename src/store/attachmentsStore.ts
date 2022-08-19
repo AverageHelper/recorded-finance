@@ -8,7 +8,7 @@ import { derived, get, writable } from "svelte/store";
 import { getDekMaterial, pKey, uid } from "./authStore";
 import { t } from "../i18n";
 import { updateUserStats } from "./uiStore";
-import chunk from "lodash/chunk";
+import chunk from "lodash-es/chunk";
 import {
 	addAttachmentToTransaction,
 	removeAttachmentIdFromTransaction,

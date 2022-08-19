@@ -1,21 +1,33 @@
 <script lang="ts">
-	import { link } from "svelte-navigator";
+	import { createEventDispatcher } from "svelte";
+	import { navigate } from "svelte-navigator";
 	import Chevron from "../icons/Chevron.svelte";
 
+	const dispatch = createEventDispatcher<{ click: MouseEvent }>();
+
 	export let to: string | null = null;
+	export let replace: boolean = false;
 	export let title: string;
 	export let subtitle: string | null = null;
 	export let count: number | string | null = null;
 	export let subCount: string | null = null;
 	export let negative: boolean = false;
+
+	function onClick(event: MouseEvent) {
+		console.debug("onClick", to);
+		if (to) {
+			navigate(to, { replace });
+		} else {
+			dispatch("click", event);
+		}
+	}
 </script>
 
 <svelte:element
 	this={to === null ? "div" : "a"}
 	class="list-item list-item-503a10fc {$$props['class']}"
 	href={to ?? "#"}
-	use:link
-	on:click
+	on:click|preventDefault={onClick}
 >
 	<slot name="icon" />
 

@@ -1,89 +1,24 @@
 <script lang="ts">
-	import type { AttachmentSchema } from "../../model/DatabaseSchema";
-	import type { Attachment } from "../../model/Attachment";
 	import { _ } from "../../i18n";
-	import { attachment as newAttachment } from "../../model/Attachment";
-	import { asyncMap, dataUriToBlob, downloadFileAtUrl } from "../../transport";
-	import { BlobReader, Data64URIWriter, TextReader, ZipWriter } from "@zip.js/zip.js";
-	import { getAllUserDataAsJson, handleError, imageDataFromFile } from "../../store";
+	import { compressUserData, handleError } from "../../store";
+	import { downloadFileAtUrl } from "../../transport";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
 	import I18N from "../../components/I18N.svelte";
 
 	let isLoading = false;
 
-	// TODO: Move this into a store
 	async function downloadStuff(event: Event, shouldMinify: boolean) {
 		event.preventDefault();
 		isLoading = true;
-		console.debug("Preparing zip writer");
-		const writer = new ZipWriter(new Data64URIWriter("application/zip"));
-		console.debug("Prepared zip writer");
 
 		try {
-			const rootName = "accountable";
-			console.debug("Writing root folder");
-			console.debug("Wrote root folder");
-
-			// ** Prepare database
-			console.debug("Getting user data");
-			const rawData = await getAllUserDataAsJson();
-			console.debug("Got user data");
-			console.debug("Encoding user data");
-			const data = JSON.stringify(rawData, undefined, shouldMinify ? undefined : "\t");
-			const encodedData = data; // btoa(data);
-			console.debug("Encoded user data");
-			console.debug("Writing user data");
-			await writer.add(
-				`${rootName}/database${shouldMinify ? "-raw" : ""}.json`,
-				new TextReader(encodedData)
-			);
-			console.debug("Wrote user data");
-
-			// ** Prepare attachments
-
-			/** Mirrors the storage bucket layout */
-			const userFilesPath = `${rootName}/storage/users/${rawData.uid}/attachments`;
-
-			const filesToGet: Array<AttachmentSchema> = rawData.attachments ?? [];
-			// FIXME: We may run out of memory here. Test with many files totaling more than 1 GB. Maybe operate on the attachments a few at a time?
-			console.debug("Downloading attachments");
-			const filesGotten: Array<[Attachment, string]> = await asyncMap(filesToGet, async a => {
-				const file = newAttachment({
-					createdAt: a.createdAt,
-					id: a.id,
-					notes: a.notes?.trim() ?? null,
-					storagePath: a.storagePath,
-					title: a.title.trim(),
-					type: a.type ?? "",
-				});
-				const data = await imageDataFromFile(file, false);
-				return [file, data];
-			});
-			console.debug("Downloaded attachments");
-			for (const [f, d] of filesGotten) {
-				// Get storage file name without extension, so that explorers don't try to treat the folder as JSON
-				const mystifiedName = f.storagePath
-					.slice(Math.max(0, f.storagePath.lastIndexOf("/") + 1))
-					.split(".")[0] as string;
-				const imagePath = `${userFilesPath}/${mystifiedName}/${f.title}`;
-				const image = dataUriToBlob(d);
-				console.debug(`Adding attachment ${f.title} to zip`);
-				await writer.add(imagePath, new BlobReader(image));
-				console.debug(`Added attachment ${f.title} to zip`);
-			}
-
-			// ** Zip them up
-			console.debug("Grabbing zip blob");
-			const dataUri = (await writer.close()) as string;
-			console.debug(`Got ${dataUri.length}-byte zip blob`);
-
-			// ** Get it
+			const dataUri = await compressUserData(shouldMinify);
 			downloadFileAtUrl(dataUri, "accountable.zip");
 		} catch (error) {
 			handleError(error);
-			await writer.close();
+		} finally {
+			isLoading = false;
 		}
-		isLoading = false;
 	}
 </script>
 

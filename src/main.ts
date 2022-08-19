@@ -1,4 +1,3 @@
-import "source-map-support/register";
 import App from "./App.svelte";
 
 // Initialize Svelte app
