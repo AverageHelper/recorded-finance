@@ -1,6 +1,6 @@
 /** Bootstrap source files (except functions, variables, mixins) */
 
-// TODO: Figure out why the commented imports don't exist in Bootstrap 5
+// The commented imports don't seem to exist in Bootstrap 5. That's fine. We don't use them anyway.
 @import "bootstrap/scss/functions";
 @import "bootstrap/scss/variables";
 @import "bootstrap/scss/mixins";
