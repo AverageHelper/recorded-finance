@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- Nothing, yet!
+- Improved JavaScript fallback message. JavaScript blocking plugins don't always fall back to the `noscript` tag we used to use, so now we instead insert a tag that appears on load. JavaScript removes that element if JavaScript execution is available.
 
 ## [0.10.2] - 2022-08-13
 ### Fixed
