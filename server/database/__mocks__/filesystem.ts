@@ -1,13 +1,24 @@
-export const deleteItem = jest.fn().mockResolvedValue(undefined);
+import type {
+	deleteItem as _deleteItem,
+	ensure as _ensure,
+	tmpDir as _tmpDir,
+	fileExists as _fileExists,
+	getFileContents as _getFileContents,
+	moveFile as _moveFile,
+	touch as _touch,
+} from "../filesystem.js";
+import { jest } from "@jest/globals";
 
-export const ensure = jest.fn().mockResolvedValue(undefined);
+export const deleteItem = jest.fn<typeof _deleteItem>().mockResolvedValue(undefined);
 
-export const tmpDir = jest.fn().mockReturnValue("/foo/bar");
+export const ensure = jest.fn<typeof _ensure>().mockResolvedValue(undefined);
 
-export const fileExists = jest.fn().mockResolvedValue(false);
+export const tmpDir = jest.fn<typeof _tmpDir>().mockReturnValue("/foo/bar");
 
-export const getFileContents = jest.fn().mockResolvedValue("{}");
+export const fileExists = jest.fn<typeof _fileExists>().mockResolvedValue(false);
 
-export const moveFile = jest.fn().mockResolvedValue(undefined);
+export const getFileContents = jest.fn<typeof _getFileContents>().mockResolvedValue("{}");
 
-export const touch = jest.fn().mockResolvedValue(undefined);
+export const moveFile = jest.fn<typeof _moveFile>().mockResolvedValue(undefined);
+
+export const touch = jest.fn<typeof _touch>().mockResolvedValue(undefined);

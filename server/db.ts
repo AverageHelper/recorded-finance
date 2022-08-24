@@ -125,7 +125,6 @@ export async function temporaryFilePath(params: Params): Promise<string | null> 
 	}
 
 	await ensure(folder);
-	console.debug(`temporaryFilePath: ${path}`);
 	return path;
 }
 
@@ -145,7 +144,10 @@ async function permanentFilePath(params: Params): Promise<string | null> {
 	// Make sure uid doesn't contain stray path arguments
 	if (uid.includes("..") || uid.includes(pathSeparator)) return null;
 
-	const DB_ROOT = env("DB") ?? resolvePath("./db");
+	const DB_ROOT =
+		(process.env.NODE_ENV as string) === "test"
+			? resolvePath("./db")
+			: env("DB") ?? resolvePath("./db");
 	const folder = resolvePath(DB_ROOT, `./users/${uid}/attachments`);
 
 	const path = join(folder, fileName.trim());
@@ -177,6 +179,7 @@ const upload = multer({
 					cb(new BadRequestError("Your UID or that file name don't add up to a valid path"), "");
 					return;
 				}
+				console.debug(`temporaryFilePath: ${tmp}`);
 				const path = dirname(tmp);
 				console.debug(`Writing uploaded file to '${path}'...`);
 				if (path === null || !path) {
@@ -291,7 +294,7 @@ interface FileData {
 }
 
 // Function so we defer creation of the router until after we've set up websocket support
-export function db(this: void): Router {
+export function db(this: void /* Inject filesystem APIs here? */): Router {
 	return Router()
 		.ws("/users/:uid/:collectionId", webSocket)
 		.ws("/users/:uid/:collectionId/:documentId", webSocket)
@@ -335,6 +338,7 @@ export function db(this: void): Router {
 					throw new BadRequestError("Your UID or that file name don't add up to a valid path");
 				}
 
+				console.debug(`temporaryFilePath: ${tempPath}`);
 				await moveFile(tempPath, permPath);
 
 				{

@@ -6,8 +6,11 @@
 	"scripts": {
 		"start": "./node_modules/.bin/concurrently -rkn SERVER,APP -s first \"npm run dev:server\" \"npm run dev:client\"",
 		"serve": "./node_modules/.bin/vite preview --open",
-		"test": "jest",
-		"test:watch": "npm run test -- --watch",
+		"test": "npm run test:client && npm run test:server",
+		"test:client": "./node_modules/.bin/jest",
+		"test:client:watch": "npm run test:client -- --watch",
+		"test:server": "cd server && npm run test",
+		"test:server:watch": "cd server && npm run test:watch",
 		"dev:client": "./node_modules/.bin/vite --open",
 		"dev:server": "cd ./server && npm start",
 		"prod:server": "NODE_ENV=production node ./server",
