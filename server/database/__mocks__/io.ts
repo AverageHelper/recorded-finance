@@ -2,7 +2,6 @@ import type {
 	statsForUser as _statsForUser,
 	numberOfUsers as _numberOfUsers,
 	fetchDbCollection as _fetchDbCollection,
-	findUserWithProperties as _findUserWithProperties,
 	fetchDbDoc as _fetchDbDoc,
 	fetchDbDocs as _fetchDbDocs,
 	upsertUser as _upsertUser,
@@ -22,9 +21,7 @@ export const numberOfUsers = jest.fn<typeof _numberOfUsers>().mockResolvedValue(
 
 export const fetchDbCollection = jest.fn<typeof _fetchDbCollection>().mockResolvedValue([]);
 
-export const findUserWithProperties = jest
-	.fn<typeof _findUserWithProperties>()
-	.mockResolvedValue(null);
+export const findUserWithProperties = jest.fn<() => Promise<unknown>>().mockResolvedValue(null);
 
 export const fetchDbDoc = jest
 	.fn<typeof _fetchDbDoc>()

@@ -1,6 +1,13 @@
 {
 	"root": true,
-	"ignorePatterns": ["dist", "node_modules", "src/version.ts", "server/version.ts", ".gitignore"],
+	"ignorePatterns": [
+		"dist",
+		"node_modules",
+		"src/version.ts",
+		"server/version.ts",
+		".gitignore",
+		"coverage"
+	],
 
 	"extends": [
 		"strictest/eslint",
@@ -94,10 +101,6 @@
 				"prettier/prettier": "warn",
 				"max-nested-callbacks": "off" // Unit tests involve a lot of nested callbacks
 			}
-		},
-		{
-			"files": ["*.js", "*.cjs"],
-			"parser": "null"
 		}
 	]
 }
