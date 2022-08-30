@@ -2,7 +2,7 @@ import Joi from "joi";
 import "joi-extract-type";
 
 // Copied from lodash
-type ValueIteratorTypeGuard<T, S extends T> = (value: T) => value is S;
+export type ValueIteratorTypeGuard<T, S extends T> = (value: T) => value is S;
 
 function isArray(tbd: unknown): tbd is Array<unknown> {
 	// Compare with lodash
@@ -20,9 +20,29 @@ export function isNonEmptyArray<T>(tbd: Array<T>): tbd is NonEmptyArray<T> {
 	return tbd.length > 0;
 }
 
-function isValidForSchema(data: unknown, schema: Joi.AnySchema): boolean {
-	const { error } = schema.validate(data);
+export function isObject(tbd: unknown): tbd is Record<string, unknown> {
+	return typeof tbd === "object" && tbd !== null && !Array.isArray(tbd);
+}
+
+/** Returns `true` if the given value matches the given schema. */
+export function isValidForSchema<S extends Joi.AnySchema>(
+	tbd: unknown,
+	schema: S
+): tbd is Joi.extractType<S> {
+	const { error } = schema.validate(tbd);
 	return !error;
+}
+
+/**
+ * Throws a {@link Joi.ValidationError} if the given value does not
+ * match the given schema.
+ */
+export function assertSchema<S extends Joi.AnySchema>(
+	tbd: unknown,
+	schema: S
+): asserts tbd is Joi.extractType<S> {
+	const { error } = schema.validate(tbd);
+	if (error) throw error;
 }
 
 const jwtPayload = Joi.object({
@@ -43,6 +63,10 @@ const user = Joi.object({
 	passwordSalt: Joi.string().required(),
 });
 export type User = Joi.extractType<typeof user>;
+
+function isUser(tbd: unknown): tbd is User {
+	return isValidForSchema(tbd, user);
+}
 
 export type Primitive = string | number | boolean | undefined | null;
 
@@ -78,7 +102,7 @@ export function isUserKeys(tbd: unknown): tbd is UserKeys {
 
 export type AnyDataItem = DataItem | UserKeys | User;
 
-const allCollectionIds = [
+export const allCollectionIds = [
 	"accounts",
 	"attachments",
 	"keys",
@@ -120,4 +144,12 @@ export function isDocumentWriteBatch(tbd: unknown): tbd is DocumentWriteBatch {
 }
 
 export type Identified<T> = T & { _id: string };
+function isIdentified(tbd: unknown): tbd is Identified<unknown> {
+	return isObject(tbd) && "_id" in tbd && typeof tbd["_id"] === "string";
+}
+
 export type IdentifiedDataItem = Identified<DataItem> | Identified<UserKeys> | User;
+
+export function isIdentifiedDataItem(tbd: unknown): tbd is IdentifiedDataItem {
+	return isIdentified(tbd) && (isDataItem(tbd) || isUserKeys(tbd) || isUser(tbd));
+}

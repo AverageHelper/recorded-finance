@@ -1,10 +1,10 @@
-import type { DataItem, Unsubscribe, UserKeys } from "./database/index.js";
-import type { DocumentData } from "./database/schemas.js";
+import type { DataItem, Unsubscribe } from "./database/index.js";
+import type { DocumentData, IdentifiedDataItem, UserKeys } from "./database/schemas.js";
 import type { DocUpdate } from "./database/io.js";
 import type { Request } from "express";
-import type { WebSocket } from "./database/websockets.js";
+import type { WebsocketRequestHandler } from "express-ws";
+import { allCollectionIds, isIdentifiedDataItem, isObject } from "./database/schemas.js";
 import { asyncWrapper } from "./asyncWrapper.js";
-import { close, send, WebSocketCode } from "./database/websockets.js";
 import { deleteItem, ensure, getFileContents, moveFile, tmpDir } from "./database/filesystem.js";
 import { dirname, resolve as resolvePath, sep as pathSeparator, join } from "path";
 import { env } from "./environment.js";
@@ -15,6 +15,9 @@ import { respondData, respondError, respondSuccess } from "./responses.js";
 import { Router } from "express";
 import { simplifiedByteCount } from "./transformers/simplifiedByteCount.js";
 import { statsForUser } from "./database/io.js";
+import { WebSocketCode } from "./networking/WebSocketCode.js";
+import { ws } from "./networking/websockets.js";
+import Joi from "joi";
 import multer, { diskStorage } from "multer";
 import {
 	CollectionReference,
@@ -213,80 +216,86 @@ const upload = multer({
 	}),
 });
 
-function webSocket(ws: WebSocket, req: Request<Params>): void {
-	const uid = (req.params.uid ?? "") || null;
-	const collectionId = (req.params.collectionId ?? "") || null;
-	const documentId = (req.params.documentId ?? "") || null;
-
-	// Ensure valid input
-	if (uid === null) return close(ws, WebSocketCode.PROTOCOL_ERROR, "Missing user ID");
-	if (collectionId === null)
-		return close(ws, WebSocketCode.PROTOCOL_ERROR, "Missing collection ID");
-	if (!isCollectionId(collectionId))
-		return close(ws, WebSocketCode.PROTOCOL_ERROR, "Invalid collection ID");
-
-	// Send an occasional ping
-	// If the client doesn't respond a few times consecutively, assume they aren't coming back
-	let timesNotThere = 0;
-	const pingInterval = setInterval(() => {
-		if (timesNotThere > 5) {
-			process.stdout.write("Client didn't respond after 5 tries. Closing\n");
-			close(ws, WebSocketCode.WENT_AWAY, "Client did not respond to pings, probably dead");
-			clearInterval(pingInterval);
-			return;
-		}
-		send(ws, "ARE_YOU_STILL_THERE");
-		timesNotThere += 1; // this goes away if the client responds
-	}, 10000); // 10 second interval
-
-	const collection = new CollectionReference<UserKeys>(uid, collectionId);
-	let unsubscribe: Unsubscribe;
-
-	// TODO: Do a dance within the websocket to assert the caller's ID is uid
-
-	if (documentId !== null) {
-		const ref = new DocumentReference(collection, documentId);
-		unsubscribe = watchUpdatesToDocument(ref, data => {
-			console.debug(`Got update for document at ${ref.path}`);
-			send(ws, {
-				message: "Here's your data",
-				dataType: "single",
-				data,
-			});
-		});
-	} else {
-		unsubscribe = watchUpdatesToCollection(collection, data => {
-			console.debug(`Got update for collection at ${collection.path}`);
-			send(ws, {
-				message: "Here's your data",
-				dataType: "multiple",
-				data,
-			});
-		});
-	}
-
-	ws.on("message", msg => {
-		try {
-			const message = (msg as Buffer).toString();
-
-			// ** Stuff we expect to hear from the client:
-			switch (message) {
-				case "START": // nop
-				case "YES_IM_STILL_HERE":
-					timesNotThere = 0;
-					return;
-				case "STOP":
-					unsubscribe();
-					return close(ws, WebSocketCode.NORMAL, "Received STOP message from client");
-				default:
-					return close(ws, WebSocketCode.PROTOCOL_ERROR, "Received unknown message from client");
-			}
-		} catch (error) {
-			console.error(error);
-			close(ws, WebSocketCode.PROTOCOL_ERROR, "Couldn't process that");
-		}
-	});
+interface WatcherData {
+	message: string;
+	dataType: "single" | "multiple";
+	data: Array<IdentifiedDataItem> | IdentifiedDataItem | null;
 }
+
+// const watcherData = Joi.object({
+// 	message: Joi.string().required(),
+// 	dataType: Joi.string().valid("single", "multiple").required(),
+// 	data: Joi.alt(Joi.array().allow(), Joi.valid(null)).required(),
+// });
+
+// type WatcherData = Joi.extractType<typeof watcherData>;
+
+const webSocket: WebsocketRequestHandler = ws(
+	// interactions
+	{
+		stop(tbd): tbd is "STOP" {
+			return tbd === "STOP";
+		},
+		data(tbd): tbd is WatcherData {
+			// TODO: Use Joi for this
+			return (
+				isObject(tbd) && //
+				"message" in tbd &&
+				"dataType" in tbd &&
+				"data" in tbd &&
+				typeof tbd["message"] === "string" &&
+				typeof tbd["dataType"] === "string" &&
+				["single", "multiple"].includes(tbd["dataType"]) &&
+				(isArrayOf(tbd["data"], isIdentifiedDataItem) ||
+					isIdentifiedDataItem(tbd["data"]) ||
+					tbd["data"] === null)
+			);
+		},
+	},
+	// params
+	Joi.object({
+		uid: Joi.string().required(),
+		documentId: Joi.string().required(),
+		collectionId: Joi.string()
+			.valid(...allCollectionIds)
+			.required(),
+	}),
+	// start
+	({ params, onClose, onMessage, send, close }) => {
+		const { uid, collectionId, documentId } = params;
+		const collection = new CollectionReference<UserKeys>(uid, collectionId);
+		let unsubscribe: Unsubscribe;
+
+		// TODO: Assert the caller's ID is uid using some protocol
+
+		if (documentId !== null) {
+			const ref = new DocumentReference(collection, documentId);
+			unsubscribe = watchUpdatesToDocument(ref, data => {
+				console.debug(`Got update for document at ${ref.path}`);
+				send("data", {
+					message: "Here's your data",
+					dataType: "single",
+					data,
+				});
+			});
+		} else {
+			unsubscribe = watchUpdatesToCollection(collection, data => {
+				console.debug(`Got update for collection at ${collection.path}`);
+				send("data", {
+					message: "Here's your data",
+					dataType: "multiple",
+					data,
+				});
+			});
+		}
+
+		onMessage("stop", () => {
+			close(WebSocketCode.NORMAL, "Received STOP message from client");
+		});
+
+		onClose(unsubscribe);
+	}
+);
 
 interface FileData {
 	contents: string;

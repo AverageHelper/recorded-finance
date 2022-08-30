@@ -32,6 +32,8 @@
 		"**/__mocks__/**/*.ts",
 		"./package*.json",
 		"./tsconfig.json",
-		"**/db/**"
+		"**/db/**",
+		"coverage",
+		"tsconfig.*"
 	]
 }
