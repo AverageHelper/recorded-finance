@@ -1,7 +1,29 @@
-import { close, open } from "fs";
+import { close, open } from "node:fs";
+import { homedir, tmpdir } from "node:os";
+import { join, resolve } from "node:path";
+import { mkdir, readFile, rename, stat, unlink, utimes } from "node:fs/promises";
 import { NotFoundError } from "../errors/index.js";
-import { mkdir, readFile, rename, stat, unlink, utimes } from "fs/promises";
-import { tmpdir } from "os";
+
+/**
+ * Resolves the given path, treating `~` as the user's home directory.
+ *
+ * @example
+ * ```ts
+ * resolvePath("~"); // "/Users/foo" on macOS
+ * resolvePath("~/"); // "/Users/foo/" on macOS
+ * resolvePath("/"); // "/"
+ *
+ * // "/Users/foo/Documents/Accountable" on macOS
+ * resolvePath("/Users/foo/Documents/Accountable") ===
+ *   resolvePath("~/Documents/Accountable");
+ * ```
+ */
+export function resolvePath(path: string): string {
+	if (path.startsWith("~")) {
+		return join(homedir(), path.slice(1));
+	}
+	return resolve(path);
+}
 
 /** Removes the item at the given path from the filesystem. */
 export async function deleteItem(path: string): Promise<void> {

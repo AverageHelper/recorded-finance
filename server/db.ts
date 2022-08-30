@@ -6,11 +6,11 @@ import type { WebsocketRequestHandler } from "express-ws";
 import { allCollectionIds, isIdentifiedDataItem, isObject } from "./database/schemas.js";
 import { asyncWrapper } from "./asyncWrapper.js";
 import { deleteItem, ensure, getFileContents, moveFile, tmpDir } from "./database/filesystem.js";
-import { dirname, resolve as resolvePath, sep as pathSeparator, join } from "path";
-import { env } from "./environment.js";
+import { dirname, resolve as resolvePath, sep as pathSeparator, join } from "node:path";
 import { handleErrors } from "./handleErrors.js";
 import { maxSpacePerUser } from "./auth/limits.js";
 import { ownersOnly, requireAuth } from "./auth/index.js";
+import { requireEnv } from "./environment.js";
 import { respondData, respondError, respondSuccess } from "./responses.js";
 import { Router } from "express";
 import { simplifiedByteCount } from "./transformers/simplifiedByteCount.js";
@@ -148,9 +148,9 @@ async function permanentFilePath(params: Params): Promise<string | null> {
 	if (uid.includes("..") || uid.includes(pathSeparator)) return null;
 
 	const DB_ROOT =
-		(process.env.NODE_ENV as string) === "test"
+		(process.env.NODE_ENV as string) === "test" //
 			? resolvePath("./db")
-			: env("DB") ?? resolvePath("./db");
+			: requireEnv("DB");
 	const folder = resolvePath(DB_ROOT, `./users/${uid}/attachments`);
 
 	const path = join(folder, fileName.trim());
