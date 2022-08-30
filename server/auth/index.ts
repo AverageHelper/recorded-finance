@@ -143,6 +143,7 @@ export function auth(this: void): Router {
 		)
 		.get(
 			"/session",
+			// TODO: don't print the error if the user has no access here
 			// throttle(),
 			asyncWrapper(async (req, res) => {
 				// ** If the user has the cookie set, respond with a JWT for the user

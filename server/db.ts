@@ -1,5 +1,10 @@
+import type {
+	CollectionID,
+	DocumentData,
+	IdentifiedDataItem,
+	UserKeys,
+} from "./database/schemas.js";
 import type { DataItem, Unsubscribe } from "./database/index.js";
-import type { DocumentData, IdentifiedDataItem, UserKeys } from "./database/schemas.js";
 import type { DocUpdate } from "./database/io.js";
 import type { Request } from "express";
 import type { WebsocketRequestHandler } from "express-ws";
@@ -261,13 +266,13 @@ const webSocket: WebsocketRequestHandler = ws(
 			.required(),
 	}),
 	// start
-	({ params, onClose, onMessage, send, close }) => {
+	// FIXME: ESLint crashes when we omit a type for `params`:
+	(context, params: Required<Omit<Params, "fileName">> & { collectionId: CollectionID }) => {
+		const { onClose, onMessage, send, close } = context;
 		const { uid, collectionId, documentId } = params;
 		const collection = new CollectionReference<UserKeys>(uid, collectionId);
 		let unsubscribe: Unsubscribe;
-
 		// TODO: Assert the caller's ID is uid using some protocol
-
 		if (documentId !== null) {
 			const ref = new DocumentReference(collection, documentId);
 			unsubscribe = watchUpdatesToDocument(ref, data => {

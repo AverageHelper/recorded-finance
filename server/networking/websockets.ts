@@ -3,6 +3,7 @@ import type { ValueIteratorTypeGuard } from "../database/index.js";
 import type { WebsocketRequestHandler } from "express-ws";
 import type { WebSocket } from "ws";
 import Joi from "joi";
+import "joi-extract-type";
 import { assertSchema, isObject } from "../database/schemas.js";
 import { WebSocketCode } from "./WebSocketCode.js";
 import { WebSocketError } from "../errors/WebSocketError.js";
@@ -159,7 +160,7 @@ export function ws<
 >(
 	interactions: T,
 	params: Params,
-	start: (context: WebSocketUtils<T> & { params: Joi.extractType<Params> }) => void
+	start: (context: WebSocketUtils<T>, params: Joi.extractType<Params>) => void
 ): WebsocketRequestHandler {
 	return function webSocket(ws: WebSocket, req: Request<Record<string, string>>): void {
 		const context = wsFactory(ws, interactions);
@@ -176,6 +177,6 @@ export function ws<
 			return context.close(WebSocketCode.UNEXPECTED_CONDITION, "Internal error");
 		}
 
-		start({ ...context, params: req.params });
+		start(context, req.params);
 	};
 }
