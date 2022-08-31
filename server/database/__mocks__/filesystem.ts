@@ -5,7 +5,6 @@ import type {
 	fileExists as _fileExists,
 	getFileContents as _getFileContents,
 	moveFile as _moveFile,
-	touch as _touch,
 } from "../filesystem.js";
 import { jest } from "@jest/globals";
 
@@ -20,5 +19,3 @@ export const fileExists = jest.fn<typeof _fileExists>().mockResolvedValue(false)
 export const getFileContents = jest.fn<typeof _getFileContents>().mockResolvedValue("{}");
 
 export const moveFile = jest.fn<typeof _moveFile>().mockResolvedValue(undefined);
-
-export const touch = jest.fn<typeof _touch>().mockResolvedValue(undefined);
