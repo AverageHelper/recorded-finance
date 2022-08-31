@@ -230,7 +230,7 @@ interface WatcherData {
 // const watcherData = Joi.object({
 // 	message: Joi.string().required(),
 // 	dataType: Joi.string().valid("single", "multiple").required(),
-// 	data: Joi.alt(Joi.array().allow(), Joi.valid(null)).required(),
+// 	data: Joi.alt(Joi.array().items(...), Joi.valid(null)).required(),
 // });
 
 // type WatcherData = Joi.extractType<typeof watcherData>;
@@ -260,16 +260,22 @@ const webSocket: WebsocketRequestHandler = ws(
 	// params
 	Joi.object({
 		uid: Joi.string().required(),
-		documentId: Joi.string().required(),
+		documentId: Joi.string().allow(null).default(null).optional(),
 		collectionId: Joi.string()
 			.valid(...allCollectionIds)
 			.required(),
 	}),
 	// start
 	// FIXME: ESLint crashes when we omit a type for `params`:
-	(context, params: Required<Omit<Params, "fileName">> & { collectionId: CollectionID }) => {
+	(
+		context,
+		params: Required<Omit<Params, "fileName" | "documentId">> & {
+			collectionId: CollectionID;
+			documentId?: string | null;
+		}
+	) => {
 		const { onClose, onMessage, send, close } = context;
-		const { uid, collectionId, documentId } = params;
+		const { uid, collectionId, documentId = null } = params;
 		const collection = new CollectionReference<UserKeys>(uid, collectionId);
 		let unsubscribe: Unsubscribe;
 		// TODO: Assert the caller's ID is uid using some protocol

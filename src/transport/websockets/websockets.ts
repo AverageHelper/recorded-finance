@@ -1,12 +1,22 @@
-import type { Request } from "express";
-import type { ValueIteratorTypeGuard } from "../database/index.js";
-import type { WebsocketRequestHandler } from "express-ws";
-import type { WebSocket } from "ws";
-import Joi from "joi";
-import "joi-extract-type";
-import { assertSchema, isObject } from "../database/schemas.js";
+import type { ValueIteratorTypeGuard } from "lodash";
+import { isRecord } from "../schemas.js";
 import { isWebSocketCode, WebSocketCode } from "./WebSocketCode.js";
-import { WebSocketError } from "../errors/WebSocketError.js";
+import { t } from "../../i18n.js";
+import { UnexpectedResponseError } from "../errors/UnexpectedResponseError.js";
+
+class WebSocketError extends Error {
+	readonly code: WebSocketCode;
+
+	constructor(code: WebSocketCode, reason: string) {
+		super(reason);
+		this.name = "WebSocketError";
+		this.code = code;
+	}
+
+	get reason(): string {
+		return this.message;
+	}
+}
 
 /** The type that a type guard is checking. */
 type TypeFromGuard<G> = G extends ValueIteratorTypeGuard<unknown, infer T> ? T : never;
@@ -58,7 +68,7 @@ export function wsFactory<T extends WebSocketMessages>(
 		tbd: unknown
 	): tbd is _WebSocketMessage<M> {
 		if (
-			!isObject(tbd) || //
+			!isRecord(tbd) || //
 			!("name" in tbd) ||
 			!("data" in tbd) ||
 			tbd["name"] !== name
@@ -81,56 +91,33 @@ export function wsFactory<T extends WebSocketMessages>(
 		ws.send(JSON.stringify(message));
 	}
 
-	// Send an occasional ping
-	// If the client doesn't respond a few times consecutively, assume they aren't coming back
-	let timesNotThere = 0;
-	ws.on("open", () => {
-		const pingInterval = setInterval(() => {
-			if (timesNotThere > 5) {
-				process.stdout.write("Client didn't respond after 5 tries. Closing\n");
-				close(ws, WebSocketCode.WENT_AWAY, "Client did not respond to pings, probably dead");
-				clearInterval(pingInterval);
-				return;
-			}
-			ws.ping();
-			console.debug("sent ping to client");
-			timesNotThere += 1; // this goes away if the client responds
-		}, 10000); // 10 second interval
-
-		ws.on("close", () => {
-			clearInterval(pingInterval);
-		});
-	});
-
-	ws.on("pong", () => {
-		console.debug("received pong from client");
-		timesNotThere = 0;
-	});
-
-	ws.on("ping", data => {
-		console.debug("ping", data);
-		ws.pong(data); // answer the ping with the data
-	});
-
 	// Application-layer communications
 	return {
 		onClose(cb): void {
-			ws.on("close", (code, reason) => {
+			ws.addEventListener("close", ({ code, reason }) => {
 				if (isWebSocketCode(code)) {
-					cb(code, reason.toString("utf-8"));
+					cb(code, reason);
 				} else {
 					cb(
 						WebSocketCode.UNEXPECTED_CONDITION,
-						`Closed with reason "${reason.toString("utf-8")}" and unknown code ${code}`
+						`Closed with reason "${reason}" and unknown code ${code}`
 					);
 				}
 			});
 		},
 
 		onMessage(name, cb): void {
-			ws.on("message", msg => {
+			ws.addEventListener("message", res => {
+				let message: unknown;
 				try {
-					const message = JSON.parse((msg as Buffer).toString()) as unknown;
+					message = JSON.parse((res.data as { toString: () => string }).toString()) as unknown;
+				} catch (error) {
+					throw new UnexpectedResponseError(
+						t("error.ws.not-json", { values: { message: JSON.stringify(error) } })
+					);
+				}
+
+				try {
 					if (!isWebSocketMessage(name, message))
 						throw new WebSocketError(WebSocketCode.WRONG_MESSAGE_TYPE, "Improper message");
 
@@ -145,7 +132,7 @@ export function wsFactory<T extends WebSocketMessages>(
 				}
 			});
 
-			ws.on("error", error => {
+			ws.addEventListener("error", error => {
 				console.error("Websocket error:", error);
 			});
 		},
@@ -157,33 +144,5 @@ export function wsFactory<T extends WebSocketMessages>(
 		close(code, reason): void {
 			close(ws, code, reason);
 		},
-	};
-}
-
-export function ws<
-	N extends Joi.BoxSchema,
-	T extends WebSocketMessages,
-	Params extends Joi.BoxObjectSchema<N>
->(
-	interactions: T,
-	params: Params,
-	start: (context: WebSocketUtils<T>, params: Joi.extractType<Params>) => void
-): WebsocketRequestHandler {
-	return function webSocket(ws: WebSocket, req: Request<Record<string, string>>): void {
-		const context = wsFactory(ws, interactions);
-
-		// Ensure valid input
-		try {
-			assertSchema(req.params, params);
-		} catch (error) {
-			if (error instanceof Joi.ValidationError) {
-				// TODO: Test that this error message makes sense.
-				return context.close(WebSocketCode.VIOLATED_CONTRACT, error.message);
-			}
-			console.error(error);
-			return context.close(WebSocketCode.UNEXPECTED_CONDITION, "Internal error");
-		}
-
-		start(context, req.params);
 	};
 }
