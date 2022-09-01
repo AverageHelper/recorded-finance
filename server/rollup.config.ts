@@ -37,6 +37,8 @@ export default defineConfig({
 		defaultHandler(warning);
 	},
 	external: [
+		// TODO: See about bundling all of these:
+
 		// "bcrypt" is C++, so can't be bundled directly.
 		// Externalizing fixes unresolved "nock", "aws-sdk", and "mock-aws-s3" packages
 		"bcrypt",
