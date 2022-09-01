@@ -1,6 +1,7 @@
 import type { User } from "../database/schemas.js";
 import { addJwtToBlacklist, jwtTokenFromRequest, newAccessToken } from "./jwt.js";
 import { asyncWrapper } from "../asyncWrapper.js";
+import { compare, genSalt, hash } from "bcrypt";
 import { Context } from "./Context.js";
 import { MAX_USERS } from "./limits.js";
 import { metadataFromRequest } from "./requireAuth.js";
@@ -8,7 +9,6 @@ import { respondSuccess } from "../responses.js";
 import { Router } from "express";
 import { throttle } from "./throttle.js";
 import { v4 as uuid } from "uuid";
-import bcrypt from "bcrypt";
 import {
 	BadRequestError,
 	DuplicateAccountError,
@@ -33,11 +33,11 @@ interface ReqBody {
 }
 
 async function generateSalt(): Promise<string> {
-	return await bcrypt.genSalt(15);
+	return await genSalt(15);
 }
 
 async function generateHash(input: string, salt: string): Promise<string> {
-	return await bcrypt.hash(input, salt);
+	return await hash(input, salt);
 }
 
 async function userWithAccountId(accountId: string): Promise<User | null> {
@@ -128,7 +128,7 @@ export function auth(this: void): Router {
 				}
 
 				// ** Verify credentials
-				const isPasswordGood = await bcrypt.compare(givenPassword, storedUser.passwordHash);
+				const isPasswordGood = await compare(givenPassword, storedUser.passwordHash);
 				if (!isPasswordGood) {
 					console.debug(`The given password doesn't match what's stored`);
 					throw new UnauthorizedError("wrong-credentials");
@@ -192,7 +192,7 @@ export function auth(this: void): Router {
 				}
 
 				// ** Verify credentials
-				const isPasswordGood = await bcrypt.compare(givenPassword, storedUser.passwordHash);
+				const isPasswordGood = await compare(givenPassword, storedUser.passwordHash);
 				if (!isPasswordGood) {
 					throw new UnauthorizedError("wrong-credentials");
 				}
@@ -229,7 +229,7 @@ export function auth(this: void): Router {
 				}
 
 				// ** Verify old credentials
-				const isPasswordGood = await bcrypt.compare(givenPassword, storedUser.passwordHash);
+				const isPasswordGood = await compare(givenPassword, storedUser.passwordHash);
 				if (!isPasswordGood) {
 					throw new UnauthorizedError("wrong-credentials");
 				}
@@ -274,7 +274,7 @@ export function auth(this: void): Router {
 				}
 
 				// ** Verify old credentials
-				const isPasswordGood = await bcrypt.compare(givenPassword, storedUser.passwordHash);
+				const isPasswordGood = await compare(givenPassword, storedUser.passwordHash);
 				if (!isPasswordGood) {
 					throw new UnauthorizedError("wrong-credentials");
 				}

@@ -1,5 +1,5 @@
 import { env } from "../environment.js";
-import { promisify } from "util";
+import { promisify } from "node:util";
 import { simplifiedByteCount } from "../transformers/index.js";
 import fastFolderSize from "fast-folder-size";
 
@@ -19,4 +19,4 @@ if ((process.env.NODE_ENV as string) !== "test") {
 	);
 }
 
-export const folderSize: (path: string) => Promise<number | undefined> = promisify(fastFolderSize);
+export const folderSize = promisify(fastFolderSize);
