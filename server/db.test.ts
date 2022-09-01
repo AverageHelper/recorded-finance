@@ -68,7 +68,7 @@ describe("File path constructor", () => {
 	`(
 		"Throws if the path contains path arguments (fileName: '$fileName', documentId: '$documentId', uid: 'uid')",
 		async (params: { fileName: string; documentId: string; uid: string }) => {
-			await expect(temporaryFilePath(params)).rejects.toThrowError(BadRequestError);
+			await expect(temporaryFilePath(params)).rejects.toThrow(BadRequestError);
 		}
 	);
 });

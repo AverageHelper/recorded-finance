@@ -1,6 +1,6 @@
 {
 	"root": true,
-	"ignorePatterns": ["dist", "node_modules", "src/version.ts", "server", ".gitignore", "coverage"],
+	"ignorePatterns": ["dist", "node_modules", "./version.ts", ".gitignore", "coverage"],
 
 	"extends": [
 		"strictest/eslint",
@@ -16,7 +16,7 @@
 	"plugins": ["prettier", "unicorn", "promise", "deprecation", "@typescript-eslint"],
 	"parser": "@typescript-eslint/parser",
 	"parserOptions": {
-		"project": "./tsconfig.prod.json",
+		"project": "./tsconfig.json",
 		"tsconfigRootDir": ".",
 		"extraFileExtensions": []
 	},
@@ -55,7 +55,7 @@
 
 	"overrides": [
 		{
-			"files": ["./*.ts", "src/**/*.test.ts", "tests/**/*.ts", "**/__mocks__/**/*.ts"],
+			"files": ["**/*.test.ts", "**/__mocks__/**/*.ts"],
 			"extends": ["plugin:prettier/recommended"],
 			"plugins": ["prettier", "@typescript-eslint"],
 			"parser": "@typescript-eslint/parser",
