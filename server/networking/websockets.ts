@@ -1,11 +1,11 @@
 import type { Request } from "express";
+import type { Struct } from "superstruct";
 import type { ValueIteratorTypeGuard } from "../database/index.js";
 import type { WebsocketRequestHandler } from "express-ws";
 import type { WebSocket } from "ws";
-import Joi from "joi";
-import "joi-extract-type";
 import { assertSchema, isObject } from "../database/schemas.js";
 import { isWebSocketCode, WebSocketCode } from "./WebSocketCode.js";
+import { StructError } from "superstruct";
 import { WebSocketError } from "../errors/WebSocketError.js";
 
 /** The type that a type guard is checking. */
@@ -160,14 +160,10 @@ export function wsFactory<T extends WebSocketMessages>(
 	};
 }
 
-export function ws<
-	N extends Joi.BoxSchema,
-	T extends WebSocketMessages,
-	Params extends Joi.BoxObjectSchema<N>
->(
+export function ws<P, T extends WebSocketMessages>(
 	interactions: T,
-	params: Params,
-	start: (context: WebSocketUtils<T>, params: Joi.extractType<Params>) => void
+	params: Struct<P>,
+	start: (context: WebSocketUtils<T>, params: P) => void
 ): WebsocketRequestHandler {
 	return function webSocket(ws: WebSocket, req: Request<Record<string, string>>): void {
 		const context = wsFactory(ws, interactions);
@@ -176,8 +172,7 @@ export function ws<
 		try {
 			assertSchema(req.params, params);
 		} catch (error) {
-			if (error instanceof Joi.ValidationError) {
-				// TODO: Test that this error message makes sense.
+			if (error instanceof StructError) {
 				return context.close(WebSocketCode.VIOLATED_CONTRACT, error.message);
 			}
 			console.error(error);

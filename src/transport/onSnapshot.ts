@@ -1,10 +1,12 @@
 import type { CollectionReference, DocumentReference, Query } from "./db.js";
 import type { DocumentData } from "./schemas.js";
+import type { Infer } from "superstruct";
+import { documentData } from "./schemas.js";
 import { AccountableError, UnexpectedResponseError, UnreachableCaseError } from "./errors/index.js";
+import { array, enums, is, nonempty, nullable, object, string, union } from "superstruct";
 import { collection, doc as docRef } from "./db.js";
 import { databaseCollection, databaseDocument } from "./api-types/index.js";
-import { isArray, isArrayOf } from "../helpers/isArray.js";
-import { isDocumentData, isRecord } from "./schemas.js";
+import { isArray } from "../helpers/isArray.js";
 import { isString } from "../helpers/isString.js";
 import { t } from "../i18n.js";
 import { WebSocketCode } from "./websockets/WebSocketCode.js";
@@ -329,30 +331,20 @@ export function onSnapshot<T>(
 			break;
 	}
 
-	interface WatcherData {
-		message: string;
-		dataType: "single" | "multiple";
-		data: Array<DocumentData> | DocumentData | null;
-	}
+	const watcherData = object({
+		message: nonempty(string()),
+		dataType: enums(["single", "multiple"] as const),
+		data: nullable(union([array(documentData), documentData])),
+	});
+
+	type WatcherData = Infer<typeof watcherData>;
 
 	const { onClose, onMessage, send } = wsFactory(new WebSocket(url), {
 		stop(tbd): tbd is "STOP" {
 			return tbd === "STOP";
 		},
 		data(tbd): tbd is WatcherData {
-			// TODO: Use Superstruct for this
-			return (
-				isRecord(tbd) && //
-				"message" in tbd &&
-				"dataType" in tbd &&
-				"data" in tbd &&
-				typeof tbd["message"] === "string" &&
-				typeof tbd["dataType"] === "string" &&
-				["single", "multiple"].includes(tbd["dataType"]) &&
-				(isArrayOf(tbd["data"], isDocumentData) ||
-					isDocumentData(tbd["data"]) ||
-					tbd["data"] === null)
-			);
+			return is(tbd, watcherData);
 		},
 	});
 

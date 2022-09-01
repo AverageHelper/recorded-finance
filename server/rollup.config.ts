@@ -46,8 +46,7 @@ export default defineConfig({
 		"utf-8-validate",
 		"fast-folder-size",
 
-		// Rollup doesn't like these very much:
-		"joi",
+		// Rollup doesn't like this very much:
 		"multer",
 	],
 	input: "./main.ts",

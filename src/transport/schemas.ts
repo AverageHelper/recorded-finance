@@ -60,10 +60,6 @@ export const documentData = define<DocumentData>(
 	value => isRecord(value) && Object.values(value).every(isPrimitive)
 );
 
-export function isDocumentData(tbd: unknown): tbd is DocumentData {
-	return is(tbd, documentData);
-}
-
 const rawServerResponse = object({
 	message: optional(string()),
 	code: optional(string()),

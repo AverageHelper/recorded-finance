@@ -1,17 +1,14 @@
-import type {
-	CollectionID,
-	DocumentData,
-	IdentifiedDataItem,
-	UserKeys,
-} from "./database/schemas.js";
 import type { DataItem, Unsubscribe } from "./database/index.js";
+import type { DocumentData, UserKeys } from "./database/schemas.js";
 import type { DocUpdate } from "./database/io.js";
+import type { Infer } from "superstruct";
 import type { Request } from "express";
 import type { WebsocketRequestHandler } from "express-ws";
-import { allCollectionIds, isIdentifiedDataItem, isObject } from "./database/schemas.js";
+import { allCollectionIds, identifiedDataItem, isValidForSchema } from "./database/schemas.js";
 import { asyncWrapper } from "./asyncWrapper.js";
 import { deleteItem, ensure, getFileContents, moveFile, tmpDir } from "./database/filesystem.js";
 import { dirname, resolve as resolvePath, sep as pathSeparator, join } from "node:path";
+import { array, enums, nonempty, nullable, object, optional, string, union } from "superstruct";
 import { handleErrors } from "./handleErrors.js";
 import { maxSpacePerUser } from "./auth/limits.js";
 import { ownersOnly, requireAuth } from "./auth/index.js";
@@ -22,7 +19,6 @@ import { simplifiedByteCount } from "./transformers/simplifiedByteCount.js";
 import { statsForUser } from "./database/io.js";
 import { WebSocketCode } from "./networking/WebSocketCode.js";
 import { ws } from "./networking/websockets.js";
-import Joi from "joi";
 import multer, { diskStorage } from "multer";
 import {
 	CollectionReference,
@@ -221,19 +217,13 @@ const upload = multer({
 	}),
 });
 
-interface WatcherData {
-	message: string;
-	dataType: "single" | "multiple";
-	data: Array<IdentifiedDataItem> | IdentifiedDataItem | null;
-}
+const watcherData = object({
+	message: nonempty(string()),
+	dataType: enums(["single", "multiple"] as const),
+	data: nullable(union([array(identifiedDataItem), identifiedDataItem])),
+});
 
-// const watcherData = Joi.object({
-// 	message: Joi.string().required(),
-// 	dataType: Joi.string().valid("single", "multiple").required(),
-// 	data: Joi.alt(Joi.array().items(...), Joi.valid(null)).required(),
-// });
-
-// type WatcherData = Joi.extractType<typeof watcherData>;
+type WatcherData = Infer<typeof watcherData>;
 
 const webSocket: WebsocketRequestHandler = ws(
 	// interactions
@@ -242,38 +232,17 @@ const webSocket: WebsocketRequestHandler = ws(
 			return tbd === "STOP";
 		},
 		data(tbd): tbd is WatcherData {
-			// TODO: Use Joi for this
-			return (
-				isObject(tbd) && //
-				"message" in tbd &&
-				"dataType" in tbd &&
-				"data" in tbd &&
-				typeof tbd["message"] === "string" &&
-				typeof tbd["dataType"] === "string" &&
-				["single", "multiple"].includes(tbd["dataType"]) &&
-				(isArrayOf(tbd["data"], isIdentifiedDataItem) ||
-					isIdentifiedDataItem(tbd["data"]) ||
-					tbd["data"] === null)
-			);
+			return isValidForSchema(tbd, watcherData);
 		},
 	},
 	// params
-	Joi.object({
-		uid: Joi.string().required(),
-		documentId: Joi.string().allow(null).default(null).optional(),
-		collectionId: Joi.string()
-			.valid(...allCollectionIds)
-			.required(),
+	object({
+		uid: nonempty(string()),
+		documentId: optional(nullable(nonempty(string()))),
+		collectionId: enums(allCollectionIds),
 	}),
 	// start
-	// FIXME: ESLint crashes when we omit a type for `params`:
-	(
-		context,
-		params: Required<Omit<Params, "fileName" | "documentId">> & {
-			collectionId: CollectionID;
-			documentId?: string | null;
-		}
-	) => {
+	(context, params) => {
 		const { onClose, onMessage, send, close } = context;
 		const { uid, collectionId, documentId = null } = params;
 		const collection = new CollectionReference<UserKeys>(uid, collectionId);
