@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - BREAKING: The server now requires the `DB` environment variable to be set.
 - Improved front-end JavaScript fallback message. JavaScript blocking plugins don't always fall back to the `noscript` tag we used to use, so now we instead insert a tag that appears on load. JavaScript removes that element if JavaScript execution is available.
-- Back-end code now gets bundled into an almost-self-contained JS file. A few dependencies still need to stay in node_modules for the time being, but I expect that to change soon.
+- Back-end code now gets bundled into an almost-self-contained JS file. A few dependencies still need to stay in node_modules for the time being, but I expect that to change soon. This new bundle should mean faster initial load times, but I haven't tested that, and I don't care. I just think Rollup is neat.
 
 ## [0.10.2] - 2022-08-13
 ### Fixed
