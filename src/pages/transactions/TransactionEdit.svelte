@@ -2,7 +2,7 @@
 	import type { Account } from "../../model/Account";
 	import type { Location, PendingLocation } from "../../model/Location";
 	import type { Transaction, TransactionRecordParams } from "../../model/Transaction";
-	import { _ } from "svelte-i18n";
+	import { _, locale } from "../../i18n";
 	import { createEventDispatcher, onMount } from "svelte";
 	import { equal, isNegative, isZero, toSnapshot } from "dinero.js";
 	import { recordFromLocation } from "../../model/Location";
@@ -200,7 +200,7 @@
 
 		try {
 			if (ogTransaction === null) {
-				throw new Error("No account to delete"); // TODO: I18N
+				throw new Error($_("accounts.cannot-delete-none-found"));
 			}
 
 			await deleteTransaction(ogTransaction);
@@ -219,48 +219,57 @@
 </script>
 
 <form class="form-74f64236 {isExpense ? 'expense' : ''}" on:submit|preventDefault={submit}>
-	<!-- TODO: I18N -->
 	{#if isCreatingTransaction}
-		<h1>Create {isExpense ? "Expense" : "Income"}</h1>
+		{#if isExpense}
+			<h1>{$_("transactions.create.expense")}</h1>
+		{:else}
+			<h1>{$_("transactions.create.income")}</h1>
+		{/if}
+	{:else if isExpense}
+		<h1>{$_("transactions.edit.expense")}</h1>
 	{:else}
-		<h1>Edit {isExpense ? "Expense" : "Income"}</h1>
+		<h1>{$_("transactions.edit.income")}</h1>
 	{/if}
 
-	<span>Account: {account.title ?? "Unknown"}</span>
+	<span>Account: {account.title ?? $_("accounts.unknown-title")}</span>
 
-	<DateTimeInput value={createdAt} label="date" on:input={e => (createdAt = e.detail)} />
+	<DateTimeInput
+		value={createdAt}
+		label={$_("transactions.meta.date")}
+		on:input={e => (createdAt = e.detail)}
+	/>
 	<div class="moneys">
 		<CurrencyInput
 			value={amount}
 			class="currency"
-			label="amount"
+			label={$_("transactions.meta.amount").toLocaleLowerCase($locale.code)}
 			on:input={e => (amount = e.detail)}
 		/>
 		<Checkbox
 			value={isReconciled}
 			class="reconciliation"
-			label="Reconciled"
+			label={$_("transactions.meta.reconciled")}
 			on:change={e => (isReconciled = e.detail)}
 		/>
 	</div>
 	<TextField
 		value={title}
-		label="title"
-		placeholder="Bank Money"
+		label={$_("transactions.meta.title").toLocaleLowerCase($locale.code)}
+		placeholder={$_("example.income-transaction-title")}
 		required
 		on:input={e => (title = e.detail)}
 	/>
 	<LocationField value={locationData} on:change={onLocationUpdate} />
 	<TextAreaField
 		value={notes}
-		label="notes"
-		placeholder="This is a thing"
+		label={$_("transactions.meta.notes").toLocaleLowerCase($locale.code)}
+		placeholder={$_("example.transaction-note")}
 		on:input={e => (notes = e.detail)}
 	/>
 
 	<div class="buttons">
 		<ActionButton type="submit" kind="bordered-primary" disabled={!hasChanges || isLoading}>
-			<CheckmarkIcon /> Save</ActionButton
+			<CheckmarkIcon /> {$_("common.save-imperative")}</ActionButton
 		>
 		{#if !isCreatingTransaction && !hasAttachments}
 			<ActionButton
@@ -268,15 +277,15 @@
 				disabled={isLoading}
 				on:click={askToDeleteTransaction}
 			>
-				<TrashIcon /> Delete</ActionButton
+				<TrashIcon /> {$_("common.delete-imperative")}</ActionButton
 			>
 		{/if}
 	</div>
 	{#if isLoading}
-		<p>Saving...</p>
+		<p>{$_("common.saving-in-progress")}</p>
 	{/if}
 	{#if hasAttachments}
-		<p>You must delete attachments before you may delete this transaction.</p>
+		<p>{$_("transactions.delete.detach-first")}</p>
 	{/if}
 
 	{#if transaction}

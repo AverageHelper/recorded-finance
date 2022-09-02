@@ -1,6 +1,7 @@
 import type { Model } from "./utility/Model";
-import isDate from "lodash/isDate";
-import isString from "lodash/isString";
+import { isDate } from "../helpers/isDate";
+import { isString } from "../helpers/isString";
+import { t } from "../i18n";
 
 function isStringOrNull(tbd: unknown): tbd is string | null {
 	return tbd === null || isString(tbd);
@@ -20,7 +21,9 @@ export function account(params: Omit<Account, "objectType">): Account {
 		id: params.id,
 		notes: (params.notes?.trim() ?? "") || null,
 		objectType: "Account",
-		title: params.title.trim() || `Account ${Math.floor(Math.random() * 10) + 1}`, // TODO: I18N
+		title:
+			params.title.trim() ||
+			t("accounts.numbered", { values: { number: Math.floor(Math.random() * 10) + 1 } }),
 	};
 }
 

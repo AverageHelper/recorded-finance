@@ -2,7 +2,7 @@ module.exports = {
 	apps: [
 		{
 			name: "accountable",
-			script: "./dist/main.js",
+			script: "./dist/server.js",
 			cwd: __dirname,
 			source_map_support: true,
 			watch: ["dist"],

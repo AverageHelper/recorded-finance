@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { _ } from "svelte-i18n";
+	import { _ } from "../../i18n";
 	import { createEventDispatcher } from "svelte";
+	import { stringFormattedDate } from "../../transformers/stringFormattedDate";
 	import ActionButton from "../buttons/ActionButton.svelte";
-	import formatDate from "date-fns/format";
 
 	const dispatch = createEventDispatcher<{ input: Date }>();
 
@@ -15,11 +15,6 @@
 	export let label: string = "";
 	export let min: Date | null = null;
 	export let max: Date | null = null;
-
-	function stringFormattedDate(date: Date | null): string | undefined {
-		if (date === null) return undefined;
-		return formatDate(date, "yyyy-MM-dd'T'HH:mm");
-	}
 
 	function reset(event: Event) {
 		event.preventDefault();
@@ -63,7 +58,6 @@
 			padding: 0.4em 0;
 			margin: 0.6em 0;
 			margin-left: 1em;
-			width: -moz-fit-content;
 			width: fit-content;
 		}
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { _ } from "../../i18n";
 	import { loginPath } from "../routes";
 	import { logout } from "../../store";
 	import { onMount } from "svelte";
@@ -22,5 +23,5 @@
 </script>
 
 <main class="content">
-	<p>Logging out...</p>
+	<p>{$_("login.logging-out")}</p>
 </main>

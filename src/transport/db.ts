@@ -7,10 +7,11 @@ import type { ValueIteratorTypeGuard } from "lodash";
 import { AccountableError } from "./errors/index.js";
 import { decrypt } from "./cryption.js";
 import { forgetJobQueue, useJobQueue } from "@averagehelper/job-queue";
+import { isArray } from "../helpers/isArray";
 import { isPrimitive } from "./schemas.js";
+import { isString } from "../helpers/isString";
+import { t } from "../i18n";
 import { v4 as uuid } from "uuid";
-import isArray from "lodash/isArray";
-import isString from "lodash/isString";
 import {
 	databaseBatchWrite,
 	databaseCollection,
@@ -151,9 +152,9 @@ export function doc<T = DocumentData>(
 ): DocumentReference<T> {
 	if ("url" in dbOrCollection) {
 		if (!collectionId || id === undefined) {
-			throw new TypeError(`Missing property in constructor`); // TODO: I18N?
+			throw new TypeError(t("error.sanity.missing-constructor-property"));
 		}
-		if (!id) throw new TypeError("ID cannot be empty"); // TODO: I18N?
+		if (!id) throw new TypeError(t("error.sanity.empty-param", { values: { name: "ID" } }));
 		const parent = collection<T>(dbOrCollection, collectionId);
 		return { id, parent, db: dbOrCollection, type: "document" };
 	}
@@ -192,14 +193,14 @@ export class WriteBatch {
 		// Ensure limit
 		const OP_LIMIT = 500;
 		if (this.#operations.length >= OP_LIMIT) {
-			throw new RangeError(`Cannot batch more than ${OP_LIMIT} write operations.`); // TODO: I18N?
+			throw new RangeError(t("error.db.batch.op-limit", { values: { limit: OP_LIMIT } }));
 		}
 
 		// Same db
 		if (!this.#db) {
 			this.#db = op.ref.db;
 		} else if (op.ref.db !== this.#db) {
-			throw new EvalError("Must use exactly one database in a write batch"); // TODO: I18N?
+			throw new EvalError(t("error.db.batch.one-db"));
 		}
 
 		// Push operation
@@ -281,7 +282,9 @@ export function bootstrap(url?: string): AccountableDB {
 	const serverUrl = url ?? import.meta.env.VITE_ACCOUNTABLE_SERVER_URL;
 
 	if (serverUrl === undefined || !serverUrl) {
-		throw new TypeError("No value found for environment variable VITE_ACCOUNTABLE_SERVER_URL"); // TODO: I18N?
+		throw new TypeError(
+			t("error.sanity.missing-env-var", { values: { key: "VITE_ACCOUNTABLE_SERVER_URL" } })
+		);
 	}
 
 	db = new AccountableDB(serverUrl);
@@ -332,9 +335,8 @@ export async function getDoc<D, T extends PrimitiveRecord<D>>(
 	const docPath = new URL(databaseDocument(uid, collection, doc), reference.db.url);
 	const { data } = await getFrom(docPath);
 
-	if (data === undefined) throw new TypeError("Expected data from server, but got none"); // TODO: I18N?
-	if (isArray(data))
-		throw new TypeError("Expected a single document from server, but got an array"); // TODO: I18N?
+	if (data === undefined) throw new TypeError(t("error.server.no-data"));
+	if (isArray(data)) throw new TypeError(t("error.server.too-many-documents"));
 
 	return new DocumentSnapshot<T>(reference, data as T | null);
 }
@@ -400,16 +402,15 @@ export async function getDocs<T>(query: CollectionReference<T>): Promise<QuerySn
 	const collPath = new URL(databaseCollection(uid, collection), query.db.url);
 
 	const { data } = await getFrom(collPath);
-	if (data === undefined) throw new TypeError("Expected data from server, but got none"); // TODO: I18N?
-	if (data === null || !isArray(data))
-		throw new TypeError("Expected an array of documents from server, but got one document"); // TODO: I18N?
+	if (data === undefined) throw new TypeError(t("error.server.no-data"));
+	if (data === null || !isArray(data)) throw new TypeError(t("error.server.too-few-documents"));
 
 	return new QuerySnapshot(
 		query,
 		data.map(data => {
 			const id = data["_id"];
 			delete data["_id"];
-			if (!isString(id)) throw new TypeError("Expected ID to be string"); // TODO: I18N?
+			if (!isString(id)) throw new TypeError(t("error.server.id-not-string"));
 
 			return new QueryDocumentSnapshot(doc(query.db, query.id, id), data as unknown as T);
 		})
@@ -456,8 +457,11 @@ export function recordFromSnapshot<G, T extends string>(
 	const pkg = doc.data();
 	const record = decrypt(pkg, dek);
 	if (!typeGuard(record)) {
-		console.debug(`Record does not match '${typeGuard.name}' type guard`, record);
-		throw new TypeError(`Failed to parse record from server document ${doc.id}`); // TODO: I18N?
+		console.debug(
+			t("error.db.record-does-not-match-guard", { values: { guard: typeGuard.name } }),
+			record
+		);
+		throw new TypeError(t("error.db.could-not-parse-document", { values: { id: doc.id } }));
 	}
 	return { id: doc.id, record };
 }

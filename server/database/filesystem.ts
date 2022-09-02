@@ -1,7 +1,28 @@
-import { close, open } from "fs";
+import { homedir, tmpdir } from "node:os";
+import { join, resolve } from "node:path";
+import { mkdir, readFile, rename, stat, unlink } from "node:fs/promises";
 import { NotFoundError } from "../errors/index.js";
-import { mkdir, readFile, rename, stat, unlink, utimes } from "fs/promises";
-import { tmpdir } from "os";
+
+/**
+ * Resolves the given path, treating `~` as the user's home directory.
+ *
+ * @example
+ * ```ts
+ * resolvePath("~"); // "/Users/foo" on macOS
+ * resolvePath("~/"); // "/Users/foo/" on macOS
+ * resolvePath("/"); // "/"
+ *
+ * // "/Users/foo/Documents/Accountable" on macOS
+ * resolvePath("/Users/foo/Documents/Accountable") ===
+ *   resolvePath("~/Documents/Accountable");
+ * ```
+ */
+export function resolvePath(path: string): string {
+	if (path.startsWith("~")) {
+		return join(homedir(), path.slice(1));
+	}
+	return resolve(path);
+}
 
 /** Removes the item at the given path from the filesystem. */
 export async function deleteItem(path: string): Promise<void> {
@@ -92,35 +113,5 @@ export async function moveFile(src: string, dest: string): Promise<void> {
 			throw new NotFoundError();
 		}
 		throw error;
-	}
-}
-
-/**
- * Creates a file, or updates the timestamps of the existing file.
- * @see https://remarkablemark.org/blog/2017/12/17/touch-file-nodejs/
- *
- * @param filename The path to the file to touch.
- */
-export async function touch(filename: string): Promise<void> {
-	try {
-		// Update the file's timestamps
-		const time = new Date();
-		await utimes(filename, time, time);
-	} catch {
-		// On fail, open and close the file again
-		// This normally happens when the file does not exist yet.
-		// These blocks create the file
-		const fd = await new Promise<number>((resolve, reject) => {
-			open(filename, "w", (err, fd) => {
-				if (err) return reject(err);
-				resolve(fd);
-			});
-		});
-		await new Promise<void>((resolve, reject) => {
-			close(fd, err => {
-				if (err) return reject(err);
-				resolve();
-			});
-		});
 	}
 }

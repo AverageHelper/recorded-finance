@@ -1,7 +1,7 @@
 import type { CorsOptions } from "cors";
 import { env } from "./environment.js";
 import { OriginError } from "./errors/index.js";
-import { URL } from "url";
+import { URL } from "node:url";
 import _cors from "cors";
 
 const allowedOriginHostnames = new Set<string>();

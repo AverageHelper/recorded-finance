@@ -17,13 +17,11 @@
 
 	onMount(async () => {
 		// If we're not sure, fetch the user session
-		if ($uid === null) await fetchSession();
+		if ($uid === null) await fetchSession(); // TODO: Cache this for a few minutes?
 		isChecking = false;
 	});
 </script>
 
 {#if !isChecking && !isVaultLoggedIn}
 	<slot {registerFocus} />
-{:else}
-	<p>Checking auth state...</p>
 {/if}

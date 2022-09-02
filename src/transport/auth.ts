@@ -2,6 +2,7 @@
 import type { KeyMaterial } from "./cryption";
 import type { AccountableDB, DocumentReference } from "./db";
 import { doc, db, getDoc, previousStats, setDoc, deleteDoc } from "./db";
+import { t } from "../i18n";
 import {
 	authJoin,
 	authLeave,
@@ -68,14 +69,15 @@ export async function createUserWithAccountIdAndPassword(
 	account: string,
 	password: string
 ): Promise<UserCredential> {
-	// TODO: I18N
-	if (!account) throw new TypeError("accountID parameter cannot be empty");
-	if (!password) throw new TypeError("password parameter cannot be empty");
+	if (!account)
+		throw new TypeError(t("error.sanity.empty-param", { values: { name: "accountID" } }));
+	if (!password)
+		throw new TypeError(t("error.sanity.empty-param", { values: { name: "password" } }));
 
 	const join = new URL(authJoin(), db.url);
 	const { access_token, uid, usedSpace, totalSpace } = await postTo(join, { account, password });
 	if (access_token === undefined || uid === undefined)
-		throw new TypeError("Expected access token from server, but got none"); // TODO: I18N
+		throw new TypeError(t("error.server.missing-access-token"));
 
 	previousStats.usedSpace = usedSpace ?? null;
 	previousStats.totalSpace = totalSpace ?? null;
@@ -121,14 +123,15 @@ export async function signInWithAccountIdAndPassword(
 	account: string,
 	password: string
 ): Promise<UserCredential> {
-	// TODO: I18N
-	if (!account) throw new TypeError("accountID parameter cannot be empty");
-	if (!password) throw new TypeError("password parameter cannot be empty");
+	if (!account)
+		throw new TypeError(t("error.sanity.empty-param", { values: { name: "accountID" } }));
+	if (!password)
+		throw new TypeError(t("error.sanity.empty-param", { values: { name: "password" } }));
 
 	const login = new URL(authLogIn(), db.url);
 	const { access_token, uid, usedSpace, totalSpace } = await postTo(login, { account, password });
 	if (access_token === undefined || uid === undefined)
-		throw new TypeError("Expected access token from server, but got none"); // TODO: I18N
+		throw new TypeError(t("error.server.missing-access-token"));
 
 	previousStats.usedSpace = usedSpace ?? null;
 	previousStats.totalSpace = totalSpace ?? null;
@@ -149,7 +152,7 @@ export async function refreshSession(db: AccountableDB): Promise<UserCredential>
 	const session = new URL(authRefreshSession(), db.url);
 	const { account, access_token, uid, usedSpace, totalSpace } = await getFrom(session);
 	if (account === undefined || access_token === undefined || uid === undefined)
-		throw new TypeError("Expected access token from server, but got none"); // TODO: I18N
+		throw new TypeError(t("error.server.missing-access-token"));
 
 	previousStats.usedSpace = usedSpace ?? null;
 	previousStats.totalSpace = totalSpace ?? null;
@@ -169,7 +172,8 @@ export async function refreshSession(db: AccountableDB): Promise<UserCredential>
  * @throws a `NetworkError` if something goes wrong with the request.
  */
 export async function deleteUser(db: AccountableDB, user: User, password: string): Promise<void> {
-	if (!password) throw new TypeError("password parameter cannot be empty"); // TODO: I18N
+	if (!password)
+		throw new TypeError(t("error.sanity.empty-param", { values: { name: "password" } }));
 
 	const leave = new URL(authLeave(), db.url);
 	await postTo(leave, {
@@ -192,9 +196,10 @@ export async function updateAccountId(
 	newAccountId: string,
 	password: string
 ): Promise<void> {
-	// TODO: I18N
-	if (!newAccountId) throw new TypeError("accountID parameter cannot be empty");
-	if (!password) throw new TypeError("password parameter cannot be empty");
+	if (!newAccountId)
+		throw new TypeError(t("error.sanity.empty-param", { values: { name: "accountID" } }));
+	if (!password)
+		throw new TypeError(t("error.sanity.empty-param", { values: { name: "password" } }));
 
 	const updateaccountid = new URL(authUpdateAccountId(), db.url);
 	await postTo(updateaccountid, {
@@ -220,9 +225,10 @@ export async function updatePassword(
 	oldPassword: string,
 	newPassword: string
 ): Promise<void> {
-	// TODO: I18N
-	if (!oldPassword) throw new TypeError("old-password parameter cannot be empty");
-	if (!newPassword) throw new TypeError("new-password parameter cannot be empty");
+	if (!oldPassword)
+		throw new TypeError(t("error.sanity.empty-param", { values: { name: "oldPassword" } }));
+	if (!newPassword)
+		throw new TypeError(t("error.sanity.empty-param", { values: { name: "newPassword" } }));
 
 	const updatepassword = new URL(authUpdatePassword(), db.url);
 	await postTo(updatepassword, {

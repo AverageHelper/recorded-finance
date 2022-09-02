@@ -1,8 +1,10 @@
 <script lang="ts">
-	export let to: string;
+	export let to: string | URL;
 	export let title: string | undefined = undefined;
+
+	$: href = typeof to === "string" ? to : to.href;
 </script>
 
-<a href={to} target="_blank" rel="noopener noreferrer" {title} class={$$props["class"]}>
+<a {href} target="_blank" rel="noopener noreferrer" {title} class={$$props["class"]}>
 	<slot />
 </a>

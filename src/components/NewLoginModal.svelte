@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { _ } from "svelte-i18n";
+	import { _ } from "../i18n";
 	import { accountId, clearNewLoginStatus, isNewLogin } from "../store";
 	import ActionButton from "./buttons/ActionButton.svelte";
 	import ConfirmGotNewAccountId from "./ConfirmGotNewAccountId.svelte";

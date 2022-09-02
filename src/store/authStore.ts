@@ -1,11 +1,17 @@
-import type { DatabaseSchema } from "../model/DatabaseSchema";
-import type { HashStore, KeyMaterial, Unsubscribe, UserPreferences } from "../transport";
+import type { AttachmentSchema, DatabaseSchema } from "../model/DatabaseSchema.js";
+import type { Attachment } from "../model/Attachment.js";
+import type { HashStore, KeyMaterial, Unsubscribe, UserPreferences } from "../transport/index.js";
 import type { User } from "../transport/auth.js";
-import { bootstrap, updateUserStats } from "./uiStore";
+import { AccountableError } from "../transport/errors/index.js";
+import { attachment as newAttachment } from "../model/Attachment.js";
+import { BlobReader, Data64URIWriter, TextReader, ZipWriter } from "@zip.js/zip.js";
+import { bootstrap, updateUserStats } from "./uiStore.js";
 import { get, writable } from "svelte/store";
-import { UnauthorizedError } from "../../server/errors";
+import { t } from "../i18n.js";
 import { v4 as uuid } from "uuid";
 import {
+	asyncMap,
+	dataUriToBlob,
 	defaultPrefs,
 	deleteAuthMaterial,
 	deleteUserPreferences,
@@ -129,7 +135,7 @@ export async function fetchSession(): Promise<void> {
 
 export async function unlockVault(password: string): Promise<void> {
 	const acctId = get(accountId);
-	if (get(uid) === null || acctId === null) throw new UnauthorizedError("missing-token");
+	if (get(uid) === null || acctId === null) throw new AccountableError("auth/unauthenticated");
 
 	await login(acctId, password);
 
@@ -164,10 +170,10 @@ export async function login(accountId: string, password: string): Promise<void> 
 
 export async function getDekMaterial(this: void): Promise<KeyMaterial> {
 	const user = auth.currentUser;
-	if (!user) throw new Error("You must sign in first"); // TODO: I18N
+	if (!user) throw new Error(t("error.auth.unauthenticated"));
 
 	const material = await getAuthMaterial(user.uid);
-	if (!material) throw new Error("You must create an accout first"); // TODO: I18N
+	if (!material) throw new Error(t("error.auth.create-account-first"));
 	return material;
 }
 
@@ -204,7 +210,7 @@ export function clearNewLoginStatus(): void {
 }
 
 export async function destroyVault(password: string): Promise<void> {
-	if (!auth.currentUser) throw new Error("Not signed in to any account."); // TODO: I18N
+	if (!auth.currentUser) throw new Error(t("error.auth.unauthenticated"));
 
 	const { deleteAllAccounts } = await import("./accountsStore");
 	const { deleteAllAttachments } = await import("./attachmentsStore");
@@ -228,8 +234,8 @@ export async function destroyVault(password: string): Promise<void> {
 export async function updateUserPreferences(prefs: Partial<UserPreferences>): Promise<void> {
 	const userId = get(uid);
 	const key = get(pKey);
-	if (key === null) throw new Error("No decryption key"); // TODO: I18N
-	if (userId === null) throw new Error("Sign in first"); // TODO: I18N
+	if (key === null) throw new Error(t("error.cryption.missing-pek"));
+	if (userId === null) throw new Error(t("error.auth.unauthenticated"));
 
 	const { dekMaterial } = await getDekMaterial();
 	const dek = deriveDEK(key, dekMaterial);
@@ -240,7 +246,7 @@ export async function updateUserPreferences(prefs: Partial<UserPreferences>): Pr
 export async function regenerateAccountId(currentPassword: string): Promise<void> {
 	const user = auth.currentUser;
 	if (user === null) {
-		throw new Error("Not logged in"); // TODO: I18N
+		throw new Error(t("error.auth.unauthenticated"));
 	}
 
 	const newAccountId = createAccountId();
@@ -252,13 +258,13 @@ export async function regenerateAccountId(currentPassword: string): Promise<void
 export async function updatePassword(oldPassword: string, newPassword: string): Promise<void> {
 	const user = auth.currentUser;
 	if (user === null) {
-		throw new Error("Not logged in"); // TODO: I18N
+		throw new AccountableError("auth/unauthenticated");
 	}
 
 	// Get old DEK material
 	const oldMaterial = await getAuthMaterial(user.uid);
 	if (!oldMaterial) {
-		throw new Error("Create an account first"); // TODO: I18N
+		throw new Error(t("error.auth.create-account-first"));
 	}
 
 	// Generate new pKey
@@ -293,8 +299,8 @@ export async function logout(): Promise<void> {
 export async function getAllUserDataAsJson(): Promise<DatabaseSchema> {
 	const userId = get(uid);
 	const key = get(pKey);
-	if (key === null) throw new Error("No decryption key"); // TODO: I18N
-	if (userId === null) throw new Error("Sign in first"); // TODO: I18N
+	if (key === null) throw new Error(t("error.cryption.missing-pek"));
+	if (userId === null) throw new Error(t("error.auth.unauthenticated"));
 
 	const { getAllAccountsAsJson } = await import("./accountsStore");
 	const { getAllAttachmentsAsJson } = await import("./attachmentsStore");
@@ -327,4 +333,80 @@ export async function getAllUserDataAsJson(): Promise<DatabaseSchema> {
 		locations,
 		tags,
 	};
+}
+
+/** Compresses the user's data into a data URI string. */
+export async function compressUserData(shouldMinify: boolean): Promise<string> {
+	// TODO: Investigate replacing zip.js with https://www.npmjs.com/package/jszip
+
+	console.debug("Preparing zip writer");
+	const writer = new ZipWriter(new Data64URIWriter("application/zip"));
+	console.debug("Prepared zip writer");
+
+	try {
+		const rootName = "accountable";
+		console.debug("Writing root folder");
+		console.debug("Wrote root folder");
+
+		// ** Prepare database
+		console.debug("Getting user data");
+		const rawData = await getAllUserDataAsJson();
+		console.debug("Got user data");
+		console.debug("Encoding user data");
+		const data = JSON.stringify(rawData, undefined, shouldMinify ? undefined : "\t");
+		const encodedData = data;
+		console.debug("Encoded user data");
+		console.debug("Writing user data");
+		await writer.add(
+			`${rootName}/database${shouldMinify ? "-raw" : ""}.json`,
+			new TextReader(encodedData)
+		);
+		console.debug("Wrote user data");
+
+		// ** Prepare attachments
+
+		// dynamic import because attachmentsStore imports authStore lol
+		const { imageDataFromFile } = await import("./attachmentsStore");
+
+		/** Mirrors the storage bucket layout */
+		const userFilesPath = `${rootName}/storage/users/${rawData.uid}/attachments`;
+
+		const filesToGet: Array<AttachmentSchema> = rawData.attachments ?? [];
+		// FIXME: We may run out of memory here. Test with many files totaling more than 1 GB. Maybe operate on the attachments a few at a time?
+		console.debug("Downloading attachments");
+		const filesGotten: Array<[Attachment, string]> = await asyncMap(filesToGet, async a => {
+			const file = newAttachment({
+				createdAt: a.createdAt,
+				id: a.id,
+				notes: a.notes?.trim() ?? null,
+				storagePath: a.storagePath,
+				title: a.title.trim(),
+				type: a.type ?? "",
+			});
+			const data = await imageDataFromFile(file, false);
+			return [file, data];
+		});
+		console.debug("Downloaded attachments");
+		for (const [f, d] of filesGotten) {
+			// Get storage file name without extension, so that explorers don't try to treat the folder as JSON
+			const mystifiedName = f.storagePath
+				.slice(Math.max(0, f.storagePath.lastIndexOf("/") + 1))
+				.split(".")[0] as string;
+			const imagePath = `${userFilesPath}/${mystifiedName}/${f.title}`;
+			const image = dataUriToBlob(d);
+			console.debug(`Adding attachment ${f.title} to zip`);
+			await writer.add(imagePath, new BlobReader(image));
+			console.debug(`Added attachment ${f.title} to zip`);
+		}
+
+		// ** Zip them up
+		console.debug("Grabbing zip blob");
+		const dataUri = await writer.close();
+		console.debug(`Got ${dataUri.length}-byte zip blob`);
+
+		return dataUri;
+	} catch (error) {
+		await writer.close();
+		throw error;
+	}
 }

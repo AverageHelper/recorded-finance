@@ -22,4 +22,6 @@ server/version.ts
 tmp
 temp
 *.local
+/stats.html
+/server/stats.html
 

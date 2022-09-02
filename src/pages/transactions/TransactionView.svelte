@@ -1,12 +1,12 @@
 <script lang="ts">
 	import type { Tag as TagObject, TagRecordParams } from "../../model/Tag";
 	import type { Attachment } from "../../model/Attachment";
-	import { _ } from "svelte-i18n";
+	import { _, locale } from "../../i18n";
 	import { accountPath } from "../../router";
 	import { addTagToTransaction, addAttachmentToTransaction } from "../../model/Transaction";
-	import { intlFormat, toTimestamp } from "../../transformers";
 	import { isNegative } from "dinero.js";
 	import { link, useNavigate } from "svelte-navigator";
+	import { toCurrency, toTimestamp } from "../../transformers";
 	import ConfirmDestroyFile from "../attachments/ConfirmDestroyFile.svelte";
 	import EditButton from "../../components/buttons/EditButton.svelte";
 	import FileInput from "../attachments/FileInput.svelte";
@@ -53,7 +53,7 @@
 	$: locationId = transaction?.locationId ?? null;
 	$: location = locationId !== null ? $locations[locationId] ?? null : null;
 
-	$: timestamp = transaction ? toTimestamp(transaction.createdAt) : "";
+	$: timestamp = transaction ? toTimestamp($locale.code, transaction.createdAt) : "";
 
 	$: accountRoute = accountPath(accountId);
 
@@ -162,46 +162,47 @@
 			on:remove-tag={removeTag}
 		/>
 
-		<!-- TODO: I18N -->
-		<h3>Details</h3>
+		<h3>{$_("common.details")}</h3>
 		<!-- Amount -->
-		<div class="key-value-pair" aria-label="Transaction Amount">
-			<span class="key">Amount</span>
+		<div class="key-value-pair" aria-label={$_("transactions.meta.amount-aria-label")}>
+			<span class="key">{$_("transactions.meta.amount")}</span>
 			<span class="value amount {isNegative(transaction.amount) ? 'negative' : ''}"
-				>{intlFormat(transaction.amount, "standard")}</span
+				>{toCurrency($locale.code, transaction.amount, "standard")}</span
 			>
 		</div>
 		<!-- Timestamp -->
-		<div class="key-value-pair" aria-label="Transaction Timestamp">
-			<span class="key">Timestamp</span>
+		<div class="key-value-pair" aria-label={$_("transactions.meta.timestamp-aria-label")}>
+			<span class="key">{$_("transactions.meta.timestamp")}</span>
 			<span class="value">{timestamp}</span>
 		</div>
 		<!-- Reconciliation -->
-		<div class="key-value-pair" aria-label="Is Transaction Reconciled?">
-			<span class="key">Reconciled</span>
-			<span class="value">{transaction.isReconciled ? "Yes" : "No"}</span>
+		<div class="key-value-pair" aria-label={$_("transactions.meta.reconciled-aria-label")}>
+			<span class="key">{$_("transactions.meta.reconciled")}</span>
+			<span class="value">{transaction.isReconciled ? $_("common.yes") : $_("common.no")}</span>
 		</div>
 		<!-- Account -->
-		<div class="key-value-pair" aria-label="Transaction Account">
-			<span class="key">Account</span>
+		<div class="key-value-pair" aria-label={$_("transactions.meta.account-aria-label")}>
+			<span class="key">{$_("transactions.meta.account")}</span>
 			<a class="value" href={accountRoute} use:link>{account?.title ?? accountId}</a>
 		</div>
 		<!-- Notes -->
 		{#if transaction.notes}
-			<div class="key-value-pair" aria-label="Transaction Notes">
-				<span class="key">Notes</span>
+			<div class="key-value-pair" aria-label={$_("transactions.meta.notes-aria-label")}>
+				<span class="key">{$_("transactions.meta.notes")}</span>
 				<span class="value">&quot;{transaction.notes}&quot;</span>
 			</div>
 		{/if}
 		<!-- Location -->
 		{#if locationId}
-			<div class="key-value-pair" aria-label="Transaction Location">
-				<span class="key">Location</span>
+			<div class="key-value-pair" aria-label={$_("transactions.meta.location-aria-label")}>
+				<span class="key">{$_("transactions.meta.location")}</span>
 				{#if location?.coordinate ?? location?.subtitle}
-					<NopLink class="value" on:click={() => (isViewingLocation = true)}
-						>{location?.title ?? locationId}
-						{#if location?.coordinate}<LocationIcon />{/if}
-					</NopLink>
+					<span class="value">
+						<NopLink on:click={() => (isViewingLocation = true)}
+							>{location?.title ?? locationId}
+							{#if location?.coordinate}<LocationIcon />{/if}
+						</NopLink>
+					</span>
 				{:else}
 					<span class="value">&quot;{location?.title ?? locationId}&quot;</span>
 				{/if}
@@ -213,7 +214,7 @@
 			</div>
 		{/if}
 
-		<h3>Files</h3>
+		<h3>{$_("files.list.heading")}</h3>
 		<List>
 			{#each transaction.attachmentIds as fileId}
 				<li>
@@ -235,7 +236,7 @@
 				</li>
 			{/each}
 		</List>
-		<FileInput on:input={onFileReceived}>Attach a file</FileInput>
+		<FileInput on:input={onFileReceived}>{$_("transactions.attach-file")}</FileInput>
 	</main>
 {:else}
 	<main class="content main-424352d2">

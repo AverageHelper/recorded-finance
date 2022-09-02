@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { DatabaseSchema } from "../../model/DatabaseSchema";
 	import type { Entry } from "@zip.js/zip.js";
+	import { _, locale } from "../../i18n";
 	import { accountsPath } from "../../router";
 	import { BlobReader, TextWriter, ZipReader } from "@zip.js/zip.js";
 	import { create } from "superstruct";
@@ -27,7 +28,7 @@
 		db = null;
 		isLoading = true;
 
-		let msg = `Loading ${file.name}`; // TODO: I18N
+		let msg = $_("settings.import.loading-file", { values: { name: file.name } });
 		const progressMeter = toast.push(msg, {
 			duration: 300,
 			initial: 0,
@@ -38,15 +39,25 @@
 		const reader = new ZipReader(new BlobReader(file));
 		try {
 			const zipFile = await reader.getEntries({
-				onprogress: progress => {
-					msg = `Loading ${file.name}: ${progress}%`; // TODO: I18N
-					toast.set(progressMeter, { msg, next: progress });
+				onprogress: progressRaw => {
+					// FIXME: We may be using this callback incorrectly
+					// See https://gildas-lormeau.github.io/zip.js/api/interfaces/ZipReaderGetEntriesOptions.html#onprogress
+					const percent = Intl.NumberFormat($locale.code, { style: "percent" }).format(
+						progressRaw / 100
+					);
+					msg = $_("settings.import.loading-file-progress", {
+						values: { name: file.name, percent },
+					});
+					toast.set(progressMeter, { msg, next: progressRaw });
 				},
 			});
 
-			const dbFile = zipFile.find(f => f.filename === "accountable/database.json");
+			const expectedDbName = "accountable/database.json";
+			const dbFile = zipFile.find(f => f.filename === expectedDbName);
 			if (!dbFile?.getData)
-				throw new TypeError("accountable/database.json not present at root of zip"); // TODO: I18N
+				throw new TypeError(
+					$_("error.settings.missing-db-file", { values: { filename: expectedDbName } })
+				);
 
 			const jsonString = (await dbFile.getData(new TextWriter())) as string;
 			const json = JSON.parse(jsonString) as unknown;
@@ -71,9 +82,8 @@
 </script>
 
 <form on:submit|preventDefault>
-	<!-- TODO: I18N -->
-	<h3>Import</h3>
-	<p>Import a JSON file describing one or more accounts.</p>
+	<h3>{$_("settings.import.meta.heading")}</h3>
+	<p>{$_("settings.import.meta.description")}</p>
 	<div class="buttons-79507e92">
 		<FileInput accept="application/zip" disabled={isLoading} on:input={onFileReceived} let:click>
 			<ActionButton
@@ -82,7 +92,7 @@
 				on:click={e => {
 					e.preventDefault();
 					click();
-				}}>Import</ActionButton
+				}}>{$_("settings.import.start-imperative")}</ActionButton
 			>
 		</FileInput>
 	</div>

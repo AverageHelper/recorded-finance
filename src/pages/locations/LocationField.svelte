@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Coordinate, Location, PendingLocation } from "../../model/Location";
 	import type { IPLocateResult } from "../../transport";
-	import { _ } from "svelte-i18n";
+	import { _ } from "../../i18n";
 	import { allLocations, handleError, locations, preferences } from "../../store";
 	import { createEventDispatcher, tick } from "svelte";
 	import { fetchLocationData } from "../../transport";

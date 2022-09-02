@@ -1,5 +1,4 @@
-import dotenv from "dotenv";
-dotenv.config(); // SIDE-EFFECT: populates `process.env`
+import "dotenv/config.js"; // SIDE-EFFECT: populates `process.env`
 
 export type EnvKey =
 	| "DB"

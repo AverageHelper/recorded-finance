@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { _ } from "../../i18n";
 	import { fetchSession, lockVault, pKey, uid } from "../../store/authStore";
 	import { loginPath } from "router/routes";
 	import { navigate } from "svelte-navigator";
@@ -22,7 +23,7 @@
 </script>
 
 {#if isChecking}
-	<p>Locking...</p>
+	<p>{$_("locked.locking")}</p>
 {:else}
 	<slot />
 {/if}

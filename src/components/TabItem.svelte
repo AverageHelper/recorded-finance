@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Tab } from "../model/ui/tabs";
-	import { _ } from "svelte-i18n";
+	import { _ } from "../i18n";
 	import { labelIdForTab, routeForTab } from "../model/ui/tabs";
 	import { link } from "svelte-navigator";
 

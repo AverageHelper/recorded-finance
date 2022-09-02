@@ -1,4 +1,8 @@
+<script lang="ts">
+	import { _ } from "../i18n";
+</script>
+
 <main>
-	<h1>404</h1>
-	<p>Nothing to see here</p>
+	<h1>{$_("404.heading")}</h1>
+	<p>{$_("404.subheading")}</p>
 </main>

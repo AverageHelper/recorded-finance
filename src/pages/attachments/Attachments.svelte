@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Attachment } from "../../model/Attachment";
+	import { _ } from "../../i18n";
 	import { allAttachments, deleteAttachment, handleError } from "../../store";
 	import ConfirmDestroyFile from "./ConfirmDestroyFile.svelte";
 	import FileListItem from "./FileListItem.svelte";
@@ -30,9 +31,8 @@
 
 <main class="content">
 	<div class="heading">
-		<!-- TODO: I18N -->
-		<h1>Files</h1>
-		<p>To add a file, attach it to a transaction.</p>
+		<h1>{$_("files.list.heading")}</h1>
+		<p>{$_("files.list.how-to-create")}</p>
 	</div>
 
 	<List>
@@ -44,7 +44,9 @@
 		{#if numberOfFiles > 0}
 			<li>
 				<p class="footer"
-					>{numberOfFiles} file{#if numberOfFiles !== 1}s{/if}</p
+					>{#if numberOfFiles === 1}{$_("files.count.file")}{:else}{$_("files.count.files", {
+							values: { n: numberOfFiles },
+						})}{/if}</p
 				>
 			</li>
 		{/if}

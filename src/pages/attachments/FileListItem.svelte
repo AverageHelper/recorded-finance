@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Attachment } from "../../model/Attachment";
+	import { _, locale } from "../../i18n";
 	import { attachments } from "../../store";
 	import { createEventDispatcher } from "svelte";
 	import { toTimestamp } from "../../transformers";
@@ -17,9 +18,9 @@
 
 	$: file = $attachments[fileId];
 	$: title = file?.title ?? fileId;
-	$: timestamp = file ? toTimestamp(file.createdAt) : "--";
+	$: timestamp = file ? toTimestamp($locale.code, file.createdAt) : "--";
 	$: subtitle = !file
-		? "Broken reference" // TODO: I18N
+		? $_("files.reference.broken")
 		: file.notes === null || !file.notes
 		? timestamp
 		: `${file.notes} - ${timestamp}`;

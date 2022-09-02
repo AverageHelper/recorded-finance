@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { _ } from "svelte-i18n";
+	import { _ } from "../../i18n";
 	import { accountsPath } from "../../router";
 	import { onMount } from "svelte";
 	import { useNavigate } from "svelte-navigator";
@@ -73,7 +73,7 @@
 				value={password}
 				on:input={onPasswordInput}
 				type="password"
-				label={$_("login.current-passphrase")}
+				label={$_("login.passphrase")}
 				placeholder="********"
 				autocomplete="current-password"
 				showsRequired={false}

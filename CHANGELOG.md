@@ -4,8 +4,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-- Port everything to Svelte.
+## [0.11.0] - 2022-09-01
+### Changed
+- BREAKING: The server now requires the `DB` environment variable to be set.
+- BREAKING: Improved the ergonomics of WebSocket communications. This means the client and server are no longer compatible.
+- Improved front-end JavaScript fallback. Plugins that block JavaScript per-site don't always let the browser fall back to the `noscript` tag, so now we instead insert a tag that disappears when JavaScript loads.
+- Back-end code now gets bundled into an almost-self-contained JS file. A few dependencies still need to stay in node_modules for the time being, but I expect that to change soon. This new bundle should mean faster initial load times, but I haven't tested that, and I don't care. I just think Rollup is neat.
+- The server now uses [Superstruct](https://github.com/ianstormtaylor/superstruct) (instead of Joi) for message validation. This helps to keep our front-end and back-end paradigms consistent, and keeps our subdependencies down (since Superstruct has none). But mostly, I did this because Superstruct plays better with Rollup than Joi does. :P
+
+## [0.10.2] - 2022-08-13
+### Fixed
+- Fixed the "Add a Transaction" button adding erroneously to the navigation stack, which incorrectly required the user to press Back more times the more transactions they created in order to return to the Accounts list.
+
+### Added
+- UI to manually select a preferred language.
+- Some Brazilian Portuguese translations.
+- New info in [CONTRIBUTING.md](CONTRIBUTING.md) about how to contribute translations.
+
+### Changed
+- Shrunk the deployable bundle by removing unused dependencies and properly tree-shaking the remaining dependencies.
+- More user-facing strings refactored into i18n keys. I think I found all of the user-facing strings reasonably enough now, though testing and experience will tell for sure if I missed anything.
+- The hamburger menu closes when the user selects a language.
+- Improved the cookie disclaimer.
+
+## [0.10.1] - 2022-08-05
+### Fixed
+- Fixed annoying flashing text when entering the login screen.
+
+## [0.10.0] - 2022-08-05
+### Changed
+- Ported front-end code from Vue to Svelte. It's [pretty cool](https://svelte.dev/).
+	- I want to experiment with Accountable under different front-end paradigms. So far, I've used [Flutter](https://github.com/AverageHelper/accountable-flutter), [Vue](https://github.com/AverageHelper/accountable-vue), and now [Svelte](https://github.com/AverageHelper/accountable-svelte). This version is the Svelte port.
+	- Svelte differs from Vue in that Svelte is a compiler, not a runtime. The bundled output contains only code needed for each component to work. There's no virtual DOM, but there's also no helpful front-end safety net.
+	- Eventually, I plan to separate the back-end code from the front-end, so I'm not duplicating that part across several front-end repositories.
 
 ## [0.9.1] - 2022-07-12
 ### Fixed
@@ -218,9 +249,13 @@ Just some re-working to make our vendor bundle fit within the recommended 500 Ki
 ### Added
 - Initial commit
 
-[Unreleased]: https://github.com/AverageHelper/accountable-svelte/compare/v0.9.1...HEAD
-[0.9.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.9.0...v0.9.1
-[0.9.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.8.1...v0.9.0
+[Unreleased]: https://github.com/AverageHelper/accountable-svelte/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.10.2...v0.11.0
+[0.10.2]: https://github.com/AverageHelper/accountable-svelte/compare/v0.10.1...v0.10.2
+[0.10.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.10.0...v0.10.1
+[0.10.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.9.1...v0.10.0
+<!-- [0.9.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.9.0...v0.9.1 doesn't exist -->
+[0.9.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.8.1...v0.9.1
 [0.8.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.6.4...v0.7.0
