@@ -2,7 +2,12 @@ import { app } from "./main.js";
 import { version } from "./version.js";
 import request from "supertest";
 
-// FIXME: This tests the prod database!!!
+/* eslint-disable jest/no-mocks-import */
+import * as mockEnvironment from "./__mocks__/environment.js";
+/* eslint-enable jest/no-mocks-import */
+
+// See https://github.com/facebook/jest/issues/10025 on why `jest.mock` doesn't work under ESM
+jest.unstable_mockModule("./environment.js", () => mockEnvironment);
 
 describe("Routes", () => {
 	describe("GET /v0/", () => {

@@ -36,8 +36,6 @@ jobs:
           popd
 
       - name: Server Lint and Build
-        env:
-          DB: ${{ env.GITHUB_WORKSPACE }}/db
         run: npm run build:server
 
       - name: Client Lint and Build
