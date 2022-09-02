@@ -151,7 +151,7 @@ export const UserModel = mongoose.model("User", userSchema);
 
 const documentRef = object({
 	collectionId: enums(allCollectionIds),
-	documentId: string(),
+	documentId: nonempty(string()),
 });
 
 const setBatch = object({
