@@ -485,20 +485,9 @@ export function db(this: void /* Inject filesystem APIs here? */): Router {
 				// Delete the referenced database entry
 				await deleteDocument(ref);
 
-				// Delete any associated files
-				try {
-					const blobsFolder = permanentAttachmentFolderForRef(uid, ref);
-					await deleteItem(blobsFolder);
-				} catch (error) {
-					console.error(
-						`Failed to delete a file associated with the document 'users/${uid}/${ref.parent.id}/${ref.id}'`,
-						error
-					);
-				}
+				// TODO: Delete any associated files
 
 				const { totalSpace, usedSpace } = await statsForUser(uid);
-
-				// TODO: Delete any associated files
 
 				respondSuccess(res, { totalSpace, usedSpace });
 			})

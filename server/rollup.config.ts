@@ -48,7 +48,8 @@ export default defineConfig({
 		"utf-8-validate",
 		"fast-folder-size",
 
-		// Rollup doesn't like this very much:
+		// Rollup doesn't like these very much:
+		"mongoose",
 		"multer",
 	],
 	input: "./main.ts",

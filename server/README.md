@@ -32,7 +32,7 @@ v16.13.1
 
 # Where your MongoDB instance can be accessed
 MONGO_CONNECTION_URL={your mongoose connection string}
-# ex: mongodb+srv://{USERNAME}:{PASSWORD}@cluster0.v7gpm.mongodb.net/{DATABASE}?retryWrites=true&w=majority
+# required, example: "mongodb+srv://...mongodb.net/..."
 
 # Where your attachment data lives
 DB={path to your storage directory}

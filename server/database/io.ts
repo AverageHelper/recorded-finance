@@ -1,6 +1,5 @@
 import type { AnyDataItem, Identified, IdentifiedDataItem, User } from "./schemas.js";
 import type { CollectionReference, DocumentReference } from "./references.js";
-import { fileURLToPath } from "url";
 import { folderSize, maxSpacePerUser } from "../auth/limits.js";
 import { requireEnv } from "../environment.js";
 import { UnreachableCaseError } from "../errors/index.js";
@@ -15,9 +14,6 @@ import {
 	TransactionModel,
 	UserModel,
 } from "./schemas.js";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // Start connecting to the database
 const DB_URL = requireEnv("MONGO_CONNECTION_URL");

@@ -149,11 +149,9 @@ export const TagModel = mongoose.model("Tag", dataItemSchema);
 export const TransactionModel = mongoose.model("Transaction", dataItemSchema);
 export const UserModel = mongoose.model("User", userSchema);
 
-const documentRef = Joi.object({
-	collectionId: Joi.string()
-		.valid(...allCollectionIds)
-		.required(),
-	documentId: Joi.string().required(),
+const documentRef = object({
+	collectionId: enums(allCollectionIds),
+	documentId: string(),
 });
 
 const setBatch = object({

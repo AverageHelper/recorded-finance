@@ -56,13 +56,6 @@ export function tmpDir(): string {
 }
 
 /**
- * Returns the operating system's default directory for temporary files as a string.
- */
-export function tmpDir(): string {
-	return tmpdir();
-}
-
-/**
  * Returns a `Promise` that resolves `true` if a file exists at
  * the given path, `false` otherwise.
  *
