@@ -23,4 +23,5 @@ tmp
 temp
 *.local
 /stats.html
+/server/stats.html
 

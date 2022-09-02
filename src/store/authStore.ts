@@ -1,14 +1,13 @@
-import type { AttachmentSchema, DatabaseSchema } from "../model/DatabaseSchema";
-import type { Attachment } from "../model/Attachment";
-import type { HashStore, KeyMaterial, Unsubscribe, UserPreferences } from "../transport";
+import type { AttachmentSchema, DatabaseSchema } from "../model/DatabaseSchema.js";
+import type { Attachment } from "../model/Attachment.js";
+import type { HashStore, KeyMaterial, Unsubscribe, UserPreferences } from "../transport/index.js";
 import type { User } from "../transport/auth.js";
-import { AccountableError } from "../transport/errors";
-import { attachment as newAttachment } from "../model/Attachment";
+import { AccountableError } from "../transport/errors/index.js";
+import { attachment as newAttachment } from "../model/Attachment.js";
 import { BlobReader, Data64URIWriter, TextReader, ZipWriter } from "@zip.js/zip.js";
-import { bootstrap, updateUserStats } from "./uiStore";
+import { bootstrap, updateUserStats } from "./uiStore.js";
 import { get, writable } from "svelte/store";
-import { t } from "../i18n";
-import { UnauthorizedError } from "../../server/errors";
+import { t } from "../i18n.js";
 import { v4 as uuid } from "uuid";
 import {
 	asyncMap,
@@ -136,7 +135,7 @@ export async function fetchSession(): Promise<void> {
 
 export async function unlockVault(password: string): Promise<void> {
 	const acctId = get(accountId);
-	if (get(uid) === null || acctId === null) throw new UnauthorizedError("missing-token");
+	if (get(uid) === null || acctId === null) throw new AccountableError("auth/unauthenticated");
 
 	await login(acctId, password);
 

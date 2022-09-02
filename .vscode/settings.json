@@ -16,5 +16,6 @@
 	"svelte.plugin.svelte.useNewTransformation": true,
 	"[svelte]": {
 		"editor.defaultFormatter": "svelte.svelte-vscode"
-	}
+	},
+	"todo-tree.filtering.excludeGlobs": ["**/dist/**"]
 }

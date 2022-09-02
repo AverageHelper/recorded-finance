@@ -1,12 +1,34 @@
-jest.mock("./database/filesystem.js");
-jest.mock("./database/io.js");
-jest.mock("./auth/jwt.js");
-
+import { jest } from "@jest/globals";
+import { BadRequestError } from "./errors/BadRequestError.js";
 import "jest-extended";
 
-import { temporaryFilePath } from "./db.js";
-import { ensure } from "./database/filesystem.js";
-import { BadRequestError } from "./errors/BadRequestError.js";
+/* eslint-disable jest/no-mocks-import */
+import * as mockFilesystem from "./database/__mocks__/filesystem.js";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import * as _mockIo from "./database/__mocks__/io.js"; // FIXME: Using this anywhere causes a nasty loop
+import * as mockJwt from "./auth/__mocks__/jwt.js";
+/* eslint-enable jest/no-mocks-import */
+
+// See https://github.com/facebook/jest/issues/10025 on why `jest.mock` doesn't work under ESM
+jest.unstable_mockModule("./database/filesystem.js", () => mockFilesystem);
+jest.unstable_mockModule("./database/io.js", () => ({
+	statsForUser: jest.fn(),
+	findUserWithProperties: jest.fn(),
+	destroyUser: jest.fn(),
+	numberOfUsers: jest.fn(),
+	upsertUser: jest.fn(),
+	deleteDbCollection: jest.fn(),
+	deleteDbDoc: jest.fn(),
+	deleteDbDocs: jest.fn(),
+	fetchDbCollection: jest.fn(),
+	fetchDbDoc: jest.fn(),
+	fetchDbDocs: jest.fn(),
+	upsertDbDocs: jest.fn(),
+}));
+jest.unstable_mockModule("./auth/jwt.js", () => mockJwt);
+
+const { temporaryFilePath } = await import("./db.js");
+const { ensure } = await import("./database/filesystem.js");
 
 const mockEnsure = ensure as jest.Mock;
 
@@ -46,7 +68,7 @@ describe("File path constructor", () => {
 	`(
 		"Throws if the path contains path arguments (fileName: '$fileName', documentId: '$documentId', uid: 'uid')",
 		async (params: { fileName: string; documentId: string; uid: string }) => {
-			await expect(temporaryFilePath(params)).rejects.toThrowError(BadRequestError);
+			await expect(temporaryFilePath(params)).rejects.toThrow(BadRequestError);
 		}
 	);
 });

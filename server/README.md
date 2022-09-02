@@ -32,16 +32,16 @@ v16.13.1
 
 # Where your attachment data lives
 DB={path to your storage directory}
-# defaults to "<project root>/server/db"
+# required, example: "~/server/db"
 
 HOST={your frontend hostname, with protocol}
-# ex: HOST=https://example.com
+# required, example: HOST=https://example.com
 
 MAX_USERS={the limit to the number of users allowed to register new accounts}
-# defaults to 5
+# optional, defaults to 5
 
 MAX_BYTES={the total number of bytes that Accountable attachments are permitted to occupy on the system}
-# defaults to 20000000000 (20 GB)
+# optional, defaults to 20000000000 (20 GB)
 ```
 
 Run these commands to compile and run

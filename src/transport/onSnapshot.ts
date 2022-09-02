@@ -1,13 +1,16 @@
-import type { CollectionReference, DocumentReference } from "./db.js";
-import type { DocumentData } from "./schemas";
-import type { Query } from "./db";
+import type { CollectionReference, DocumentReference, Query } from "./db.js";
+import type { DocumentData } from "./schemas.js";
+import type { Infer } from "superstruct";
+import { documentData } from "./schemas.js";
 import { AccountableError, UnexpectedResponseError, UnreachableCaseError } from "./errors/index.js";
+import { array, enums, is, nonempty, nullable, object, string, union } from "superstruct";
 import { collection, doc as docRef } from "./db.js";
 import { databaseCollection, databaseDocument } from "./api-types/index.js";
-import { isArray } from "../helpers/isArray";
-import { isRawServerResponse } from "./schemas";
-import { isString } from "../helpers/isString";
-import { t } from "../i18n";
+import { isArray } from "../helpers/isArray.js";
+import { isString } from "../helpers/isString.js";
+import { t } from "../i18n.js";
+import { WebSocketCode } from "./websockets/WebSocketCode.js";
+import { wsFactory } from "./websockets/websockets.js";
 
 export class DocumentSnapshot<T = DocumentData> {
 	#data: T | null;
@@ -328,34 +331,25 @@ export function onSnapshot<T>(
 			break;
 	}
 
-	const ws = new WebSocket(url);
-	ws.addEventListener("open", () => {
-		ws.send("START");
+	const watcherData = object({
+		message: nonempty(string()),
+		dataType: enums(["single", "multiple"] as const),
+		data: nullable(union([array(documentData), documentData])),
+	});
+
+	type WatcherData = Infer<typeof watcherData>;
+
+	const { onClose, onMessage, send } = wsFactory(new WebSocket(url), {
+		stop(tbd): tbd is "STOP" {
+			return tbd === "STOP";
+		},
+		data(tbd): tbd is WatcherData {
+			return is(tbd, watcherData);
+		},
 	});
 
 	let previousSnap: QuerySnapshot<T> | null = null;
-	ws.addEventListener("message", res => {
-		let message: unknown;
-		try {
-			message = JSON.parse((res.data as { toString: () => string }).toString()) as unknown;
-		} catch (error) {
-			throw new UnexpectedResponseError(
-				t("error.ws.not-json", { values: { message: JSON.stringify(error) } })
-			);
-		}
-
-		if (message === "ARE_YOU_STILL_THERE") {
-			// Respond to pings
-			ws.send("YES_IM_STILL_HERE");
-			return;
-		}
-
-		if (!isRawServerResponse(message))
-			throw new UnexpectedResponseError(
-				t("error.ws.invalid-response", {
-					values: { response: JSON.stringify(message, undefined, "  ") },
-				})
-			);
+	onMessage("data", message => {
 		const data = message.data;
 		if (data === undefined) throw new UnexpectedResponseError(t("error.ws.message-data-undefined"));
 
@@ -389,31 +383,30 @@ export function onSnapshot<T>(
 		throw new UnreachableCaseError(type);
 	});
 
-	ws.addEventListener("close", event => {
+	onClose((code, _reason) => {
 		console.debug(
 			t("error.ws.closed-with-code-reason", {
-				values: { code: event.code, reason: event.reason || t("error.ws.no-reason-given") },
+				values: { code, reason: _reason || t("error.ws.no-reason-given") },
 			})
 		);
 
-		const WS_NORMAL = 1000;
-		const WS_GOING_AWAY = 1001;
-		const WS_UNKNOWN = 1006;
+		const WS_NORMAL = WebSocketCode.NORMAL;
+		const WS_GOING_AWAY = WebSocketCode.WENT_AWAY;
+		const WS_UNKNOWN = WebSocketCode.__UNKNOWN_STATE;
 
 		// Connection closed. Find out why
-		if (event.code !== WS_NORMAL) {
-			const code = event.code;
+		if (code !== WS_NORMAL) {
 			let reason: string | null = null;
 
-			if (event.reason?.trim()) {
-				reason = event.reason;
+			if (_reason?.trim()) {
+				reason = _reason;
 			} else if (!navigator.onLine) {
 				// Offline status could cause a 1006, so we handle this case first
 				// TODO: Show some UI or smth to indicate online status, and add a way to manually reconnect.
 				reason = t("error.ws.internet-gone");
-			} else if (event.code === WS_UNKNOWN) {
+			} else if (code === WS_UNKNOWN) {
 				reason = t("error.ws.server-closed-without-reason");
-			} else if (event.code === WS_GOING_AWAY) {
+			} else if (code === WS_GOING_AWAY) {
 				reason = t("error.ws.endpoints-closing-down");
 			}
 
@@ -428,6 +421,6 @@ export function onSnapshot<T>(
 	});
 
 	return (): void => {
-		ws.send("STOP");
+		send("stop", "STOP");
 	};
 }

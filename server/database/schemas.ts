@@ -1,8 +1,20 @@
-import Joi from "joi";
-import "joi-extract-type";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import type { Infer, Struct, StructError } from "superstruct";
+import {
+	enums,
+	intersection,
+	is,
+	literal,
+	nonempty,
+	object,
+	optional,
+	string,
+	type,
+	union,
+} from "superstruct";
 
 // Copied from lodash
-type ValueIteratorTypeGuard<T, S extends T> = (value: T) => value is S;
+export type ValueIteratorTypeGuard<T, S extends T> = (value: T) => value is S;
 
 function isArray(tbd: unknown): tbd is Array<unknown> {
 	// Compare with lodash
@@ -20,29 +32,42 @@ export function isNonEmptyArray<T>(tbd: Array<T>): tbd is NonEmptyArray<T> {
 	return tbd.length > 0;
 }
 
-function isValidForSchema(data: unknown, schema: Joi.AnySchema): boolean {
-	const { error } = schema.validate(data);
-	return !error;
+export function isObject(tbd: unknown): tbd is Record<string, unknown> {
+	return typeof tbd === "object" && tbd !== null && !Array.isArray(tbd);
 }
 
-const jwtPayload = Joi.object({
-	uid: Joi.string().required(),
-	hash: Joi.string(),
-}).unknown(true);
+/** Returns `true` if the given value matches the given schema. */
+export function isValidForSchema<T>(tbd: unknown, schema: Struct<T>): tbd is T {
+	return is(tbd, schema);
+}
 
-export type JwtPayload = Joi.extractType<typeof jwtPayload>;
+/**
+ * Throws a {@link StructError} if the given value does not
+ * match the given schema.
+ */
+export function assertSchema<T>(tbd: unknown, schema: Struct<T>): asserts tbd is T {
+	const [error] = schema.validate(tbd);
+	if (error) throw error;
+}
+
+const jwtPayload = type({
+	uid: nonempty(string()),
+	hash: optional(nonempty(string())),
+});
+
+export type JwtPayload = Infer<typeof jwtPayload>;
 
 export function isJwtPayload(tbd: unknown): tbd is JwtPayload {
 	return isValidForSchema(tbd, jwtPayload);
 }
 
-const user = Joi.object({
-	uid: Joi.string().required(),
-	currentAccountId: Joi.string().required(),
-	passwordHash: Joi.string().required(),
-	passwordSalt: Joi.string().required(),
+const user = object({
+	uid: nonempty(string()),
+	currentAccountId: nonempty(string()),
+	passwordHash: nonempty(string()),
+	passwordSalt: nonempty(string()),
 });
-export type User = Joi.extractType<typeof user>;
+export type User = Infer<typeof user>;
 
 export type Primitive = string | number | boolean | undefined | null;
 
@@ -53,24 +78,24 @@ export type DocumentData<T> = {
 	[K in keyof T]: Primitive;
 };
 
-const dataItem = Joi.object({
-	ciphertext: Joi.string().required(),
-	objectType: Joi.string().required(),
-	cryption: Joi.string().valid("v0", "v1"),
+const dataItem = object({
+	ciphertext: nonempty(string()),
+	objectType: nonempty(string()),
+	cryption: optional(enums(["v0", "v1"] as const)),
 });
-export type DataItem = Joi.extractType<typeof dataItem>;
+export type DataItem = Infer<typeof dataItem>;
 
 export function isDataItem(tbd: unknown): tbd is DataItem {
 	return isValidForSchema(tbd, dataItem);
 }
 
-const userKeys = Joi.object({
-	dekMaterial: Joi.string().required(),
-	passSalt: Joi.string().required(),
-	oldDekMaterial: Joi.string(),
-	oldPassSalt: Joi.string(),
+const userKeys = object({
+	dekMaterial: nonempty(string()),
+	passSalt: nonempty(string()),
+	oldDekMaterial: optional(nonempty(string())),
+	oldPassSalt: optional(nonempty(string())),
 });
-export type UserKeys = Joi.extractType<typeof userKeys>;
+export type UserKeys = Infer<typeof userKeys>;
 
 export function isUserKeys(tbd: unknown): tbd is UserKeys {
 	return isValidForSchema(tbd, userKeys);
@@ -78,7 +103,7 @@ export function isUserKeys(tbd: unknown): tbd is UserKeys {
 
 export type AnyDataItem = DataItem | UserKeys | User;
 
-const allCollectionIds = [
+export const allCollectionIds = [
 	"accounts",
 	"attachments",
 	"keys",
@@ -94,30 +119,39 @@ export function isCollectionId(tbd: string): tbd is CollectionID {
 	return allCollectionIds.includes(tbd as CollectionID);
 }
 
-const documentRef = Joi.object({
-	collectionId: Joi.string()
-		.valid(...allCollectionIds)
-		.required(),
-	documentId: Joi.string().required(),
+const documentRef = object({
+	collectionId: enums(allCollectionIds),
+	documentId: nonempty(string()),
 });
 
-const setBatch = Joi.object({
-	type: Joi.string().valid("set").required(),
-	ref: documentRef.required(),
-	data: dataItem.required(),
+const setBatch = object({
+	type: literal("set"),
+	ref: documentRef,
+	data: dataItem,
 });
 
-const deleteBatch = Joi.object({
-	type: Joi.string().valid("delete").required(),
-	ref: documentRef.required(),
+const deleteBatch = object({
+	type: literal("delete"),
+	ref: documentRef,
 });
 
-const documentWriteBatch = Joi.alt(setBatch, deleteBatch);
-export type DocumentWriteBatch = Joi.extractType<typeof documentWriteBatch>;
+const documentWriteBatch = union([setBatch, deleteBatch]);
+export type DocumentWriteBatch = Infer<typeof documentWriteBatch>;
 
 export function isDocumentWriteBatch(tbd: unknown): tbd is DocumentWriteBatch {
 	return isValidForSchema(tbd, documentWriteBatch);
 }
 
-export type Identified<T> = T & { _id: string };
-export type IdentifiedDataItem = Identified<DataItem> | Identified<UserKeys> | User;
+const identified = type({
+	_id: nonempty(string()),
+});
+
+function _identified<T>(struct: Struct<T>): Struct<T & Infer<typeof identified>> {
+	return intersection([struct, identified]);
+}
+
+export type Identified<T> = Infer<ReturnType<typeof _identified<T>>>;
+
+export const identifiedDataItem = union([_identified(dataItem), _identified(userKeys), user]);
+
+export type IdentifiedDataItem = Infer<typeof identifiedDataItem>;
