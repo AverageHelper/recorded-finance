@@ -1,10 +1,10 @@
 import type { AnyDataItem, Identified, IdentifiedDataItem, User } from "./schemas.js";
 import type { CollectionReference, DocumentReference } from "./references.js";
 import { folderSize, maxSpacePerUser } from "../auth/limits.js";
+import { join as joinPath } from "node:path";
 import { requireEnv } from "../environment.js";
 import { UnreachableCaseError } from "../errors/index.js";
 import mongoose from "mongoose";
-import path from "path";
 import {
 	AccountModel,
 	AttachmentModel,
@@ -23,7 +23,7 @@ process.stdout.write("Connected to MongoDB\n");
 // The place where the user's encrypted attachments live
 function dbFolderForUser(uid: string): string {
 	const DB_ROOT = requireEnv("DB");
-	const dir = path.join(DB_ROOT, "users", uid);
+	const dir = joinPath(DB_ROOT, "users", uid);
 	console.debug(`dbFolderForUser(uid: ${uid}) ${dir}`);
 	return dir;
 }
