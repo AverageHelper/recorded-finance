@@ -482,9 +482,9 @@ export function db(this: void /* Inject filesystem APIs here? */): Router {
 				// Delete the referenced database entry
 				await deleteDocument(ref);
 
-				const { totalSpace, usedSpace } = await statsForUser(uid);
-
 				// TODO: Delete any associated files
+
+				const { totalSpace, usedSpace } = await statsForUser(uid);
 
 				respondSuccess(res, { totalSpace, usedSpace });
 			})
