@@ -1,4 +1,4 @@
-import type { EnvKey } from "../environment";
+import type { EnvKey } from "../environment.js";
 import { tmpdir } from "node:os";
 
 const mockDB = tmpdir();
