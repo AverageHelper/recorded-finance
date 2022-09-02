@@ -1,4 +1,4 @@
-import { app } from "./main.js";
+import { jest } from "@jest/globals";
 import { version } from "./version.js";
 import request from "supertest";
 
@@ -8,6 +8,8 @@ import * as mockEnvironment from "./__mocks__/environment.js";
 
 // See https://github.com/facebook/jest/issues/10025 on why `jest.mock` doesn't work under ESM
 jest.unstable_mockModule("./environment.js", () => mockEnvironment);
+
+const { app } = await import("./main.js");
 
 describe("Routes", () => {
 	describe("GET /v0/", () => {
