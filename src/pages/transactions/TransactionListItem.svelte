@@ -1,9 +1,10 @@
 <script lang="ts">
 	import type { Transaction } from "../../model/Transaction";
+	import { _, locale } from "../../i18n";
 	import { allBalances, attachments, handleError, updateTransaction } from "../../store";
 	import { isNegative as isDineroNegative } from "dinero.js";
-	import { intlFormat, toTimestamp } from "../../transformers";
 	import { onMount } from "svelte";
+	import { toCurrency, toTimestamp } from "../../transformers";
 	import { transaction as newTransaction } from "../../model/Transaction";
 	import { transactionPath } from "../../router";
 	import Checkbox from "../../components/inputs/Checkbox.svelte";
@@ -19,7 +20,7 @@
 
 	let isAttachmentBroken: boolean | "unknown" = "unknown";
 	$: hasLocation = transaction.locationId !== null;
-	$: timestamp = toTimestamp(transaction.createdAt);
+	$: timestamp = toTimestamp($locale.code, transaction.createdAt);
 
 	$: accountBalanceSoFar = ($allBalances[transaction.accountId] ?? {})[transaction.id] ?? null;
 
@@ -64,8 +65,8 @@
 	to={transactionRoute}
 	title={transaction.title ?? "--"}
 	subtitle={timestamp}
-	count={intlFormat(transaction.amount)}
-	subCount={accountBalanceSoFar ? intlFormat(accountBalanceSoFar) : "--"}
+	count={toCurrency($locale.code, transaction.amount)}
+	subCount={accountBalanceSoFar ? toCurrency($locale.code, accountBalanceSoFar) : "--"}
 	negative={isNegative}
 >
 	<div slot="icon" class="checkbox-b9eab07a">
@@ -80,6 +81,7 @@
 			}}
 		/>
 		{#if isChangingReconciled}
+			<!-- TODO: Make a loading spinner for this -->
 			<span class="loading" style="min-height: 33pt">...</span>
 		{/if}
 	</div>
@@ -90,12 +92,11 @@
 				<LocationIcon />
 			</div>
 		{/if}
-		<!-- TODO: I18N -->
 		{#if hasAttachments}
 			<div
-				title={`${transaction.attachmentIds.length} attachment${
-					transaction.attachmentIds.length === 1 ? "" : "s"
-				}`}
+				title={transaction.attachmentIds.length === 1
+					? $_("files.count.attachment")
+					: $_("files.count.attachments", { values: { n: transaction.attachmentIds.length } })}
 			>
 				{#if isAttachmentBroken}
 					<strong>?</strong>

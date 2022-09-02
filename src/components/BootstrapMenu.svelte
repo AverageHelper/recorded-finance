@@ -1,12 +1,13 @@
 <script lang="ts">
-	import { _ } from "svelte-i18n";
+	import { _, locale } from "../i18n";
 	import { aboutPath, homePath, installPath, loginPath, securityPath } from "../router";
 	import { isLoginEnabled } from "../store";
 	import { link, useLocation } from "svelte-navigator";
+	import LanguageSelector from "./LanguageSelector.svelte";
 
 	interface Page {
 		path: string;
-		titleKey: string;
+		titleKey: `home.nav.${"home" | "about" | "security" | "install" | "log-in"}`;
 	}
 
 	let isNavButtonOpen = false; // This is exactly what Bootstrap does lol
@@ -18,11 +19,11 @@
 	}
 
 	const pages: Array<Page> = [
-		{ path: homePath(), titleKey: "home.nav.home" },
-		{ path: aboutPath(), titleKey: "home.nav.about" },
-		{ path: securityPath(), titleKey: "home.nav.security" },
-		{ path: installPath(), titleKey: "home.nav.install" },
-		isLoginEnabled ? { path: loginPath(), titleKey: "home.nav.log-in" } : null,
+		{ path: homePath(), titleKey: "home.nav.home" } as const,
+		{ path: aboutPath(), titleKey: "home.nav.about" } as const,
+		{ path: securityPath(), titleKey: "home.nav.security" } as const,
+		{ path: installPath(), titleKey: "home.nav.install" } as const,
+		isLoginEnabled ? ({ path: loginPath(), titleKey: "home.nav.log-in" } as const) : null,
 	].filter(isNotNull);
 
 	const location = useLocation();
@@ -35,15 +36,17 @@
 	function close() {
 		isNavButtonOpen = false;
 	}
+
+	$: $locale && close(); // Close the nav when locale changes
 </script>
 
-<nav class="navbar-147f68de navbar navbar-expand-sm navbar-dark">
+<nav class="navbar-147f68de navbar navbar-expand-md navbar-dark">
 	<a
 		href={homeRoute}
 		class="navbar-brand-9794720e"
 		role="heading"
-		aria-label={$_("common.accountable")}
-		title={$_("common.accountable")}
+		aria-label={$_("common.platform")}
+		title={$_("common.platform")}
 		use:link>A&cent;countable</a
 	>
 	<button
@@ -53,18 +56,14 @@
 		data-bs-target="#navbarNav"
 		aria-controls="navbarNav"
 		aria-expanded={isNavButtonOpen}
-		aria-label="Toggle navigation"
+		aria-label={$_("app.toggle-nav")}
 		on:click={toggle}
 	>
 		<span class="navbar-toggler-icon" />
 	</button>
 
 	<div id="navbarNav" class="collapse navbar-collapse {isNavButtonOpen ? 'show' : ''}">
-		<ul class="navbar-nav mr-auto">
-			<!-- <li class="nav-item">
-				<span class="visually-hidden">Current Language: {$locale}</span>
-				<p class="flag-icon">{$locale}</p>
-			</li> -->
+		<ul class="navbar-nav">
 			{#each pages as page (page.path)}
 				<li class="nav-item {currentPath === page.path ? 'active' : ''}">
 					<a
@@ -79,6 +78,11 @@
 					</a>
 				</li>
 			{/each}
+			<li class="nav-item">
+				<div class="locale">
+					<LanguageSelector />
+				</div>
+			</li>
 		</ul>
 	</div>
 </nav>
@@ -97,7 +101,8 @@
 	@import "bootstrap/scss/navbar";
 	@import "bootstrap/scss/helpers/_visually-hidden.scss";
 
-	$change: 575px;
+	// $change: 575px; // Bootstrap's 'sm' change position
+	$change: 767px; // Bootstrap's 'md' change position
 
 	.navbar-brand-9794720e {
 		display: block;
@@ -106,11 +111,18 @@
 		z-index: 50;
 		margin-left: 16pt;
 		text-decoration: none;
+		border-radius: 4pt;
 		color: color($label);
 
-		&:hover {
-			color: color($link);
-			text-decoration: underline;
+		@media (hover: hover) {
+			&:hover {
+				color: color($link);
+				text-decoration: underline;
+			}
+		}
+
+		&:focus-visible {
+			outline: 2pt solid color($link);
 		}
 	}
 
@@ -120,6 +132,8 @@
 		width: 100%;
 
 		#navbarNav {
+			z-index: 100;
+
 			@include mq($until: $change) {
 				position: absolute;
 				top: 1.8em;
@@ -142,11 +156,10 @@
 
 				&-nav {
 					z-index: 100;
-					margin-right: 0;
-					margin-top: 22pt;
+					margin-top: 20pt;
 					padding: 0 8pt;
 					text-align: right;
-					width: 100%;
+					min-width: 100vw;
 					background-color: color($navbar-background);
 				}
 			}
@@ -156,14 +169,24 @@
 			font-weight: bold;
 		}
 
-		.flag-icon {
-			margin: 0;
-			padding: 0;
-		}
-
 		.nav-item {
+			margin: auto 0;
+
+			> .locale {
+				width: fit-content;
+				margin-left: auto;
+			}
+
 			&.active {
 				color: color($link);
+			}
+
+			.nav-link {
+				border-radius: 4pt;
+
+				&:focus-visible {
+					outline: 2pt solid color($link);
+				}
 			}
 
 			@media (hover: hover) {

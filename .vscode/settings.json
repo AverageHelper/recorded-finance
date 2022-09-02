@@ -6,7 +6,9 @@
 	"i18n-ally.displayLanguage": "en-US",
 	"i18n-ally.keystyle": "nested",
 	"i18n-ally.localesPaths": ["src/locales"],
+	"i18n-ally.regex.usageMatchAppend": ["[^\\w\\d]t\\(['\"`]({key})['\"`]"],
 	"i18n-ally.sourceLanguage": "en-US",
+	"i18n-ally.tabStyle": "tab",
 	"svelte.plugin.svelte.compilerWarnings": {
 		"a11y-label-has-associated-control": "ignore"
 	},
@@ -14,5 +16,6 @@
 	"svelte.plugin.svelte.useNewTransformation": true,
 	"[svelte]": {
 		"editor.defaultFormatter": "svelte.svelte-vscode"
-	}
+	},
+	"todo-tree.filtering.excludeGlobs": ["**/dist/**"]
 }

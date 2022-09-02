@@ -1,17 +1,18 @@
 <script lang="ts">
 	import type { Account } from "../../model/Account";
+	import { _, locale } from "../../i18n";
 	import { accountPath } from "../../router";
 	import { currentBalance, getTransactionsForAccount, transactionsForAccount } from "../../store";
-	import { intlFormat } from "../../transformers";
 	import { isNegative as isDineroNegative } from "dinero.js";
 	import { onMount } from "svelte";
+	import { toCurrency } from "../../transformers";
 	import ListItem from "../../components/ListItem.svelte";
 
 	export let account: Account;
 	export let link: boolean = true;
 	export let count: number | null = null;
 
-	$: accountRoute = link ? accountPath(account.id) : "#"; // TODO: I18N
+	$: accountRoute = link ? accountPath(account.id) : "#";
 	$: theseTransactions = $transactionsForAccount[account.id];
 
 	$: remainingBalance = $currentBalance[account.id] ?? null;
@@ -23,9 +24,10 @@
 			: count ?? Object.keys(theseTransactions).length;
 
 	$: notes = account.notes?.trim() ?? "";
-	$: countString = `${numberOfTransactions ?? "?"} transaction${
-		numberOfTransactions === 1 ? "" : "s"
-	}`; // TODO: I18N
+	$: countString =
+		numberOfTransactions === 1
+			? $_("transactions.count.transaction")
+			: $_("transactions.count.transactions", { values: { n: numberOfTransactions ?? "?" } });
 	$: subtitle = !notes
 		? countString
 		: numberOfTransactions === null
@@ -41,7 +43,7 @@
 	to={accountRoute}
 	title={account.title}
 	{subtitle}
-	count={remainingBalance ? intlFormat(remainingBalance) : "--"}
+	count={remainingBalance ? toCurrency($locale.code, remainingBalance) : "--"}
 	negative={isBalanceNegative}
 	class={$$props["class"]}
 	on:click

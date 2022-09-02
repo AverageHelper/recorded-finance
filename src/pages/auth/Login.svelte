@@ -1,12 +1,16 @@
 <script lang="ts">
-	import { _ } from "svelte-i18n";
+	import { _ } from "../../i18n";
 	import { accountsPath, loginPath, signupPath } from "../../router";
 	import { onMount } from "svelte";
+	import { repoReadmeHeading } from "../../platformMeta";
 	import { useLocation, useNavigate } from "svelte-navigator";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
 	import ErrorNotice from "../../components/ErrorNotice.svelte";
 	import Footer from "../../Footer.svelte";
+	import I18N from "../../components/I18N.svelte";
+	import InfoDrawer from "../../components/InfoDrawer.svelte";
 	import NopLink from "../../components/NopLink.svelte";
+	import OutLink from "../../components/OutLink.svelte";
 	import TextField from "../../components/inputs/TextField.svelte";
 	import {
 		bootstrap,
@@ -141,7 +145,7 @@
 					value={$_("login.value-will-be-generated")}
 					disabled={isSignupMode && !isLoading}
 					label={$_("login.account-id")}
-					placeholder="b4dcb93bc0c04251a930541e1a3c9a80"
+					placeholder={$_("example.account-id")}
 					autocomplete="username"
 				/>
 			{:else}
@@ -151,7 +155,7 @@
 					on:input={onUpdateAccountId}
 					disabled={isSignupMode && !isLoading}
 					label={$_("login.account-id")}
-					placeholder="b4dcb93bc0c04251a930541e1a3c9a80"
+					placeholder={$_("example.account-id")}
 					autocomplete="username"
 					showsRequired={false}
 					required
@@ -162,7 +166,7 @@
 				value={password}
 				on:input={onUpdatePassphrase}
 				type="password"
-				label={$_(isSignupMode ? "login.new-passphrase" : "login.current-passphrase")}
+				label={isSignupMode ? $_("login.new-passphrase-imperative") : $_("login.passphrase")}
 				placeholder="********"
 				autocomplete={isSignupMode ? "new-password" : "current-password"}
 				showsRequired={false}
@@ -184,12 +188,9 @@
 				type="submit"
 				kind={isSignupMode ? "bordered-primary-green" : "bordered-primary"}
 				disabled={isLoading}
-				>{$_(isSignupMode ? "login.create-account" : "login.log-in")}</ActionButton
+				>{isSignupMode ? $_("login.create-account") : $_("login.log-in")}</ActionButton
 			>
 
-			{#if !$loginProcessState}
-				<p>{$_("login.cookie-disclaimer")}</p>
-			{/if}
 			{#if $loginProcessState === "AUTHENTICATING"}
 				<span>{$_("login.process.authenticating")}</span>
 			{/if}
@@ -223,6 +224,17 @@
 						</p>
 					{/if}
 				</div>
+			{/if}
+
+			{#if !$loginProcessState}
+				<InfoDrawer title={$_("login.cookie-disclaimer-header")}>
+					<p>
+						<I18N keypath="login.cookie-disclaimer">
+							<!-- more -->
+							<OutLink to={repoReadmeHeading("why-use-cookies")}>{$_("login.cookie-more")}</OutLink>
+						</I18N>
+					</p>
+				</InfoDrawer>
 			{/if}
 		</form>
 		<Footer />

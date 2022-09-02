@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { _ } from "../i18n";
 	import { onMount } from "svelte";
 	import { useLocation, useNavigate } from "svelte-navigator";
 	import ActionButton from "./buttons/ActionButton.svelte";
@@ -51,7 +52,7 @@
 		value={searchQuery}
 		on:input={onSearchQueryChange}
 		type="search"
-		placeholder="Search"
+		placeholder={$_("input.search")}
 		class="input"
 		on:keyup={onKeyup}
 	/>

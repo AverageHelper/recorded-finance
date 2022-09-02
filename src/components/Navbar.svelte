@@ -25,6 +25,7 @@
 		<aside class="leading-actions actions-container">
 			{#if !isRoute}
 				<ActionButton on:click={goBack}>
+					<!-- TODO: Use a proper icon for this -->
 					<span>&lt;</span>
 				</ActionButton>
 			{/if}
@@ -55,7 +56,9 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		position: relative;
+		position: sticky;
+		top: 0;
+		z-index: 1000;
 		text-align: center;
 		height: 44pt;
 		width: 100vw;

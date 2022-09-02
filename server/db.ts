@@ -1,20 +1,24 @@
-import type { DataItem, Unsubscribe, UserKeys } from "./database/index.js";
-import type { DocumentData } from "./database/schemas.js";
+import type { DataItem, Unsubscribe } from "./database/index.js";
+import type { DocumentData, UserKeys } from "./database/schemas.js";
 import type { DocUpdate } from "./database/io.js";
+import type { Infer } from "superstruct";
 import type { Request } from "express";
-import type { WebSocket } from "./database/websockets.js";
+import type { WebsocketRequestHandler } from "express-ws";
+import { allCollectionIds, identifiedDataItem, isValidForSchema } from "./database/schemas.js";
 import { asyncWrapper } from "./asyncWrapper.js";
-import { close, send, WebSocketCode } from "./database/websockets.js";
 import { deleteItem, ensure, getFileContents, moveFile, tmpDir } from "./database/filesystem.js";
-import { dirname, resolve as resolvePath, sep as pathSeparator, join } from "path";
-import { env } from "./environment.js";
+import { dirname, resolve as resolvePath, sep as pathSeparator, join } from "node:path";
+import { array, enums, nonempty, nullable, object, optional, string, union } from "superstruct";
 import { handleErrors } from "./handleErrors.js";
 import { maxSpacePerUser } from "./auth/limits.js";
 import { ownersOnly, requireAuth } from "./auth/index.js";
+import { requireEnv } from "./environment.js";
 import { respondData, respondError, respondSuccess } from "./responses.js";
 import { Router } from "express";
 import { simplifiedByteCount } from "./transformers/simplifiedByteCount.js";
 import { statsForUser } from "./database/io.js";
+import { WebSocketCode } from "./networking/WebSocketCode.js";
+import { ws } from "./networking/websockets.js";
 import multer, { diskStorage } from "multer";
 import {
 	CollectionReference,
@@ -125,7 +129,6 @@ export async function temporaryFilePath(params: Params): Promise<string | null> 
 	}
 
 	await ensure(folder);
-	console.debug(`temporaryFilePath: ${path}`);
 	return path;
 }
 
@@ -145,7 +148,10 @@ async function permanentFilePath(params: Params): Promise<string | null> {
 	// Make sure uid doesn't contain stray path arguments
 	if (uid.includes("..") || uid.includes(pathSeparator)) return null;
 
-	const DB_ROOT = env("DB") ?? resolvePath("./db");
+	const DB_ROOT =
+		(process.env.NODE_ENV as string) === "test" //
+			? resolvePath("./db")
+			: requireEnv("DB");
 	const folder = resolvePath(DB_ROOT, `./users/${uid}/attachments`);
 
 	const path = join(folder, fileName.trim());
@@ -177,6 +183,7 @@ const upload = multer({
 					cb(new BadRequestError("Your UID or that file name don't add up to a valid path"), "");
 					return;
 				}
+				console.debug(`temporaryFilePath: ${tmp}`);
 				const path = dirname(tmp);
 				console.debug(`Writing uploaded file to '${path}'...`);
 				if (path === null || !path) {
@@ -210,80 +217,65 @@ const upload = multer({
 	}),
 });
 
-function webSocket(ws: WebSocket, req: Request<Params>): void {
-	const uid = (req.params.uid ?? "") || null;
-	const collectionId = (req.params.collectionId ?? "") || null;
-	const documentId = (req.params.documentId ?? "") || null;
+const watcherData = object({
+	message: nonempty(string()),
+	dataType: enums(["single", "multiple"] as const),
+	data: nullable(union([array(identifiedDataItem), identifiedDataItem])),
+});
 
-	// Ensure valid input
-	if (uid === null) return close(ws, WebSocketCode.PROTOCOL_ERROR, "Missing user ID");
-	if (collectionId === null)
-		return close(ws, WebSocketCode.PROTOCOL_ERROR, "Missing collection ID");
-	if (!isCollectionId(collectionId))
-		return close(ws, WebSocketCode.PROTOCOL_ERROR, "Invalid collection ID");
+type WatcherData = Infer<typeof watcherData>;
 
-	// Send an occasional ping
-	// If the client doesn't respond a few times consecutively, assume they aren't coming back
-	let timesNotThere = 0;
-	const pingInterval = setInterval(() => {
-		if (timesNotThere > 5) {
-			process.stdout.write("Client didn't respond after 5 tries. Closing\n");
-			close(ws, WebSocketCode.WENT_AWAY, "Client did not respond to pings, probably dead");
-			clearInterval(pingInterval);
-			return;
+const webSocket: WebsocketRequestHandler = ws(
+	// interactions
+	{
+		stop(tbd): tbd is "STOP" {
+			return tbd === "STOP";
+		},
+		data(tbd): tbd is WatcherData {
+			return isValidForSchema(tbd, watcherData);
+		},
+	},
+	// params
+	object({
+		uid: nonempty(string()),
+		documentId: optional(nullable(nonempty(string()))),
+		collectionId: enums(allCollectionIds),
+	}),
+	// start
+	(context, params) => {
+		const { onClose, onMessage, send, close } = context;
+		const { uid, collectionId, documentId = null } = params;
+		const collection = new CollectionReference<UserKeys>(uid, collectionId);
+		let unsubscribe: Unsubscribe;
+		// TODO: Assert the caller's ID is uid using some protocol
+		if (documentId !== null) {
+			const ref = new DocumentReference(collection, documentId);
+			unsubscribe = watchUpdatesToDocument(ref, data => {
+				console.debug(`Got update for document at ${ref.path}`);
+				send("data", {
+					message: "Here's your data",
+					dataType: "single",
+					data,
+				});
+			});
+		} else {
+			unsubscribe = watchUpdatesToCollection(collection, data => {
+				console.debug(`Got update for collection at ${collection.path}`);
+				send("data", {
+					message: "Here's your data",
+					dataType: "multiple",
+					data,
+				});
+			});
 		}
-		send(ws, "ARE_YOU_STILL_THERE");
-		timesNotThere += 1; // this goes away if the client responds
-	}, 10000); // 10 second interval
 
-	const collection = new CollectionReference<UserKeys>(uid, collectionId);
-	let unsubscribe: Unsubscribe;
-
-	// TODO: Do a dance within the websocket to assert the caller's ID is uid
-
-	if (documentId !== null) {
-		const ref = new DocumentReference(collection, documentId);
-		unsubscribe = watchUpdatesToDocument(ref, data => {
-			console.debug(`Got update for document at ${ref.path}`);
-			send(ws, {
-				message: "Here's your data",
-				dataType: "single",
-				data,
-			});
+		onMessage("stop", () => {
+			close(WebSocketCode.NORMAL, "Received STOP message from client");
 		});
-	} else {
-		unsubscribe = watchUpdatesToCollection(collection, data => {
-			console.debug(`Got update for collection at ${collection.path}`);
-			send(ws, {
-				message: "Here's your data",
-				dataType: "multiple",
-				data,
-			});
-		});
+
+		onClose(unsubscribe);
 	}
-
-	ws.on("message", msg => {
-		try {
-			const message = (msg as Buffer).toString();
-
-			// ** Stuff we expect to hear from the client:
-			switch (message) {
-				case "START": // nop
-				case "YES_IM_STILL_HERE":
-					timesNotThere = 0;
-					return;
-				case "STOP":
-					unsubscribe();
-					return close(ws, WebSocketCode.NORMAL, "Received STOP message from client");
-				default:
-					return close(ws, WebSocketCode.PROTOCOL_ERROR, "Received unknown message from client");
-			}
-		} catch (error) {
-			console.error(error);
-			close(ws, WebSocketCode.PROTOCOL_ERROR, "Couldn't process that");
-		}
-	});
-}
+);
 
 interface FileData {
 	contents: string;
@@ -291,7 +283,7 @@ interface FileData {
 }
 
 // Function so we defer creation of the router until after we've set up websocket support
-export function db(this: void): Router {
+export function db(this: void /* Inject filesystem APIs here? */): Router {
 	return Router()
 		.ws("/users/:uid/:collectionId", webSocket)
 		.ws("/users/:uid/:collectionId/:documentId", webSocket)
@@ -335,6 +327,7 @@ export function db(this: void): Router {
 					throw new BadRequestError("Your UID or that file name don't add up to a valid path");
 				}
 
+				console.debug(`temporaryFilePath: ${tempPath}`);
 				await moveFile(tempPath, permPath);
 
 				{

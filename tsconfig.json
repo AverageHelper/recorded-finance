@@ -3,7 +3,7 @@
 	"compilerOptions": {
 		"declaration": true,
 		"noEmit": false,
-		"types": ["vite/client", "svelte"]
+		"types": ["vite/client", "svelte", "jest", "jest-extended"]
 	},
 	"ts-node": {
 		"esm": true

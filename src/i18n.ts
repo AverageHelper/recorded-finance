@@ -1,38 +1,116 @@
-import { addMessages, init, getLocaleFromNavigator } from "svelte-i18n";
-import enUS from "./locales/en-US.json";
+import type { Readable } from "svelte/store";
+import { _, addMessages, getLocaleFromNavigator, init, locale as _locale } from "svelte-i18n";
+import { derived, get } from "svelte/store";
+import { isRecord } from "./transport/schemas";
+import { isString } from "./helpers/isString";
 
-// Formatter consumers should import from here, not svelte-i18n directly,
-// so that the formatter gets properly initialized in unit tests.
-export { getNumberFormatter } from "svelte-i18n";
+// ** Language files **
+import enUS from "./locales/en-US.json";
+import ptBR from "./locales/pt-BR.json";
 
 const messages = {
 	"en-US": enUS,
+	"pt-BR": ptBR,
 } as const;
 
 export type LocaleCode = keyof typeof messages;
 
 /** Returns `true` if the given string is a supported locale code. */
-export function isSupportedLocaleCode(tbd: string | null): tbd is LocaleCode {
-	if (tbd === null) return false;
-	return Object.keys(messages).includes(tbd);
+export function isSupportedLocaleCode(tbd: unknown): tbd is LocaleCode {
+	return Object.keys(messages).includes(tbd as string);
 }
 
 export interface LocaleDescriptor {
-	/** The locale code. @example `"en-US"` */
+	/**
+	 * The locale code.
+	 *
+	 * @example "en-US"
+	 */
 	readonly code: LocaleCode;
 
-	/** An emoji flag representing the locale. @example `"🇺🇸"` */
+	/**
+	 * An emoji flag representing the locale.
+	 *
+	 * @example "🇺🇸"
+	 */
 	readonly flag: string;
 
-	/** A string describing the locale to visually-impaired readers. @example `"English (United States)"` */
-	readonly language: string;
+	/**
+	 * A string describing the locale, especially for visually-impaired readers.
+	 *
+	 * @example "United States English"
+	 */
+	readonly name: string;
+
+	/**
+	 * A brief string describing the locale.
+	 *
+	 * @example "English (USA)"
+	 */
+	readonly shortName: string;
+}
+
+function isLocaleDescriptor(tbd: unknown): tbd is LocaleDescriptor {
+	return (
+		isRecord(tbd) &&
+		"code" in tbd &&
+		"flag" in tbd &&
+		"name" in tbd &&
+		"shortName" in tbd &&
+		isSupportedLocaleCode(tbd["code"]) &&
+		isString(tbd["flag"]) &&
+		isString(tbd["name"]) &&
+		isString(tbd["shortName"])
+	);
+}
+
+function assertLocaleDescriptor(tbd: unknown): asserts tbd is LocaleDescriptor {
+	if (!isLocaleDescriptor(tbd))
+		throw new TypeError(`Value is not a LocaleDescriptor: ${JSON.stringify(tbd)}`);
+}
+
+type StoreValue<T> = T extends Readable<infer S> ? S : never;
+
+/**
+ * Internationalizes the given `keypath` based on the current locale.
+ * Use this function in imperative environments outside of Svelte components.
+ *
+ * @important Avoid using this function in declarative contexts. Instead,
+ * subscribe to the `_` store.
+ */
+export function t(...[keypath, options]: Parameters<StoreValue<typeof _>>): string {
+	return get(_)(keypath, options);
+}
+
+// Use this store instead of the `t` function in Svelte components.
+export { _ } from "svelte-i18n";
+
+// Ensure metadata is valid
+for (const locale of Object.values(messages)) {
+	assertLocaleDescriptor(locale.meta);
+}
+
+/** Metadata about the current locale. */
+export const locale = derived<typeof _locale, LocaleDescriptor>(_locale, $locale => {
+	if (isSupportedLocaleCode($locale)) {
+		const meta = messages[$locale].meta;
+		if (isLocaleDescriptor(meta)) return meta;
+	}
+	return messages["en-US"].meta as LocaleDescriptor; // ASSUMPTION: we've already asserted this case
+});
+
+/** Set the current locale. */
+export async function setLocale(code: LocaleCode): Promise<void> {
+	await _locale.set(code);
+	console.debug(`User manually selected locale ${code}`);
 }
 
 /** The list of supported locales. */
 export const locales: ReadonlyArray<LocaleDescriptor> = Object.entries(messages) //
 	.map(([code, strings]) => ({
 		code: code as LocaleCode,
-		language: strings.meta.language,
+		name: strings.meta.name,
+		shortName: strings.meta.shortName,
 		flag: strings.meta.flag,
 	}));
 
@@ -40,17 +118,10 @@ export const locales: ReadonlyArray<LocaleDescriptor> = Object.entries(messages)
 // ** Set up Svelte I18N Runtime **
 // **
 
-const fallbackLocale = "en-US";
-
-// TODO: Read ?lang query to get preferred locale
-// const LOCALE_PARAM = "lang";
-// const initialLocale =
-// 	typeof location !== "undefined" // `location` is undefined in Jest
-// 		? new URLSearchParams(location.search).get(LOCALE_PARAM)
-// 		: fallbackLocale;
+const fallbackLocale: LocaleCode = "en-US";
 
 const initialLocale = getLocaleFromNavigator();
-console.debug(`Locale: ${initialLocale ?? "null"}`);
+console.debug(`Navigator locale: ${initialLocale ?? "null"}`);
 
 Object.entries(messages).forEach(([locale, partials]) => {
 	addMessages(locale, partials);

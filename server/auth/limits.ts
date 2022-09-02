@@ -1,5 +1,5 @@
 import { env } from "../environment.js";
-import { promisify } from "util";
+import { promisify } from "node:util";
 import { simplifiedByteCount } from "../transformers/index.js";
 import fastFolderSize from "fast-folder-size";
 
@@ -11,10 +11,12 @@ const defaultMaxSpace = 20000000000;
 const totalSpace = Number.parseInt(env("MAX_BYTES") ?? `${defaultMaxSpace}`, 10);
 export const maxSpacePerUser = totalSpace / MAX_USERS;
 
-process.stdout.write(
-	`We have ${simplifiedByteCount(totalSpace)} available. That's ${simplifiedByteCount(
-		maxSpacePerUser
-	)} for each of our ${MAX_USERS} max users.\n`
-);
+if ((process.env.NODE_ENV as string) !== "test") {
+	process.stdout.write(
+		`We have ${simplifiedByteCount(totalSpace)} available. That's ${simplifiedByteCount(
+			maxSpacePerUser
+		)} for each of our ${MAX_USERS} max users.\n`
+	);
+}
 
-export const folderSize: (path: string) => Promise<number | undefined> = promisify(fastFolderSize);
+export const folderSize = promisify(fastFolderSize);

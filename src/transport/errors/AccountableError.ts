@@ -1,4 +1,5 @@
-import { UnreachableError } from "./UnreachableError.js";
+import { t } from "../../i18n";
+import { UnreachableCaseError } from "./UnreachableCaseError.js";
 
 export type AccountableErrorCode =
 	| "auth/account-already-exists"
@@ -21,42 +22,41 @@ export type AccountableErrorCode =
 	| "storage/unauthenticated";
 
 function messageFromCode(code: AccountableErrorCode): string {
-	// TODO: I18N
 	switch (code) {
 		case "auth/account-already-exists":
-			return "That account already exists";
+			return t("error.auth.account-already-exists");
 		case "auth/internal-error":
-			return "Internal auth error";
+			return t("error.auth.internal");
 		case "auth/invalid-argument":
-			return "Invalid auth argument";
+			return t("error.auth.invalid-argument");
 		case "auth/invalid-credential":
-			return "Invalid account ID or password";
+			return t("error.auth.invalid-credential");
 		case "auth/quota-exceeded":
 		case "database/deadline-exceeded":
-			return "You are being throttled";
+			return t("error.server.throttled");
 		case "database/failed-precondition":
-			return "Failed precondition";
+			return t("error.db.failed-precondition");
 		case "database/internal-error":
-			return "Internal database error";
+			return t("error.db.internal");
 		case "database/invalid-argument":
-			return "Invalid database argument";
+			return t("error.db.invalid-argument");
 		case "storage/internal-error":
-			return "Internal storage error";
+			return t("error.storage.internal");
 		case "storage/invalid-argument":
-			return "Invalid storage argument";
+			return t("error.storage.invalid-argument");
 		case "storage/invalid-checksum":
-			return "The uploaded file does not match the provided checksum. Please reupload";
+			return t("error.storage.invalid-checksum");
 		case "storage/quota-exceeded":
 		case "storage/retry-limit-exceeded":
-			return "You are being throttled";
+			return t("error.server.throttled");
 		case "storage/server-file-wrong-size":
-			return "The uploaded file does not match the provided file size. Please reupload";
+			return t("error.storage.server-file-wrong-size");
 		case "auth/unauthenticated":
 		case "database/unauthenticated":
 		case "storage/unauthenticated":
-			return "You must sign in first";
+			return t("error.auth.unauthenticated");
 		default:
-			throw new UnreachableError(code);
+			throw new UnreachableCaseError(code);
 	}
 }
 

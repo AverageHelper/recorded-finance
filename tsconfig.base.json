@@ -16,11 +16,10 @@
 		"allowJs": false,
 		"declaration": false,
 		"removeComments": true,
-		"sourceMap": true,
 		"baseUrl": "./src",
 		"outDir": "./dist",
 		"isolatedModules": true,
-		"strict": true, // FIXME: Svelte files ignore this bit
+		"strict": true,
 		"noFallthroughCasesInSwitch": true,
 		"noImplicitReturns": true,
 		"noPropertyAccessFromIndexSignature": true,

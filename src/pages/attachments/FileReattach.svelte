@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Attachment } from "../../model/Attachment";
 	import type { Transaction } from "../../model/Transaction";
+	import { _ } from "../../i18n";
 	import { createEventDispatcher } from "svelte";
 	import FileInput from "./FileInput.svelte";
 	import FileListItem from "./FileListItem.svelte";
@@ -49,18 +50,14 @@
 </script>
 
 <div>
-	<!-- TODO: I18N -->
-	<h3>Fix broken reference</h3>
-	<p
-		>This attachment somehow got lost in the mix, possibly due to an import bug. Select the correct
-		file below:</p
-	>
+	<h3>{$_("files.reference.heading")}</h3>
+	<p>{$_("files.reference.explanation")}</p>
 
 	<List>
 		<li>
 			<FileInput on:input={createNewFile} let:click>
 				<ListItem
-					title="Upload a file"
+					title={$_("files.upload.imperative")}
 					to=""
 					on:click={e => {
 						e.preventDefault();
@@ -83,7 +80,9 @@
 		{#if numberOfFiles > 0}
 			<li>
 				<p class="footer"
-					>{numberOfFiles} file{#if numberOfFiles !== 1}s{/if}</p
+					>{#if numberOfFiles === 1}{$_("files.count.file")}{:else}{$_("files.count.files", {
+							values: { n: numberOfFiles },
+						})}{/if}</p
 				>
 			</li>
 		{/if}

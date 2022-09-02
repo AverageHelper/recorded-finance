@@ -1,7 +1,7 @@
 import type { CollectionID } from "./db";
 import type { Infer } from "superstruct";
-import isArray from "lodash/isArray";
-import isObject from "lodash/isObject";
+import { isArray } from "../helpers/isArray";
+import { isObject } from "../helpers/isObject";
 import {
 	array,
 	boolean,
@@ -59,10 +59,6 @@ export const documentData = define<DocumentData>(
 	"documentData",
 	value => isRecord(value) && Object.values(value).every(isPrimitive)
 );
-
-export function isDocumentData(tbd: unknown): tbd is DocumentData {
-	return is(tbd, documentData);
-}
 
 const rawServerResponse = object({
 	message: optional(string()),

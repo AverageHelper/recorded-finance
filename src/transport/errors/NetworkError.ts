@@ -1,8 +1,5 @@
 import type { ServerResponse } from "../api-types/index.js";
-import { _ } from "svelte-i18n";
-import { get } from "svelte/store";
-
-const t = get(_);
+import { t } from "../../i18n";
 
 type ErrorCode =
 	| "account-conflict"

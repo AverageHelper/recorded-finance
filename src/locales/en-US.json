@@ -1,25 +1,34 @@
 {
 	"meta": {
 		"code": "en-US",
-		"language": "English (United States)",
+		"name": "United States English",
+		"shortName": "English (USA)",
 		"flag": "🇺🇸"
 	},
 	"common": {
-		"count": {
-			"account": "1 account",
-			"accounts": "{n} accounts"
-		},
-		"accountable": "Accountable",
-		"client": "Client",
+		"platform": "Accountable",
+		"cancel": "Cancel",
+		"application": "Client",
+		"current-language": "Current Language: {name}",
+		"details": "Details",
 		"current-aside": "(current)",
+		"delete-imperative": "Delete",
 		"disk-usage": "Used {used} of {total}",
 		"download-action": "Download",
 		"learn-more": "Learn More",
+		"loading-in-progress": "Loading...",
+		"saving-in-progress": "Saving...",
+		"select-language": "Select a language",
 		"yes": "Yes",
+		"no": "No",
 		"not-yet": "Not yet",
+		"reset": "Reset",
+		"save-imperative": "Save",
 		"server": "Server"
 	},
 	"actions": {
+		"add-new-noun": "Add a new {noun}",
+		"more-info-about": "Read more information about {topic}",
 		"location": {
 			"clear": "Clear location",
 			"get-current": "Get current location"
@@ -31,16 +40,42 @@
 	"date-time": {
 		"now": "Now"
 	},
-	"text-input": {
-		"required": "(required)"
-	},
 	"error": {
+		"auth": {
+			"account-already-exists": "Someone already has an account with that ID.",
+			"internal": "Internal auth error",
+			"invalid-argument": "Invalid auth argument",
+			"invalid-credential": "Invalid account ID or passphrase",
+			"invalid-email": "That doesn't quite look like an email address.",
+			"create-account-first": "You must create an accout first",
+			"unauthenticated": "You must sign in first"
+		},
 		"cryption": {
+			"empty-result": "Result was empty",
+			"plaintext-not-json": "Decrypted plaintext did not parse as valid JSON: {error}: '{plaintext}'",
+			"malformed-key": "Decrypted key is malformed",
 			"missing-pek": "No decryption key"
+		},
+		"db": {
+			"account-has-transactions": "Cannot delete an account that has transactions.",
+			"could-not-parse-document": "Failed to parse record from server document {id}",
+			"failed-precondition": "Failed precondition",
+			"internal": "Internal database error",
+			"invalid-argument": "Invalid database argument",
+			"record-does-not-match-guard": "Record does not match '{guard}' type guard",
+			"batch": {
+				"op-limit": "Cannot batch more than {limit} write operations.",
+				"one-db": "Must use exactly one database in a write batch"
+			}
 		},
 		"form": {
 			"missing-required-fields": "Please fill out the required fields",
-			"password-mismatch": "Those passwords need to match"
+			"password-mismatch": "Those passphrases need to match"
+		},
+		"fs": {
+			"invalid-uri-no-byte-string": "Invalid Data URI: Could not get byte string",
+			"invalid-uri-no-mime-string": "Invalid Data URI: Could not get MIME string",
+			"expected-string": "Expected string output, got {type}"
 		},
 		"network": {
 			"account-conflict": "An account with that ID already exists",
@@ -54,6 +89,48 @@
 			"too-many-requests": "You are being throttled",
 			"wrong-credentials": "Incorrect account ID or passphrase",
 			"unknown": "Not sure what went wrong. Try again maybe?"
+		},
+		"sanity": {
+			"empty-param": "{name} parameter cannot be empty",
+			"missing-env-var": "No value found for environment variable {key}",
+			"missing-constructor-property": "Missing property in constructor",
+			"unreachable-case": "Unreachable case: {value}"
+		},
+		"server": {
+			"id-not-string": "Expected ID to be string",
+			"missing-access-token": "Expected access token from server, but got none",
+			"no-data": "Expected data from server, but got none",
+			"no-version": "No version string found",
+			"throttled": "You are being throttled",
+			"too-few-documents": "Expected an array of documents from server, but got one document",
+			"too-many-documents": "Expected a single document from server, but got an array",
+			"unexpected-response": "Server response was unexpected: {message}"
+		},
+		"settings": {
+			"missing-db-file": "{filename} not present at root of zip",
+			"invalid-location-preference": "{pref} is not a valid location preference."
+		},
+		"storage": {
+			"internal": "Internal storage error",
+			"invalid-argument": "Invalid storage argument",
+			"invalid-checksum": "The uploaded file does not match the provided checksum. Please reupload",
+			"invalid-ref-path": "Invalid storage ref: {path}",
+			"malformed-payload": "Improperly formatted payload.",
+			"no-data-found": "No data found at the ref",
+			"server-file-wrong-size": "The uploaded file does not match the provided file size. Please reupload"
+		},
+		"ws": {
+			"closed-with-code-reason": "Websocket closed with code {code}: {reason}",
+			"closed-with-code": "Websocket closed with code {code}",
+			"data-not-array": "Data is not an array",
+			"data-is-array": "Data is an array",
+			"endpoints-closing-down": "Endpoint(s) closing down for now",
+			"invalid-response": "Invalid server response: {response}",
+			"internet-gone": "Internet connection lost",
+			"message-data-undefined": "Message data is undefined",
+			"no-reason-given": "No reason given",
+			"not-json": "The message could not be parsed as JSON: {message}",
+			"server-closed-without-reason": "The server closed the connection without telling us why"
 		}
 	},
 	"debug": {
@@ -62,6 +139,203 @@
 		"transaction-id": "The transaction ID is {id}.",
 		"count-one-transaction": "There is 1 transaction in the cache.",
 		"count-all-transactions": "There are {n} transactions in the cache."
+	},
+	"accounts": {
+		"meta": {
+			"title": "title",
+			"notes": "notes"
+		},
+		"noun": "Account",
+		"count": {
+			"account": "1 account",
+			"accounts": "{n} accounts"
+		},
+		"numbered": "Account {number}",
+		"unknown-title": "Unknown",
+		"cannot-delete-none-found": "No account to delete",
+		"create": "Create Account",
+		"edit-titled": "Edit {title}",
+		"delete-titled": "Delete {title}"
+	},
+	"files": {
+		"does-not-exist": "This file does not exist. Sorry.",
+		"item-alt": "Stored file",
+		"self-with-unknown-title": "this file",
+		"list": {
+			"heading": "Files",
+			"how-to-create": "To add a file, attach it to a transaction."
+		},
+		"count": {
+			"file": "1 file",
+			"files": "{n} files",
+			"attachment": "1 attachment",
+			"attachments": "{n} attachments"
+		},
+		"numbered": "Attachment {number}",
+		"delete": {
+			"remove-dead-ref": "Remove this dead reference",
+			"confirm": "Are you sure you want to delete {title}? This cannot be undone."
+		},
+		"meta": {
+			"name": "Name: {name}",
+			"file-type": "Type: {type}",
+			"timestamp": "Timestamp: {timestamp}",
+			"linked-transaction": "Linked Transaction",
+			"linked-transactions": "Linked Transactions"
+		},
+		"upload": {
+			"imperative": "Upload a file",
+			"choose": "Choose a file"
+		},
+		"reference": {
+			"broken": "Broken reference",
+			"heading": "Fix broken reference",
+			"explanation": "This attachment somehow got lost in the mix, possibly due to an import bug. Select the correct file below:"
+		}
+	},
+	"locations": {
+		"count": {
+			"location": "1 location",
+			"locations": "{n} locations"
+		},
+		"list": {
+			"heading": "Locations",
+			"how-to-create": "To add a location, set a location on a transaction."
+		},
+		"meta": {
+			"id": "ID: {id}",
+			"title": "Title: {title}",
+			"subtitle": "Subtitle: {subtitle}",
+			"last-used-time": "Last Used: {lastUsed}",
+			"latitude-short": "Lat: {lat}",
+			"longitude-short": "Lng: {lng}"
+		}
+	},
+	"months": {
+		"does-not-match-pattern": "{month} does not match a month identifier pattern"
+	},
+	"settings": {
+		"heading": "Settings",
+		"update-successful": "Your preferences have been updated!",
+		"auth": {
+			"account-id-heading": "Change Account ID",
+			"account-id-description": "Somebody bothering you with your account ID? You can change it with one click:",
+			"account-id-updated": "Your account ID has been updated!",
+			"get-new-account-id": "Regenerate account ID",
+			"passphrase-heading": "Change Passphrase",
+			"passphrase-updated": "Your passphrase has been updated!",
+			"update-passphrase": "Change passphrase"
+		},
+		"delete-all": {
+			"heading": "Delete Everything",
+			"description": "You have the option to delete all of your data on {platform}.",
+			"in-progress": "Deleting...",
+			"start-imperative": "Delete Everything",
+			"confirm": "Are you sure you want to delete {everything}? This action cannot be undone.",
+			"really-everything": "all of your data"
+		},
+		"export": {
+			"actions": {
+				"export-all": "Export Everything",
+				"export-all-nicely": "Export Everything with nice spacing"
+			},
+			"meta": {
+				"heading": "Export",
+				"description": "Exports an {unencrypted} copy of all your data in JSON format. (Except attachments of course, those will come as Accountable got them).",
+				"unencrypted": "unencrypted"
+			}
+		},
+		"import": {
+			"meta": {
+				"heading": "Import",
+				"description": "Import a JSON file describing one or more accounts."
+			},
+			"begin": "Begin Import",
+			"duplicate-accounts": "Duplicate Accounts",
+			"duplicates-explanation": "These entries seem to match an account you already have. Would you like to overwrite the account and transactions we have stored with what you gave us here?",
+			"given-file-name-unknown": "That file",
+			"file-has-no-financial-data": "{file} contains no financial data.",
+			"heading": "Select Accounts from \"{fileName}\"",
+			"in-progress": "Importing... ({percent})",
+			"loading-file": "Loading {name}",
+			"loading-file-progress": "Loading {name}: {percent}",
+			"miscellaneous-items": "Everything Else",
+			"new-accounts": "New Accounts",
+			"start-imperative": "Import",
+			"success": "Imported all the things!"
+		},
+		"location": {
+			"heading": "Location Service",
+			"api-disclaimer": "By default, we don't talk to any external location APIs. However, if you want Accountable to prefill transaction location fields, you'll need to select a different option below.",
+			"iplocate": "IPLocate",
+			"manual-disclaimer": "Note that we have no \"automatic\" location features. We only fetch your current location when you press a button to request it. We use the {iplocate} API to obtain vague location data.",
+			"actions": {
+				"confirm": "Confirm preference"
+			},
+			"preference": {
+				"none": "None",
+				"none-description": "No location services.",
+				"imprecise": "Imprecise",
+				"imprecise-description": "Get, on-demand, a locale based on your IP address.",
+				"precise": "Precise",
+				"precise-description": "Get the best-available location information."
+			}
+		}
+	},
+	"tags": {
+		"count": {
+			"tag": "1 tag",
+			"tags": "{n} tags"
+		},
+		"create": "Add tag",
+		"choose-existing": "Choose a Tag",
+		"delete": {
+			"action-cannot-be-undone": "This cannot be undone.",
+			"confirm": "Are you sure you want to delete {name}?",
+			"removed-from-transactions": "This tag will be removed from {count}."
+		},
+		"list": {
+			"heading": "Tags",
+			"how-to-create": "To add a tag, go to one of your transactions."
+		},
+		"self-with-unknown-title": "this tag"
+	},
+	"transactions": {
+		"self-with-unknown-title": "this transaction",
+		"count": {
+			"transaction": "1 transaction",
+			"transactions": "{n} transactions"
+		},
+		"n-of-n-count": "{c} of {t} transactions",
+		"delete": {
+			"detach-first": "You must delete attachments before you may delete this transaction.",
+			"confirm": "Are you sure you want to delete {title}? This cannot be undone."
+		},
+		"create": {
+			"expense": "Create Expense",
+			"income": "Create Income"
+		},
+		"edit": {
+			"expense": "Edit Expense",
+			"income": "Edit Income"
+		},
+		"attach-file": "Attach a file",
+		"meta": {
+			"account": "Account",
+			"account-aria-label": "Transaction Account",
+			"amount": "Amount",
+			"amount-aria-label": "Transaction Amount",
+			"date": "date",
+			"location": "Location",
+			"location-aria-label": "Transaction Location",
+			"notes": "Notes",
+			"notes-aria-label": "Transaction Notes",
+			"reconciled": "Reconciled",
+			"reconciled-aria-label": "Is this transaction reconciled?",
+			"timestamp": "Timestamp",
+			"timestamp-aria-label": "Transaction Timestamp",
+			"title": "Title"
+		}
 	},
 	"app": {
 		"nav": {
@@ -73,13 +347,19 @@
 			"generic-page": "Page",
 			"settings": "Settings",
 			"tags": "Tags"
-		}
+		},
+		"toggle-nav": "Toggle navigation"
 	},
 	"example": {
+		"account-id": "b4dcb93bc0c04251a930541e1a3c9a80",
 		"business-name": "ACME Co.",
-		"city-country": "Swahilli, New Guinnea"
+		"city-country": "Swahilli, New Guinnea",
+		"income-transaction-title": "Bank Money",
+		"transaction-note": "This is a thing"
 	},
 	"input": {
+		"required": "(required)",
+		"search": "Search",
 		"location": {
 			"self": "location",
 			"title": "location title",
@@ -131,13 +411,21 @@
 	},
 	"login": {
 		"account-id": "account ID",
-		"current-passphrase": "passphrase",
+		"checking-lock-state": "Checking lock state...",
+		"current-account-id": "current account ID",
+		"current-passphrase": "current passphrase",
+		"logging-out": "Logging out...",
+		"new-passphrase": "new passphrase",
+		"new-passphrase-repeat": "new passphrase again",
+		"passphrase": "passphrase",
 		"repeat-passphrase": "passphrase again",
-		"new-passphrase": "Create a strong passphrase",
+		"new-passphrase-imperative": "Create a strong passphrase",
 		"value-will-be-generated": "to be generated...",
 		"log-in": "Log in",
 		"create-account": "Create an account",
-		"cookie-disclaimer": "Logging in will set one cookie, which contains your login token. This cookie lets your browser securely remember that you were logged in without Accountable needing to keep your login token someplace unsafe.",
+		"cookie-disclaimer-header": "How our cookies work",
+		"cookie-disclaimer": "Logging in will set two cookies, which together contain information that declares your access to your data. These cookies let your browser securely remember that you are logged in. The alternative is for us to recall your login information with JavaScript, which is not a safe place to keep thing. {more}",
+		"cookie-more": "More info.",
 		"process": {
 			"authenticating": "Authenticating...",
 			"reauthenticating": "Re-authenticating...",
@@ -169,7 +457,12 @@
 	},
 	"locked": {
 		"heading": "You're logged in, but your ledger is locked. Enter your passphrase to unlock the ledger.",
+		"locking": "Locking...",
 		"unlock": "Unlock"
+	},
+	"404": {
+		"heading": "404",
+		"subheading": "Nothing to see here"
 	},
 	"install": {
 		"service": {

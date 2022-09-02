@@ -1,23 +1,16 @@
 import type { AnyDataItem, Identified, IdentifiedDataItem, User } from "./schemas.js";
 import type { CollectionReference, DocumentReference } from "./references.js";
-import { deleteItem, ensure } from "./filesystem.js";
-import { env } from "../environment.js";
-import { fileURLToPath } from "url";
+import { deleteItem, ensure, resolvePath } from "./filesystem.js";
 import { folderSize, maxSpacePerUser } from "../auth/limits.js";
+import { join as joinPath } from "node:path";
 import { Low, JSONFile } from "lowdb";
-import { rm } from "fs/promises";
+import { rm } from "node:fs/promises";
 import { NotEnoughRoomError } from "../errors/index.js";
+import { requireEnv } from "../environment.js";
 import { simplifiedByteCount } from "../transformers/index.js";
 import { useJobQueue } from "@averagehelper/job-queue";
-import path from "path";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const dbEnv = env("DB") ?? "";
-
-export const DB_DIR = dbEnv //
-	? path.resolve(dbEnv)
-	: path.resolve(__dirname, "../../db");
+export const DB_DIR = resolvePath(requireEnv("DB"));
 process.stdout.write(`Database and storage directory: ${DB_DIR}\n`);
 
 type UserIndexDb = Record<string, User>;
@@ -35,7 +28,7 @@ async function userIndexDb(
 	cb: (db: UserIndexDb | null, write: (n: UserIndexDb | null) => void) => unknown = identity
 ): Promise<unknown> {
 	await ensure(DB_DIR);
-	const file = path.join(DB_DIR, "users.json");
+	const file = joinPath(DB_DIR, "users.json");
 	const adapter = new JSONFile<UserIndexDb>(file);
 	const db = new Low(adapter);
 	await db.read();
@@ -55,7 +48,7 @@ async function userIndexDb(
 }
 
 function dbFolderForUser(uid: string): string {
-	return path.join(DB_DIR, "users", uid);
+	return joinPath(DB_DIR, "users", uid);
 }
 
 interface UserStats {
@@ -98,7 +91,7 @@ async function dbForUser(
 		)}\n`
 	);
 
-	const file = path.join(folder, "db.json");
+	const file = joinPath(folder, "db.json");
 	const adapter = new JSONFile<UserDb>(file);
 	const db = new Low(adapter);
 	await db.read();
@@ -125,7 +118,7 @@ async function dbForUser(
 async function destroyDbForUser(uid: string): Promise<void> {
 	if (!uid) throw new TypeError("uid should not be empty");
 
-	const folder = path.join(DB_DIR, "users", uid);
+	const folder = joinPath(DB_DIR, "users", uid);
 	await rm(folder, { recursive: true, force: true });
 }
 
@@ -312,7 +305,7 @@ export async function deleteDbCollection<T extends AnyDataItem>(
 ): Promise<void> {
 	if (ref.id === "users") {
 		// Special handling, delete all users, burn everything
-		const usersDir = path.join(DB_DIR, "users");
+		const usersDir = joinPath(DB_DIR, "users");
 		await deleteItem(usersDir);
 
 		// Clear the user index

@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { _ } from "svelte-i18n";
+	import { _ } from "./i18n";
+	import { repoFile, repoMain, repoNewIssue } from "./platformMeta";
 	import AppVersion from "./components/AppVersion.svelte";
 	import GitHubIcon from "./icons/GitHub.svelte";
 	import I18N from "./components/I18N.svelte";
@@ -11,29 +12,21 @@
 	<p>
 		<I18N keypath="footer.license">
 			<!-- name -->
-			<OutLink
-				to="https://github.com/AverageHelper/accountable-svelte/blob/main/LICENSE"
-				title={$_("footer.view-license")}>{$_("footer.license-name")}</OutLink
+			<OutLink to={repoFile("LICENSE")} title={$_("footer.view-license")}
+				>{$_("footer.license-name")}</OutLink
 			>
 		</I18N>
 	</p>
 	<p>
 		<I18N keypath="footer.pr">
 			<!-- issue -->
-			<OutLink to="https://github.com/AverageHelper/accountable-svelte/issues/new/choose"
-				>{$_("footer.issue")}</OutLink
-			>
+			<OutLink to={repoNewIssue}>{$_("footer.issue")}</OutLink>
 			<!-- github -->
-			<OutLink to="https://github.com/AverageHelper/accountable-svelte"
-				>{$_("footer.github")}</OutLink
-			>
+			<OutLink to={repoMain}>{$_("footer.github")}</OutLink>
 		</I18N>
 	</p>
 	<p>
-		<OutLink
-			to="https://github.com/AverageHelper/accountable-svelte"
-			title={$_("footer.view-source")}
-		>
+		<OutLink to={repoMain} title={$_("footer.view-source")}>
 			<GitHubIcon class="icon" alt={$_("footer.view-github")} title={$_("footer.view-github")} />
 		</OutLink>
 	</p>

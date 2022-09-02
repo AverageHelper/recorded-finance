@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { _ } from "svelte-i18n";
+	import { _ } from "../../i18n";
 	import { onMount } from "svelte";
 	import AccountEdit from "./AccountEdit.svelte";
 	import AccountListItem from "./AccountListItem.svelte";
@@ -69,8 +69,8 @@
 				<li>
 					<p class="footer"
 						>{$numberOfAccounts === 1
-							? $_("common.count.account")
-							: $_("common.count.accounts", { values: { n: $numberOfAccounts } })}</p
+							? $_("accounts.count.account")
+							: $_("accounts.count.accounts", { values: { n: $numberOfAccounts } })}</p
 					>
 				</li>
 			{/if}

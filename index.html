@@ -5,7 +5,7 @@
 		<title>Accountable</title>
 		<link rel="icon" href="/favicon.ico" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<style>
+		<style type="text/css">
 			html {
 				transition: background 0.6s;
 				background-color: #fff;
@@ -15,18 +15,44 @@
 				html {
 					background: #181818;
 				}
+
+				#noscript p {
+					color: #eee;
+				}
+			}
+		</style>
+		<style type="text/css">
+			/* Hide the noscript bit until we're sure JavaScript is disabled. */
+			#noscript {
+				height: 0;
+				overflow: hidden;
+				animation: reveal 3.5s forwards;
+			}
+			@keyframes reveal {
+				from {
+					height: 0;
+				}
+				to {
+					height: initial;
+				}
 			}
 		</style>
 	</head>
 	<body>
-		<noscript>
-			<!-- FIXME: This doesn't appear when people selectively disable JS, with a NoScript plugin or the like -->
-			<p
-				>I'm sorry but Accountable doesn't work without JavaScript enabled. (I know, it's silly.)
-				<strong>Please enable JavaScript to continue.</strong>
-			</p>
-		</noscript>
-		<div id="app"></div>
+		<div id="app">
+			<main id="noscript">
+				<!-- We're avoiding the <noscript> tag because selective-JS-blocking extensions don't enable that tag. -->
+				<!-- FIXME: This might not appear if the user disables JS while viewing the site. -->
+				<!-- CSS ensures that this tag shows up if JS doesn't load within 0.8 seconds. -->
+				<!-- JS removes this tag if JS is enabled! -->
+				<!-- TODO: Display as much as we can without JavaScript. Would SSR work? -->
+				<p
+					>I'm sorry but Accountable doesn't work without JavaScript enabled. (I know, it's
+					silly.)</p
+				>
+				<p><strong>Please enable JavaScript to continue.</strong></p>
+			</main>
+		</div>
 		<script type="module" src="/src/main.ts"></script>
 	</body>
 </html>

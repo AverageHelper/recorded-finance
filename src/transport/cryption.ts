@@ -1,7 +1,15 @@
+import type CryptoJS from "crypto-js";
+import { isString } from "../helpers/isString";
+import { t } from "../i18n";
+import "crypto-js/sha512"; // to keep SHA512 algo from tree-shaking away
+import AES from "crypto-js/aes";
 import atob from "atob-lite";
 import btoa from "btoa-lite";
-import CryptoJS from "crypto-js";
-import isString from "lodash/isString";
+import CryptoJSCore from "crypto-js/core";
+import EncBase64 from "crypto-js/enc-base64";
+import EncUtf8 from "crypto-js/enc-utf8";
+import PBKDF2 from "crypto-js/pbkdf2";
+import WordArray from "crypto-js/lib-typedarrays";
 
 /**
  * User-level encryption material that lives on the server.
@@ -47,15 +55,15 @@ const Protocols = {
 		keySizeBits: 8192, // my first aim was 256 bits, but that was actually WORDS, so this is the number of bits I was doing
 		saltSizeBytes: 32,
 		iterations: 10000,
-		keyEncoding: CryptoJS.enc.Base64,
-		dataEncoding: CryptoJS.enc.Utf8,
-		hasher: CryptoJS.algo.SHA512,
-		cipher: CryptoJS.AES,
-		derivation: CryptoJS.PBKDF2,
+		keyEncoding: EncBase64,
+		dataEncoding: EncUtf8,
+		hasher: CryptoJSCore.algo.SHA512,
+		cipher: AES,
+		derivation: PBKDF2,
 
 		/** Generates a cryptographically-secure random value. */
 		randomValue(byteCount: number): string {
-			return CryptoJS.lib.WordArray.random(byteCount).toString(CryptoJS.enc.Base64);
+			return WordArray.random(byteCount).toString(EncBase64);
 		},
 	},
 } as const;
@@ -113,7 +121,7 @@ export async function derivePKey(password: string, salt: string): Promise<HashSt
 
 export function deriveDEK(pKey: HashStore, ciphertext: string): HashStore {
 	const dekObject = decrypt({ ciphertext }, pKey);
-	if (!isString(dekObject)) throw new TypeError("Decrypted key is malformatted"); // TODO: I18N?
+	if (!isString(dekObject)) throw new TypeError(t("error.cryption.malformed-key"));
 
 	return new HashStore(atob(dekObject));
 }
@@ -175,7 +183,6 @@ export function encrypt<T extends string>(
 	return { ciphertext, objectType, cryption: "v0" };
 }
 
-// TODO: I18N?
 class DecryptionError extends Error {
 	private constructor(message: string) {
 		super(message);
@@ -183,17 +190,20 @@ class DecryptionError extends Error {
 	}
 
 	static resultIsEmpty(): DecryptionError {
-		return new DecryptionError("Result was empty");
+		return new DecryptionError(t("error.cryption.empty-result"));
 	}
 
 	static parseFailed(error: unknown, plaintext: string): DecryptionError {
+		let message: string;
 		if (error instanceof Error) {
-			return new DecryptionError(
-				`Decrypted plaintext did not parse as valid JSON: ${error.message}: '${plaintext}'`
-			);
+			message = error.message;
+		} else {
+			message = JSON.stringify(error);
 		}
 		return new DecryptionError(
-			`Decrypted plaintext did not parse as valid JSON: ${JSON.stringify(error)}: '${plaintext}'`
+			t("error.cryption.plaintext-not-json", {
+				values: { error: message, plaintext },
+			})
 		);
 	}
 }

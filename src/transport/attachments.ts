@@ -12,6 +12,7 @@ import { collection, db, doc, recordFromSnapshot, setDoc, deleteDoc } from "./db
 import { deleteObject, downloadString, ref, uploadString } from "./storage.js";
 import { encrypt, decrypt } from "./cryption";
 import { dataUrlFromFile } from "./getDataAtUrl";
+import { t } from "../i18n";
 
 export type AttachmentRecordPackage = EPackage<"Attachment">;
 
@@ -32,7 +33,7 @@ function attachmentStorageRef(file: Attachment): StorageReference {
 	// For some reason, String.prototype.match does not work for this
 	const parts =
 		Array.from(storagePath.matchAll(/users\/([\w\d]+)\/attachments\/([\w\d]+)\.json/gu))[0] ?? [];
-	const errMsg = `Invalid storage ref: ${storagePath}`;
+	const errMsg = t("error.storage.invalid-ref-path", { values: { path: storagePath } });
 
 	const uid = parts[1];
 	const fileName = parts[2];
@@ -45,15 +46,15 @@ function attachmentStorageRef(file: Attachment): StorageReference {
 export async function embeddableDataForFile(dek: HashStore, file: Attachment): Promise<string> {
 	const storageRef = attachmentStorageRef(file);
 	const encryptedData = await downloadString(storageRef);
-	if (encryptedData === null) throw new EvalError("No data found at the ref"); // TODO: I18N
+	if (encryptedData === null) throw new EvalError(t("error.storage.no-data-found"));
 	const pkg = JSON.parse(encryptedData) as { ciphertext: string };
 	if (!("ciphertext" in pkg)) {
-		throw new TypeError("Improperly formatted payload."); // TODO: I18N
+		throw new TypeError(t("error.storage.malformed-payload"));
 	}
 
 	const imageData = decrypt(pkg, dek);
 	if (typeof imageData !== "string") {
-		throw new TypeError(`Expected string output. Got ${typeof imageData}`); // TODO: I18N
+		throw new TypeError(t("error.fs.expected-string", { values: { type: typeof imageData } }));
 	}
 	return imageData;
 }

@@ -1,0 +1,561 @@
+{
+	"meta": {
+		"code": "pt-BR",
+		"name": "Portugues do Brasil",
+		"shortName": "Portugues (BR)",
+		"flag": "🇧🇷"
+	},
+	"common": {
+		"platform": "Accountable",
+		"cancel": "Cancelar",
+		"application": "Aplicativo",
+		"current-language": "Idioma Atual: {name}",
+		"details": "Detalhes",
+		"current-aside": "(atual)",
+		"delete-imperative": "Excluir",
+		"disk-usage": "Usado {used} de {total}",
+		"download-action": "Download",
+		"learn-more": "Saber Mais",
+		"loading-in-progress": "Carregando...",
+		"saving-in-progress": "Armazenando...",
+		"select-language": "Selecione um idioma",
+		"yes": "Sim",
+		"no": "Não",
+		"not-yet": "Ainda não",
+		"reset": "Recompor",
+		"save-imperative": "Armazenar",
+		"server": "Servidor"
+	},
+	"actions": {
+		"add-new-noun": "Adicionar um novo {noun}",
+		"more-info-about": "Leia mais informações sobre {topic}",
+		"location": {
+			"clear": "Apagar local",
+			"get-current": "Obter localização atual"
+		}
+	},
+	"currency": {
+		"positive-or-negative": "+/-"
+	},
+	"date-time": {
+		"now": "Agora"
+	},
+	"error": {
+		"auth": {
+			"account-already-exists": "Someone already has an account with that ID.",
+			"internal": "Internal auth error",
+			"invalid-argument": "Invalid auth argument",
+			"invalid-credential": "Invalid account ID or passphrase",
+			"invalid-email": "That doesn't quite look like an email address.",
+			"create-account-first": "You must create an accout first",
+			"unauthenticated": "You must sign in first"
+		},
+		"cryption": {
+			"empty-result": "Result was empty",
+			"plaintext-not-json": "Decrypted plaintext did not parse as valid JSON: {error}: '{plaintext}'",
+			"malformed-key": "Decrypted key is malformed",
+			"missing-pek": "No decryption key"
+		},
+		"db": {
+			"account-has-transactions": "Cannot delete an account that has transactions.",
+			"could-not-parse-document": "Failed to parse record from server document {id}",
+			"failed-precondition": "Failed precondition",
+			"internal": "Internal database error",
+			"invalid-argument": "Invalid database argument",
+			"record-does-not-match-guard": "Record does not match '{guard}' type guard",
+			"batch": {
+				"op-limit": "Cannot batch more than {limit} write operations.",
+				"one-db": "Must use exactly one database in a write batch"
+			}
+		},
+		"form": {
+			"missing-required-fields": "Please fill out the required fields",
+			"password-mismatch": "Those passphrases need to match"
+		},
+		"fs": {
+			"invalid-uri-no-byte-string": "Invalid Data URI: Could not get byte string",
+			"invalid-uri-no-mime-string": "Invalid Data URI: Could not get MIME string",
+			"expected-string": "Expected string output, got {type}"
+		},
+		"network": {
+			"account-conflict": "An account with that ID already exists",
+			"bad-gateway": "The CORS policy for this site does not allow access from the specified Origin.",
+			"bad-method": "That method is not allowed here. What are you trying to do?",
+			"expired-token": "You must sign in again in order to proceed",
+			"missing-token": "Unauthorized",
+			"not-found": "No data found",
+			"not-implemented": "That feature is not implemented yet",
+			"not-owner": "Unauthorized",
+			"too-many-requests": "You are being throttled",
+			"wrong-credentials": "Incorrect account ID or passphrase",
+			"unknown": "Not sure what went wrong. Try again maybe?"
+		},
+		"sanity": {
+			"empty-param": "{name} parameter cannot be empty",
+			"missing-env-var": "No value found for environment variable {key}",
+			"missing-constructor-property": "Missing property in constructor",
+			"unreachable-case": "Unreachable case: {value}"
+		},
+		"server": {
+			"id-not-string": "Expected ID to be string",
+			"missing-access-token": "Expected access token from server, but got none",
+			"no-data": "Expected data from server, but got none",
+			"no-version": "No version string found",
+			"throttled": "You are being throttled",
+			"too-few-documents": "Expected an array of documents from server, but got one document",
+			"too-many-documents": "Expected a single document from server, but got an array",
+			"unexpected-response": "Server response was unexpected: {message}"
+		},
+		"settings": {
+			"missing-db-file": "{filename} not present at root of zip",
+			"invalid-location-preference": "{pref} is not a valid location preference."
+		},
+		"storage": {
+			"internal": "Internal storage error",
+			"invalid-argument": "Invalid storage argument",
+			"invalid-checksum": "The uploaded file does not match the provided checksum. Please reupload",
+			"invalid-ref-path": "Invalid storage ref: {path}",
+			"malformed-payload": "Improperly formatted payload.",
+			"no-data-found": "No data found at the ref",
+			"server-file-wrong-size": "The uploaded file does not match the provided file size. Please reupload"
+		},
+		"ws": {
+			"closed-with-code-reason": "Websocket closed with code {code}: {reason}",
+			"closed-with-code": "Websocket closed with code {code}",
+			"data-not-array": "Data is not an array",
+			"data-is-array": "Data is an array",
+			"endpoints-closing-down": "Endpoint(s) closing down for now",
+			"invalid-response": "Invalid server response: {response}",
+			"internet-gone": "Internet connection lost",
+			"message-data-undefined": "Message data is undefined",
+			"no-reason-given": "No reason given",
+			"not-json": "The message could not be parsed as JSON: {message}",
+			"server-closed-without-reason": "The server closed the connection without telling us why"
+		}
+	},
+	"debug": {
+		"something-is-wrong": "Something's wrong",
+		"account-but-no-transaction": "We have an account, but no transaction.",
+		"transaction-id": "The transaction ID is {id}.",
+		"count-one-transaction": "There is 1 transaction in the cache.",
+		"count-all-transactions": "There are {n} transactions in the cache."
+	},
+	"accounts": {
+		"meta": {
+			"title": "título",
+			"notes": "notas"
+		},
+		"noun": "Conta",
+		"count": {
+			"account": "1 conta",
+			"accounts": "{n} contas"
+		},
+		"numbered": "Conta {number}",
+		"unknown-title": "Desconhecida",
+		"cannot-delete-none-found": "No account to delete",
+		"create": "Criar Conta",
+		"edit-titled": "Editar {title}",
+		"delete-titled": "Excluir {title}"
+	},
+	"files": {
+		"does-not-exist": "This file does not exist. Sorry.",
+		"item-alt": "Stored file",
+		"self-with-unknown-title": "this file",
+		"list": {
+			"heading": "Files",
+			"how-to-create": "To add a file, attach it to a transaction."
+		},
+		"count": {
+			"file": "1 file",
+			"files": "{n} files",
+			"attachment": "1 attachment",
+			"attachments": "{n} attachments"
+		},
+		"numbered": "Attachment {number}",
+		"delete": {
+			"remove-dead-ref": "Remove this dead reference",
+			"confirm": "Are you sure you want to delete {title}? This cannot be undone."
+		},
+		"meta": {
+			"name": "Name: {name}",
+			"file-type": "Type: {type}",
+			"timestamp": "Timestamp: {timestamp}",
+			"linked-transaction": "Linked Transaction",
+			"linked-transactions": "Linked Transactions"
+		},
+		"upload": {
+			"imperative": "Upload a file",
+			"choose": "Choose a file"
+		},
+		"reference": {
+			"broken": "Broken reference",
+			"heading": "Fix broken reference",
+			"explanation": "This attachment somehow got lost in the mix, possibly due to an import bug. Select the correct file below:"
+		}
+	},
+	"locations": {
+		"count": {
+			"location": "1 localização",
+			"locations": "{n} localizações"
+		},
+		"list": {
+			"heading": "Localizações",
+			"how-to-create": "To add a location, set a location on a transaction."
+		},
+		"meta": {
+			"id": "ID: {id}",
+			"title": "Título: {title}",
+			"subtitle": "Legenda: {subtitle}",
+			"last-used-time": "Usado Anteriormente: {lastUsed}",
+			"latitude-short": "Lat: {lat}",
+			"longitude-short": "Lng: {lng}"
+		}
+	},
+	"months": {
+		"does-not-match-pattern": "{month} does not match a month identifier pattern"
+	},
+	"settings": {
+		"heading": "Definições",
+		"update-successful": "Your preferences have been updated!",
+		"auth": {
+			"account-id-heading": "Change Account ID",
+			"account-id-description": "Somebody bothering you with your account ID? You can change it with one click:",
+			"account-id-updated": "Your account ID has been updated!",
+			"get-new-account-id": "Regenerate account ID",
+			"passphrase-heading": "Change Passphrase",
+			"passphrase-updated": "Your passphrase has been updated!",
+			"update-passphrase": "Change passphrase"
+		},
+		"delete-all": {
+			"heading": "Excluir Tudo",
+			"description": "Você tem a opção de excluir todos os seus dados no {platform}.",
+			"in-progress": "Deletando...",
+			"start-imperative": "Excluir Tudo",
+			"confirm": "Tem certeza de que deseja excluir {everything}? Essa ação não pode ser desfeita.",
+			"really-everything": "todos os seus dados"
+		},
+		"export": {
+			"actions": {
+				"export-all": "Export Everything",
+				"export-all-nicely": "Export Everything with nice spacing"
+			},
+			"meta": {
+				"heading": "Export",
+				"description": "Exports an {unencrypted} copy of all your data in JSON format. (Except attachments of course, those will come as Accountable got them).",
+				"unencrypted": "unencrypted"
+			}
+		},
+		"import": {
+			"meta": {
+				"heading": "Import",
+				"description": "Import a JSON file describing one or more accounts."
+			},
+			"begin": "Begin Import",
+			"duplicate-accounts": "Duplicate Accounts",
+			"duplicates-explanation": "These entries seem to match an account you already have. Would you like to overwrite the account and transactions we have stored with what you gave us here?",
+			"given-file-name-unknown": "That file",
+			"file-has-no-financial-data": "{file} contains no financial data.",
+			"heading": "Select Accounts from \"{fileName}\"",
+			"in-progress": "Importing... ({percent})",
+			"loading-file": "Loading {name}",
+			"loading-file-progress": "Loading {name}: {percent}",
+			"miscellaneous-items": "Everything Else",
+			"new-accounts": "New Accounts",
+			"start-imperative": "Import",
+			"success": "Imported all the things!"
+		},
+		"location": {
+			"heading": "Location Service",
+			"api-disclaimer": "By default, we don't talk to any external location APIs. However, if you want Accountable to prefill transaction location fields, you'll need to select a different option below.",
+			"iplocate": "IPLocate",
+			"manual-disclaimer": "Note that we have no \"automatic\" location features. We only fetch your current location when you press a button to request it. We use the {iplocate} API to obtain vague location data.",
+			"actions": {
+				"confirm": "Confirm preference"
+			},
+			"preference": {
+				"none": "Nenhum",
+				"none-description": "No location services.",
+				"imprecise": "Imprecise",
+				"imprecise-description": "Get, on-demand, a locale based on your IP address.",
+				"precise": "Precise",
+				"precise-description": "Get the best-available location information."
+			}
+		}
+	},
+	"tags": {
+		"count": {
+			"tag": "1 marcação",
+			"tags": "{n} tags"
+		},
+		"create": "Adicionar etiqueta",
+		"choose-existing": "Choose a Tag",
+		"delete": {
+			"action-cannot-be-undone": "This cannot be undone.",
+			"confirm": "Are you sure you want to delete {name}?",
+			"removed-from-transactions": "This tag will be removed from {count}."
+		},
+		"list": {
+			"heading": "Tags",
+			"how-to-create": "To add a tag, go to one of your transactions."
+		},
+		"self-with-unknown-title": "esta etiqueta"
+	},
+	"transactions": {
+		"self-with-unknown-title": "esta transação",
+		"count": {
+			"transaction": "1 transação",
+			"transactions": "{n} transações"
+		},
+		"n-of-n-count": "{c} de {t} transações",
+		"delete": {
+			"detach-first": "You must delete attachments before you may delete this transaction.",
+			"confirm": "Are you sure you want to delete {title}? This cannot be undone."
+		},
+		"create": {
+			"expense": "Criar Despesa",
+			"income": "Criar Renda"
+		},
+		"edit": {
+			"expense": "Editar Despesa",
+			"income": "Editar Renda"
+		},
+		"attach-file": "Anexar um arquivo",
+		"meta": {
+			"account": "Conta",
+			"account-aria-label": "Conta de transações",
+			"amount": "Valor",
+			"amount-aria-label": "Valor da transação",
+			"date": "encontro",
+			"location": "Localização",
+			"location-aria-label": "Local da transação",
+			"notes": "Notas",
+			"notes-aria-label": "Notas de transação",
+			"reconciled": "Reconciliada",
+			"reconciled-aria-label": "Esta transação é reconciliada?",
+			"timestamp": "Encontro",
+			"timestamp-aria-label": "Data da transação",
+			"title": "Título"
+		}
+	},
+	"app": {
+		"nav": {
+			"accounts": "Contas",
+			"attachments": "Arquivos",
+			"locations": "Localizações",
+			"lock": "Trancar",
+			"log-out": "Sair",
+			"generic-page": "Página",
+			"settings": "Definições",
+			"tags": "Tags"
+		},
+		"toggle-nav": "Alternar de navegação"
+	},
+	"example": {
+		"account-id": "b4dcb93bc0c04251a930541e1a3c9a80",
+		"business-name": "ACME Co.",
+		"city-country": "Suaíli, Nova Guiné",
+		"income-transaction-title": "Dinheiro do banco",
+		"transaction-note": "Isso é uma coisa"
+	},
+	"input": {
+		"required": "(necessário)",
+		"search": "Pesquisa",
+		"location": {
+			"self": "localização",
+			"title": "título do localização",
+			"unknown": "Desconhecida",
+			"subtitle": "legenda do localização"
+		},
+		"locations": {
+			"recent": "Locais recentes",
+			"disclaimer": "To get your current location, you'll need to enable the location service in {settings}."
+		}
+	},
+	"footer": {
+		"license": "Este projeto está licenciado sob a licença {name}.",
+		"license-name": "GNU General Public License v3.0",
+		"view-license": "Veja a licença completa",
+		"pr": "Fique a vontade para {issue} ou envie um pull request no {github} deste projeto.",
+		"issue": "abra um problema",
+		"github": "página do GitHub",
+		"view-github": "Confira meu GitHub",
+		"view-source": "Ver o código fonte deste projeto"
+	},
+	"home": {
+		"sign-up-now": "Comece agora",
+		"coming-soon": "Em Breve",
+		"tagline": "Respectful digital financial records.",
+		"nav": {
+			"about": "Sobre",
+			"home": "Principal",
+			"install": "Instalar",
+			"log-in": "Conecte-se",
+			"security": "Segurança"
+		},
+		"accountability": {
+			"heading": "Responsável Por Si Mesmo.",
+			"p1": "Keep a close eye on your spending. Never lose a dime again! If you're the sort to obsess about where your money is going, {tool}.",
+			"tool": "this might be the tool for you"
+		},
+		"encrypted": {
+			"heading": "Seu Livro-razão De Dinheiro, Não O Meu.",
+			"p1": "Accountable, by design, cannot see your data, even on our own servers. We don't need or want to see what you do with your money. That's not my job. {legal}",
+			"legal": "(I'd rather you {not} do illegal stuff with this.)",
+			"not": "não"
+		},
+		"open-source": {
+			"heading": "Mantenha-me Responsável.",
+			"open": "All of Accountable's source code is open to read.",
+			"let-me-know": "Let me know if anything needs fixed."
+		}
+	},
+	"login": {
+		"account-id": "ID da conta",
+		"checking-lock-state": "Verificando o estado de bloqueio...",
+		"current-account-id": "ID da conta atual",
+		"current-passphrase": "senha atual",
+		"logging-out": "Saindo...",
+		"new-passphrase": "nova senha",
+		"new-passphrase-repeat": "nova senha novamente",
+		"passphrase": "senha",
+		"repeat-passphrase": "senha novamente",
+		"new-passphrase-imperative": "Crie uma senha forte",
+		"value-will-be-generated": "será gerado...",
+		"log-in": "Conecte-se",
+		"create-account": "Crie a sua conta aqui",
+		"cookie-disclaimer-header": "How our cookies work",
+		"cookie-disclaimer": "Logging in will set two cookies, which together contain information that declares your access to your data. These cookies let your browser securely remember that you are logged in. The alternative is for us to recall your login information with JavaScript, which is not a safe place to keep thing. {more}",
+		"cookie-more": "More info.",
+		"process": {
+			"authenticating": "Autenticação...",
+			"reauthenticating": "Autenticando novamente...",
+			"generating-keys": "Gerando chaves...",
+			"fetching-keys": "Buscando chaves...",
+			"deriving-pkey": "Derivando a chave da senha..."
+		},
+		"new-account-prompt": {
+			"open-soon": "Você não tem uma conta? Estaremos abertos em breve para novas contas",
+			"create": {
+				"question": "Você precisa criar uma conta?",
+				"action": "Crie sua conta aqui!"
+			},
+			"already-have": {
+				"question": "Você já tem uma conta??",
+				"action": "Conecte-se!"
+			}
+		},
+		"new-account": {
+			"heading": "Sua Nova Conta",
+			"p1": "This is your new account ID. You will need it and your passphrase to log in later.",
+			"remember-this": "LEMBRE-SE DESTA PALAVRA: {accountId}",
+			"write-it-down": "Anotá-la. (tente um {manager}.)",
+			"manager": "gerenciador de senhas",
+			"no-recovery": "If you lose it, we won't be able to get it back for you.",
+			"is-account-id-safe": "Do you have your account ID ({accountId}) written down somewhere safe?",
+			"acknowledge": "Entendi"
+		}
+	},
+	"locked": {
+		"heading": "You're logged in, but your ledger is locked. Enter your passphrase to unlock the ledger.",
+		"locking": "Bloqueio...",
+		"unlock": "Desbloquear"
+	},
+	"404": {
+		"heading": "404",
+		"subheading": "Não há nada para ver aqui"
+	},
+	"install": {
+		"service": {
+			"heading": "Hosted Service",
+			"p1": "There's an Accountable client-server architecture right here! Click the {login} link above to create an account."
+		},
+		"self": {
+			"heading": "Self-host Server",
+			"p1": "Check out the {readme} for more on how to set Accountable up on your own computer.",
+			"planning": "We're planning a hosted solution right here soon.",
+			"p2": "I'm toying with the idea of (optionally) using Firebase as an Accountable server. This would be great for users who are okay with using a Google service and don't want to pay to host your own installation.",
+			"readme": "README"
+		}
+	},
+	"about": {
+		"goals": {
+			"heading": "Metas",
+			"p1": "The aim of Accountable is to be a cross-platform and portable spot to keep your transaction records and receipts. I plan to have proper mobile clients eventually. The {selfhost} option will always be available, and I intend for this project to always be {opensource}. You will always have access to the financial records that you give to Accountable, and Accountable cannot share those records with anyone else.",
+			"selfhost": "self-host",
+			"opensource": "open-source"
+		},
+		"alternatives": {
+			"heading": "Alternativas",
+			"p1": "There are a few {alts} out there, but none I've found that I like. Lots of proprietary ones, too. Feel free to use them if you'd like, I'm not sponsored by any of them. Their respective names are trademarks of their owners:",
+			"alts": "open-source desktop balance keepers",
+
+			"alt1": "You may have heard of {ynab}.",
+			"alt2": "{intuit} makes {mint}. These guys also make {turbotax} and other fintech products you might have heard about.",
+			"alt3": "{ramsey} makes {everydollar}. I subscribe to many of Ramsey's financial principles. Stay out of debt, folks.",
+			"alt4": "There are {others}, but I've only tried these. Check them out if you're curious! I'm sure they're great.",
+			"everydollar": "EveryDollar",
+			"intuit": "Intuit",
+			"mint": "Mint",
+			"ramsey": "Dave Ramsey",
+			"turbotax": "TurboTax",
+			"ynab": "YNAB",
+			"others": "lots of others",
+
+			"open-source": "I'm sure these are brilliant, but none of them are {opensource}. All of these keep your data for you, and hang onto the encryption keys to that data; they're not {e2ee}. I don't know what all they do with your data, and I don't trust them to tell you.",
+			"opensource": "open-source",
+			"e2ee": "end-to-end encrypted",
+
+			"summary": "Part of their business model is to be the gateway to your financial records. If you just want help with your budget, and want someone else to keep your pocketbook for you, then any of the above may suit you just fine."
+		}
+	},
+	"security-faq": {
+		"heading": "Perguntas frequentes sobre segurança",
+		"summary": "{tldr} Seus dados são ilegíveis por qualquer pessoa, exceto você (até onde sei.)",
+		"tldr": "Em resumo:",
+		"encryption-kind": {
+			"question": "Que tipo de criptografia Accountable faz?",
+			"answer": "Usamos apenas o melhor {mge} como todos os outros.",
+			"mge": "\"criptografia de nível militar\""
+		},
+		"where-keys": {
+			"question": "Who holds the encryption keys?",
+			"answer1": "You do.",
+			"answer2": "When you create an account, Accountable generates a data-encryption key {dek} to use to encrypt and decrypt your data. Accountable generates a separate key-encryption key {kek} from your given passphrase to use to encrypt your DEK. Accountable then encrypts the DEK and sends it to our servers to store. This encrypted blob is useless without the KEK to decrypt it, and your KEK is unknown without your passphrase.",
+			"dek": "(DEK)",
+			"kek": "(KEK)",
+			"answer3": "We use {sha512} and {pbkdf2} with 10,000 rounds to generate these keys. See {source}.",
+			"sha512": "SHA-512",
+			"pbkdf2": "PBKDF2",
+			"source": "the relevant source code"
+		},
+		"passphrase-handling": {
+			"question": "What does Accountable do with my passphrase?",
+			"answer1": "Accountable never transmits your passphrase anywhere, even over TLS.",
+			"answer2": "Accountable generates a one-way hash of your passphrase, and sends that instead. The server then {salts} and {hashes} that hash, and stores the resulting mash. (That mash has nothing to do with how your data is encrypted; see above.)",
+			"salts": "salts",
+			"hashes": "hashes",
+			"answer3": "When you log in again, Accountable repeats the procedure on your hashed passphrase, and checks to see whether this new mash matches the stored mash.",
+			"answer4": "This mash is what Accountable's server uses to guard access to your encrypted database. If someone can give the server a passphrase hash that results in the correct mash, the server assumes that person is you, and happily sends over your encrypted data. No part of this mash—the hash the server gets, the salt the server generates, or the final mash of the two—can be used to decrypt your data. (Accountable uses your {dek} for that; see above.)",
+			"dek": "DEK",
+			"answer5": "We use {sha512} and {bcrypt} with a cost factor of 15. See {source}.",
+			"sha512": "SHA-512",
+			"bcrypt": "bcrypt",
+			"source": "the relevant source code"
+		},
+		"change-passphrase": {
+			"question": "What if I change my passphrase?",
+			"answer1": "We don't re-encrypt the entire database, if that's what you're thinking.",
+			"answer2": "Since your passphrase is only used to generate a KEK, Accountable only re-encrypts the DEK using the new KEK that your new passphrase generates.",
+			"answer3": "If you think your DEK may be compromised, I'm sorry. You may export your data, delete your old account, create a new account, and import your data again. This will re-encrypt everything using a fresh DEK."
+		},
+		"lost-passphrase": {
+			"question": "What happens if I lose my passphrase?",
+			"answer1": "You lose your data. There is nothing I or anyone can do (unless your passphrase is easily-cracked. Give it a go!) Without your passphrase, nobody can generate the KEK that encrypts the DEK that encrypts your data. Without that passphrase, your data is lost.",
+			"answer2": "Don't lose your passphrase."
+		},
+		"database-breach": {
+			"question": "What happens if someone steals the database?",
+			"answer1": "If your passphrase is good, there's nothing anyone but you can do with Accountable's database. The server never sees your DEK, its corresponding KEK, or your passphrase, and cannot put those into the database."
+		}
+	}
+}

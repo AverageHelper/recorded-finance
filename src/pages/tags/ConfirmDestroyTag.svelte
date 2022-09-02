@@ -1,9 +1,11 @@
 <script lang="ts">
 	import type { Tag } from "../../model/Tag";
+	import { _ } from "../../i18n";
 	import { createEventDispatcher } from "svelte";
 	import { numberOfReferencesForTag } from "../../store";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
 	import Confirm from "../../components/Confirm.svelte";
+	import I18N from "../../components/I18N.svelte";
 
 	const dispatch = createEventDispatcher<{
 		yes: Tag;
@@ -25,18 +27,30 @@
 </script>
 
 <Confirm {isOpen} closeModal={no}>
-	<!-- TODO: I18N -->
-	<span slot="message"
-		>Are you sure you want to delete the tag <strong class="tag-name">{tag.name}</strong>?
+	<span slot="message">
+		<I18N keypath="tags.delete.confirm">
+			<!-- name -->
+			<strong class="tag-name">{tag.name || $_("tags.self-with-unknown-title")}</strong>
+		</I18N>
 		{#if count > 0}
-			This tag will be removed from
-			<strong>{count} transaction(s)</strong>.{/if}
-		This cannot be undone.</span
+			<I18N keypath="tags.delete.removed-from-transactions">
+				{#if count === 1}
+					<strong>{$_("transactions.count.transaction")}</strong>
+				{:else}
+					<strong>{$_("transactions.count.transactions", { values: { n: count } })}</strong>
+				{/if}
+			</I18N>
+		{/if}
+		{$_("tags.delete.action-cannot-be-undone")}</span
 	>
 
-	<ActionButton slot="primary-action" kind="bordered-destructive" on:click={yes}>Yes</ActionButton>
-	<ActionButton slot="secondary-action" kind="bordered-primary" on:click={no}>No</ActionButton>
-	<!-- <ActionButton slot="cancel-action" kind="bordered-secondary" on:click={no}>Cancel</ActionButton> -->
+	<ActionButton slot="primary-action" kind="bordered-destructive" on:click={yes}
+		>{$_("common.yes")}</ActionButton
+	>
+	<ActionButton slot="secondary-action" kind="bordered-primary" on:click={no}
+		>{$_("common.no")}</ActionButton
+	>
+	<!-- <ActionButton slot="cancel-action" kind="bordered-secondary" on:click={no}>{$_("common.cancel")}</ActionButton> -->
 </Confirm>
 
 <style lang="scss">

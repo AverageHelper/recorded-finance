@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { _ } from "../../i18n";
 	import ChangePasswordForm from "./ChangePasswordForm.svelte";
 	import ChangeAccountIdForm from "./ChangeAccountIdForm.svelte";
 	import DeleteData from "./DeleteData.svelte";
@@ -9,8 +10,7 @@
 
 <main class="content">
 	<div class="heading">
-		<!-- TODO: I18N -->
-		<h1>Settings</h1>
+		<h1>{$_("settings.heading")}</h1>
 	</div>
 
 	<LocationPrefForm />

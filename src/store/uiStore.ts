@@ -2,6 +2,7 @@ import { AccountableError, NetworkError } from "../transport/errors/index.js";
 import { getServerVersion } from "../transport/server.js";
 import { derived, get, writable } from "svelte/store";
 import { StructError } from "superstruct";
+import { t } from "../i18n.js";
 import { toast } from "@zerodevx/svelte-toast";
 import {
 	bootstrap as _bootstrap,
@@ -92,7 +93,6 @@ export async function loadServerVersion(): Promise<void> {
 }
 
 export function handleError(error: unknown): void {
-	// TODO: I18N
 	let message: string;
 	if (error instanceof Error || error instanceof NetworkError) {
 		message = error.message;
@@ -105,13 +105,13 @@ export function handleError(error: unknown): void {
 	}
 
 	if (message.includes("auth/invalid-email")) {
-		toast.push("That doesn't quite look like an email address. (You should never see this)", {
+		toast.push(`${t("error.auth.invalid-email")} (You should never see this)`, {
 			classes: ["toast-error"],
 		});
 	} else if (message.includes("auth/wrong-password") || message.includes("auth/user-not-found")) {
-		toast.push("Incorrect account ID or password.", { classes: ["toast-error"] });
+		toast.push(t("error.network.wrong-credentials"), { classes: ["toast-error"] });
 	} else if (message.includes("auth/email-already-in-use")) {
-		toast.push("Someone already has an account with that ID.", { classes: ["toast-error"] });
+		toast.push(t("error.auth.account-already-exists"), { classes: ["toast-error"] });
 	} else {
 		toast.push(message, { classes: ["toast-error"] });
 	}

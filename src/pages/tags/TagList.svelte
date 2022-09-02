@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Tag as TagObject, TagRecordParams } from "../../model/Tag";
+	import { _ } from "../../i18n";
 	import { allTags } from "../../store";
 	import { createEventDispatcher, tick } from "svelte";
 	import { tag as newTag } from "../../model/Tag";
@@ -67,8 +68,7 @@
 			</li>
 		{/each}
 		<li>
-			<!-- TODO: I18N -->
-			<NopLink on:click={addTag}>Add tag</NopLink>
+			<NopLink on:click={addTag}>{$_("tags.create")}</NopLink>
 		</li>
 	</ul>
 </div>

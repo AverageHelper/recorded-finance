@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
+import { visualizer } from "rollup-plugin-visualizer";
 import analyze from "rollup-plugin-analyzer";
 import path from "node:path";
 import sveltePreprocess from "svelte-preprocess";
@@ -7,14 +8,12 @@ import tsconfigPaths from "vite-tsconfig-paths";
 import typescript from "@rollup/plugin-typescript";
 
 console.warn(`process.env.NODE_ENV: ${process.env.NODE_ENV ?? "undefined"}`);
-const isProduction = process.env.NODE_ENV === "production";
 
 export default defineConfig({
 	plugins: [
 		svelte({
 			emitCss: true,
 			preprocess: sveltePreprocess({
-				sourceMap: !isProduction,
 				typescript: {
 					tsconfigFile: "./tsconfig.prod.json",
 				},
@@ -53,6 +52,9 @@ export default defineConfig({
 					module.percent > 8
 				);
 			},
+		}),
+		visualizer({
+			gzipSize: true,
 		}),
 	],
 	// See https://www.npmjs.com/package/svelte-navigator#faq
