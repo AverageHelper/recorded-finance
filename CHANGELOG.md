@@ -5,8 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Server endpoints to support TOTP 2FA. See our [API documentation](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/AverageHelper/accountable-svelte/HEAD/server/openapi.yaml) for details.
+
 ### Changed
 - The client now accepts "extra" values from server responses. This way, old clients can still talk to new server instances without much issue.
+
+### Fixed
+- The server no longer sends the user's password hash in their JWT. That was silly to do, so we no longer do that.
 
 ## [0.11.0] - 2022-09-01
 ### Changed

@@ -1,8 +1,8 @@
 openapi: 3.0.1
 info:
-  title: Accountable
-  version: 0.5.1
-  description: This is the Accountable Server. It doesn't do much, because the Accountable client does most of the hard work. You can read the source code on [GitHub](https://github.com/AverageHelper/accountable-svelte).
+  title: Accountable Server
+  version: 0.6.1
+  description: This is the Accountable Server. All the server does is store data given to it by the client. The server controls access to the data with basic password-based auth with optional time-based multi-factor auth. The Accountable client does most of the hard work of encrypting the user's data. You can read Accountable's source code on [GitHub](https://github.com/AverageHelper/accountable-svelte).
   license:
     name: GNU General Public License v3.0
     url: https://github.com/AverageHelper/accountable-svelte/blob/main/LICENSE
@@ -155,7 +155,7 @@ paths:
     post:
       tags:
         - auth
-      summary: Get an auth token for an existing account
+      summary: Get an auth token for an existing account.
       operationId: login-account
       requestBody:
         required: true
@@ -175,7 +175,7 @@ paths:
                   description: A passphrase to access the user's account.
       responses:
         200:
-          description: Successfully logged in
+          description: Successfully authenticated with passphrase. Further validation may be needed.
           content:
             application/json:
               schema:
@@ -187,18 +187,24 @@ paths:
                       - "Success!"
                   access_token:
                     type: string
-                    description: Temporary bearer token used to authenticate future requests
+                    description: Temporary bearer token used to authenticate future requests.
+                  validate:
+                    type: string
+                    enum:
+                      - "none"
+                      - "totp"
+                    description: The sort of extra validation that's needed before the user may access their data. The value is `"none"` if the user's account needs no further validation.
                   uid:
                     type: string
-                    description: The user's persistent UID, different from the given account ID
+                    description: The user's persistent UID, different from the given account ID.
                   totalSpace:
                     type: number
                     example: 1000000
-                    description: "The number of total bytes the server has allocated for the user."
+                    description: The number of total bytes the server has allocated for the user.
                   usedSpace:
                     type: number
                     example: 85000
-                    description: "The number of bytes the user has stored."
+                    description: The number of bytes the user has stored.
         400:
           description: Missing one or more required parameters
           content:
@@ -226,6 +232,181 @@ paths:
                     type: string
                     enum:
                       - "Incorrect account ID or passphrase"
+  "/v0/totp/validate":
+    post:
+      tags:
+        - auth
+      summary: Validate a time-based code for authentication. Must have obtained an access token previously. Successful validations return a new access token to be used in subsequent requests.
+      operationId: validate-totp
+      security:
+        - jwt: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - token
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: The code to validate. Normally 6 characters long.
+      responses:
+        200:
+          description: Successfully validated the time-based code. The user must now provide a TOTP to validate initial access or any sensitive operations.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    enum:
+                      - "Success!"
+                  access_token:
+                    type: string
+                    description: Temporary bearer token used to authenticate future requests.
+                  uid:
+                    type: string
+                    description: The user's persistent UID, different from the account ID used to sign in.
+                  totalSpace:
+                    type: number
+                    example: 1000000
+                    description: The number of total bytes the server has allocated for the user.
+                  usedSpace:
+                    type: number
+                    example: 85000
+                    description: The number of bytes the user has stored.
+        400:
+          description: Missing one or more required parameters.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    enum:
+                      - "Improper parameter types"
+        403:
+          description: The given token is invalid, or a valid session token was not provided.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "expired-token"
+                      - "missing-token"
+                      - "wrong-credentials"
+        409:
+          description: The user does not have a TOTP secret set.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "totp-secret-missing"
+  "/v0/totp/secret":
+    get:
+      tags:
+        - auth
+      summary: Generates a new TOTP secret for the user. If the user has already enabled 2FA, then a 409 status is returned.
+      operationId: get-totp-secret
+      security:
+        - jwt: []
+      responses:
+        200:
+          description: Got a new secret.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    enum:
+                      - "Success!"
+                  secret:
+                    type: string
+                    description: A TOTP configuration URI, to be displayed to the user as, for example, a QR code. The user should keep this value safe, as it is the only way to generate time-based authentication codes.
+        403:
+          description: The caller did not send valid session cookies.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "expired-token"
+                      - "missing-token"
+        409:
+          description: The user already has a TOTP secret set. We should not override it.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "totp-conflict"
+    delete:
+      tags:
+        - auth
+      summary: Disables the user's TOTP requirement, and deletes the stored TOTP secret.
+      operationId: delete-totp-secret
+      security:
+        - jwt: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - password
+                - token
+              type: object
+              properties:
+                password:
+                  type: string
+                  description: The passphrase to access the account.
+                token:
+                  type: string
+                  description: The current TOTP to access the account.
+      responses:
+        200:
+          description: The secret is gone.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    enum:
+                      - "Success!"
+        403:
+          description: The caller did not send valid session cookies, or the password was invalid.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "expired-token"
+                      - "missing-token"
+                      - "wrong-credentials"
   "/v0/session":
     get:
       tags:

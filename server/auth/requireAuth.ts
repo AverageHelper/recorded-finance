@@ -1,14 +1,17 @@
 import type { JsonWebTokenError } from "jsonwebtoken";
+import type { MFAOption, User } from "../database/schemas.js";
 import type { Request, RequestHandler } from "express";
-import type { User } from "../database/schemas.js";
+import { assertSchema, jwtPayload } from "../database/schemas.js";
 import { asyncWrapper } from "../asyncWrapper.js";
 import { BadRequestError, NotFoundError, UnauthorizedError } from "../errors/index.js";
 import { blacklistHasJwt, jwtTokenFromRequest, verifyJwt } from "./jwt.js";
 import { Context } from "./Context.js";
 import { findUserWithProperties } from "../database/io.js";
+import { StructError } from "superstruct";
 
 interface Metadata {
 	user: User;
+	validatedWithMfa: Array<MFAOption>;
 }
 
 async function userWithUid(uid: string): Promise<User | null> {
@@ -16,6 +19,9 @@ async function userWithUid(uid: string): Promise<User | null> {
 	return await findUserWithProperties({ uid });
 }
 
+/**
+ * Retrieves user metadata from the request headers and session cookies in the request.
+ */
 export async function metadataFromRequest(
 	req: Pick<Request, "session" | "headers">
 ): Promise<Metadata> {
@@ -34,16 +40,27 @@ export async function metadataFromRequest(
 		throw new UnauthorizedError("expired-token");
 	});
 
-	const uid = (payload["uid"] as string | undefined) ?? null;
-	if (uid === null || typeof uid !== "string")
-		throw new BadRequestError("Missing or invalid `uid`");
+	try {
+		assertSchema(payload, jwtPayload);
+	} catch (error) {
+		if (error instanceof StructError) {
+			console.debug(`JWT payload failed to verify: ${error.message}`);
+		} else {
+			console.debug(`JWT payload failed to verify: ${JSON.stringify(error)}`);
+		}
+		throw new BadRequestError("Invalid JWT payload");
+	}
+
+	const uid = payload.uid;
+	const validatedWithMfa = payload.validatedWithMfa;
+	// TODO: If the JWT is more than x minutes old (but not expired), leave validatedWithMfa empty. This would ensure that sensitive operations require the user to re-validate
 
 	// NOTE: We need a full user-fetch here so we know we're working with a real user.
 	// You might be tempted to slim this down to just passing the UID through, but don't.
 	const user = await userWithUid(uid);
 	if (!user) throw new NotFoundError();
 
-	return { user };
+	return { user, validatedWithMfa };
 }
 
 /** A handler that makes sure the calling user is authorized to access the requested resource. */

@@ -1,11 +1,13 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type { Infer, Struct, StructError } from "superstruct";
 import {
+	array,
 	enums,
 	intersection,
 	is,
 	literal,
 	nonempty,
+	nullable,
 	object,
 	optional,
 	string,
@@ -50,9 +52,20 @@ export function assertSchema<T>(tbd: unknown, schema: Struct<T>): asserts tbd is
 	if (error) throw error;
 }
 
-const jwtPayload = type({
+const mfaOptions = ["totp"] as const;
+
+export type MFAOption = typeof mfaOptions[number];
+
+export const jwtPayload = type({
+	/** The ID of the signed-in user */
 	uid: nonempty(string()),
-	hash: optional(nonempty(string())),
+
+	/**
+	 * The MFA authentication methods the user used recently.
+	 * Sensitive endpoints should check this value if the user
+	 * has 2FA auth enabled.
+	 */
+	validatedWithMfa: array(enums(mfaOptions)),
 });
 
 export type JwtPayload = Infer<typeof jwtPayload>;
@@ -62,10 +75,44 @@ export function isJwtPayload(tbd: unknown): tbd is JwtPayload {
 }
 
 const user = object({
+	/**
+	 * The user's unique ID. This value never changes for the life
+	 * of the account.
+	 */
 	uid: nonempty(string()),
+
+	/**
+	 * The user's account ID, used to identify the user at login.
+	 * The user may change this value at any time.
+	 */
 	currentAccountId: nonempty(string()),
+
+	/**
+	 * The hash of the user's password.
+	 */
 	passwordHash: nonempty(string()),
+
+	/**
+	 * The salt with which the user's password was hashed.
+	 */
 	passwordSalt: nonempty(string()),
+
+	/**
+	 * Additional second-factor auth options that the user has enabled.
+	 *
+	 * If this value contains `"totp"`, then the user's `totpSecret`
+	 * must be used in combination with the normal password validation
+	 * data to allow the user access to their data.
+	 */
+	requiredAddtlAuth: optional(array(enums(mfaOptions))),
+
+	/**
+	 * The secret against which to validate time-based authentication
+	 * tokens. The value is `null` or `undefined` if the user does not
+	 * have TOTP enabled on their account and they have not begun to
+	 * set up TOTP as their additional auth.
+	 */
+	totpSecret: optional(nullable(nonempty(string()))),
 });
 export type User = Infer<typeof user>;
 

@@ -1,4 +1,4 @@
-import type { JwtPayload, User } from "../database/schemas.js";
+import type { JwtPayload, MFAOption, User } from "../database/schemas.js";
 import type { Request } from "express";
 import { generateSecureToken } from "n-digit-token";
 import { isJwtPayload } from "../database/schemas.js";
@@ -47,11 +47,15 @@ export function addJwtToBlacklist(token: string): void {
 }
 
 // TODO: Be smarter about session storage. See https://gist.github.com/soulmachine/b368ce7292ddd7f91c15accccc02b8df
-export async function newAccessToken(req: Pick<Request, "session">, user: User): Promise<string> {
+export async function newAccessToken(
+	req: Pick<Request, "session">,
+	user: User,
+	validatedWithMfa: Array<MFAOption>
+): Promise<string> {
 	const options: jwt.SignOptions = { expiresIn: "1h" };
 	const payload: JwtPayload = {
 		uid: user.uid,
-		hash: user.passwordHash,
+		validatedWithMfa,
 	};
 
 	const token = await new Promise<string>((resolve, reject) => {

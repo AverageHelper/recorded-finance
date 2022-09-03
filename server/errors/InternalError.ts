@@ -8,6 +8,8 @@ export type ErrorCode =
 	| "not-found"
 	| "not-implemented"
 	| "too-many-requests"
+	| "totp-conflict"
+	| "totp-secret-missing"
 	| "unknown";
 
 export class InternalError extends Error {
