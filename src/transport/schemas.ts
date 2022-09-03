@@ -13,6 +13,7 @@ import {
 	object,
 	optional,
 	string,
+	type,
 	union,
 } from "superstruct";
 
@@ -60,7 +61,7 @@ export const documentData = define<DocumentData>(
 	value => isRecord(value) && Object.values(value).every(isPrimitive)
 );
 
-const rawServerResponse = object({
+const rawServerResponse = type({
 	message: optional(string()),
 	code: optional(string()),
 	version: optional(string()),

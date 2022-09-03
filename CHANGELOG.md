@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Changed
+- The client now accepts "extra" values from server responses. This way, old clients can still talk to new server instances without much issue.
+
 ## [0.11.0] - 2022-09-01
 ### Changed
 - BREAKING: The server now requires the `DB` environment variable to be set.
