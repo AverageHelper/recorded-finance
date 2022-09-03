@@ -11,6 +11,8 @@ type ErrorCode =
 	| "not-implemented"
 	| "not-owner"
 	| "too-many-requests"
+	| "totp-conflict"
+	| "totp-secret-missing"
 	| "wrong-credentials"
 	| "unknown";
 

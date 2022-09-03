@@ -87,6 +87,8 @@
 			"not-implemented": "That feature is not implemented yet",
 			"not-owner": "Unauthorized",
 			"too-many-requests": "You are being throttled",
+			"totp-conflict": "You already have TOTP authentication enabled",
+			"totp-secret-missing": "You do not have a TOTP secret to validate against",
 			"wrong-credentials": "Incorrect account ID or passphrase",
 			"unknown": "Not sure what went wrong. Try again maybe?"
 		},
