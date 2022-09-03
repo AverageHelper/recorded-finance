@@ -22,9 +22,11 @@ const rateLimiter = new RateLimiterMemory({ points, duration, blockDuration });
  * Returns middleware that prevents an IP address from sending more than
  * 10 requests in 10 minutes.
  */
-export function throttle<P = ParamsDictionary, ResBody = unknown, ReqBody = unknown>(
-	this: void
-): RequestHandler<P, ResBody, ReqBody> {
+export function throttle<
+	P = ParamsDictionary,
+	ResBody = unknown,
+	ReqBody = unknown
+>(): RequestHandler<P, ResBody, ReqBody> {
 	return asyncWrapper(async (req, res, next) => {
 		const remoteIp = req.ip;
 		try {

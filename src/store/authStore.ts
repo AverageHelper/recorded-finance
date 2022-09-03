@@ -168,7 +168,7 @@ export async function login(accountId: string, password: string): Promise<void> 
 	}
 }
 
-export async function getDekMaterial(this: void): Promise<KeyMaterial> {
+export async function getDekMaterial(): Promise<KeyMaterial> {
 	const user = auth.currentUser;
 	if (!user) throw new Error(t("error.auth.unauthenticated"));
 
@@ -177,7 +177,7 @@ export async function getDekMaterial(this: void): Promise<KeyMaterial> {
 	return material;
 }
 
-export function createAccountId(this: void): string {
+export function createAccountId(): string {
 	return uuid().replace(/\W+/gu, "");
 }
 

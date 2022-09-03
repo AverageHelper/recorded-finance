@@ -283,7 +283,7 @@ interface FileData {
 }
 
 // Function so we defer creation of the router until after we've set up websocket support
-export function db(this: void /* Inject filesystem APIs here? */): Router {
+export function db(/* Inject filesystem APIs here? */): Router {
 	return Router()
 		.ws("/users/:uid/:collectionId", webSocket)
 		.ws("/users/:uid/:collectionId/:documentId", webSocket)

@@ -11,7 +11,7 @@ export interface UserPreferences {
 
 export type UserPreferencesRecordPackage = EPackage<"UserPreferences">;
 
-export function defaultPrefs(this: void): UserPreferences {
+export function defaultPrefs(): UserPreferences {
 	return {
 		locationSensitivity: "none",
 	};

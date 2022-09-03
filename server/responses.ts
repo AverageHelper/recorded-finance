@@ -7,7 +7,6 @@ const VARY = ["Vary", "*"] as const;
 const CACHE_CONTROL = ["Cache-Control", "no-store"] as const;
 
 export function respondSuccess(
-	this: void,
 	res: Response,
 	additionalValues?: Record<string, string | number>
 ): void {
@@ -18,7 +17,6 @@ export function respondSuccess(
 }
 
 export function respondData<T extends { _id: string } | { uid: string }>(
-	this: void,
 	res: Response,
 	data: DocumentData<T> | Array<DocumentData<T>> | null
 ): void {
@@ -28,7 +26,7 @@ export function respondData<T extends { _id: string } | { uid: string }>(
 		.json({ message: "Success!", data });
 }
 
-export function respondError(this: void, res: Response, err: InternalError): void {
+export function respondError(res: Response, err: InternalError): void {
 	res.setHeader(...CACHE_CONTROL);
 	res.setHeader(...VARY);
 	err.headers.forEach((value, name) => {
@@ -37,6 +35,6 @@ export function respondError(this: void, res: Response, err: InternalError): voi
 	res.status(err.status).json({ message: err.message, code: err.code });
 }
 
-export function respondInternalError(this: void, res: Response): void {
+export function respondInternalError(res: Response): void {
 	respondError(res, new InternalError());
 }
