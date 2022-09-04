@@ -4,7 +4,7 @@ import { asyncWrapper } from "../asyncWrapper.js";
 import { compare } from "bcrypt";
 import { Context } from "./Context.js";
 import { generateHash, generateSalt } from "./generators.js";
-import { generateTOTPSecret, verifyTOTP } from "./totp.js";
+import { generateTOTPRecoverySecret, generateTOTPSecret, verifyTOTP } from "./totp.js";
 import { MAX_USERS } from "./limits.js";
 import { metadataFromRequest } from "./requireAuth.js";
 import { respondSuccess } from "../responses.js";
@@ -260,23 +260,47 @@ export function auth(): Router {
 
 				// Check the TOTP is valid
 				const isValid = verifyTOTP(token, secret);
-				if (!isValid) throw new UnauthorizedError("wrong-credentials");
+				if (!isValid) {
+					// Check that the value is the user's recovery token
+					// FIXME: This is vuln to timing attacks
+					if (token !== user.mfaRecoveryToken) {
+						throw new UnauthorizedError("wrong-credentials");
+					} else {
+						// Invalidate the old token
+						await upsertUser({
+							currentAccountId: user.currentAccountId,
+							passwordHash: user.passwordHash,
+							passwordSalt: user.passwordSalt,
+							requiredAddtlAuth: user.requiredAddtlAuth,
+							totpSecret: user.totpSecret,
+							mfaRecoveryToken: null,
+							uid,
+						});
+					}
+				}
 
 				// If there's a pending secret for the user, and the user hasn't enabled a requirement, enable it
-				if (!user.requiredAddtlAuth || !user.requiredAddtlAuth.includes("totp")) {
+				let recovery_token: string | null = null;
+				if (user.requiredAddtlAuth?.includes("totp") !== true) {
+					recovery_token = await generateTOTPRecoverySecret(user.currentAccountId);
 					await upsertUser({
 						currentAccountId: user.currentAccountId,
 						passwordHash: user.passwordHash,
 						passwordSalt: user.passwordSalt,
 						requiredAddtlAuth: ["totp"], // TODO: Leave other 2FA alone
 						totpSecret: secret,
+						mfaRecoveryToken: recovery_token,
 						uid,
 					});
 				}
 
 				const access_token = await newAccessToken(req, user, ["totp"]);
 				const { totalSpace, usedSpace } = await statsForUser(uid);
-				respondSuccess(res, { access_token, uid, totalSpace, usedSpace });
+				if (recovery_token !== null) {
+					respondSuccess(res, { access_token, recovery_token, uid, totalSpace, usedSpace });
+				} else {
+					respondSuccess(res, { access_token, uid, totalSpace, usedSpace });
+				}
 			})
 		)
 		.get(

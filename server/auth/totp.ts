@@ -46,10 +46,12 @@ function generateTOTP(secret: string, window: number = 0): string {
 export function verifyTOTP(token: string, secret: string, window: number = 1): boolean {
 	for (let errorWindow = -window; errorWindow <= window; errorWindow += 1) {
 		const totp = generateTOTP(secret, errorWindow);
-		if (token === totp) return true;
+		if (token === totp) return true; // FIXME: This is vuln to timing attacks
 	}
 	return false;
 }
+
+// TODO: Create a way to generate the user's MFA secrets from info in a config file, separate from the database
 
 /**
  * Generates a new TOTP secret that the user with the given account ID may use
@@ -71,4 +73,8 @@ export async function generateTOTPSecret(accountId: string): Promise<string> {
 	configUri.searchParams.set("secret", secret);
 
 	return configUri.href;
+}
+
+export async function generateTOTPRecoverySecret(accountId: string): Promise<string> {
+	return await generateSalt();
 }

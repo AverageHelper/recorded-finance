@@ -74,7 +74,7 @@ export function isJwtPayload(tbd: unknown): tbd is JwtPayload {
 	return isValidForSchema(tbd, jwtPayload);
 }
 
-const user = object({
+export const user = object({
 	/**
 	 * The user's unique ID. This value never changes for the life
 	 * of the account.
@@ -96,6 +96,12 @@ const user = object({
 	 * The salt with which the user's password was hashed.
 	 */
 	passwordSalt: nonempty(string()),
+
+	/**
+	 * A special value that will always be a valid TOTP code.
+	 * // TODO: Should we regenerate this every time it's used?
+	 */
+	mfaRecoveryToken: optional(nullable(nonempty(string()))),
 
 	/**
 	 * Additional second-factor auth options that the user has enabled.

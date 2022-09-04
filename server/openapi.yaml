@@ -267,6 +267,9 @@ paths:
                   access_token:
                     type: string
                     description: Temporary bearer token used to authenticate future requests.
+                  recovery_token:
+                    type: string
+                    description: A recovery code that will be a valid TOTP code exactly once. Only provided if this is the first time this TOTP secret was validated. The user should keep this value safe, as it allows anyone with the user's password access to the account.
                   uid:
                     type: string
                     description: The user's persistent UID, different from the account ID used to sign in.
