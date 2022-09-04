@@ -329,10 +329,26 @@ export function auth(): Router {
 					throw new UnauthorizedError("wrong-credentials");
 				}
 
-				// ** Verify credentials
+				// ** Verify password credentials
 				const isPasswordGood = await compare(givenPassword, storedUser.passwordHash);
 				if (!isPasswordGood) {
 					throw new UnauthorizedError("wrong-credentials");
+				}
+
+				// ** Verify MFA
+				if (
+					typeof storedUser.totpSecret === "string" &&
+					storedUser.requiredAddtlAuth?.includes("totp") === true
+				) {
+					// TOTP is required
+					const token = req.body.token;
+
+					if (typeof token !== "string" || token === "")
+						// TODO: Use a different code for missing MFA
+						throw new UnauthorizedError("wrong-credentials");
+
+					const isValid = verifyTOTP(token, storedUser.totpSecret);
+					if (!isValid) throw new UnauthorizedError("wrong-credentials");
 				}
 
 				// ** Delete the user
@@ -370,6 +386,22 @@ export function auth(): Router {
 				const isPasswordGood = await compare(givenPassword, storedUser.passwordHash);
 				if (!isPasswordGood) {
 					throw new UnauthorizedError("wrong-credentials");
+				}
+
+				// ** Verify MFA
+				if (
+					typeof storedUser.totpSecret === "string" &&
+					storedUser.requiredAddtlAuth?.includes("totp") === true
+				) {
+					// TOTP is required
+					const token = req.body.token;
+
+					if (typeof token !== "string" || token === "")
+						// TODO: Use a different code for missing MFA
+						throw new UnauthorizedError("wrong-credentials");
+
+					const isValid = verifyTOTP(token, storedUser.totpSecret);
+					if (!isValid) throw new UnauthorizedError("wrong-credentials");
 				}
 
 				// ** Store new credentials
@@ -415,6 +447,22 @@ export function auth(): Router {
 				const isPasswordGood = await compare(givenPassword, storedUser.passwordHash);
 				if (!isPasswordGood) {
 					throw new UnauthorizedError("wrong-credentials");
+				}
+
+				// ** Verify MFA
+				if (
+					typeof storedUser.totpSecret === "string" &&
+					storedUser.requiredAddtlAuth?.includes("totp") === true
+				) {
+					// TOTP is required
+					const token = req.body.token;
+
+					if (typeof token !== "string" || token === "")
+						// TODO: Use a different code for missing MFA
+						throw new UnauthorizedError("wrong-credentials");
+
+					const isValid = verifyTOTP(token, storedUser.totpSecret);
+					if (!isValid) throw new UnauthorizedError("wrong-credentials");
 				}
 
 				// ** Store new credentials

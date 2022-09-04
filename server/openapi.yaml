@@ -461,13 +461,13 @@ paths:
     post:
       tags:
         - auth
-      summary: Invalidate the request's bearer token
+      summary: Invalidate the request's bearer token.
       operationId: log-out
       security:
         - jwt: []
       responses:
         200:
-          description: Successfully logged out
+          description: Successfully logged out.
           content:
             application/json:
               schema:
@@ -481,7 +481,7 @@ paths:
     post:
       tags:
         - auth
-      summary: Destroy the user's data and account credentials
+      summary: Destroy the user's data and account credentials.
       operationId: leave-forever
       requestBody:
         required: true
@@ -499,9 +499,12 @@ paths:
                 password:
                   type: string
                   description: The passphrase to access the account.
+                token:
+                  type: string
+                  description: The TOTP token. Required if the user's account requires TOTP 2FA.
       responses:
         200:
-          description: Operation succeeded
+          description: Operation succeeded.
           content:
             application/json:
               schema:
@@ -512,7 +515,7 @@ paths:
                     enum:
                       - "Success!"
         400:
-          description: Missing one or more required parameters
+          description: Missing one or more required parameters.
           content:
             application/json:
               schema:
@@ -523,8 +526,7 @@ paths:
                     enum:
                       - "Improper parameter types"
         403:
-          description: The given passphrase does not match, or the given account does
-            not exist
+          description: The given passphrase does not match, a required TOTP token was not provided, or the given account does not exist.
           content:
             application/json:
               schema:
@@ -542,7 +544,7 @@ paths:
     post:
       tags:
         - auth
-      summary: Change the user's password
+      summary: Change the user's password.
       operationId: change-password
       requestBody:
         required: true
@@ -561,12 +563,15 @@ paths:
                 password:
                   type: string
                   description: The current passphrase to access the account.
+                token:
+                  type: string
+                  description: The TOTP token. Required if the user's account requires TOTP 2FA.
                 newpassword:
                   type: string
                   description: The new passphrase to access the account from now on.
       responses:
         200:
-          description: Operation succeeded
+          description: Operation succeeded.
           content:
             application/json:
               schema:
@@ -577,7 +582,7 @@ paths:
                     enum:
                       - "Success!"
         400:
-          description: Missing one or more required parameters
+          description: Missing one or more required parameters.
           content:
             application/json:
               schema:
@@ -588,8 +593,7 @@ paths:
                     enum:
                       - "Improper parameter types"
         403:
-          description: The given passphrase does not match, or the given account does
-            not exist
+          description: The given passphrase does not match, a required TOTP token was not provided, or the given account does not exist.
           content:
             application/json:
               schema:
@@ -607,7 +611,7 @@ paths:
     post:
       tags:
         - auth
-      summary: Change the user's account ID
+      summary: Change the user's account ID.
       operationId: change-account-id
       requestBody:
         required: true
@@ -629,9 +633,12 @@ paths:
                 password:
                   type: string
                   description: The current passphrase to access the account.
+                token:
+                  type: string
+                  description: The TOTP token. Required if the user's account requires TOTP 2FA.
       responses:
         200:
-          description: Operation succeeded
+          description: Operation succeeded.
           content:
             application/json:
               schema:
@@ -642,7 +649,7 @@ paths:
                     enum:
                       - "Success!"
         400:
-          description: Missing one or more required parameters
+          description: Missing one or more required parameters.
           content:
             application/json:
               schema:
@@ -653,8 +660,7 @@ paths:
                     enum:
                       - "Improper parameter types"
         403:
-          description: The given passphrase does not match, or the given account does
-            not exist
+          description: The given passphrase does not match, a required TOTP token was not provided, or the given account does not exist.
           content:
             application/json:
               schema:

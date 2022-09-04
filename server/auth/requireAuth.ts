@@ -68,6 +68,13 @@ export const requireAuth: RequestHandler = asyncWrapper(async (req, res, next) =
 	const metadata = await metadataFromRequest(req);
 	const uid = metadata.user.uid;
 
+	if (
+		metadata.user.requiredAddtlAuth?.includes("totp") === true && // req totp
+		!metadata.validatedWithMfa.includes("totp") // didn't use totp this session
+	) {
+		throw new UnauthorizedError("missing-token");
+	}
+
 	Context.bind(req, { uid }); // This reference drops when the request is done
 	next();
 });
