@@ -2,7 +2,7 @@ import type { AttachmentSchema, DatabaseSchema } from "../model/DatabaseSchema.j
 import type { Attachment } from "../model/Attachment.js";
 import type { HashStore, KeyMaterial, Unsubscribe, UserPreferences } from "../transport/index.js";
 import type { User } from "../transport/auth.js";
-import { AccountableError } from "../transport/errors/index.js";
+import { AccountableError, NetworkError } from "../transport/errors/index.js";
 import { attachment as newAttachment } from "../model/Attachment.js";
 import { BlobReader, Data64URIWriter, TextReader, ZipWriter } from "@zip.js/zip.js";
 import { bootstrap, updateUserStats } from "./uiStore.js";
@@ -126,7 +126,10 @@ export async function fetchSession(): Promise<void> {
 		await updateUserStats();
 		onSignedIn(user);
 	} catch (error) {
-		console.error(error);
+		// ignore "missing-token" errors, those are normal when we don't have a session yet
+		if (!(error instanceof NetworkError) || error.code !== "missing-token") {
+			console.error(error);
+		}
 	} finally {
 		// In any event, error or not:
 		loginProcessState.set(null);
