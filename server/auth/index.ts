@@ -11,6 +11,7 @@ import { respondSuccess } from "../responses.js";
 import { Router } from "express";
 import { throttle } from "./throttle.js";
 import { v4 as uuid } from "uuid";
+import safeCompare from "safe-compare";
 import {
 	BadRequestError,
 	ConflictError,
@@ -262,10 +263,12 @@ export function auth(): Router {
 				const isValid = verifyTOTP(token, secret);
 				if (!isValid) {
 					// Check that the value is the user's recovery token
-					// FIXME: This is vuln to timing attacks
-					if (token !== user.mfaRecoveryToken) {
+					if (
+						typeof user.mfaRecoveryToken === "string" &&
+						!safeCompare(token, user.mfaRecoveryToken)
+					) {
 						throw new UnauthorizedError("wrong-credentials");
-					} else {
+					} else if (typeof user.mfaRecoveryToken === "string") {
 						// Invalidate the old token
 						await upsertUser({
 							currentAccountId: user.currentAccountId,

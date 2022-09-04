@@ -3,6 +3,7 @@ import { createHmac } from "node:crypto";
 import { generateSalt } from "./generators.js";
 import { URL } from "node:url";
 import base32Decode from "base32-decode";
+import safeCompare from "safe-compare";
 
 // Based on https://medium.com/onfrontiers-engineering/two-factor-authentication-flow-with-node-and-react-7cbdf249f13
 // and https://auth0.com/blog/from-theory-to-practice-adding-two-factor-to-node-dot-js/
@@ -46,7 +47,7 @@ function generateTOTP(secret: string, window: number = 0): string {
 export function verifyTOTP(token: string, secret: string, window: number = 1): boolean {
 	for (let errorWindow = -window; errorWindow <= window; errorWindow += 1) {
 		const totp = generateTOTP(secret, errorWindow);
-		if (token === totp) return true; // FIXME: This is vuln to timing attacks
+		if (safeCompare(token, totp)) return true;
 	}
 	return false;
 }
