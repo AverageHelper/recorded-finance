@@ -1,6 +1,7 @@
 /* eslint-disable no-bitwise */
 import { createHmac } from "node:crypto";
-import { generateSalt } from "./generators.js";
+import { generateHash } from "./generators.js";
+import { persistentSecret } from "./jwt.js";
 import { URL } from "node:url";
 import base32Decode from "base32-decode";
 import safeCompare from "safe-compare";
@@ -44,7 +45,19 @@ function generateTOTP(secret: string, window: number = 0): string {
 /**
  * Checks that the given token fits the given secret.
  */
-export function verifyTOTP(token: string, secret: string, window: number = 1): boolean {
+export function verifyTOTP(token: string, secretOrUri: string, window: number = 1): boolean {
+	let secret: string;
+	try {
+		const uri = new URL(secretOrUri); // throws if not a URL
+		const secretParam = uri.searchParams.get("secret");
+		secret =
+			uri.protocol === "otpauth:" && secretParam !== null && secretParam
+				? secretParam
+				: secretOrUri;
+	} catch {
+		secret = secretOrUri;
+	}
+
 	for (let errorWindow = -window; errorWindow <= window; errorWindow += 1) {
 		const totp = generateTOTP(secret, errorWindow);
 		if (safeCompare(token, totp)) return true;
@@ -52,19 +65,24 @@ export function verifyTOTP(token: string, secret: string, window: number = 1): b
 	return false;
 }
 
-// TODO: Create a way to generate the user's MFA secrets from info in a config file, separate from the database
-
 /**
- * Generates a new TOTP secret that the user with the given account ID may use
- * to generate one-time auth codes.
+ * Generates a TOTP URI that contains the secret value that the user with
+ * the given account ID may use to generate one-time auth codes. The secret
+ * is stable for a given `seed` and `AUTH_SECRET`.
+ *
+ * @param accountId A string that identifies the user account. This value may
+ *  be user-provided. This value is not used to create the user's TOTP secret.
+ * @param seed The value used in combination with the server's `AUTH_SECRET`
+ *  to generate the user's TOTP secret.
  */
-export async function generateTOTPSecret(accountId: string): Promise<string> {
+export async function generateTOTPSecretURI(accountId: string, seed: string): Promise<string> {
 	if (!accountId) throw new TypeError("accountId cannot be empty");
+	if (!seed) throw new TypeError("seed cannot be empty");
 
 	const issuer = "Accountable";
 	const digits = 6; // number of digits
 	const period = 30; // seconds
-	const secret = await generateSalt();
+	const secret = await generateHash(seed, persistentSecret);
 
 	const configUri = new URL(`otpauth://totp/${issuer}:${accountId}`);
 	configUri.searchParams.set("algorithm", algorithm);
@@ -76,6 +94,13 @@ export async function generateTOTPSecret(accountId: string): Promise<string> {
 	return configUri.href;
 }
 
-export async function generateTOTPRecoverySecret(accountId: string): Promise<string> {
-	return await generateSalt();
+/**
+ * Generates a random string. This value is stable for a given `seed`
+ * and `AUTH_SECRET`.
+ *
+ * @param seed The value used in combination with the server's `AUTH_SECRET`
+ *  to generate the random string.
+ */
+export async function generateTOTPRecoverySecret(seed: string): Promise<string> {
+	return await generateHash(seed, persistentSecret);
 }

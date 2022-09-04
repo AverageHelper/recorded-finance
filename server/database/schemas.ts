@@ -98,27 +98,30 @@ export const user = object({
 	passwordSalt: nonempty(string()),
 
 	/**
-	 * A special value that will always be a valid TOTP code.
+	 * A value which is used to generate a special value that
+	 * will always be a valid TOTP code.
 	 * // TODO: Should we regenerate this every time it's used?
 	 */
-	mfaRecoveryToken: optional(nullable(nonempty(string()))),
+	mfaRecoverySeed: optional(nullable(nonempty(string()))),
 
 	/**
 	 * Additional second-factor auth options that the user has enabled.
 	 *
-	 * If this value contains `"totp"`, then the user's `totpSecret`
-	 * must be used in combination with the normal password validation
-	 * data to allow the user access to their data.
+	 * If this value contains `"totp"`, then the user's `totpSeed`
+	 * and the server's persistent `AUTH_SECRET` must be used in
+	 * combination with the normal password validation data to
+	 * allow the user access to their data.
 	 */
 	requiredAddtlAuth: optional(array(enums(mfaOptions))),
 
 	/**
-	 * The secret against which to validate time-based authentication
-	 * tokens. The value is `null` or `undefined` if the user does not
-	 * have TOTP enabled on their account and they have not begun to
-	 * set up TOTP as their additional auth.
+	 * The value which is used to generate the secret against which
+	 * to validate time-based authentication tokens. The value is
+	 * `null` or `undefined` if the user does not have TOTP enabled
+	 * on their account and they have not begun to set up TOTP as
+	 * their additional auth.
 	 */
-	totpSecret: optional(nullable(nonempty(string()))),
+	totpSeed: optional(nullable(nonempty(string()))),
 });
 export type User = Infer<typeof user>;
 

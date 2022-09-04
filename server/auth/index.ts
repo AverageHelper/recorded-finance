@@ -3,8 +3,8 @@ import { addJwtToBlacklist, jwtTokenFromRequest, newAccessToken } from "./jwt.js
 import { asyncWrapper } from "../asyncWrapper.js";
 import { compare } from "bcrypt";
 import { Context } from "./Context.js";
-import { generateHash, generateSalt } from "./generators.js";
-import { generateTOTPRecoverySecret, generateTOTPSecret, verifyTOTP } from "./totp.js";
+import { generateHash, generateSalt, generateSecureToken } from "./generators.js";
+import { generateTOTPRecoverySecret, generateTOTPSecretURI, verifyTOTP } from "./totp.js";
 import { MAX_USERS } from "./limits.js";
 import { metadataFromRequest } from "./requireAuth.js";
 import { respondSuccess } from "../responses.js";
@@ -86,11 +86,14 @@ export function auth(): Router {
 				const passwordSalt = await generateSalt();
 				const passwordHash = await generateHash(givenPassword, passwordSalt);
 				const uid = newDocumentId();
-				const user: User = {
-					uid,
+				const user: Required<User> = {
 					currentAccountId: givenAccountId,
+					mfaRecoverySeed: null,
 					passwordHash,
 					passwordSalt,
+					requiredAddtlAuth: [],
+					totpSeed: null,
+					uid,
 				};
 				await upsertUser(user);
 
@@ -133,7 +136,7 @@ export function auth(): Router {
 
 				// ** If the user's account has a TOTP secret set and locked-in, validate="totp"
 				const validate: MFAOption | "none" =
-					(user.totpSecret ?? "") && // has a secret
+					(user.totpSeed ?? "") && // has a secret
 					user.requiredAddtlAuth?.includes("totp") === true // totp enabled
 						? "totp"
 						: "none";
@@ -165,16 +168,18 @@ export function auth(): Router {
 				}
 
 				// Generate and store the new secret
-				const secret = await generateTOTPSecret(accountId);
+				const totpSeed = generateSecureToken(15);
+				const secret = await generateTOTPSecretURI(accountId, totpSeed);
 
 				// We should not lock in the secret until the user hits /totp/validate with that secret.
 				// Just set the secret, not the 2fa requirement
 				await upsertUser({
 					currentAccountId: accountId,
+					mfaRecoverySeed: user.mfaRecoverySeed ?? null,
 					passwordHash: user.passwordHash,
 					passwordSalt: user.passwordSalt,
 					requiredAddtlAuth: [], // TODO: Leave other 2FA alone
-					totpSecret: secret,
+					totpSeed,
 					uid,
 				});
 
@@ -189,7 +194,6 @@ export function auth(): Router {
 				const { user /* validatedWithMfa */ } = await metadataFromRequest(req);
 				const uid = user.uid;
 				const accountId = user.currentAccountId;
-				const secret = user.totpSecret;
 
 				const givenPassword = req.body.password;
 				const token = req.body.token;
@@ -203,10 +207,11 @@ export function auth(): Router {
 				}
 
 				// If the user has no secret, treat the secret as deleted and return 200
-				if (secret === null || secret === undefined || !secret) {
+				if (user.totpSeed === null || user.totpSeed === undefined || !user.totpSeed) {
 					respondSuccess(res);
 					return;
 				}
+				const secret = await generateTOTPSecretURI(user.currentAccountId, user.totpSeed);
 
 				// Validate the user's passphrase
 				const isPasswordGood = await compare(givenPassword, user.passwordHash);
@@ -225,10 +230,11 @@ export function auth(): Router {
 				// Delete the secret and disable 2FA
 				await upsertUser({
 					currentAccountId: accountId,
+					mfaRecoverySeed: user.mfaRecoverySeed ?? null,
 					passwordHash: user.passwordHash,
 					passwordSalt: user.passwordSalt,
 					requiredAddtlAuth: [], // TODO: Leave other 2FA alone
-					totpSecret: null,
+					totpSeed: null,
 					uid,
 				});
 
@@ -244,7 +250,6 @@ export function auth(): Router {
 				// Get credentials
 				const { user } = await metadataFromRequest(req);
 				const uid = user.uid;
-				const secret = user.totpSecret;
 
 				const token = req.body.token;
 				if (typeof token !== "string" || token === "") {
@@ -252,31 +257,30 @@ export function auth(): Router {
 				}
 
 				// If the user doesn't have a secret stored, return 409
-				if (secret === null || secret === undefined || !secret) {
+				if (user.totpSeed === null || user.totpSeed === undefined || !user.totpSeed) {
 					throw new ConflictError(
 						"totp-secret-missing",
 						"You do not have a TOTP secret to validate against"
 					);
 				}
+				const secret = await generateTOTPSecretURI(user.currentAccountId, user.totpSeed);
 
 				// Check the TOTP is valid
 				const isValid = verifyTOTP(token, secret);
-				if (!isValid) {
+				if (!isValid && typeof user.mfaRecoverySeed === "string") {
 					// Check that the value is the user's recovery token
-					if (
-						typeof user.mfaRecoveryToken === "string" &&
-						!safeCompare(token, user.mfaRecoveryToken)
-					) {
+					const mfaRecoveryToken = await generateTOTPRecoverySecret(user.mfaRecoverySeed);
+					if (!safeCompare(token, mfaRecoveryToken)) {
 						throw new UnauthorizedError("wrong-credentials");
-					} else if (typeof user.mfaRecoveryToken === "string") {
+					} else {
 						// Invalidate the old token
 						await upsertUser({
 							currentAccountId: user.currentAccountId,
+							mfaRecoverySeed: null, // TODO: Should we regenerate this?
 							passwordHash: user.passwordHash,
 							passwordSalt: user.passwordSalt,
-							requiredAddtlAuth: user.requiredAddtlAuth,
-							totpSecret: user.totpSecret,
-							mfaRecoveryToken: null,
+							requiredAddtlAuth: user.requiredAddtlAuth ?? [],
+							totpSeed: user.totpSeed,
 							uid,
 						});
 					}
@@ -285,14 +289,15 @@ export function auth(): Router {
 				// If there's a pending secret for the user, and the user hasn't enabled a requirement, enable it
 				let recovery_token: string | null = null;
 				if (user.requiredAddtlAuth?.includes("totp") !== true) {
-					recovery_token = await generateTOTPRecoverySecret(user.currentAccountId);
+					const mfaRecoverySeed = generateSecureToken(15);
+					recovery_token = await generateTOTPRecoverySecret(mfaRecoverySeed);
 					await upsertUser({
 						currentAccountId: user.currentAccountId,
+						mfaRecoverySeed,
 						passwordHash: user.passwordHash,
 						passwordSalt: user.passwordSalt,
 						requiredAddtlAuth: ["totp"], // TODO: Leave other 2FA alone
-						totpSecret: secret,
-						mfaRecoveryToken: recovery_token,
+						totpSeed: user.totpSeed,
 						uid,
 					});
 				}
@@ -364,7 +369,7 @@ export function auth(): Router {
 
 				// ** Verify MFA
 				if (
-					typeof storedUser.totpSecret === "string" &&
+					typeof storedUser.totpSeed === "string" &&
 					storedUser.requiredAddtlAuth?.includes("totp") === true
 				) {
 					// TOTP is required
@@ -374,7 +379,11 @@ export function auth(): Router {
 						// TODO: Use a different code for missing MFA
 						throw new UnauthorizedError("wrong-credentials");
 
-					const isValid = verifyTOTP(token, storedUser.totpSecret);
+					const secret = await generateTOTPSecretURI(
+						storedUser.currentAccountId,
+						storedUser.totpSeed
+					);
+					const isValid = verifyTOTP(token, secret);
 					if (!isValid) throw new UnauthorizedError("wrong-credentials");
 				}
 
@@ -417,7 +426,7 @@ export function auth(): Router {
 
 				// ** Verify MFA
 				if (
-					typeof storedUser.totpSecret === "string" &&
+					typeof storedUser.totpSeed === "string" &&
 					storedUser.requiredAddtlAuth?.includes("totp") === true
 				) {
 					// TOTP is required
@@ -427,7 +436,11 @@ export function auth(): Router {
 						// TODO: Use a different code for missing MFA
 						throw new UnauthorizedError("wrong-credentials");
 
-					const isValid = verifyTOTP(token, storedUser.totpSecret);
+					const secret = await generateTOTPSecretURI(
+						storedUser.currentAccountId,
+						storedUser.totpSeed
+					);
+					const isValid = verifyTOTP(token, secret);
 					if (!isValid) throw new UnauthorizedError("wrong-credentials");
 				}
 
@@ -435,10 +448,13 @@ export function auth(): Router {
 				const passwordSalt = await generateSalt();
 				const passwordHash = await generateHash(newGivenPassword, passwordSalt);
 				await upsertUser({
-					uid: storedUser.uid,
 					currentAccountId: storedUser.currentAccountId,
+					mfaRecoverySeed: storedUser.mfaRecoverySeed ?? null,
 					passwordHash,
 					passwordSalt,
+					requiredAddtlAuth: storedUser.requiredAddtlAuth ?? [],
+					totpSeed: storedUser.totpSeed ?? null,
+					uid: storedUser.uid,
 				});
 
 				// TODO: Invalidate the old jwt, send a new one
@@ -478,7 +494,7 @@ export function auth(): Router {
 
 				// ** Verify MFA
 				if (
-					typeof storedUser.totpSecret === "string" &&
+					typeof storedUser.totpSeed === "string" &&
 					storedUser.requiredAddtlAuth?.includes("totp") === true
 				) {
 					// TOTP is required
@@ -488,16 +504,23 @@ export function auth(): Router {
 						// TODO: Use a different code for missing MFA
 						throw new UnauthorizedError("wrong-credentials");
 
-					const isValid = verifyTOTP(token, storedUser.totpSecret);
+					const secret = await generateTOTPSecretURI(
+						storedUser.currentAccountId,
+						storedUser.totpSeed
+					);
+					const isValid = verifyTOTP(token, secret);
 					if (!isValid) throw new UnauthorizedError("wrong-credentials");
 				}
 
 				// ** Store new credentials
 				await upsertUser({
-					uid: storedUser.uid,
+					currentAccountId: newGivenAccountId,
+					mfaRecoverySeed: storedUser.mfaRecoverySeed ?? null,
 					passwordHash: storedUser.passwordHash,
 					passwordSalt: storedUser.passwordSalt,
-					currentAccountId: newGivenAccountId,
+					requiredAddtlAuth: storedUser.requiredAddtlAuth ?? [],
+					totpSeed: storedUser.totpSeed ?? null,
+					uid: storedUser.uid,
 				});
 
 				// TODO: Invalidate the old jwt, send a new one

@@ -215,7 +215,7 @@ export async function fetchDbDocs<T extends AnyDataItem>(
 	})) as NonEmptyArray<Snapshot<T>>;
 }
 
-export async function upsertUser(properties: User): Promise<void> {
+export async function upsertUser(properties: Required<User>): Promise<void> {
 	assertSchema(properties, userSchema); // assures nonempty fields
 	const uid = properties.uid;
 
@@ -226,9 +226,9 @@ export async function upsertUser(properties: User): Promise<void> {
 			currentAccountId: properties.currentAccountId,
 			passwordHash: properties.passwordHash,
 			passwordSalt: properties.passwordSalt,
-			mfaRecoveryToken: properties.mfaRecoveryToken ?? null,
-			requiredAddtlAuth: properties.requiredAddtlAuth ?? [],
-			totpSecret: properties.totpSecret ?? null,
+			mfaRecoverySeed: properties.mfaRecoverySeed,
+			requiredAddtlAuth: properties.requiredAddtlAuth,
+			totpSeed: properties.totpSeed,
 			uid,
 		};
 		write(userIndex);
