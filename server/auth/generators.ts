@@ -1,4 +1,10 @@
 import { genSalt, hash } from "bcrypt";
+import { generateSecureToken as _generateSecureToken } from "n-digit-token";
+
+/** Generate a cryptographically secure pseudo random token of given number of digits. */
+export function generateSecureToken(length: number): string {
+	return _generateSecureToken(length) as string;
+}
 
 /**
  * @returns a `Promise` that resolves to a cryptographically-random salt.

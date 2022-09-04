@@ -5,6 +5,8 @@ const mockDB = tmpdir();
 
 export function env(key: EnvKey): string | undefined {
 	switch (key) {
+		case "AUTH_SECRET":
+			return "not-special";
 		case "DB":
 			return mockDB;
 		default:
