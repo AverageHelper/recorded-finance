@@ -52,16 +52,32 @@ function generateHOTP(base32Secret: string, counter: number): string {
 	return `${code % 10 ** 6}`.padStart(6, "0");
 }
 
+interface GeneratorOptions {
+	/** The current Unix timestamp (in milliseconds). If omitted, then `Date.now()` is used instead */
+	now?: number;
+
+	window?: number;
+}
+
 /** Generates a TOTP code from the given secret value. */
-export function generateTOTP(base32Secret: string, window: number = 0): string {
-	const counter = Math.floor(Date.now() / 30000);
+export function generateTOTP(base32Secret: string, options?: GeneratorOptions): string {
+	const { now = Date.now(), window = 0 } = options ?? {};
+	const counter = Math.floor(now / 30000);
 	return generateHOTP(base32Secret, counter + window);
+}
+
+interface VerifierOptions {
+	/** The current Unix timestamp (in milliseconds). If omitted, then `Date.now()` is used instead */
+	now?: number;
+
+	window?: number;
 }
 
 /**
  * Checks that the given token fits the given secret.
  */
-export function verifyTOTP(token: string, secretOrUri: string, window: number = 1): boolean {
+export function verifyTOTP(token: string, secretOrUri: string, options?: VerifierOptions): boolean {
+	const { now, window = 1 } = options ?? {};
 	let secret: string;
 	try {
 		const uri = new URL(secretOrUri); // throws if not a URL
@@ -75,7 +91,7 @@ export function verifyTOTP(token: string, secretOrUri: string, window: number = 
 	}
 
 	for (let errorWindow = -window; errorWindow <= window; errorWindow += 1) {
-		const totp = generateTOTP(secret, errorWindow);
+		const totp = generateTOTP(secret, { now, window: errorWindow });
 		if (safeCompare(token, totp)) return true;
 	}
 	return false;

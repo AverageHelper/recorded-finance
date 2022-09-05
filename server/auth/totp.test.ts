@@ -21,10 +21,6 @@ describe("TOTP", () => {
 		`otpauth://totp/Accountable:${accountId}?algorithm=SHA1&digits=6&issuer=Accountable&period=30&secret=${secret}`
 	);
 
-	afterEach(() => {
-		jest.useRealTimers();
-	});
-
 	test("secret generator throws if the seed is empty", () => {
 		expect(() => generateSecret("")).toThrow(TypeError);
 	});
@@ -103,17 +99,15 @@ describe("TOTP", () => {
 	] as const;
 
 	test.each(timesAndTokens)("generates a new 6-digit TOTP every 30 seconds", (now, totp) => {
-		jest.useFakeTimers({ now }); // trick Date.now() into doing what I want
-		const value = generateTOTP(secret);
+		const value = generateTOTP(secret, { now });
 		expect(value).toHaveLength(6);
 		expect(value).toBe(totp);
 	});
 
 	test.each(timesAndTokens)("returns `true` for a valid TOTP", (now, totp) => {
-		jest.useFakeTimers({ now });
-		const isValid = verifyTOTP(totp, secret);
-		const isValid2 = verifyTOTP(totp, secret);
-		const isValidButWithUriSecret = verifyTOTP(totp, secretUri.href);
+		const isValid = verifyTOTP(totp, secret, { now });
+		const isValid2 = verifyTOTP(totp, secret, { now });
+		const isValidButWithUriSecret = verifyTOTP(totp, secretUri.href, { now });
 		expect(isValid).toBeTrue();
 		expect(isValid2).toBe(isValid);
 		expect(isValidButWithUriSecret).toBe(isValid2);
@@ -135,18 +129,17 @@ describe("TOTP", () => {
 		${"      "}  | ${"all ' ' characters"}
 		${""}        | ${"no characters"}
 	`("returns `false` for an invalid TOTP of $desc", ({ totp }: { totp: string }) => {
-		jest.useFakeTimers({ now: timesAndTokens[0][0] }); // valid code is 236323 or timesAndTokens[0][1]
-		const isValid = verifyTOTP(totp, secret);
-		const isValid2 = verifyTOTP(totp, secret);
-		const isValidButWithUriSecret = verifyTOTP(totp, secretUri.href);
+		const now = timesAndTokens[0][0]; // valid code is 236323 or timesAndTokens[0][1]
+		const isValid = verifyTOTP(totp, secret, { now });
+		const isValid2 = verifyTOTP(totp, secret, { now });
+		const isValidButWithUriSecret = verifyTOTP(totp, secretUri.href, { now });
 		expect(isValid).toBeFalse();
 		expect(isValid2).toBe(isValid);
 		expect(isValidButWithUriSecret).toBe(isValid2);
 	});
 
 	test.each(timesAndTokens)("matches a well-known TOTP provider's implementation", now => {
-		jest.useFakeTimers({ now });
-		const value = generateTOTP(secret);
+		const value = generateTOTP(secret, { now });
 		expect(value).toBe(totpGenerator(secret, { timestamp: now }));
 	});
 
