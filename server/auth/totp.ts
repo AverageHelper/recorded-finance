@@ -56,6 +56,7 @@ interface GeneratorOptions {
 	/** The current Unix timestamp (in milliseconds). If omitted, then `Date.now()` is used instead */
 	now?: number;
 
+	/** @default 0 */
 	window?: number;
 }
 
@@ -70,6 +71,7 @@ interface VerifierOptions {
 	/** The current Unix timestamp (in milliseconds). If omitted, then `Date.now()` is used instead */
 	now?: number;
 
+	/** @default 1 */
 	window?: number;
 }
 
@@ -81,12 +83,16 @@ export function verifyTOTP(token: string, secretOrUri: string, options?: Verifie
 	let secret: string;
 	try {
 		const uri = new URL(secretOrUri); // throws if not a URL
+
+		// Can't fall back. Don't try to use the URI as a secret, it's not base-32
+		if (uri.protocol !== "otpauth:") return false;
+
 		const secretParam = uri.searchParams.get("secret");
-		secret =
-			uri.protocol === "otpauth:" && secretParam !== null && secretParam
-				? secretParam
-				: secretOrUri;
+		if (secretParam === null || !secretParam) return false;
+
+		secret = secretParam;
 	} catch {
+		// fallback: not a URI, so use the secret as-is
 		secret = secretOrUri;
 	}
 

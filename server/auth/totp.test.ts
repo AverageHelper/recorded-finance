@@ -13,6 +13,11 @@ jest.unstable_mockModule("./jwt.js", () => mockJwt);
 const { base32Encode, generateSecret, generateTOTP, generateTOTPSecretURI, verifyTOTP } =
 	await import("./totp.js");
 
+function urlWithNewProtocol(old: URL, newProtocol: string): URL {
+	const afterProtocol = old.href.split(":")[1] as string;
+	return new URL(`${newProtocol}:${afterProtocol}`);
+}
+
 describe("TOTP", () => {
 	// These values are unique for each user
 	const accountId = "bob"; // doesn't matter much, just handy for the URI
@@ -113,6 +118,30 @@ describe("TOTP", () => {
 		expect(isValidButWithUriSecret).toBe(isValid2);
 	});
 
+	test("returns `false` if the protocol of the given secret URI is not 'otpauth:'", () => {
+		const [now, totp] = timesAndTokens[0]; // these should be valid together
+		const badSecret = urlWithNewProtocol(secretUri, "https");
+		expect(verifyTOTP(totp, badSecret.href, { now })).toBeFalse();
+	});
+
+	test("returns `false` if the given secret URI doesn't have a 'secret' param", () => {
+		const [now, totp] = timesAndTokens[0];
+		expect(verifyTOTP(totp, secretUri.href, { now })).toBeTrue(); // sanity check
+
+		const badSecret = new URL(secretUri.href);
+		badSecret.searchParams.delete("secret");
+		expect(verifyTOTP(totp, badSecret.href, { now })).toBeFalse();
+	});
+
+	test("returns `false` if the given secret URI's 'secret' param is empty", () => {
+		const [now, totp] = timesAndTokens[0];
+		expect(verifyTOTP(totp, secretUri.href, { now })).toBeTrue(); // sanity check
+
+		const badSecret = new URL(secretUri.href);
+		badSecret.searchParams.set("secret", "");
+		expect(verifyTOTP(totp, badSecret.href, { now })).toBeFalse();
+	});
+
 	test.each`
 		totp         | desc
 		${"236329"}  | ${"one character changed from valid"}
@@ -141,6 +170,15 @@ describe("TOTP", () => {
 	test.each(timesAndTokens)("matches a well-known TOTP provider's implementation", now => {
 		const value = generateTOTP(secret, { now });
 		expect(value).toBe(totpGenerator(secret, { timestamp: now }));
+	});
+
+	test.each(timesAndTokens)("uses Date.now() if no timestamp is given", now => {
+		jest.useFakeTimers({ now });
+		const value = generateTOTP(secret);
+		const isValid = verifyTOTP(value, secret);
+		expect(value).toBe(totpGenerator(secret));
+		expect(isValid).toBeTrue();
+		jest.useRealTimers();
 	});
 
 	test.each`
