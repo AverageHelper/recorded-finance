@@ -4,7 +4,7 @@ import { asyncWrapper } from "../asyncWrapper.js";
 import { compare } from "bcrypt";
 import { Context } from "./Context.js";
 import { generateHash, generateSalt, generateSecureToken } from "./generators.js";
-import { generateTOTPRecoverySecret, generateTOTPSecretURI, verifyTOTP } from "./totp.js";
+import { generateSecret, generateTOTPSecretURI, verifyTOTP } from "./totp.js";
 import { MAX_USERS } from "./limits.js";
 import { metadataFromRequest } from "./requireAuth.js";
 import { respondSuccess } from "../responses.js";
@@ -168,7 +168,7 @@ export function auth(): Router {
 
 				// Generate and store the new secret
 				const totpSeed = generateSecureToken(15);
-				const secret = await generateTOTPSecretURI(accountId, totpSeed);
+				const secret = generateTOTPSecretURI(accountId, totpSeed);
 
 				// We should not lock in the secret until the user hits /totp/validate with that secret.
 				// Just set the secret, not the 2fa requirement
@@ -210,7 +210,7 @@ export function auth(): Router {
 					respondSuccess(res);
 					return;
 				}
-				const secret = await generateTOTPSecretURI(user.currentAccountId, user.totpSeed);
+				const secret = generateTOTPSecretURI(user.currentAccountId, user.totpSeed);
 
 				// Validate the user's passphrase
 				const isPasswordGood = await compare(givenPassword, user.passwordHash);
@@ -262,13 +262,13 @@ export function auth(): Router {
 						"You do not have a TOTP secret to validate against"
 					);
 				}
-				const secret = await generateTOTPSecretURI(user.currentAccountId, user.totpSeed);
+				const secret = generateTOTPSecretURI(user.currentAccountId, user.totpSeed);
 
 				// Check the TOTP is valid
 				const isValid = verifyTOTP(token, secret);
 				if (!isValid && typeof user.mfaRecoverySeed === "string") {
 					// Check that the value is the user's recovery token
-					const mfaRecoveryToken = await generateTOTPRecoverySecret(user.mfaRecoverySeed);
+					const mfaRecoveryToken = generateSecret(user.mfaRecoverySeed);
 					if (!safeCompare(token, mfaRecoveryToken)) {
 						throw new UnauthorizedError("wrong-mfa-credentials");
 					} else {
@@ -289,7 +289,7 @@ export function auth(): Router {
 				let recovery_token: string | null = null;
 				if (user.requiredAddtlAuth?.includes("totp") !== true) {
 					const mfaRecoverySeed = generateSecureToken(15);
-					recovery_token = await generateTOTPRecoverySecret(mfaRecoverySeed);
+					recovery_token = generateSecret(mfaRecoverySeed);
 					await upsertUser({
 						currentAccountId: user.currentAccountId,
 						mfaRecoverySeed,
@@ -376,10 +376,7 @@ export function auth(): Router {
 					if (typeof token !== "string" || token === "")
 						throw new UnauthorizedError("missing-mfa-credentials");
 
-					const secret = await generateTOTPSecretURI(
-						storedUser.currentAccountId,
-						storedUser.totpSeed
-					);
+					const secret = generateTOTPSecretURI(storedUser.currentAccountId, storedUser.totpSeed);
 					const isValid = verifyTOTP(token, secret);
 					if (!isValid) throw new UnauthorizedError("wrong-mfa-credentials");
 				}
@@ -432,10 +429,7 @@ export function auth(): Router {
 					if (typeof token !== "string" || token === "")
 						throw new UnauthorizedError("missing-mfa-credentials");
 
-					const secret = await generateTOTPSecretURI(
-						storedUser.currentAccountId,
-						storedUser.totpSeed
-					);
+					const secret = generateTOTPSecretURI(storedUser.currentAccountId, storedUser.totpSeed);
 					const isValid = verifyTOTP(token, secret);
 					if (!isValid) throw new UnauthorizedError("wrong-mfa-credentials");
 				}
@@ -499,10 +493,7 @@ export function auth(): Router {
 					if (typeof token !== "string" || token === "")
 						throw new UnauthorizedError("missing-mfa-credentials");
 
-					const secret = await generateTOTPSecretURI(
-						storedUser.currentAccountId,
-						storedUser.totpSeed
-					);
+					const secret = generateTOTPSecretURI(storedUser.currentAccountId, storedUser.totpSeed);
 					const isValid = verifyTOTP(token, secret);
 					if (!isValid) throw new UnauthorizedError("wrong-mfa-credentials");
 				}

@@ -18,6 +18,7 @@
 		"@averagehelper/job-queue": "1.0.1",
 		"atob-lite": "2.0.0",
 		"base32-decode": "1.0.0",
+		"base32-encode": "2.0.0",
 		"bcrypt": "5.0.1",
 		"btoa-lite": "1.0.0",
 		"cookie-session": "2.0.0",

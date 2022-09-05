@@ -1,18 +1,31 @@
 /* eslint-disable no-bitwise */
 import { createHmac } from "node:crypto";
-import { generateHash } from "./generators.js";
 import { persistentSecret } from "./jwt.js";
 import { URL } from "node:url";
-import base32Decode from "base32-decode";
+import _base32Decode from "base32-decode";
+import _base32Encode from "base32-encode";
 import safeCompare from "safe-compare";
 
 // Based on https://medium.com/onfrontiers-engineering/two-factor-authentication-flow-with-node-and-react-7cbdf249f13
 // and https://auth0.com/blog/from-theory-to-practice-adding-two-factor-to-node-dot-js/
 
+type Base32Variant = Parameters<typeof _base32Decode>[1];
+
+const variant: Base32Variant = "RFC3548";
 const algorithm = "SHA1";
 
+export function base32Decode(data: string): ArrayBuffer {
+	return _base32Decode(data, variant);
+}
+
+export function base32Encode(
+	data: ArrayBuffer | Int8Array | Uint8Array | Uint8ClampedArray
+): string {
+	return _base32Encode(data, variant, { padding: false });
+}
+
 function generateHOTP(secret: string, counter: number): string {
-	const decodedSecret = base32Decode(secret, "RFC4648");
+	const decodedSecret = base32Decode(secret);
 
 	const buffer = Buffer.alloc(8);
 	for (let i = 0; i < 8; i += 1) {
@@ -37,9 +50,10 @@ function generateHOTP(secret: string, counter: number): string {
 	return `${code % 10 ** 6}`.padStart(6, "0");
 }
 
-function generateTOTP(secret: string, window: number = 0): string {
+/** Generates a TOTP code from the given secret value. */
+export function generateTOTP(base32Secret: string, window: number = 0): string {
 	const counter = Math.floor(Date.now() / 30000);
-	return generateHOTP(secret, counter + window);
+	return generateHOTP(base32Secret, counter + window);
 }
 
 /**
@@ -75,14 +89,13 @@ export function verifyTOTP(token: string, secretOrUri: string, window: number = 
  * @param seed The value used in combination with the server's `AUTH_SECRET`
  *  to generate the user's TOTP secret.
  */
-export async function generateTOTPSecretURI(accountId: string, seed: string): Promise<string> {
+export function generateTOTPSecretURI(accountId: string, seed: string): string {
 	if (!accountId) throw new TypeError("accountId cannot be empty");
-	if (!seed) throw new TypeError("seed cannot be empty");
 
 	const issuer = "Accountable";
 	const digits = 6; // number of digits
 	const period = 30; // seconds
-	const secret = await generateHash(seed, persistentSecret);
+	const secret = generateSecret(seed);
 
 	const configUri = new URL(`otpauth://totp/${issuer}:${accountId}`);
 	configUri.searchParams.set("algorithm", algorithm);
@@ -95,12 +108,20 @@ export async function generateTOTPSecretURI(accountId: string, seed: string): Pr
 }
 
 /**
- * Generates a random string. This value is stable for a given `seed`
- * and `AUTH_SECRET`.
+ * Generates a 21-character long cryptographically-random string,
+ * encoded in base 32, that isstable for a given `seed` param and
+ * `AUTH_SECRET` env variable.
  *
  * @param seed The value used in combination with the server's `AUTH_SECRET`
- *  to generate the random string.
+ *  environment variable to generate the random string.
  */
-export async function generateTOTPRecoverySecret(seed: string): Promise<string> {
-	return await generateHash(seed, persistentSecret);
+export function generateSecret(seed: string): string {
+	if (!seed) throw new TypeError("seed cannot be empty");
+
+	// Mix the secret and the seed together
+	const hmac = createHmac(algorithm, persistentSecret);
+	hmac.update(Buffer.from(seed));
+	const digest = hmac.digest();
+
+	return base32Encode(Buffer.from(digest).slice(0, 13)); // 21-char secret
 }
