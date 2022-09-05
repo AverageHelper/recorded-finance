@@ -40,8 +40,12 @@ app
 	})
 	.use(handleErrors);
 
-process.stdout.write(`NODE_ENV: ${env("NODE_ENV") ?? "undefined"}\n`);
+// process.stdout.write(`NODE_ENV: ${env("NODE_ENV") ?? "undefined"}\n`);
 
 app.listen(PORT, () => {
-	process.stdout.write(`Accountable storage server v${appVersion} listening on port ${PORT}\n`);
+	process.stdout.write(
+		`Accountable storage server v${appVersion} listening on port ${PORT} in ${
+			env("NODE_ENV") ?? "unknown"
+		} environment\n`
+	);
 });
