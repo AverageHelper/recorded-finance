@@ -1,6 +1,7 @@
 import "jest-extended";
 import { jest } from "@jest/globals";
 import { URL } from "node:url";
+import totpGenerator from "totp-generator";
 
 /* eslint-disable jest/no-mocks-import */
 import * as mockJwt from "./__mocks__/jwt.js";
@@ -141,6 +142,12 @@ describe("TOTP", () => {
 		expect(isValid).toBeFalse();
 		expect(isValid2).toBe(isValid);
 		expect(isValidButWithUriSecret).toBe(isValid2);
+	});
+
+	test.each(timesAndTokens)("matches a well-known TOTP provider's implementation", now => {
+		jest.useFakeTimers({ now });
+		const value = generateTOTP(secret);
+		expect(value).toBe(totpGenerator(secret, { timestamp: now }));
 	});
 
 	// TODO: Test that isValid is different for different secrets

@@ -6,9 +6,6 @@ import _base32Decode from "base32-decode";
 import _base32Encode from "base32-encode";
 import safeCompare from "safe-compare";
 
-// Based on https://medium.com/onfrontiers-engineering/two-factor-authentication-flow-with-node-and-react-7cbdf249f13
-// and https://auth0.com/blog/from-theory-to-practice-adding-two-factor-to-node-dot-js/
-
 type Base32Variant = Parameters<typeof _base32Decode>[1];
 
 const variant: Base32Variant = "RFC3548";
@@ -24,21 +21,26 @@ export function base32Encode(
 	return _base32Encode(data, variant, { padding: false });
 }
 
-function generateHOTP(secret: string, counter: number): string {
-	const decodedSecret = base32Decode(secret);
+function generateHOTP(base32Secret: string, counter: number): string {
+	const decodedSecret = base32Decode(base32Secret);
 
+	// Based on https://medium.com/onfrontiers-engineering/two-factor-authentication-flow-with-node-and-react-7cbdf249f13,
+	// https://auth0.com/blog/from-theory-to-practice-adding-two-factor-to-node-dot-js/,
+	// and https://github.com/guyht/notp/blob/master/index.js
+
+	// Create a byte array
 	const buffer = Buffer.alloc(8);
 	for (let i = 0; i < 8; i += 1) {
 		buffer[7 - i] = counter & 0xff;
 		counter >>= 8;
 	}
 
-	// Step 1: Generate an HMAC-SHA-1 value
+	// Generate an HMAC-SHA-1 value
 	const hmac = createHmac(algorithm.toLowerCase(), Buffer.from(decodedSecret));
 	hmac.update(buffer);
 	const hmacResult = hmac.digest();
 
-	// Step 2: Generate a 4-byte string (Dynamic Truncation)
+	// Generate a 4-byte string (Dynamic Truncation)
 	const offset = (hmacResult[hmacResult.length - 1] as number) & 0xf;
 	const code =
 		(((hmacResult[offset] as number) & 0x7f) << 24) |
@@ -46,7 +48,7 @@ function generateHOTP(secret: string, counter: number): string {
 		(((hmacResult[offset + 2] as number) & 0xff) << 8) |
 		((hmacResult[offset + 3] as number) & 0xff);
 
-	// Step 3: Compute an HOTP value
+	// Compute an HOTP value
 	return `${code % 10 ** 6}`.padStart(6, "0");
 }
 
