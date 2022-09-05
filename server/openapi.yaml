@@ -304,7 +304,7 @@ paths:
                     enum:
                       - "expired-token"
                       - "missing-token"
-                      - "wrong-credentials"
+                      - "wrong-mfa-credentials"
         409:
           description: The user does not have a TOTP secret set.
           content:
@@ -410,6 +410,7 @@ paths:
                       - "expired-token"
                       - "missing-token"
                       - "wrong-credentials"
+                      - "wrong-mfa-credentials"
   "/v0/session":
     get:
       tags:
@@ -538,11 +539,12 @@ paths:
                   code:
                     type: string
                     enum:
+                      - "missing-mfa-credentials"
                       - "wrong-credentials"
+                      - "wrong-mfa-credentials"
                   message:
                     type: string
-                    enum:
-                      - "Incorrect account ID or passphrase"
+                    example: "Incorrect account ID or passphrase"
   "/v0/updatepassword":
     post:
       tags:
@@ -605,11 +607,12 @@ paths:
                   code:
                     type: string
                     enum:
+                      - "missing-mfa-credentials"
                       - "wrong-credentials"
+                      - "wrong-mfa-credentials"
                   message:
                     type: string
-                    enum:
-                      - "Incorrect account ID or passphrase"
+                    example: "Incorrect account ID or passphrase"
   "/v0/updateaccountid":
     post:
       tags:
@@ -672,11 +675,12 @@ paths:
                   code:
                     type: string
                     enum:
+                      - "missing-mfa-credentials"
                       - "wrong-credentials"
+                      - "wrong-mfa-credentials"
                   message:
                     type: string
-                    enum:
-                      - "Incorrect account ID or passphrase"
+                    example: "Incorrect account ID or passphrase"
   "/v0/db/users/{uid}":
     post:
       tags:

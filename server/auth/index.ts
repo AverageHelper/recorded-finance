@@ -39,7 +39,6 @@ interface ReqBody {
 
 async function userWithAccountId(accountId: string): Promise<User | null> {
 	// Find first user whose account ID matches
-	// TODO: Rename `currentAccountId` to `accountId`
 	return await findUserWithProperties({ currentAccountId: accountId });
 }
 
@@ -224,7 +223,7 @@ export function auth(): Router {
 				if (isCodeGood) {
 					respondSuccess(res);
 				} else {
-					throw new UnauthorizedError("wrong-credentials");
+					throw new UnauthorizedError("wrong-mfa-credentials");
 				}
 
 				// Delete the secret and disable 2FA
@@ -271,7 +270,7 @@ export function auth(): Router {
 					// Check that the value is the user's recovery token
 					const mfaRecoveryToken = await generateTOTPRecoverySecret(user.mfaRecoverySeed);
 					if (!safeCompare(token, mfaRecoveryToken)) {
-						throw new UnauthorizedError("wrong-credentials");
+						throw new UnauthorizedError("wrong-mfa-credentials");
 					} else {
 						// Invalidate the old token
 						await upsertUser({
@@ -313,7 +312,6 @@ export function auth(): Router {
 		)
 		.get(
 			"/session",
-			// TODO: don't print the error if the user has no access here
 			// throttle(),
 			asyncWrapper(async (req, res) => {
 				// ** If the user has the cookie set, respond with a JWT for the user
@@ -376,15 +374,14 @@ export function auth(): Router {
 					const token = req.body.token;
 
 					if (typeof token !== "string" || token === "")
-						// TODO: Use a different code for missing MFA
-						throw new UnauthorizedError("wrong-credentials");
+						throw new UnauthorizedError("missing-mfa-credentials");
 
 					const secret = await generateTOTPSecretURI(
 						storedUser.currentAccountId,
 						storedUser.totpSeed
 					);
 					const isValid = verifyTOTP(token, secret);
-					if (!isValid) throw new UnauthorizedError("wrong-credentials");
+					if (!isValid) throw new UnauthorizedError("wrong-mfa-credentials");
 				}
 
 				// ** Delete the user
@@ -433,15 +430,14 @@ export function auth(): Router {
 					const token = req.body.token;
 
 					if (typeof token !== "string" || token === "")
-						// TODO: Use a different code for missing MFA
-						throw new UnauthorizedError("wrong-credentials");
+						throw new UnauthorizedError("missing-mfa-credentials");
 
 					const secret = await generateTOTPSecretURI(
 						storedUser.currentAccountId,
 						storedUser.totpSeed
 					);
 					const isValid = verifyTOTP(token, secret);
-					if (!isValid) throw new UnauthorizedError("wrong-credentials");
+					if (!isValid) throw new UnauthorizedError("wrong-mfa-credentials");
 				}
 
 				// ** Store new credentials
@@ -501,15 +497,14 @@ export function auth(): Router {
 					const token = req.body.token;
 
 					if (typeof token !== "string" || token === "")
-						// TODO: Use a different code for missing MFA
-						throw new UnauthorizedError("wrong-credentials");
+						throw new UnauthorizedError("missing-mfa-credentials");
 
 					const secret = await generateTOTPSecretURI(
 						storedUser.currentAccountId,
 						storedUser.totpSeed
 					);
 					const isValid = verifyTOTP(token, secret);
-					if (!isValid) throw new UnauthorizedError("wrong-credentials");
+					if (!isValid) throw new UnauthorizedError("wrong-mfa-credentials");
 				}
 
 				// ** Store new credentials
