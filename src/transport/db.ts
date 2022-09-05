@@ -207,7 +207,7 @@ export class WriteBatch {
 		this.#operations.push(op);
 	}
 
-	set<T>(ref: DocumentReference<T>, data: T): void {
+	set<T extends object>(ref: DocumentReference<T>, data: T): void {
 		const primitiveData: DocumentData = {};
 		Object.entries(data).forEach(([key, value]) => {
 			if (!isPrimitive(value)) return;
