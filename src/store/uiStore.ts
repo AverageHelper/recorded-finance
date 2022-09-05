@@ -94,12 +94,12 @@ export async function loadServerVersion(): Promise<void> {
 
 export function handleError(error: unknown): void {
 	let message: string;
-	if (error instanceof Error || error instanceof NetworkError) {
-		message = error.message;
-	} else if (error instanceof AccountableError) {
+	if (error instanceof AccountableError) {
 		message = error.code;
 	} else if (error instanceof StructError) {
 		message = `ValidationError: ${error.message}`;
+	} else if (error instanceof NetworkError || error instanceof Error) {
+		message = error.message;
 	} else {
 		message = JSON.stringify(error);
 	}

@@ -82,6 +82,7 @@
 			"bad-gateway": "The CORS policy for this site does not allow access from the specified Origin.",
 			"bad-method": "That method is not allowed here. What are you trying to do?",
 			"expired-token": "You must sign in again in order to proceed",
+			"missing-mfa-credentials": "Você deve fornecer um código TOTP",
 			"missing-token": "Unauthorized",
 			"not-found": "No data found",
 			"not-implemented": "That feature is not implemented yet",
@@ -90,6 +91,7 @@
 			"totp-conflict": "Você já tem a autenticação TOTP habilitada",
 			"totp-secret-missing": "Você não tem um segredo TOTP para validar",
 			"wrong-credentials": "Incorrect account ID or passphrase",
+			"wrong-mfa-credentials": "Esse código é inválido",
 			"unknown": "Not sure what went wrong. Try again maybe?"
 		},
 		"sanity": {

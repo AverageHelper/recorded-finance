@@ -1,35 +1,48 @@
+import type { HttpStatusCode } from "helpers/HttpStatusCode.js";
 import type { ServerResponse } from "../api-types/index.js";
 import { t } from "../../i18n";
 
-type ErrorCode =
-	| "account-conflict"
-	| "bad-gateway"
-	| "bad-method"
-	| "expired-token"
-	| "missing-token"
-	| "not-found"
-	| "not-implemented"
-	| "not-owner"
-	| "too-many-requests"
-	| "totp-conflict"
-	| "totp-secret-missing"
-	| "wrong-credentials"
-	| "unknown";
+const errorCodes = [
+	"account-conflict",
+	"bad-gateway",
+	"bad-method",
+	"expired-token",
+	"missing-token",
+	"missing-mfa-credentials",
+	"not-found",
+	"not-implemented",
+	"not-owner",
+	"too-many-requests",
+	"totp-conflict",
+	"totp-secret-missing",
+	"wrong-credentials",
+	"wrong-mfa-credentials",
+	"unknown",
+] as const;
 
-function messageFromCode(code: string | undefined): string | null {
-	if (code === undefined) return null;
-	// TODO: Maybe move this call closer to the UI
-	return t(`error.network.${code as ErrorCode}`);
+type ErrorCode = typeof errorCodes[number];
+
+function isKnownErrorCode(tbd: unknown): tbd is ErrorCode {
+	return errorCodes.includes(tbd as ErrorCode);
 }
 
+function messageFromCode(code: ErrorCode): string {
+	// TODO: Maybe move this call closer to the UI
+	return t(`error.network.${code}`);
+}
+
+/** An error provided to us by the server. */
 export class NetworkError extends Error {
-	readonly status: Readonly<number>;
-	readonly code: Readonly<string>;
+	readonly status: Readonly<HttpStatusCode>;
+	readonly code: Readonly<ErrorCode>;
 
 	constructor(response: ServerResponse) {
-		super(messageFromCode(response.code) ?? response.message);
+		const message = isKnownErrorCode(response.code)
+			? messageFromCode(response.code)
+			: `[${response.code ?? "undefined"}] ${response.message}`;
+		super(message);
 		this.name = "NetworkError";
 		this.status = response.status;
-		this.code = response.code ?? "unknown";
+		this.code = isKnownErrorCode(response.code) ? response.code : "unknown";
 	}
 }
