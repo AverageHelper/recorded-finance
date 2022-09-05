@@ -143,5 +143,18 @@ describe("TOTP", () => {
 		expect(value).toBe(totpGenerator(secret, { timestamp: now }));
 	});
 
-	// TODO: Test that isValid is different for different secrets
+	test.each`
+		plainSecret                                      | totp
+		${"the user's special TOTP secret in plaintext"} | ${"236323"}
+		${"secret"}                                      | ${"537346"}
+		${"different secret"}                            | ${"216535"}
+	`(
+		"codes generate differently for different secrets",
+		({ plainSecret, totp }: { plainSecret: string; totp: string }) => {
+			const now = timesAndTokens[0][0];
+			const secret = base32Encode(Buffer.from(plainSecret));
+			const value = generateTOTP(secret, { now });
+			expect(value).toBe(totp);
+		}
+	);
 });
