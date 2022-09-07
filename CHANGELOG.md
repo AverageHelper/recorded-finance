@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.1] - 2022-09-07
+### Security
+- Addressed [CWE-20](https://cwe.mitre.org/data/definitions/20.html): The client now checks that the origin incoming server messages through the WebSocket channel match the expected origin.
+
 ## [0.11.0] - 2022-09-01
 ### Changed
 - BREAKING: The server now requires the `DB` environment variable to be set.
@@ -249,7 +253,8 @@ Just some re-working to make our vendor bundle fit within the recommended 500 Ki
 ### Added
 - Initial commit
 
-[Unreleased]: https://github.com/AverageHelper/accountable-svelte/compare/v0.11.0...HEAD
+[Unreleased]: https://github.com/AverageHelper/accountable-svelte/compare/v0.11.1...HEAD
+[0.11.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.11.0...v0.11.1
 [0.11.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.10.2...v0.11.0
 [0.10.2]: https://github.com/AverageHelper/accountable-svelte/compare/v0.10.1...v0.10.2
 [0.10.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.10.0...v0.10.1
