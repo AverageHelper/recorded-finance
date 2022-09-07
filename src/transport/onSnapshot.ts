@@ -339,7 +339,7 @@ export function onSnapshot<T>(
 
 	type WatcherData = Infer<typeof watcherData>;
 
-	const { onClose, onMessage, send } = wsFactory(new WebSocket(url), {
+	const { onClose, onMessage, send } = wsFactory(url, {
 		stop(tbd): tbd is "STOP" {
 			return tbd === "STOP";
 		},
