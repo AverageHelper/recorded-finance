@@ -109,3 +109,19 @@ I've heard that GDPR doesn't care about "session" cookies, and therefore don't n
 While our cookies indeed deal with the user's login "session," [GDPR.edu](https://gdpr.eu/cookies/) defines "session cookies" as cookies that "are temporary and expire once you close your browser (or once your session ends)." Since our cookies persist between browser sessions, I need to disclose them.
 
 `Secure` cookies are also hidden to most browsers' devtools. (I might post screenshots later of what I mean by this). This means that most users won't see our cookies on their browser. However, our cookies are not set with the `Secure` attribute if the login request comes from an HTTP source, such as `localhost`. These cookies _will_ appear in some browsers' devtools. To avoid confusion, and as a point of principle, I want to make clear to savvy users what's happening here.
+
+### How do releases work?
+
+The manual way is complicated: add a version entry to [CHANGELOG.md](/CHANGELOG.md), straighten out the not-yet-valid URLs in the changelog footer, update [package.json](/package.json) and [package-lock.json](/package-lock.json) (the latter using `npm i`), then merge the PR, then copy the changelog entry to cut a new [Release](https://github.com/AverageHelper/accountable-svelte/releases) and tag using GitHub's UI. The changelog's version links now point to the relevant newly-created tags.
+
+I've missed some steps before. For example, version [0.9.0](/CHANGELOG.md#090---2022-07-12) doesn't have a tag, so its comparison link points to [0.9.1](/CHANGELOG.md#091---2022-07-12) instead. Not ideal. Since we use [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), we can automate most of these release steps:
+
+1. I create a version entry in [CHANGELOG.md](/CHANGELOG.md). If I'm ready to merge to main but not yet ready to cut the release, I call the version `"Unreleased"`, and the tooling ignores that version.
+2. When I'm ready to cut the release, I rename `"Unreleased"` to the next [SemVer](https://semver.org/spec/v2.0.0.html)-appropriate number.
+3. I run `npm run release`, which fixes the changelog's footer links and bumps the `version` in [package.json](/package.json) and [package-lock.json](/package-lock.json).
+4. I push a PR.
+	- The CI (Continuous Integration) bots check that there's a new version in the changelog, and if so, check that I've run `npm run release` on the branch. (The usual CI checks also occur.)
+5. I merge the PR.
+	- The CD (Continuous Deployment) bots dispatch a new git tag and GitHub Release using the content of the [CHANGELOG.md](/CHANGELOG.md).
+
+Once the release is tagged and deployed, it's up to server maintainers (including me) to pull down the latest changes. I might do something about that later.
