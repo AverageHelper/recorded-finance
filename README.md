@@ -114,7 +114,7 @@ While our cookies indeed deal with the user's login "session," [GDPR.edu](https:
 
 The manual way is complicated: add a version entry to [CHANGELOG.md](/CHANGELOG.md), straighten out the not-yet-valid URLs in the changelog footer, update [package.json](/package.json) and [package-lock.json](/package-lock.json) (the latter using `npm i`), then merge the PR, then copy the changelog entry to cut a new [Release](https://github.com/AverageHelper/accountable-svelte/releases) and tag using GitHub's UI. The changelog's version links now point to the relevant newly-created tags.
 
-I've missed some steps before. For example, version [0.9.0](/CHANGELOG.md#090---2022-07-12) doesn't have a tag, so its comparison link points to [0.9.1](/CHANGELOG.md#091---2022-07-12) instead. Not ideal. Since we use [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), we can automate most of these release steps:
+I've missed some steps before. For example, version [0.9.0](/CHANGELOG.md#090---2022-07-12) didn't originally have a tag, so related comparison links were broken. Not ideal. Since we use [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), we can automate most of our release steps, as follows:
 
 1. I create a version entry in [CHANGELOG.md](/CHANGELOG.md). If I'm ready to merge to main but not yet ready to cut the release, I call the version `"Unreleased"`, and the tooling ignores that version.
 2. When I'm ready to cut the release, I rename `"Unreleased"` to the next [SemVer](https://semver.org/spec/v2.0.0.html)-appropriate number.
