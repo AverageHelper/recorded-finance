@@ -6,10 +6,11 @@ import { assert, literal, string, type } from "superstruct";
 import gitDiff from "git-diff";
 import semver from "semver";
 
+// Fixes the changelog's footer links and bumps the `version` in [package.json](/package.json) and [package-lock.json](/package-lock.json).
+// This script may be run repeatedly on the same project.
+
 const { parse: parseSemVer } = semver;
 const diffOptions: GitDiffOptions = { color: true };
-
-// fix the changelog's footer links and bumps the `version` in [package.json](/package.json) and [package-lock.json](/package-lock.json).
 
 function quote(str: string | undefined): string | undefined {
 	if (str === undefined) return str;
@@ -120,6 +121,7 @@ if (!didFixPackageJson) {
 
 // Update package-lock.json
 const oldPackageLockJson = `${JSON.stringify(packageLockJson, undefined, "\t")}\n`;
+// Maybe we should just run `npm i` instead?
 packageLockJson.version = thisRelease.version.version;
 packageLockJson.packages[""].version = thisRelease.version.version;
 const newPackageLockJson = `${JSON.stringify(packageLockJson, undefined, "\t")}\n`;
