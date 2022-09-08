@@ -30,12 +30,6 @@ const changelog = changelogParser(rawChangelog);
 
 const releases = changelog.releases;
 
-// Get 'Unreleased' if it exists
-const unreleasedRelease = releases[0];
-if (unreleasedRelease) {
-	console.info("Has 'Unreleased'");
-}
-
 // Get current versioned release
 const thisReleaseIdx = releases.findIndex(release => release.date && release.version);
 const thisRelease = releases[thisReleaseIdx];
@@ -137,5 +131,7 @@ if (!didFixPackageLockJson) {
 }
 
 // If we fixed the changelog or updated package.json, throw
-if (didFixChangelog || didFixPackageJson || didFixPackageLockJson)
-	throw new EvalError("We made some changes. Please review them and re-run."); // this should fail us in CI
+if (didFixChangelog || didFixPackageJson || didFixPackageLockJson) {
+	console.warn("⚠️  We made some changes. Please review them and re-run. ⚠️");
+	process.exit(1); // this should fail us in CI
+}

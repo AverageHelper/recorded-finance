@@ -1,6 +1,6 @@
 name: Check Versions Match
 
-# On PR to main, check that package.json and package-lock.json share the version. Block otherwise.
+# On PR to main, check that package.json and package-lock.json share the version, and that CHANGELOG.md is spec-compliant. Block otherwise.
 
 on:
   pull_request:

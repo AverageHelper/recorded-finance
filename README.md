@@ -118,7 +118,7 @@ I've missed some steps before. For example, version [0.9.0](/CHANGELOG.md#090---
 
 1. I create a version entry in [CHANGELOG.md](/CHANGELOG.md). If I'm ready to merge to main but not yet ready to cut the release, I call the version `"Unreleased"`, and the tooling ignores that version.
 2. When I'm ready to cut the release, I rename `"Unreleased"` to the next [SemVer](https://semver.org/spec/v2.0.0.html)-appropriate number.
-3. I run `npm run release`, which fixes the changelog's footer links and bumps the `version` in [package.json](/package.json) and [package-lock.json](/package-lock.json).
+3. I run `npm run release`, which fixes the changelog's footer links and the `version` fields in [package.json](/package.json) and [package-lock.json](/package-lock.json).
 4. I push a PR.
 	- The CI (Continuous Integration) bots check that there's a new version in the changelog, and if so, check that I've run `npm run release` on the branch. (The usual CI checks also occur.)
 5. I merge the PR.
