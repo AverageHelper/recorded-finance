@@ -42,4 +42,3 @@ jobs:
           name: v${{ steps.changelog.outputs.version }}
           body: ${{ steps.changelog.outputs.description }}
           prerelease: ${{ steps.changelog.outputs.versionMajor == 0 }}
-          draft: true # TODO: Remove
