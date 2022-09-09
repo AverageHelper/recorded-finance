@@ -5,7 +5,6 @@ name: Create Release
 on:
   push:
     branches: [main]
-  workflow_dispatch: # TODO: Remove
 
 jobs:
   release:
@@ -42,5 +41,5 @@ jobs:
           tag_name: v${{ steps.changelog.outputs.version }}
           name: v${{ steps.changelog.outputs.version }}
           body: ${{ steps.changelog.outputs.description }}
-          prerelease: ${{ steps.changelog.outputs.versionMajor }} == 0
+          prerelease: ${{ steps.changelog.outputs.versionMajor }} == '0'
           draft: true # TODO: Remove
