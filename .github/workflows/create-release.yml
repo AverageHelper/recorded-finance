@@ -13,16 +13,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Use Node.js 16.x
-        uses: actions/setup-node@v3
-        with:
-          node-version: 16.x
-          cache: "npm"
-
-      - name: Install Dependencies
-        run: |
-          npm ci
-
       - name: Get last version from tag
         id: lasttag
         run: echo ::set-output name=version::$(git tag --sort=-v:refname | sed '1p;d')
