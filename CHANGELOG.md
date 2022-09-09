@@ -9,9 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Nothing, yet!
 
-## [0.11.2] - 2022-09-08
+## [0.11.2] - 2022-09-09
 ### Added
 - Automated our release process and changelog handling. This changelog entry is a test that I only need to add an entry here for a release to be automatically deployed. The [Releases](https://github.com/AverageHelper/accountable-svelte/releases) view should automatically see this entry.
+
+### Changed
+- Updated some CI/CD analysis tools.
 
 ## [0.11.1] - 2022-09-07
 ### Security
