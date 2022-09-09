@@ -5,9 +5,10 @@ name: Create Release
 on:
   push:
     branches: [main]
+  workflow_dispatch: # TODO: Remove
 
 jobs:
-  build:
+  release:
     runs-on: ubuntu-latest
 
     steps:
@@ -37,6 +38,7 @@ jobs:
         if: github.ref == 'refs/heads/main' && steps.changelog.outputs.status == 'release' && steps.changelog.outputs.version != steps.lasttag.outputs.version
         uses: softprops/action-gh-release@v1
         with:
+          token: ${{ secrets.RELEASE_TOKEN }}
           tag_name: v${{ steps.changelog.outputs.version }}
           name: v${{ steps.changelog.outputs.version }}
           body: ${{ steps.changelog.outputs.description }}
