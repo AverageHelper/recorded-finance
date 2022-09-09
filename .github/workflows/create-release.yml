@@ -33,7 +33,7 @@ jobs:
       #     dry_run: true # TODO: Remove
 
       # TODO: See if this pushes a tag too
-      - name: Publish Release
+      - name: Publish Release (debug 1)
         if: github.ref == 'refs/heads/main' && steps.changelog.outputs.status == 'release' && steps.changelog.outputs.version != steps.lasttag.outputs.version
         uses: softprops/action-gh-release@v1
         with:
@@ -41,5 +41,5 @@ jobs:
           tag_name: v${{ steps.changelog.outputs.version }}
           name: v${{ steps.changelog.outputs.version }}
           body: ${{ steps.changelog.outputs.description }}
-          prerelease: ${{ steps.changelog.outputs.versionMajor }} == '0'
+          prerelease: ${{ steps.changelog.outputs.versionMajor == 0 }}
           draft: true # TODO: Remove
