@@ -1,0 +1,54 @@
+name: Create Release
+
+# On push to main, if the latest version in CHANGELOG.md is different from the latest version tag, create a new tag and a new release
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js 16.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: |
+          npm ci
+
+      - name: Get last version from tag
+        id: lasttag
+        run: echo ::set-output name=version::$(git tag --sort=-v:refname | sed '1p;d')
+
+      - name: Parse Changelog
+        id: changelog
+        uses: coditory/changelog-parser@v1.0.2
+
+      # - name: Push tag
+      #   if: github.ref == 'refs/heads/main' && steps.changelog.outputs.version != steps.lasttag.outputs.version
+      #   uses: laputansoft/github-tag-action@v4.6
+      #   with:
+      #     github_token: ${{ secrets.GITHUB_TOKEN }}
+      #     tag: v${{ steps.changelog.outputs.version }}
+      #     release_branches: main
+      #     default_bump: false
+      #     create_annotated_tag: false
+      #     dry_run: true # TODO: Remove
+
+      # TODO: See if this pushes a tag too
+      - name: Publish Release
+        if: github.ref == 'refs/heads/main' && steps.changelog.outputs.status == 'release' && steps.changelog.outputs.version != steps.lasttag.outputs.version
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.changelog.outputs.version }}
+          name: v${{ steps.changelog.outputs.version }}
+          body: ${{ steps.changelog.outputs.description }}
+          prerelease: ${{ steps.changelog.outputs.versionMajor }} == 0
+          draft: true # TODO: Remove
