@@ -1,8 +1,17 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+### Added
+- Nothing, yet!
+
+## [0.11.2] - 2022-09-08
+### Added
+- Automated our release process and changelog handling. This changelog entry is a test that I only need to add an entry here for a release to be automatically deployed. The [Releases](https://github.com/AverageHelper/accountable-svelte/releases) view should automatically see this entry.
 
 ## [0.11.1] - 2022-09-07
 ### Security
@@ -17,9 +26,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The server now uses [Superstruct](https://github.com/ianstormtaylor/superstruct) (instead of Joi) for message validation. This helps to keep our front-end and back-end paradigms consistent, and keeps our subdependencies down (since Superstruct has none). But mostly, I did this because Superstruct plays better with Rollup than Joi does. :P
 
 ## [0.10.2] - 2022-08-13
-### Fixed
-- Fixed the "Add a Transaction" button adding erroneously to the navigation stack, which incorrectly required the user to press Back more times the more transactions they created in order to return to the Accounts list.
-
 ### Added
 - UI to manually select a preferred language.
 - Some Brazilian Portuguese translations.
@@ -30,6 +36,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - More user-facing strings refactored into i18n keys. I think I found all of the user-facing strings reasonably enough now, though testing and experience will tell for sure if I missed anything.
 - The hamburger menu closes when the user selects a language.
 - Improved the cookie disclaimer.
+
+### Fixed
+- Fixed the "Add a Transaction" button adding erroneously to the navigation stack, which incorrectly required the user to press Back more times the more transactions they created in order to return to the Accounts list.
 
 ## [0.10.1] - 2022-08-05
 ### Fixed
@@ -169,10 +178,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **Client:** Fixed weirdness when entering a negative amount into `CurrencyInput`
-
-Known issues:
-- Light mode doesn't exist anymore. I'll turn it back on when I've had time to design it better
-- The accounts list disappears with an error, something to do with server connection. I'm not sure why this happens, or why the Reload button doesn't work.
+- Known issues:
+  - Light mode doesn't exist anymore. I'll turn it back on when I've had time to design it better
+  - The accounts list disappears with an error, something to do with server connection. I'm not sure why this happens, or why the Reload button doesn't work.
 
 ## [0.5.0] - 2022-02-18
 ### Added
@@ -217,9 +225,9 @@ Known issues:
 
 ## [0.3.4] - 2022-01-31
 ### Changed
-Just some re-working to make our vendor bundle fit within the recommended 500 KiB:
-- Replace [Joi](https://github.com/sideway/joi) with [Superstruct](https://www.npmjs.com/package/superstruct) on the client
-- Tree-shake away Bootstrap's JavaScript bundle. Use Vue's own state mechanics instead.
+- Just some re-working to make our vendor bundle fit within the recommended 500 KiB:
+  - Replace [Joi](https://github.com/sideway/joi) with [Superstruct](https://www.npmjs.com/package/superstruct) on the client
+  - Tree-shake away Bootstrap's JavaScript bundle. Use Vue's own state mechanics instead.
 
 ## [0.3.3] - 2022-01-31
 ### Added
@@ -253,7 +261,8 @@ Just some re-working to make our vendor bundle fit within the recommended 500 Ki
 ### Added
 - Initial commit
 
-[Unreleased]: https://github.com/AverageHelper/accountable-svelte/compare/v0.11.1...HEAD
+[Unreleased]: https://github.com/AverageHelper/accountable-svelte/compare/v0.11.2...HEAD
+[0.11.2]: https://github.com/AverageHelper/accountable-svelte/compare/v0.11.1...v0.11.2
 [0.11.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.11.0...v0.11.1
 [0.11.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.10.2...v0.11.0
 [0.10.2]: https://github.com/AverageHelper/accountable-svelte/compare/v0.10.1...v0.10.2
