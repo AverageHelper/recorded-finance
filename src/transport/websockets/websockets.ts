@@ -49,13 +49,13 @@ interface WebSocketUtils<T extends WebSocketMessages> {
 /**
  * Constructs a type-safe websocket interface.
  *
- * @param ws The {@link WebSocket} instance by which to send and receive messages.
+ * @param url The URL of the server with which the WebSocket communication should take place.
  * @param interactions The types of interactions expected to be sent over the connection.
  *
  * @returns An object with utility functions to use to interact with the client.
  */
 export function wsFactory<T extends WebSocketMessages>(
-	ws: WebSocket,
+	url: URL,
 	interactions: T
 ): WebSocketUtils<T> {
 	interface _WebSocketMessage<M extends keyof T> {
@@ -92,6 +92,7 @@ export function wsFactory<T extends WebSocketMessages>(
 	}
 
 	// Application-layer communications
+	const ws = new WebSocket(url);
 	return {
 		onClose(cb): void {
 			ws.addEventListener("close", ({ code, reason }) => {
@@ -108,6 +109,14 @@ export function wsFactory<T extends WebSocketMessages>(
 
 		onMessage(name, cb): void {
 			ws.addEventListener("message", res => {
+				if (res.origin !== url.origin) {
+					// Apparently, we need to check this. See: https://cwe.mitre.org/data/definitions/20.html
+					console.warn(
+						`Received WebSocket message from unknown origin '${res.origin}'. (Expected origin is '${url.origin}')`
+					);
+					return;
+				}
+
 				let message: unknown;
 				try {
 					message = JSON.parse((res.data as { toString: () => string }).toString()) as unknown;
