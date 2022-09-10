@@ -54,13 +54,7 @@
 
 	"overrides": [
 		{
-			"files": [
-				"./*.ts",
-				"src/**/*.test.ts",
-				"tests/**/*.ts",
-				"**/__mocks__/**/*.ts",
-				"scripts/**/*.ts"
-			],
+			"files": ["./*.ts", "src/**/*.test.ts", "tests/**/*.ts", "**/__mocks__/**/*.ts"],
 			"extends": ["plugin:prettier/recommended"],
 			"plugins": ["prettier", "@typescript-eslint"],
 			"parser": "@typescript-eslint/parser",
@@ -78,6 +72,10 @@
 		},
 		{
 			"files": ["scripts/**/*.ts"],
+			"parserOptions": {
+				"project": "./tsconfig.test.json",
+				"tsconfigRootDir": "."
+			},
 			"rules": {
 				"unicorn/no-process-exit": "off",
 				"no-console": ["warn", { "allow": ["error", "warn", "info"] }]
