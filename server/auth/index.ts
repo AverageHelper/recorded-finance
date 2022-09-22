@@ -1,7 +1,7 @@
 import type { MFAOption, User } from "../database/schemas.js";
 import { addJwtToBlacklist, jwtTokenFromRequest, newAccessToken } from "./jwt.js";
 import { asyncWrapper } from "../asyncWrapper.js";
-import { compare } from "bcrypt";
+import { compare } from "bcryptjs";
 import { Context } from "./Context.js";
 import { generateHash, generateSalt, generateSecureToken } from "./generators.js";
 import { generateSecret, generateTOTPSecretURI, verifyTOTP } from "./totp.js";

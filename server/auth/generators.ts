@@ -1,4 +1,4 @@
-import { genSalt, hash } from "bcrypt";
+import { genSalt, hash } from "bcryptjs";
 import { generateSecureToken as _generateSecureToken } from "n-digit-token";
 
 /** Generate a cryptographically secure pseudo random token of given number of digits. */

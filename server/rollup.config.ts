@@ -7,10 +7,15 @@ import commonjs from "@rollup/plugin-commonjs";
 import json from "@rollup/plugin-json";
 import typescript from "@rollup/plugin-typescript";
 
+const isProduction = process.env.NODE_ENV === "production";
+
 export default defineConfig({
 	plugins: [
 		// Transpile source
-		typescript({ project: "./tsconfig.json" }), // translate TypeScript to JS
+		typescript({
+			project: "./tsconfig.json",
+			sourceMap: !isProduction,
+		}), // translate TypeScript to JS
 		commonjs({ transformMixedEsModules: true }), // translate CommonJS to ESM
 		json(), // translate JSON ("express" requires this for its status messages)
 
@@ -21,7 +26,7 @@ export default defineConfig({
 		}),
 
 		// Minify output
-		process.env.NODE_ENV === "production" ? terser() : null,
+		isProduction ? terser() : null,
 
 		// Statistics
 		analyze({ filter: () => false }), // only top-level summary
@@ -34,26 +39,22 @@ export default defineConfig({
 		// of global `this`.
 		if (warning.code === "THIS_IS_UNDEFINED") return;
 
+		// Required for "multer".
+		// Circular dependencies are sometimes bad, but the devs at "readable-stream" insist they're
+		// using them correctly.
+		// See https://github.com/nodejs/readable-stream/issues/280 and https://github.com/nodejs/readable-stream/issues/348
+		if (
+			warning.code === "CIRCULAR_DEPENDENCY" &&
+			warning.importer?.includes("readable-stream") === true
+		)
+			return;
+
 		defaultHandler(warning);
 	},
-	external: [
-		// TODO: See about bundling all of these:
-
-		// "bcrypt" is C++, so can't be bundled directly.
-		// Externalizing fixes unresolved "nock", "aws-sdk", and "mock-aws-s3" packages
-		"bcrypt",
-
-		// relies on __dirname, so must be external and CJS
-		"bufferutil",
-		"utf-8-validate",
-		"fast-folder-size",
-
-		// Rollup doesn't like this very much:
-		"multer",
-	],
 	input: "./main.ts",
 	output: {
 		file: "dist/server.js",
 		format: "module",
+		sourcemap: isProduction ? undefined : "inline",
 	},
 });
