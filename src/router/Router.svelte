@@ -37,6 +37,7 @@
 		settingsPath,
 		signupPath,
 		tagsPath,
+		totpPath,
 	} from "./routes";
 
 	function paramValue(params: RouteParams, key: string): string {
@@ -78,6 +79,11 @@
 		</Lock>
 	</Route>
 	<Route path={signupPath()}>
+		<VaultIsLoggedOut>
+			<Login />
+		</VaultIsLoggedOut>
+	</Route>
+	<Route path={totpPath()}>
 		<VaultIsLoggedOut>
 			<Login />
 		</VaultIsLoggedOut>

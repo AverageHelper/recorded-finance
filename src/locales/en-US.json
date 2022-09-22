@@ -359,6 +359,7 @@
 		"business-name": "ACME Co.",
 		"city-country": "Swahilli, New Guinnea",
 		"income-transaction-title": "Bank Money",
+		"totp-code": "000000",
 		"transaction-note": "This is a thing"
 	},
 	"input": {
@@ -415,6 +416,7 @@
 	},
 	"login": {
 		"account-id": "account ID",
+		"totp": "Token",
 		"checking-lock-state": "Checking lock state...",
 		"current-account-id": "current account ID",
 		"current-passphrase": "current passphrase",

@@ -61,6 +61,10 @@ export const documentData = define<DocumentData>(
 	value => isRecord(value) && Object.values(value).every(isPrimitive)
 );
 
+export const mfaValidation = enums(["totp", "none"] as const);
+
+export type MFAValidation = Infer<typeof mfaValidation>;
+
 const rawServerResponse = type({
 	message: optional(string()),
 	code: optional(string()),
@@ -68,10 +72,13 @@ const rawServerResponse = type({
 	totalSpace: optional(number()),
 	usedSpace: optional(number()),
 	access_token: optional(string()),
+	recovery_token: optional(string()),
+	secret: optional(string()),
 	account: optional(string()),
 	uid: optional(string()),
 	data: optional(nullable(union([documentData, array(documentData)]))),
 	dataType: optional(enums(["single", "multiple"] as const)),
+	validate: optional(string()), // expects "none" or "totp", but don't crash if we get something else
 });
 
 export function isRawServerResponse(tbd: unknown): tbd is RawServerResponse {

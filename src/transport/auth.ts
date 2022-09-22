@@ -1,6 +1,7 @@
 /* eslint-disable deprecation/deprecation */
-import type { KeyMaterial } from "./cryption";
 import type { AccountableDB, DocumentReference } from "./db";
+import type { KeyMaterial } from "./cryption";
+import { AccountableError } from "./errors";
 import { doc, db, getDoc, previousStats, setDoc, deleteDoc } from "./db";
 import { t } from "../i18n";
 import {
@@ -13,6 +14,7 @@ import {
 	authUpdatePassword,
 	getFrom,
 	postTo,
+	totpValidate,
 } from "./api-types/index.js";
 
 function authRef(uid: string): DocumentReference<KeyMaterial> {
@@ -60,9 +62,9 @@ export interface UserCredential {
  *
  * Note: The account ID acts as a unique identifier for the user. This function will create a new user account and set the initial user password.
  *
- * @param db - The {@link AccountableDB} instance.
- * @param account - The user's account ID.
- * @param password - The user's chosen password.
+ * @param db The {@link AccountableDB} instance.
+ * @param account The user's account ID.
+ * @param password The user's chosen password.
  */
 export async function createUserWithAccountIdAndPassword(
 	db: AccountableDB,
@@ -90,7 +92,7 @@ export async function createUserWithAccountIdAndPassword(
 /**
  * Signs out the current user.
  *
- * @param db - The {@link AccountableDB} instance.
+ * @param db The {@link AccountableDB} instance.
  *
  * @throws a `NetworkError` if something goes wrong with the request.
  */
@@ -112,9 +114,9 @@ export async function signOut(db: AccountableDB): Promise<void> {
  * account ID serves as a unique identifier for the user, and the password is used to access
  * the user's account in your Accountable instance. See also: {@link createUserWithAccountIdAndPassword}.
  *
- * @param db - The {@link AccountableDB} instance.
- * @param account - The user's account ID.
- * @param password - The user's password.
+ * @param db The {@link AccountableDB} instance.
+ * @param account The user's account ID.
+ * @param password The user's password.
  *
  * @throws a `NetworkError` if something goes wrong with the request.
  */
@@ -133,6 +135,7 @@ export async function signInWithAccountIdAndPassword(
 	if (access_token === undefined || uid === undefined)
 		throw new TypeError(t("error.server.missing-access-token"));
 
+	db.clearUser(); // clear the previous user
 	previousStats.usedSpace = usedSpace ?? null;
 	previousStats.totalSpace = totalSpace ?? null;
 
@@ -142,9 +145,49 @@ export async function signInWithAccountIdAndPassword(
 }
 
 /**
+ * Asynchronously validates the current session using the given TOTP.
+ *
+ * @param db The {@link AccountableDB} instance.
+ * @param token The current TOTP, to be validated against the user's
+ * server-stored secrets.
+ *
+ * @returns a Promise that resolves with the user's credentials and,
+ * if this is the user's first time validating a token, a special
+ * recovery token that the user should save to use in case they lose
+ * their authenticator.
+ */
+export async function verifySessionWithTOTP(
+	db: AccountableDB,
+	token: string
+): Promise<[recoveryToken: string | null, credential: UserCredential]> {
+	if (!token) throw new TypeError(t("error.sanity.empty-param", { values: { name: "token" } }));
+	const user = db.currentUser;
+	if (!user) throw new AccountableError("auth/unauthenticated");
+
+	const validate = new URL(totpValidate(), db.url);
+	const {
+		access_token,
+		recovery_token,
+		uid,
+		usedSpace,
+		totalSpace,
+	} = //
+		await postTo(validate, { token });
+	if (access_token === undefined || uid === undefined)
+		throw new TypeError(t("error.server.missing-access-token"));
+
+	previousStats.usedSpace = usedSpace ?? null;
+	previousStats.totalSpace = totalSpace ?? null;
+
+	const credential: UserCredential = { user };
+	const recovery = recovery_token ?? null;
+	return [recovery, credential];
+}
+
+/**
  * Asynchronously refreshes the login token
  *
- * @param db - The {@link AccountableDB} instance.
+ * @param db The {@link AccountableDB} instance.
  *
  * @throws a `NetworkError` if something goes wrong with the request.
  */
@@ -165,9 +208,9 @@ export async function refreshSession(db: AccountableDB): Promise<UserCredential>
 /**
  * Deletes and signs out the user.
  *
- * @param db - The {@link AccountableDB} instance.
- * @param user - The user.
- * @param password - The user's chosen password.
+ * @param db The {@link AccountableDB} instance.
+ * @param user The user.
+ * @param password The user's chosen password.
  *
  * @throws a `NetworkError` if something goes wrong with the request.
  */
@@ -176,6 +219,11 @@ export async function deleteUser(db: AccountableDB, user: User, password: string
 		throw new TypeError(t("error.sanity.empty-param", { values: { name: "password" } }));
 
 	const leave = new URL(authLeave(), db.url);
+	if (db.currentUser?.uid === user.uid) {
+		db.clearUser();
+		previousStats.usedSpace = null;
+		previousStats.totalSpace = null;
+	}
 	await postTo(leave, {
 		account: user.accountId,
 		password,
@@ -185,9 +233,9 @@ export async function deleteUser(db: AccountableDB, user: User, password: string
 /**
  * Updates the user's account ID.
  *
- * @param user - The user.
- * @param newAccountId - The new account ID.
- * @param password - The user's chosen password.
+ * @param user The user.
+ * @param newAccountId The new account ID.
+ * @param password The user's chosen password.
  *
  * @throws a `NetworkError` if something goes wrong with the request.
  */
@@ -212,10 +260,10 @@ export async function updateAccountId(
 /**
  * Updates the user's password.
  *
- * @param db - The {@link AccountableDB} instance.
- * @param user - The user.
- * @param oldPassword - The old password.
- * @param newPassword - The new password.
+ * @param db The {@link AccountableDB} instance.
+ * @param user The user.
+ * @param oldPassword The old password.
+ * @param newPassword The new password.
  *
  * @throws a `NetworkError` if something goes wrong with the request.
  */

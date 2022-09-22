@@ -37,6 +37,7 @@ import {
 	signOut,
 	updateAccountId,
 	updatePassword as _updatePassword,
+	verifySessionWithTOTP,
 } from "../transport/auth.js";
 
 type LoginProcessState = "AUTHENTICATING" | "GENERATING_KEYS" | "FETCHING_KEYS" | "DERIVING_PKEY";
@@ -145,6 +146,19 @@ export async function unlockVault(password: string): Promise<void> {
 	// TODO: Instead of re-authing, download the ledger and attempt a decrypt with the given password. If fail, throw. If succeed, continue.
 }
 
+async function finalizeLogin(password: string, user: User): Promise<void> {
+	await updateUserStats();
+
+	// Get the salt and dek material from server
+	loginProcessState.set("FETCHING_KEYS");
+	const material = await getDekMaterial();
+
+	// Derive a pKey from the password, and remember it
+	loginProcessState.set("DERIVING_PKEY");
+	pKey.set(await derivePKey(password, material.passSalt));
+	onSignedIn(user);
+}
+
 export async function login(accountId: string, password: string): Promise<void> {
 	try {
 		loginProcessState.set("AUTHENTICATING");
@@ -155,22 +169,31 @@ export async function login(accountId: string, password: string): Promise<void> 
 			accountId,
 			await hashed(password) // FIXME: Should use OPAQUE or SRP instead
 		);
-		await updateUserStats();
-
-		// Get the salt and dek material from server
-		loginProcessState.set("FETCHING_KEYS");
-		const material = await getDekMaterial();
-
-		// Derive a pKey from the password, and remember it
-		loginProcessState.set("DERIVING_PKEY");
-		pKey.set(await derivePKey(password, material.passSalt));
-		onSignedIn(user);
+		await finalizeLogin(password, user);
 	} finally {
 		// In any event, error or not:
 		loginProcessState.set(null);
 	}
 }
 
+/**
+ * Verifies the given TOTP token. Returns the user's recovery token if
+ * they have not yet seen it.
+ */
+export async function loginWithTotp(password: string, token: string): Promise<void> {
+	try {
+		loginProcessState.set("AUTHENTICATING");
+		const [, { user }] = await verifySessionWithTOTP(auth, token);
+		await finalizeLogin(password, user);
+	} finally {
+		loginProcessState.set(null);
+	}
+}
+
+/**
+ * Throws a {@link NetworkError} with code `"missing-mfa-credentials"` if
+ * the user still needs to verify their 2FA.
+ */
 export async function getDekMaterial(): Promise<KeyMaterial> {
 	const user = auth.currentUser;
 	if (!user) throw new Error(t("error.auth.unauthenticated"));

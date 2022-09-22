@@ -359,6 +359,7 @@
 		"business-name": "ACME Co.",
 		"city-country": "Suaíli, Nova Guiné",
 		"income-transaction-title": "Dinheiro do banco",
+		"totp-code": "000000",
 		"transaction-note": "Isso é uma coisa"
 	},
 	"input": {
@@ -415,6 +416,7 @@
 	},
 	"login": {
 		"account-id": "ID da conta",
+		"totp": "Token",
 		"checking-lock-state": "Verificando o estado de bloqueio...",
 		"current-account-id": "ID da conta atual",
 		"current-passphrase": "senha atual",

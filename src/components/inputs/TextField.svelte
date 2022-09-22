@@ -27,6 +27,63 @@
 		| "tel"
 		| "url";
 
+	/** See https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/autocomplete */
+	type AutocompleteType =
+		| "off"
+		| "on"
+		| "name"
+		| "honorific-prefix"
+		| "given-name"
+		| "additional-name"
+		| "family-name"
+		| "honorific-suffix"
+		| "nickname"
+		| "email"
+		| "username"
+		| "new-password"
+		| "current-password"
+		| "one-time-code"
+		| "organization-title"
+		| "organization"
+		| "street-address"
+		| "address-line1"
+		| "address-line2"
+		| "address-line3"
+		| "address-level4"
+		| "address-level3"
+		| "address-level2"
+		| "address-level1"
+		| "country"
+		| "country-name"
+		| "postal-code"
+		| "cc-name"
+		| "cc-given-name"
+		| "cc-additional-name"
+		| "cc-family-name"
+		| "cc-number"
+		| "cc-exp"
+		| "cc-exp-month"
+		| "cc-exp-year"
+		| "cc-csc"
+		| "cc-type"
+		| "transaction-currency"
+		| "transaction-amount"
+		| "language"
+		| "bday"
+		| "bday-day"
+		| "bday-month"
+		| "bday-year"
+		| "sex"
+		| "tel"
+		| "tel-country-code"
+		| "tel-national"
+		| "tel-area-code"
+		| "tel-local"
+		| "tel-extension"
+		| "impp"
+		| "url"
+		| "photo";
+
 	export let value: string = "";
 	export let dataTest: string | null = null;
 	export let placeholder: string | null = null;
@@ -36,7 +93,7 @@
 	export let min: number | null = null;
 	export let max: number | null = null;
 	export let autofocus: boolean = false;
-	export let autocomplete: string = "";
+	export let autocomplete: AutocompleteType = "on";
 	export let label: string = "";
 	export let disabled: boolean = false;
 	export let autocapitalize: string = "none";
@@ -109,6 +166,7 @@
 			{size}
 			{maxlength}
 			{required}
+			name={label || placeholder || ""}
 			data-test={dataTest}
 			disabled
 		/>
