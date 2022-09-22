@@ -56,7 +56,7 @@ export function activateLightMode(): void {
 }
 
 export async function updateUserStats(): Promise<void> {
-	const { usedSpace: _usedSpace, totalSpace: _totalSpace } = await getUserStats();
+	const { usedSpace: _usedSpace, totalSpace: _totalSpace } = await getUserStats(db);
 	usedSpace.set(_usedSpace);
 	totalSpace.set(_totalSpace);
 }

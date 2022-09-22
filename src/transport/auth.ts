@@ -1,8 +1,7 @@
-/* eslint-disable deprecation/deprecation */
 import type { AccountableDB, DocumentReference } from "./db";
 import type { KeyMaterial } from "./cryption";
 import { AccountableError } from "./errors";
-import { doc, db, getDoc, previousStats, setDoc, deleteDoc } from "./db";
+import { doc, db, getDoc, setDoc, deleteDoc } from "./db";
 import { t } from "../i18n";
 import {
 	authJoin,
@@ -81,8 +80,9 @@ export async function createUserWithAccountIdAndPassword(
 	if (access_token === undefined || uid === undefined)
 		throw new TypeError(t("error.server.missing-access-token"));
 
-	previousStats.usedSpace = usedSpace ?? null;
-	previousStats.totalSpace = totalSpace ?? null;
+	if (usedSpace !== undefined && totalSpace !== undefined) {
+		db.setUserStats({ usedSpace, totalSpace });
+	}
 
 	const user: User = { accountId: account, uid };
 	db.setUser(user);
@@ -100,8 +100,7 @@ export async function signOut(db: AccountableDB): Promise<void> {
 	const logout = new URL(authLogOut(), db.url);
 	await postTo(logout, {});
 	db.clearUser();
-	previousStats.usedSpace = null;
-	previousStats.totalSpace = null;
+	db.setUserStats(null);
 }
 
 /**
@@ -136,8 +135,9 @@ export async function signInWithAccountIdAndPassword(
 		throw new TypeError(t("error.server.missing-access-token"));
 
 	db.clearUser(); // clear the previous user
-	previousStats.usedSpace = usedSpace ?? null;
-	previousStats.totalSpace = totalSpace ?? null;
+	if (usedSpace !== undefined && totalSpace !== undefined) {
+		db.setUserStats({ usedSpace, totalSpace });
+	}
 
 	const user: User = { accountId: account, uid };
 	db.setUser(user);
@@ -176,8 +176,9 @@ export async function verifySessionWithTOTP(
 	if (access_token === undefined || uid === undefined)
 		throw new TypeError(t("error.server.missing-access-token"));
 
-	previousStats.usedSpace = usedSpace ?? null;
-	previousStats.totalSpace = totalSpace ?? null;
+	if (usedSpace !== undefined && totalSpace !== undefined) {
+		db.setUserStats({ usedSpace, totalSpace });
+	}
 
 	const credential: UserCredential = { user };
 	const recovery = recovery_token ?? null;
@@ -197,8 +198,9 @@ export async function refreshSession(db: AccountableDB): Promise<UserCredential>
 	if (account === undefined || access_token === undefined || uid === undefined)
 		throw new TypeError(t("error.server.missing-access-token"));
 
-	previousStats.usedSpace = usedSpace ?? null;
-	previousStats.totalSpace = totalSpace ?? null;
+	if (usedSpace !== undefined && totalSpace !== undefined) {
+		db.setUserStats({ usedSpace, totalSpace });
+	}
 
 	const user: User = { accountId: account, uid };
 	db.setUser(user);
@@ -221,8 +223,7 @@ export async function deleteUser(db: AccountableDB, user: User, password: string
 	const leave = new URL(authLeave(), db.url);
 	if (db.currentUser?.uid === user.uid) {
 		db.clearUser();
-		previousStats.usedSpace = null;
-		previousStats.totalSpace = null;
+		db.setUserStats(null);
 	}
 	await postTo(leave, {
 		account: user.accountId,
