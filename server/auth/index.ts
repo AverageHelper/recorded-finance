@@ -244,6 +244,7 @@ export function auth(): Router {
 		)
 		.post<unknown, unknown, ReqBody>(
 			"/totp/validate",
+			throttle(),
 			asyncWrapper(async (req, res) => {
 				// ** Check that the given TOTP is valid for the user. If valid, but the user hasn't yet enabled a 2FA requirement, enable it
 
