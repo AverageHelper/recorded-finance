@@ -1,11 +1,12 @@
 import type { AnyDataItem, Identified, IdentifiedDataItem, User } from "./schemas.js";
 import type { CollectionReference, DocumentReference } from "./references.js";
+import { assertSchema, user as userSchema } from "./schemas.js";
 import { deleteItem, ensure, resolvePath } from "./filesystem.js";
 import { folderSize, maxSpacePerUser } from "../auth/limits.js";
 import { join as joinPath } from "node:path";
 import { Low, JSONFile } from "lowdb";
-import { rm } from "node:fs/promises";
 import { NotEnoughRoomError } from "../errors/index.js";
+import { rm } from "node:fs/promises";
 import { requireEnv } from "../environment.js";
 import { simplifiedByteCount } from "../transformers/index.js";
 import { useJobQueue } from "@averagehelper/job-queue";
@@ -214,18 +215,21 @@ export async function fetchDbDocs<T extends AnyDataItem>(
 	})) as NonEmptyArray<Snapshot<T>>;
 }
 
-export async function upsertUser(properties: User): Promise<void> {
+export async function upsertUser(properties: Required<User>): Promise<void> {
+	assertSchema(properties, userSchema); // assures nonempty fields
 	const uid = properties.uid;
-	if (!uid) throw new TypeError("uid property was empty");
 
 	// Upsert to index
 	await userIndexDb<void>((data, write) => {
 		const userIndex = data ?? {};
 		userIndex[uid] = {
-			uid: properties.uid,
 			currentAccountId: properties.currentAccountId,
 			passwordHash: properties.passwordHash,
 			passwordSalt: properties.passwordSalt,
+			mfaRecoverySeed: properties.mfaRecoverySeed,
+			requiredAddtlAuth: properties.requiredAddtlAuth,
+			totpSeed: properties.totpSeed,
+			uid,
 		};
 		write(userIndex);
 	});

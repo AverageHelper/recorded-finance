@@ -1,5 +1,6 @@
 export * from "./BadMethodError.js";
 export * from "./BadRequestError.js";
+export * from "./ConflictError.js";
 export * from "./DuplicateAccountError.js";
 export * from "./InternalError.js";
 export * from "./NotEnoughRoomError.js";

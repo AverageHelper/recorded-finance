@@ -18,7 +18,7 @@ jobs:
         uses: coditory/changelog-parser@v1.0.2
 
       - name: Publish Release
-        if: github.ref == 'refs/heads/main' && steps.changelog.outputs.status != 'unreleased'
+        if: steps.changelog.outputs.status != 'unreleased'
         # This action doesn't create a new release if the tag already exists
         uses: softprops/action-gh-release@v1
         with:

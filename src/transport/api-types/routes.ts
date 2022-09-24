@@ -38,6 +38,23 @@ export function authJoin(): "/v0/join" {
 
 /**
  * Route for:
+ * - POST `/v0/totp/validate`
+ */
+export function totpValidate(): "/v0/totp/validate" {
+	return `${BASE}/totp/validate`;
+}
+
+/**
+ * Route for:
+ * - GET `/v0/totp/secret`
+ * - DELETE `/v0/totp/secret`
+ */
+export function totpSecret(): "/v0/totp/secret" {
+	return `${BASE}/totp/secret`;
+}
+
+/**
+ * Route for:
  * - POST `/v0/login`
  */
 export function authLogIn(): "/v0/login" {

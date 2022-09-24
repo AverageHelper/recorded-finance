@@ -4,6 +4,7 @@ import "jest-extended";
 
 /* eslint-disable jest/no-mocks-import */
 import * as mockFilesystem from "./database/__mocks__/filesystem.js";
+import * as mockGenerators from "./auth/__mocks__/generators.js";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import * as _mockIo from "./database/__mocks__/io.js"; // FIXME: Using this anywhere causes a nasty loop
 import * as mockJwt from "./auth/__mocks__/jwt.js";
@@ -11,6 +12,7 @@ import * as mockJwt from "./auth/__mocks__/jwt.js";
 
 // See https://github.com/facebook/jest/issues/10025 on why `jest.mock` doesn't work under ESM
 jest.unstable_mockModule("./database/filesystem.js", () => mockFilesystem);
+jest.unstable_mockModule("./auth/generators.js", () => mockGenerators);
 jest.unstable_mockModule("./database/io.js", () => ({
 	statsForUser: jest.fn(),
 	findUserWithProperties: jest.fn(),

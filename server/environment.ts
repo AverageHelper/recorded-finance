@@ -1,7 +1,8 @@
 import "dotenv/config.js"; // SIDE-EFFECT: populates `process.env`
 
 export type EnvKey =
-	| "DB" //
+	| "AUTH_SECRET" //
+	| "DB"
 	| "HOST"
 	| "MAX_BYTES"
 	| "MAX_USERS"

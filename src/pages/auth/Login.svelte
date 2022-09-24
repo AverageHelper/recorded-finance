@@ -3,6 +3,7 @@
 	import { accountsPath, loginPath, signupPath } from "../../router";
 	import { onMount } from "svelte";
 	import { repoReadmeHeading } from "../../platformMeta";
+	import { AccountableError, NetworkError, UnreachableCaseError } from "../../transport/errors";
 	import { useLocation, useNavigate } from "svelte-navigator";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
 	import ErrorNotice from "../../components/ErrorNotice.svelte";
@@ -20,6 +21,7 @@
 		handleError,
 		isSignupEnabled,
 		login,
+		loginWithTotp,
 		loginProcessState,
 		uid,
 	} from "../../store";
@@ -30,19 +32,26 @@
 	let accountId = "";
 	let password = "";
 	let passwordRepeat = "";
+	let token = "";
 	let isLoading = false;
 
 	$: isLoggedIn = $uid !== null;
 	$: mode = !isSignupEnabled
-		? "login" // can't sign up? log in instead.
+		? needsTotp
+			? ("totp" as const)
+			: ("login" as const) // can't sign up? log in instead.
 		: $location.pathname === signupPath()
-		? "signup"
-		: "login";
+		? ("signup" as const)
+		: needsTotp
+		? ("totp" as const)
+		: ("login" as const);
 	$: isSignupMode = mode === "signup";
 	$: isLoginMode = mode === "login";
+	$: isTotpMode = mode === "totp";
 
 	let accountIdField: TextField | undefined;
 	let passwordField: TextField | undefined;
+	let needsTotp = false;
 
 	onMount(() => {
 		accountIdField?.focus();
@@ -82,22 +91,29 @@
 	}
 
 	function onUpdateAccountId(event: CustomEvent<string>) {
-		const newId = event.detail;
 		if (!isSignupMode || isLoading) {
-			accountId = newId;
+			accountId = event.detail;
 		} else {
+			// Prevent overwriting the given account ID when signing up.
+			// There are no technical back-end restrictions to necessitate this,
+			// and an API user can just send whatever account ID they want;
+			// we just don't want to be responsible for storing any more
+			// user data than we need, so we provide this one.
+			// (This might be a stupid idea. I'll find out later.)
 			accountId = accountId;
 		}
 	}
 
+	function onUpdateTotp(event: CustomEvent<string>) {
+		token = event.detail;
+	}
+
 	function onUpdatePassphrase(event: CustomEvent<string>) {
-		const newPassphrase = event.detail;
-		password = newPassphrase;
+		password = event.detail;
 	}
 
 	function onUpdateRepeatPassphrase(event: CustomEvent<string>) {
-		const newPassphrase = event.detail;
-		passwordRepeat = newPassphrase;
+		passwordRepeat = event.detail;
 	}
 
 	async function submit() {
@@ -113,6 +129,7 @@
 			if (isSignupMode && password !== passwordRepeat)
 				throw new Error($_("error.form.password-mismatch"));
 
+			console.debug(`Doing ${mode}`);
 			switch (mode) {
 				case "signup":
 					await createVault(accountId, password);
@@ -121,16 +138,37 @@
 				case "login":
 					await login(accountId, password);
 					break;
+
+				case "totp":
+					await loginWithTotp(password, token);
+					break;
+
+				default:
+					throw new UnreachableCaseError(mode);
 			}
+			console.debug(`Finished ${mode}`);
 
 			navigate(accountsPath(), { replace: true });
 		} catch (error) {
+			if (
+				(error instanceof NetworkError && error.code === "missing-mfa-credentials") ||
+				(error instanceof NetworkError && error.code === "missing-token") ||
+				(error instanceof AccountableError && error.code === "auth/unauthenticated")
+			) {
+				// Switch to TOTP mode
+				needsTotp = true;
+				console.debug(`Entering ${mode} mode`);
+				return;
+			}
+			// Otherwise, treat the error like a problem:
 			handleError(error);
 		} finally {
 			isLoading = false;
 		}
 	}
 </script>
+
+<!-- TODO: Break this component into three: Login, Signup, TOTP -->
 
 {#if $bootstrapError}
 	<main class="content">
@@ -148,30 +186,43 @@
 					placeholder={$_("example.account-id")}
 					autocomplete="username"
 				/>
-			{:else}
+			{:else if isLoginMode}
 				<TextField
 					bind:this={accountIdField}
 					value={accountId}
 					on:input={onUpdateAccountId}
-					disabled={isSignupMode && !isLoading}
+					disabled={isLoading}
 					label={$_("login.account-id")}
 					placeholder={$_("example.account-id")}
 					autocomplete="username"
 					showsRequired={false}
 					required
 				/>
+			{:else if isTotpMode}
+				<TextField
+					value={token}
+					on:input={onUpdateTotp}
+					disabled={isLoading}
+					label={$_("login.totp")}
+					placeholder={$_("example.totp-code")}
+					autocomplete="one-time-code"
+					showsRequired={false}
+					required
+				/>
 			{/if}
-			<TextField
-				bind:this={passwordField}
-				value={password}
-				on:input={onUpdatePassphrase}
-				type="password"
-				label={isSignupMode ? $_("login.new-passphrase-imperative") : $_("login.passphrase")}
-				placeholder="********"
-				autocomplete={isSignupMode ? "new-password" : "current-password"}
-				showsRequired={false}
-				required
-			/>
+			{#if isLoginMode}
+				<TextField
+					bind:this={passwordField}
+					value={password}
+					on:input={onUpdatePassphrase}
+					type="password"
+					label={isSignupMode ? $_("login.new-passphrase-imperative") : $_("login.passphrase")}
+					placeholder="********"
+					autocomplete={isSignupMode ? "new-password" : "current-password"}
+					showsRequired={false}
+					required
+				/>
+			{/if}
 			{#if isSignupMode}
 				<TextField
 					value={passwordRepeat}

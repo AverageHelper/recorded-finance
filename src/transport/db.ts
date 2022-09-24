@@ -1,4 +1,3 @@
-/* eslint-disable deprecation/deprecation */
 import type { DocumentData, DocumentWriteBatch, PrimitiveRecord } from "./schemas.js";
 import type { EPackage, HashStore } from "./cryption.js";
 import type { Unsubscribe } from "./onSnapshot.js";
@@ -29,15 +28,32 @@ import {
 
 export class AccountableDB {
 	#currentUser: User | null;
+	#lastKnownUserStats: UserStats | null;
 	public readonly url: Readonly<URL>;
 
 	constructor(url: string) {
 		this.#currentUser = null;
+		this.#lastKnownUserStats = null;
 		this.url = new URL(url);
 	}
 
 	get currentUser(): User | null {
 		return this.#currentUser;
+	}
+
+	get lastKnownUserStats(): UserStats | null {
+		return this.#lastKnownUserStats;
+	}
+
+	setUserStats(stats: UserStats | null): void {
+		if (stats === null) {
+			this.#lastKnownUserStats = null;
+		} else {
+			this.#lastKnownUserStats = {
+				usedSpace: stats.usedSpace,
+				totalSpace: stats.totalSpace,
+			};
+		}
 	}
 
 	setUser(user: User): void {
@@ -54,6 +70,11 @@ export class AccountableDB {
 			currentUser: this.#currentUser ? "<signed in>" : null,
 		});
 	}
+}
+
+interface UserStats {
+	readonly totalSpace: number;
+	readonly usedSpace: number;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -207,7 +228,7 @@ export class WriteBatch {
 		this.#operations.push(op);
 	}
 
-	set<T>(ref: DocumentReference<T>, data: T): void {
+	set<T extends object>(ref: DocumentReference<T>, data: T): void {
 		const primitiveData: DocumentData = {};
 		Object.entries(data).forEach(([key, value]) => {
 			if (!isPrimitive(value)) return;
@@ -291,28 +312,17 @@ export function bootstrap(url?: string): AccountableDB {
 	return db;
 }
 
-interface UserStats {
-	totalSpace: number | null;
-	usedSpace: number | null;
-}
-
-/**
- * A local cache of the user's storage stats.
- *
- * @deprecated The only files that should see or modify this are `db.ts`, `storage.ts`, and `auth.ts`.
- */
-export const previousStats: UserStats = {
-	totalSpace: null,
-	usedSpace: null,
-};
-
 /**
  * Gets statistics about the space the user's data occupies on the server.
  */
-export async function getUserStats(): Promise<UserStats> {
+export async function getUserStats(db: AccountableDB): Promise<UserStats> {
 	// This might be on the server too, but since Accountable gets this back with every write, we keep a copy here and use an async function to retrieve it.
 	// TODO: Add an endpoint for this
-	return await Promise.resolve(previousStats);
+	const stats = db.lastKnownUserStats;
+	return await Promise.resolve({
+		usedSpace: stats?.usedSpace ?? Number.MAX_SAFE_INTEGER,
+		totalSpace: stats?.totalSpace ?? Number.MAX_SAFE_INTEGER,
+	});
 }
 
 /**
@@ -363,8 +373,9 @@ export async function setDoc<D, T extends PrimitiveRecord<D>>(
 	const docPath = new URL(databaseDocument(uid, collection, doc), reference.db.url);
 
 	const { usedSpace, totalSpace } = await postTo(docPath, data);
-	previousStats.usedSpace = usedSpace ?? null;
-	previousStats.totalSpace = totalSpace ?? null;
+	if (usedSpace !== undefined && totalSpace !== undefined) {
+		reference.db.setUserStats({ usedSpace, totalSpace });
+	}
 }
 
 /**
@@ -384,8 +395,9 @@ export async function deleteDoc(reference: DocumentReference): Promise<void> {
 	const docPath = new URL(databaseDocument(uid, collection, doc), reference.db.url);
 
 	const { usedSpace, totalSpace } = await deleteAt(docPath);
-	previousStats.usedSpace = usedSpace ?? null;
-	previousStats.totalSpace = totalSpace ?? null;
+	if (usedSpace !== undefined && totalSpace !== undefined) {
+		reference.db.setUserStats({ usedSpace, totalSpace });
+	}
 }
 
 /**

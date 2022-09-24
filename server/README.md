@@ -30,8 +30,12 @@ v16.13.1
 ```sh
 # .env
 
-# Where your attachment data lives
-DB={path to your storage directory}
+# A secret value used to sign JWTs and generate TOTP secrets. Keep this safe.
+# Consider generating this value with https://bitwarden.com/password-generator/
+AUTH_SECRET={some random string of characters}
+# required, example: "wAheb^8v^YV^s6YaeYVW&8tyLa*ce4"
+
+DB={path to your storage directory} # For attachment data
 # required, example: "~/server/db"
 
 HOST={your frontend hostname, with protocol}

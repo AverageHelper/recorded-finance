@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0] - 2022-09-24
+### Added
+- Server endpoints to support TOTP 2FA. See our [API documentation](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/AverageHelper/accountable-svelte/HEAD/server/openapi.yaml) for details.
+
+### Changed
+- BREAKING: The server now requires the `AUTH_SECRET` environment variable to be set. This value should be randomly generated (perhaps using a [password generator](https://bitwarden.com/password-generator/)) and kept safe. This value lets the server sign JWTs and generate user secrets. See the [README](/README.md) for info.
+- The client now accepts "extra" values from server responses. This way, old clients can still talk to new server instances without much issue.
+
+### Fixed
+- The server now accepts user session tokens across reboots! Go ahead and restart your server all you want, clients should now take the change in stride!
+- The server no longer sends the user's password hash in their JWT. That was silly to do. Not sure why we did that. We don't do that anymore.
+
 ## [0.11.3] - 2022-09-09
 ### Security
 - Removed `git-diff`. They're vulnerable to shell injection. I've seen this myself in another project, and [has been observed by others](https://github.com/danday74/git-diff/issues/6).
@@ -264,6 +276,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial commit
 
+[0.12.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.11.3...v0.12.0
 [0.11.3]: https://github.com/AverageHelper/accountable-svelte/compare/v0.11.2...v0.11.3
 [0.11.2]: https://github.com/AverageHelper/accountable-svelte/compare/v0.11.1...v0.11.2
 [0.11.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.11.0...v0.11.1

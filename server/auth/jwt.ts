@@ -1,14 +1,13 @@
-import type { JwtPayload, User } from "../database/schemas.js";
+import type { JwtPayload, MFAOption, User } from "../database/schemas.js";
 import type { Request } from "express";
-import { generateSecureToken } from "n-digit-token";
 import { isJwtPayload } from "../database/schemas.js";
+import { requireEnv } from "../environment.js";
 import { TemporarySet } from "./TemporarySet.js";
 import cookieSession from "cookie-session";
 import jwt from "jsonwebtoken";
 
-// Generate a new JWT secret for every run.
-// Restarting the server will log out all users.
-const secret = generateSecureToken(25) as string;
+/** A special secret that only the server should ever know. */
+export const persistentSecret = requireEnv("AUTH_SECRET");
 
 const ONE_HOUR = 60 * 60 * 1000;
 
@@ -16,7 +15,7 @@ const ONE_HOUR = 60 * 60 * 1000;
 export const session = cookieSession({
 	name: "sessionToken",
 	// keys: ["...", "...."], // `secret` is used if not provided. Research these keys.
-	secret,
+	secret: persistentSecret,
 	// secure: /* varies based on whether the request came from an HTTP or HTTPS source */,
 	httpOnly: true,
 	sameSite: "strict",
@@ -47,15 +46,19 @@ export function addJwtToBlacklist(token: string): void {
 }
 
 // TODO: Be smarter about session storage. See https://gist.github.com/soulmachine/b368ce7292ddd7f91c15accccc02b8df
-export async function newAccessToken(req: Pick<Request, "session">, user: User): Promise<string> {
+export async function newAccessToken(
+	req: Pick<Request, "session">,
+	user: User,
+	validatedWithMfa: Array<MFAOption>
+): Promise<string> {
 	const options: jwt.SignOptions = { expiresIn: "1h" };
 	const payload: JwtPayload = {
 		uid: user.uid,
-		hash: user.passwordHash,
+		validatedWithMfa,
 	};
 
 	const token = await new Promise<string>((resolve, reject) => {
-		jwt.sign(payload, secret, options, (err, token) => {
+		jwt.sign(payload, persistentSecret, options, (err, token) => {
 			if (err) {
 				reject(err);
 				return;
@@ -104,7 +107,7 @@ function unverifiedJwt(token: string): string | jwt.JwtPayload | null {
 
 export async function verifyJwt(token: string): Promise<jwt.JwtPayload> {
 	return await new Promise<jwt.JwtPayload>((resolve, reject) => {
-		jwt.verify(token, secret, (err, payload) => {
+		jwt.verify(token, persistentSecret, (err, payload) => {
 			// Fail if failed i guess
 			if (err) return reject(err);
 

@@ -21,16 +21,19 @@ export async function postTo(
 	return await doRequest(url, { method: "POST", body: JSON.stringify(body) });
 }
 
-/** Performs a DELETE request at the provided URL. */
-export async function deleteAt(url: URL): Promise<ServerResponse> {
-	return await doRequest(url, { method: "DELETE" });
+/** Performs a DELETE request at the provided URL using the given body. */
+export async function deleteAt(
+	url: URL,
+	body?: DocumentData | Array<DocumentWriteBatch>
+): Promise<ServerResponse> {
+	return await doRequest(url, { method: "DELETE", body: body ? JSON.stringify(body) : undefined });
 }
 
 /** Performs a multipart GET request at the provided URL. */
 export async function downloadFrom(url: URL): Promise<string> {
 	const response = await getFrom(url);
 	const data = response.data as unknown;
-	if (!isFileData(data)) throw new UnexpectedResponseError("Invalid file data");
+	if (!isFileData(data)) throw new UnexpectedResponseError("Invalid file data"); // TODO: i18n
 	return data.contents;
 }
 
@@ -38,7 +41,7 @@ export async function downloadFrom(url: URL): Promise<string> {
 export async function uploadTo(url: URL, fileBody: string): Promise<ServerResponse> {
 	const urlString = url.toString();
 	const fileName = urlString.slice(Math.max(0, urlString.lastIndexOf("/") + 1));
-	if (!fileName) throw new TypeError(`Couldn't get file name from '${urlString}'`);
+	if (!fileName) throw new TypeError(`Couldn't get file name from '${urlString}'`); // TODO: i18n
 
 	const file = new File([fileBody], "file.json", { type: "application/json" });
 	const body = new FormData();
@@ -83,7 +86,7 @@ async function doRequest(
 		if (!isRawServerResponse(json))
 			throw new UnexpectedResponseError(
 				`Invalid server response: ${JSON.stringify(json, undefined, "  ")}`
-			);
+			); // TODO: i18n
 
 		result = {
 			// `fetch` does not always return statusText, per spec: https://fetch.spec.whatwg.org/#concept-response-status-message
