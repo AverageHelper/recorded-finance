@@ -40,9 +40,10 @@ export default defineConfig({
 		if (warning.code === "THIS_IS_UNDEFINED") return;
 
 		// Required for "multer".
-		// Circular dependencies are sometimes bad, but the devs at "readable-stream" insist they're
-		// using them correctly.
-		// See https://github.com/nodejs/readable-stream/issues/280 and https://github.com/nodejs/readable-stream/issues/348
+		// Circular dependencies are sometimes bad, but the devs at
+		// "readable-stream" insist they're using them correctly.
+		// See https://github.com/nodejs/readable-stream/issues/280
+		// and https://github.com/nodejs/readable-stream/issues/348
 		if (
 			warning.code === "CIRCULAR_DEPENDENCY" &&
 			warning.importer?.includes("readable-stream") === true

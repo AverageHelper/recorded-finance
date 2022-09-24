@@ -321,8 +321,17 @@ export function auth(): Router {
 				const access_token = await newAccessToken(req, metadata.user, metadata.validatedWithMfa);
 				const uid = metadata.user.uid;
 				const account = metadata.user.currentAccountId;
+				const requiredAddtlAuth = metadata.user.requiredAddtlAuth ?? [];
 				const { totalSpace, usedSpace } = await statsForUser(uid);
-				respondSuccess(res, { account, access_token, uid, totalSpace, usedSpace });
+
+				respondSuccess(res, {
+					account,
+					access_token,
+					requiredAddtlAuth,
+					uid,
+					totalSpace,
+					usedSpace,
+				});
 			})
 		)
 		.post("/logout", throttle(), (req, res) => {

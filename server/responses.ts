@@ -8,7 +8,7 @@ const CACHE_CONTROL = ["Cache-Control", "no-store"] as const;
 
 export function respondSuccess(
 	res: Response,
-	additionalValues?: Record<string, string | number>
+	additionalValues?: Record<string, string | number | Array<string | number>>
 ): void {
 	res
 		.setHeader(...CACHE_CONTROL) //

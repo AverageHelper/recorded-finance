@@ -437,6 +437,12 @@ paths:
                   access_token:
                     type: string
                     description: Temporary bearer token used to authenticate future requests
+                  requiredAddtlAuth:
+                    type: array
+                    items:
+                      enum:
+                        - "totp"
+                    description: The sort of extra validation that the user has registered. Might be empty.
                   uid:
                     type: string
                     description: The user's persistent UID, different from the given account ID

@@ -10,7 +10,10 @@ import { findUserWithProperties } from "../database/io.js";
 import { StructError } from "superstruct";
 
 interface Metadata {
+	/** The user's auth data. */
 	user: User;
+
+	/** The MFA confirmations that the user has completed this session. */
 	validatedWithMfa: Array<MFAOption>;
 }
 
