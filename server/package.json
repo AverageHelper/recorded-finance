@@ -1,6 +1,6 @@
 {
 	"name": "accountable-server",
-	"version": "0.6.1",
+	"version": "0.7.0",
 	"scripts": {
 		"start": "./node_modules/.bin/nodemon --watch ./dist ./dist/server.js",
 		"prebuild": "rm -rf ./dist && npm run export-version",
