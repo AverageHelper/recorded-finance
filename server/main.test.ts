@@ -4,10 +4,12 @@ import request from "supertest";
 
 /* eslint-disable jest/no-mocks-import */
 import * as mockEnvironment from "./__mocks__/environment.js";
+import * as mockGenerators from "./auth/__mocks__/generators.js";
 /* eslint-enable jest/no-mocks-import */
 
 // See https://github.com/facebook/jest/issues/10025 on why `jest.mock` doesn't work under ESM
 jest.unstable_mockModule("./environment.js", () => mockEnvironment);
+jest.unstable_mockModule("./auth/generators.js", () => mockGenerators);
 
 const { app } = await import("./main.js");
 

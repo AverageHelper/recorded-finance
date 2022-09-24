@@ -1,5 +1,7 @@
-import { genSalt, hash } from "bcryptjs";
+import { compare, genSalt, hash } from "bcryptjs";
 import { generateSecureToken as _generateSecureToken } from "n-digit-token";
+
+export { compare };
 
 /** Generate a cryptographically secure pseudo random token of given number of digits. */
 export function generateSecureToken(length: number): string {
