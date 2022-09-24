@@ -187,6 +187,7 @@ export function auth(): Router {
 		)
 		.delete(
 			"/totp/secret",
+			throttle(),
 			asyncWrapper<unknown, unknown, ReqBody>(async (req, res) => {
 				// ** TOTP Un-registration
 
