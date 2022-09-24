@@ -1,5 +1,6 @@
 import type { AccountableDB, DocumentReference } from "./db";
 import type { KeyMaterial } from "./cryption";
+import type { MFAValidation } from "./schemas";
 import { AccountableError } from "./errors";
 import { doc, db, getDoc, setDoc, deleteDoc } from "./db";
 import { t } from "../i18n";
@@ -11,8 +12,10 @@ import {
 	authRefreshSession,
 	authUpdateAccountId,
 	authUpdatePassword,
+	deleteAt,
 	getFrom,
 	postTo,
+	totpSecret,
 	totpValidate,
 } from "./api-types/index.js";
 
@@ -34,20 +37,18 @@ export async function deleteAuthMaterial(uid: string): Promise<void> {
 }
 
 export interface User {
-	/**
-	 * The account ID of the user.
-	 */
+	/** The account ID of the user. */
 	readonly accountId: Readonly<string>;
-	/**
-	 * The user's unique ID, scoped to the instance.
-	 */
+
+	/** The user's unique ID. Not alterable without creating a new account. */
 	readonly uid: Readonly<string>;
+
+	/** The user's registered 2FA methods. */
+	readonly mfa: ReadonlyArray<MFAValidation>;
 }
 
 export interface UserCredential {
-	/**
-	 * The user authenticated by this credential.
-	 */
+	/** The user authenticated by this credential. */
 	user: User;
 }
 
@@ -84,7 +85,7 @@ export async function createUserWithAccountIdAndPassword(
 		db.setUserStats({ usedSpace, totalSpace });
 	}
 
-	const user: User = { accountId: account, uid };
+	const user: User = { accountId: account, uid, mfa: [] };
 	db.setUser(user);
 	return { user };
 }
@@ -130,7 +131,14 @@ export async function signInWithAccountIdAndPassword(
 		throw new TypeError(t("error.sanity.empty-param", { values: { name: "password" } }));
 
 	const login = new URL(authLogIn(), db.url);
-	const { access_token, uid, usedSpace, totalSpace } = await postTo(login, { account, password });
+	const {
+		access_token,
+		uid,
+		usedSpace,
+		totalSpace,
+		validate,
+	} = //
+		await postTo(login, { account, password });
 	if (access_token === undefined || uid === undefined)
 		throw new TypeError(t("error.server.missing-access-token"));
 
@@ -139,9 +147,49 @@ export async function signInWithAccountIdAndPassword(
 		db.setUserStats({ usedSpace, totalSpace });
 	}
 
-	const user: User = { accountId: account, uid };
+	const mfa: Array<MFAValidation> = [];
+	if (validate === "totp") mfa.push("totp");
+
+	const user: User = { accountId: account, uid, mfa };
 	db.setUser(user);
 	return { user };
+}
+
+/**
+ * Begins enrolling the user in TOTP 2FA. Must call {@link verifySessionWithTOTP}
+ * in order to confirm the enrollment and start requiring TOTP with new logins.
+ *
+ * @param db The {@link AccountableDB} instance.
+ *
+ * @returns a Promise that resolves with the user's new TOTP secret. Present this
+ * to the user for later validation.
+ */
+export async function enrollTotp(db: AccountableDB): Promise<string> {
+	if (!db.currentUser) throw new AccountableError("auth/unauthenticated");
+
+	const enroll = new URL(totpSecret(), db.url);
+	const { secret } = await getFrom(enroll);
+
+	if (secret === undefined) throw new TypeError("Expected secret from server, but got nothing"); // TODO: I18N
+
+	return secret;
+}
+
+/**
+ * Disables the user's TOTP requirement, and deletes the server's stored TOTP secret.
+ */
+export async function unenrollTotp(
+	db: AccountableDB,
+	password: string,
+	token: string
+): Promise<void> {
+	if (!password)
+		throw new TypeError(t("error.sanity.empty-param", { values: { name: "password" } }));
+	if (!token) throw new TypeError(t("error.sanity.empty-param", { values: { name: "token" } }));
+
+	const unenroll = new URL(totpSecret(), db.url);
+	await deleteAt(unenroll, { password, token });
+	await refreshSession(db);
 }
 
 /**
@@ -194,7 +242,15 @@ export async function verifySessionWithTOTP(
  */
 export async function refreshSession(db: AccountableDB): Promise<UserCredential> {
 	const session = new URL(authRefreshSession(), db.url);
-	const { account, access_token, uid, usedSpace, totalSpace } = await getFrom(session);
+	const {
+		account,
+		access_token,
+		uid,
+		usedSpace,
+		totalSpace,
+		requiredAddtlAuth,
+	} = //
+		await getFrom(session);
 	if (account === undefined || access_token === undefined || uid === undefined)
 		throw new TypeError(t("error.server.missing-access-token"));
 
@@ -202,7 +258,12 @@ export async function refreshSession(db: AccountableDB): Promise<UserCredential>
 		db.setUserStats({ usedSpace, totalSpace });
 	}
 
-	const user: User = { accountId: account, uid };
+	const mfa: Array<MFAValidation> = [];
+	for (const auth of new Set(requiredAddtlAuth ?? [])) {
+		if (auth === "totp") mfa.push(auth);
+	}
+
+	const user: User = { accountId: account, uid, mfa };
 	db.setUser(user);
 	return { user };
 }

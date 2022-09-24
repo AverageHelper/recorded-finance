@@ -6,6 +6,7 @@
 	import Exports from "./Exports.svelte";
 	import Import from "./Import.svelte";
 	import LocationPrefForm from "./LocationPrefForm.svelte";
+	import MfaForm from "./MfaForm.svelte";
 </script>
 
 <main class="content">
@@ -16,6 +17,7 @@
 	<LocationPrefForm />
 	<ChangeAccountIdForm />
 	<ChangePasswordForm />
+	<MfaForm />
 	<Import />
 	<Exports />
 	<DeleteData />

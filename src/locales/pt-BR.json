@@ -416,7 +416,7 @@
 	},
 	"login": {
 		"account-id": "ID da conta",
-		"totp": "Token",
+		"totp": "token",
 		"checking-lock-state": "Verificando o estado de bloqueio...",
 		"current-account-id": "ID da conta atual",
 		"current-passphrase": "senha atual",

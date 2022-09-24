@@ -6,7 +6,7 @@ import { AccountableError, NetworkError } from "../transport/errors/index.js";
 import { attachment as newAttachment } from "../model/Attachment.js";
 import { BlobReader, Data64URIWriter, TextReader, ZipWriter } from "@zip.js/zip.js";
 import { bootstrap, updateUserStats } from "./uiStore.js";
-import { get, writable } from "svelte/store";
+import { derived, get, writable } from "svelte/store";
 import { t } from "../i18n.js";
 import { v4 as uuid } from "uuid";
 import {
@@ -32,19 +32,24 @@ import {
 import {
 	createUserWithAccountIdAndPassword,
 	deleteUser,
+	enrollTotp,
 	refreshSession,
 	signInWithAccountIdAndPassword,
 	signOut,
+	unenrollTotp as _unenrollTotp,
 	updateAccountId,
 	updatePassword as _updatePassword,
 	verifySessionWithTOTP,
 } from "../transport/auth.js";
 
+// TODO: Should probably intercept NetworkError in here, or perhaps closer to the REST calls
+
 type LoginProcessState = "AUTHENTICATING" | "GENERATING_KEYS" | "FETCHING_KEYS" | "DERIVING_PKEY";
 
 export const isNewLogin = writable(false);
-export const accountId = writable<string | null>(null);
-export const uid = writable<string | null>(null);
+export const currentUser = writable<User | null>(null);
+export const accountId = derived(currentUser, u => u?.accountId ?? null);
+export const uid = derived(currentUser, u => u?.uid ?? null);
 export const pKey = writable<HashStore | null>(null);
 export const loginProcessState = writable<LoginProcessState | null>(null);
 export const preferences = writable(defaultPrefs());
@@ -60,8 +65,7 @@ export function clearAuthCache(): void {
 	get(pKey)?.destroy();
 	pKey.set(null);
 	loginProcessState.set(null);
-	uid.set(null);
-	accountId.set(null);
+	currentUser.set(null);
 	isNewLogin.set(false);
 	preferences.set(defaultPrefs());
 	console.debug("authStore: cache cleared");
@@ -76,8 +80,7 @@ export function lockVault(): void {
 }
 
 export function onSignedIn(user: User): void {
-	accountId.set(user.accountId);
-	uid.set(user.uid);
+	currentUser.set(user);
 
 	const watcher = get(userPrefsWatcher);
 	if (watcher) {
@@ -191,6 +194,44 @@ export async function loginWithTotp(password: string, token: string): Promise<vo
 }
 
 /**
+ * Requests a new TOTP secret from the Accountable server. If the user
+ * has not already confirmed a TOTP enrollment, then this function
+ * resolves with the user's secret. Present this secret to the user,
+ * perhaps as a QR code.
+ *
+ * @returns the user's new TOTP secret URI.
+ */
+export async function beginTotpEnrollment(): Promise<URL> {
+	const rawSecret = await enrollTotp(auth);
+	return new URL(rawSecret); // the server should have sent a valid URI
+}
+
+/**
+ * Verifies the given time-based token, and returns the user's recovery token.
+ *
+ * @param token The current time-based token.
+ * @throws an error if the user has already seen their recovery token
+ * @returns the user's recovery token.
+ */
+export async function confirmTotpEnrollment(token: string): Promise<string> {
+	const [recoveryToken] = await verifySessionWithTOTP(auth, token);
+	if (recoveryToken === null) throw new Error("You've already verified your enrollment"); // TODO: i18n
+
+	return recoveryToken;
+}
+
+/**
+ * Disables the user's TOTP requirement, and deletes the server's
+ * stored TOTP secret.
+ *
+ * @param password The user's password.
+ * @param token The current time-based token.
+ */
+export async function unenrollTotp(password: string, token: string): Promise<void> {
+	await _unenrollTotp(auth, password, token);
+}
+
+/**
  * Throws a {@link NetworkError} with code `"missing-mfa-credentials"` if
  * the user still needs to verify their 2FA.
  */
@@ -277,7 +318,7 @@ export async function regenerateAccountId(currentPassword: string): Promise<void
 
 	const newAccountId = createAccountId();
 	await updateAccountId(user, newAccountId, await hashed(currentPassword));
-	accountId.set(newAccountId);
+	await fetchSession(); // updates the stored account ID
 	isNewLogin.set(true);
 }
 
