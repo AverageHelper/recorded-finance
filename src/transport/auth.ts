@@ -189,7 +189,6 @@ export async function unenrollTotp(
 
 	const unenroll = new URL(totpSecret(), db.url);
 	await deleteAt(unenroll, { password, token });
-	await refreshSession(db);
 }
 
 /**

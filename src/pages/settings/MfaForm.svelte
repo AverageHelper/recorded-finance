@@ -33,9 +33,9 @@
 	>
 
 	{#if isEnrolled}
-		<ActionButton on:click={unenroll}>Unenroll 2FA</ActionButton>
+		<ActionButton kind="bordered" on:click={unenroll}>Unenroll 2FA</ActionButton>
 	{:else}
-		<ActionButton on:click={enroll}>Enroll 2FA</ActionButton>
+		<ActionButton kind="bordered" on:click={enroll}>Enroll 2FA</ActionButton>
 	{/if}
 
 	<MfaEnrollModal isOpen={isEnrollingMfa} on:finished={closeModals} />

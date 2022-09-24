@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { _ } from "../../i18n";
-	import { accountsPath, loginPath, signupPath, totpPath } from "../../router";
+	import { accountsPath, loginPath, signupPath } from "../../router";
 	import { onMount } from "svelte";
 	import { repoReadmeHeading } from "../../platformMeta";
-	import { NetworkError, UnreachableCaseError } from "../../transport/errors";
+	import { AccountableError, NetworkError, UnreachableCaseError } from "../../transport/errors";
 	import { useLocation, useNavigate } from "svelte-navigator";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
 	import ErrorNotice from "../../components/ErrorNotice.svelte";
@@ -37,10 +37,12 @@
 
 	$: isLoggedIn = $uid !== null;
 	$: mode = !isSignupEnabled
-		? ("login" as const) // can't sign up? log in instead.
+		? needsTotp
+			? ("totp" as const)
+			: ("login" as const) // can't sign up? log in instead.
 		: $location.pathname === signupPath()
 		? ("signup" as const)
-		: $location.pathname === totpPath()
+		: needsTotp
 		? ("totp" as const)
 		: ("login" as const);
 	$: isSignupMode = mode === "signup";
@@ -49,6 +51,7 @@
 
 	let accountIdField: TextField | undefined;
 	let passwordField: TextField | undefined;
+	let needsTotp = false;
 
 	onMount(() => {
 		accountIdField?.focus();
@@ -126,6 +129,7 @@
 			if (isSignupMode && password !== passwordRepeat)
 				throw new Error($_("error.form.password-mismatch"));
 
+			console.debug(`Doing ${mode}`);
 			switch (mode) {
 				case "signup":
 					await createVault(accountId, password);
@@ -142,12 +146,18 @@
 				default:
 					throw new UnreachableCaseError(mode);
 			}
+			console.debug(`Finished ${mode}`);
 
 			navigate(accountsPath(), { replace: true });
 		} catch (error) {
-			if (error instanceof NetworkError && error.code === "missing-mfa-credentials") {
+			if (
+				(error instanceof NetworkError && error.code === "missing-mfa-credentials") ||
+				(error instanceof NetworkError && error.code === "missing-token") ||
+				(error instanceof AccountableError && error.code === "auth/unauthenticated")
+			) {
 				// Switch to TOTP mode
-				navigate(totpPath());
+				needsTotp = true;
+				console.debug(`Entering ${mode} mode`);
 				return;
 			}
 			// Otherwise, treat the error like a problem:

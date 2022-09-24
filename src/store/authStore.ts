@@ -172,6 +172,7 @@ export async function login(accountId: string, password: string): Promise<void> 
 			accountId,
 			await hashed(password) // FIXME: Should use OPAQUE or SRP instead
 		);
+		if (user.mfa.includes("totp")) throw new AccountableError("auth/unauthenticated");
 		await finalizeLogin(password, user);
 	} finally {
 		// In any event, error or not:
@@ -216,6 +217,7 @@ export async function beginTotpEnrollment(): Promise<URL> {
 export async function confirmTotpEnrollment(token: string): Promise<string> {
 	const [recoveryToken] = await verifySessionWithTOTP(auth, token);
 	if (recoveryToken === null) throw new Error("You've already verified your enrollment"); // TODO: i18n
+	await fetchSession();
 
 	return recoveryToken;
 }
@@ -228,7 +230,8 @@ export async function confirmTotpEnrollment(token: string): Promise<string> {
  * @param token The current time-based token.
  */
 export async function unenrollTotp(password: string, token: string): Promise<void> {
-	await _unenrollTotp(auth, password, token);
+	await _unenrollTotp(auth, await hashed(password), token);
+	await fetchSession();
 }
 
 /**

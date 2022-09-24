@@ -15,9 +15,9 @@
 	</div>
 
 	<LocationPrefForm />
+	<MfaForm />
 	<ChangeAccountIdForm />
 	<ChangePasswordForm />
-	<MfaForm />
 	<Import />
 	<Exports />
 	<DeleteData />

@@ -42,10 +42,6 @@ export function settingsPath(): "/settings" {
 	return "/settings";
 }
 
-export function totpPath(): "/login/totp" {
-	return "/login/totp";
-}
-
 /* Data Pages */
 
 export function accountPath<ID extends string>(accountId: ID): `/accounts/${typeof accountId}` {

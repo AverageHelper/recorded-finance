@@ -34,14 +34,6 @@
 	let totpSecrets: TotpMaterial | null = null;
 	$: totpSecret = totpSecrets?.secret.searchParams.get("secret") ?? null;
 
-	/**
-	 * Whether we should let the user back out early.
-	 * If they validate their password, the API may want to validate
-	 * TOTP as well. We shouldn't let the user make other requests
-	 * until that's complete, to simplify error handling elsewhere.
-	 */
-	$: canClose = totpSecrets === null;
-
 	onMount(() => {
 		// If already enrolled, close immediately
 		if (isEnrolled) close();
@@ -104,18 +96,22 @@
 	}
 
 	function close() {
-		if (totpSecrets?.recoveryToken && !confirm("Did you write down your recovery token?")) return;
+		if (totpSecrets?.recoveryToken && !confirm("Did you write down your recovery token?")) {
+			totpSecrets = null;
+			return;
+		}
 
 		dispatch("finished");
 	}
 </script>
 
 <!-- TODO: I18N -->
-<Modal open={isOpen} closeModal={canClose ? close : null}>
+<Modal open={isOpen} closeModal={close}>
 	<h1>Enroll in MFA</h1>
 
 	{#if totpSecrets === null}
 		<!-- Renew existing password auth, get TOTP secret -->
+		<p>Enter your password to enable 2FA:</p>
 		<TextField
 			value={password}
 			type="password"
@@ -129,8 +125,9 @@
 		>
 	{:else if totpSecrets.recoveryToken === null}
 		<!-- Display a TOTP secret, ask for TOTP to confirm, get recovery token -->
+		<p>Scan this code with your authenticator app:</p>
 		<QR value={totpSecrets.secret.href} />
-		<p><code>{totpSecret}</code></p>
+		<p>Or use this code: <code>{totpSecret}</code></p>
 		<TextField
 			value={token}
 			autocomplete="one-time-code"
