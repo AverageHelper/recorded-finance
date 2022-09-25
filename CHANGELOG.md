@@ -5,12 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Changed
+- BREAKING: The server now requires the `DATABASE_URL` environment variable to be set. See the [README](/server/README.md) for details.
+
 ## [0.12.0] - 2022-09-24
 ### Added
 - Server endpoints to support TOTP 2FA. See our [API documentation](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/AverageHelper/accountable-svelte/HEAD/server/openapi.yaml) for details.
 
 ### Changed
-- BREAKING: The server now requires the `AUTH_SECRET` environment variable to be set. This value should be randomly generated (perhaps using a [password generator](https://bitwarden.com/password-generator/)) and kept safe. This value lets the server sign JWTs and generate user secrets. See the [README](/README.md) for info.
+- BREAKING: The server now requires the `AUTH_SECRET` environment variable to be set. This value should be randomly generated (perhaps using a [password generator](https://bitwarden.com/password-generator/)) and kept safe. This value lets the server sign JWTs and generate user secrets. See the [README](/server/README.md) for info.
 - The client now accepts "extra" values from server responses. This way, old clients can still talk to new server instances without much issue.
 
 ### Fixed

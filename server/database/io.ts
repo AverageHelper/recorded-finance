@@ -1,30 +1,37 @@
-import type { AnyDataItem, Identified, IdentifiedDataItem, User } from "./schemas.js";
 import type { CollectionReference, DocumentReference } from "./references.js";
+import type {
+	CollectionID,
+	DataItem,
+	DataItemKey,
+	DataOf,
+	Identified,
+	IdentifiedDataItem,
+	User,
+	UserKeys,
+} from "./schemas.js";
+import { assertSchema, user as userSchema } from "./schemas.js";
 import { folderSize, maxSpacePerUser } from "../auth/limits.js";
 import { join as joinPath } from "node:path";
+import { PrismaClient } from "@prisma/client";
 import { requireEnv } from "../environment.js";
 import { UnreachableCaseError } from "../errors/index.js";
-import mongoose from "mongoose";
-import {
-	AccountModel,
-	assertSchema,
-	AttachmentModel,
-	KeysModel,
-	LocationModel,
-	TagModel,
-	TransactionModel,
-	user as userSchema,
-	UserModel,
-} from "./schemas.js";
 
 // Start connecting to the database
-const DB_URL = requireEnv("MONGO_CONNECTION_URL");
-await mongoose.connect(DB_URL);
+const dataSource = new PrismaClient();
 process.stdout.write("Connected to MongoDB\n");
+
+// Profile database accesses
+dataSource.$use(async (params, next) => {
+	const before = Date.now();
+	const result: unknown = await next(params);
+	const after = Date.now();
+	console.debug(`Query ${params.model ?? "undefined"}.${params.action} took ${after - before}ms`);
+	return result;
+});
 
 // The place where the user's encrypted attachments live
 function dbFolderForUser(uid: string): string {
-	const DB_ROOT = requireEnv("DB");
+	const DB_ROOT = requireEnv("DB"); // TODO: Move this to the database
 	const dir = joinPath(DB_ROOT, "users", uid);
 	console.debug(`dbFolderForUser(uid: ${uid}) ${dir}`);
 	return dir;
@@ -44,31 +51,52 @@ export async function statsForUser(uid: string): Promise<UserStats> {
 }
 
 export async function numberOfUsers(): Promise<number> {
-	const allUsers = await UserModel.find();
-	return allUsers.length;
+	return await dataSource.user.count();
 }
 
-export async function fetchDbCollection(
-	ref: CollectionReference<AnyDataItem>
+export async function fetchDbCollection<ID extends CollectionID>(
+	ref: CollectionReference<ID>
 ): Promise<Array<IdentifiedDataItem>> {
 	const uid = ref.uid;
 
 	switch (ref.id) {
 		case "accounts":
-			return await AccountModel.find({ uid });
 		case "attachments":
-			return await AttachmentModel.find({ uid });
-		case "keys":
-			return await KeysModel.find({ uid });
 		case "locations":
-			return await LocationModel.find({ uid });
 		case "tags":
-			return await TagModel.find({ uid });
 		case "transactions":
-			return await TransactionModel.find({ uid });
+			return (
+				await dataSource.dataItem.findMany({
+					where: { userId: uid, collectionId: ref.id },
+					select: {
+						ciphertext: true,
+						cryption: true,
+						objectType: true,
+						id: true,
+					},
+				})
+			).map(v => ({ ...v, _id: v.id }));
+		case "keys":
+			return (
+				await dataSource.userKeys.findMany({
+					where: { userId: uid },
+					select: {
+						dekMaterial: true,
+						oldDekMaterial: true,
+						oldPassSalt: true,
+						passSalt: true,
+						userId: true,
+					},
+				})
+			).map(k => ({
+				...k,
+				_id: k.userId,
+				oldDekMaterial: k.oldDekMaterial ?? undefined,
+				oldPassSalt: k.oldPassSalt ?? undefined,
+			}));
 		case "users":
 			// Special handling: fetch all users
-			return await UserModel.find();
+			return await dataSource.user.findMany();
 		default:
 			throw new UnreachableCaseError(ref.id);
 	}
@@ -76,17 +104,40 @@ export async function fetchDbCollection(
 
 export async function findUserWithProperties(query: Partial<User>): Promise<User | null> {
 	if (Object.keys(query).length === 0) return null; // Fail gracefully for an empty query
-	const results = await UserModel.find(query);
-	return results[0] ?? null; // first result or null
+	return await dataSource.user.findFirst({
+		where: {
+			...query,
+			requiredAddtlAuth: {
+				hasEvery: query.requiredAddtlAuth,
+			},
+		},
+	});
 }
 
 /** A view of database data. */
-interface Snapshot<T extends AnyDataItem> {
+interface Snapshot<ID extends CollectionID = CollectionID> {
 	/** The database reference. */
-	ref: DocumentReference<T>;
+	ref: DocumentReference<ID>;
 
 	/** The stored data for the reference. */
-	data: Identified<T> | null;
+	data: Identified<DataOf<ID>> | null;
+}
+
+function isDataItemKey(id: CollectionID): id is DataItemKey {
+	switch (id) {
+		case "accounts":
+		case "attachments":
+		case "locations":
+		case "tags":
+		case "transactions":
+			return true;
+
+		case "keys":
+		case "users":
+			return false;
+		default:
+			throw new UnreachableCaseError(id);
+	}
 }
 
 /**
@@ -95,26 +146,51 @@ interface Snapshot<T extends AnyDataItem> {
  * @param ref A document reference.
  * @returns a view of database data.
  */
-export async function fetchDbDoc<T extends AnyDataItem>(
-	ref: DocumentReference<T>
-): Promise<Snapshot<T>> {
+export async function fetchDbDoc(ref: DocumentReference): Promise<Snapshot> {
 	const collectionId = ref.parent.id;
-	const _id = ref.id;
+	const id = ref.id;
+	if (isDataItemKey(collectionId)) {
+		const result = await dataSource.dataItem.findFirst({ where: { id, collectionId } });
+		if (result === null) return { ref, data: null };
+
+		const data: Identified<DataItem> = {
+			_id: result.id,
+			objectType: result.objectType,
+			ciphertext: result.ciphertext,
+			cryption: result.cryption ?? "v0",
+		};
+		return { ref, data };
+	}
 	switch (collectionId) {
-		case "accounts":
-			return { ref, data: await AccountModel.findById(_id) };
-		case "attachments":
-			return { ref, data: await AttachmentModel.findById(_id) };
-		case "keys":
-			return { ref, data: await KeysModel.findById(_id) };
-		case "locations":
-			return { ref, data: await LocationModel.findById(_id) };
-		case "tags":
-			return { ref, data: await TagModel.findById(_id) };
-		case "transactions":
-			return { ref, data: await TransactionModel.findById(_id) };
-		case "users":
-			return { ref, data: await UserModel.findById(_id) };
+		case "keys": {
+			const result = await dataSource.userKeys.findUnique({ where: { userId: id } });
+			if (result === null) return { ref, data: null };
+
+			const data: Identified<UserKeys> = {
+				_id: result.userId,
+				dekMaterial: result.dekMaterial,
+				oldDekMaterial: result.oldDekMaterial ?? undefined,
+				oldPassSalt: result.oldPassSalt ?? undefined,
+				passSalt: result.passSalt,
+			};
+			return { ref, data };
+		}
+		case "users": {
+			const result = await dataSource.user.findUnique({ where: { uid: id } });
+			if (result === null) return { ref, data: null };
+
+			const data: Identified<User> = {
+				_id: result.uid,
+				uid: result.uid,
+				currentAccountId: result.currentAccountId,
+				mfaRecoverySeed: result.mfaRecoverySeed,
+				passwordHash: result.passwordHash,
+				passwordSalt: result.passwordSalt,
+				requiredAddtlAuth: result.requiredAddtlAuth,
+				totpSeed: result.totpSeed,
+			};
+			return { ref, data };
+		}
 		default:
 			throw new UnreachableCaseError(collectionId);
 	}
@@ -126,76 +202,84 @@ export async function fetchDbDoc<T extends AnyDataItem>(
  * @param refs An array of document references.
  * @returns an array containing the given references and their associated data.
  */
-export async function fetchDbDocs<T extends AnyDataItem>(
-	refs: NonEmptyArray<DocumentReference<T>>
-): Promise<NonEmptyArray<Snapshot<T>>> {
+export async function fetchDbDocs<ID extends CollectionID>(
+	refs: NonEmptyArray<DocumentReference<ID>>
+): Promise<NonEmptyArray<Snapshot<ID>>> {
 	// Assert same UID on all refs
 	const uid = refs[0].uid;
 	if (!refs.every(u => u.uid === uid))
 		throw new TypeError(`Not every UID matches the first: ${uid}`);
 
 	// fetch the data
-	return (await Promise.all(refs.map(fetchDbDoc))) as NonEmptyArray<Snapshot<T>>;
+	return (await Promise.all(refs.map(fetchDbDoc))) as NonEmptyArray<Snapshot<ID>>;
 }
 
 export async function upsertUser(properties: Required<User>): Promise<void> {
 	assertSchema(properties, userSchema); // assures nonempty fields
 	const uid = properties.uid;
 
-	await UserModel.findByIdAndUpdate(uid, properties, { upsert: true });
+	await dataSource.user.upsert({
+		where: { uid },
+		update: properties,
+		create: properties,
+	});
 }
 
 export async function destroyUser(uid: string): Promise<void> {
 	if (!uid) throw new TypeError("uid was empty");
 
-	await AccountModel.deleteMany({ uid });
-	await AttachmentModel.deleteMany({ uid });
-	await KeysModel.deleteMany({ uid });
-	await LocationModel.deleteMany({ uid });
-	await TagModel.deleteMany({ uid });
-	await TransactionModel.deleteMany({ uid });
-	await UserModel.findByIdAndDelete(uid);
+	await dataSource.dataItem.deleteMany({ where: { userId: uid } });
+	await dataSource.userKeys.deleteMany({ where: { userId: uid } });
+	await dataSource.user.delete({ where: { uid } });
 }
 
-export interface DocUpdate<T extends AnyDataItem> {
-	ref: DocumentReference<T>;
-	data: T;
+export interface DocUpdate<ID extends CollectionID = CollectionID> {
+	ref: DocumentReference<ID>;
+	data: DataOf<ID>;
 }
 
-export async function upsertDbDocs<T extends AnyDataItem>(
-	updates: NonEmptyArray<DocUpdate<T>>
-): Promise<void> {
+export async function upsertDbDocs(updates: NonEmptyArray<DocUpdate>): Promise<void> {
 	// Assert same UID on all refs
 	const uid = updates[0].ref.uid;
 	if (!updates.every(u => u.ref.uid === uid))
 		throw new TypeError(`Not every UID matches the first: ${uid}`);
 
 	await Promise.all(
-		updates.map(async ({ data, ref }) => {
-			const collectionId = ref.parent.id;
-			const _id = ref.id;
+		updates.map(async update => {
+			const collectionId = update.ref.parent.id;
+			const id = update.ref.id;
 			switch (collectionId) {
 				case "accounts":
-					await AccountModel.findByIdAndUpdate(_id, data, { upsert: true });
-					return;
 				case "attachments":
-					await AttachmentModel.findByIdAndUpdate(_id, data, { upsert: true });
-					return;
-				case "keys":
-					await KeysModel.findByIdAndUpdate(_id, data, { upsert: true });
-					return;
 				case "locations":
-					await LocationModel.findByIdAndUpdate(_id, data, { upsert: true });
-					return;
 				case "tags":
-					await TagModel.findByIdAndUpdate(_id, data, { upsert: true });
+				case "transactions": {
+					const data = (update as DocUpdate<DataItemKey>).data;
+					await dataSource.dataItem.upsert({
+						where: { id },
+						update: data,
+						create: { ...data, collectionId, userId: uid },
+					});
 					return;
-				case "transactions":
-					await TransactionModel.findByIdAndUpdate(_id, data, { upsert: true });
+				}
+				case "keys": {
+					const data = (update as DocUpdate<"keys">).data;
+					await dataSource.userKeys.upsert({
+						where: { userId: id },
+						update: data,
+						create: data,
+					});
 					return;
-				case "users":
-					await UserModel.findByIdAndUpdate(_id, data, { upsert: true });
+				}
+				case "users": {
+					const data = (update as DocUpdate<"users">).data;
+					await dataSource.user.upsert({
+						where: { uid: id },
+						update: data,
+						create: data,
+					});
 					return;
+				}
 				default:
 					throw new UnreachableCaseError(collectionId);
 			}
@@ -203,8 +287,8 @@ export async function upsertDbDocs<T extends AnyDataItem>(
 	);
 }
 
-export async function deleteDbDocs<T extends AnyDataItem>(
-	refs: NonEmptyArray<DocumentReference<T>>
+export async function deleteDbDocs<ID extends CollectionID>(
+	refs: NonEmptyArray<DocumentReference<ID>>
 ): Promise<void> {
 	// Assert same UID on all refs
 	const uid = refs[0].uid;
@@ -214,28 +298,20 @@ export async function deleteDbDocs<T extends AnyDataItem>(
 	await Promise.all(
 		refs.map(async ref => {
 			const collectionId = ref.parent.id;
-			const _id = ref.id;
+			const id = ref.id;
 			switch (collectionId) {
 				case "accounts":
-					await AccountModel.findByIdAndDelete(_id);
-					return;
 				case "attachments":
-					await AttachmentModel.findByIdAndDelete(_id);
+				case "locations":
+				case "tags":
+				case "transactions":
+					await dataSource.dataItem.delete({ where: { id } });
 					return;
 				case "keys":
-					await KeysModel.findByIdAndDelete(_id);
-					return;
-				case "locations":
-					await LocationModel.findByIdAndDelete(_id);
-					return;
-				case "tags":
-					await TagModel.findByIdAndDelete(_id);
-					return;
-				case "transactions":
-					await TransactionModel.findByIdAndDelete(_id);
+					await dataSource.userKeys.delete({ where: { userId: id } });
 					return;
 				case "users":
-					await UserModel.findByIdAndDelete(_id);
+					await dataSource.user.delete({ where: { uid: id } });
 					return;
 				default:
 					throw new UnreachableCaseError(collectionId);
@@ -244,43 +320,33 @@ export async function deleteDbDocs<T extends AnyDataItem>(
 	);
 }
 
-export async function deleteDbDoc<T extends AnyDataItem>(ref: DocumentReference<T>): Promise<void> {
+export async function deleteDbDoc<ID extends CollectionID>(
+	ref: DocumentReference<ID>
+): Promise<void> {
 	await deleteDbDocs([ref]);
 }
 
-export async function deleteDbCollection<T extends AnyDataItem>(
-	ref: CollectionReference<T>
+export async function deleteDbCollection<ID extends CollectionID>(
+	ref: CollectionReference<ID>
 ): Promise<void> {
 	const uid = ref.uid;
 
 	switch (ref.id) {
 		case "accounts":
-			await AccountModel.deleteMany({ uid });
-			return;
 		case "attachments":
-			await AttachmentModel.deleteMany({ uid });
+		case "locations":
+		case "tags":
+		case "transactions":
+			await dataSource.dataItem.deleteMany({ where: { userId: uid } });
 			return;
 		case "keys":
-			await KeysModel.deleteMany({ uid });
-			return;
-		case "locations":
-			await LocationModel.deleteMany({ uid });
-			return;
-		case "tags":
-			await TagModel.deleteMany({ uid });
-			return;
-		case "transactions":
-			await TransactionModel.deleteMany({ uid });
+			await dataSource.userKeys.deleteMany({ where: { userId: uid } });
 			return;
 		case "users":
 			// Special handling: delete all users, and burn everything
-			await AccountModel.deleteMany();
-			await AttachmentModel.deleteMany();
-			await KeysModel.deleteMany();
-			await LocationModel.deleteMany();
-			await TagModel.deleteMany();
-			await TransactionModel.deleteMany();
-			await UserModel.deleteMany();
+			await dataSource.dataItem.deleteMany();
+			await dataSource.userKeys.deleteMany();
+			await dataSource.user.deleteMany();
 			return;
 		default:
 			throw new UnreachableCaseError(ref.id);

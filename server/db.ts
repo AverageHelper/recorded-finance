@@ -1,8 +1,8 @@
-import type { DataItem, Unsubscribe } from "./database/index.js";
-import type { DocumentData, UserKeys } from "./database/schemas.js";
+import type { DocumentData } from "./database/schemas.js";
 import type { DocUpdate } from "./database/io.js";
 import type { Infer } from "superstruct";
 import type { Request } from "express";
+import type { Unsubscribe } from "./database/index.js";
 import type { WebsocketRequestHandler } from "express-ws";
 import { allCollectionIds, identifiedDataItem, isValidForSchema } from "./database/schemas.js";
 import { asyncWrapper } from "./asyncWrapper.js";
@@ -52,7 +52,7 @@ interface Params {
 	fileName?: string;
 }
 
-function collectionRef(req: Request<Params>): CollectionReference<DataItem> | null {
+function collectionRef(req: Request<Params>): CollectionReference | null {
 	const uid = (req.params.uid ?? "") || null;
 	const collectionId = req.params.collectionId ?? "";
 	if (uid === null || !isCollectionId(collectionId)) return null;
@@ -60,7 +60,7 @@ function collectionRef(req: Request<Params>): CollectionReference<DataItem> | nu
 	return new CollectionReference(uid, collectionId);
 }
 
-function documentRef(req: Request<Params>): DocumentReference<DataItem> | null {
+function documentRef(req: Request<Params>): DocumentReference | null {
 	const documentId = req.params.documentId ?? "";
 	const collection = collectionRef(req);
 	if (!collection) return null;
@@ -244,7 +244,7 @@ const webSocket: WebsocketRequestHandler = ws(
 	(context, params) => {
 		const { onClose, onMessage, send, close } = context;
 		const { uid, collectionId, documentId = null } = params;
-		const collection = new CollectionReference<UserKeys>(uid, collectionId);
+		const collection = new CollectionReference(uid, collectionId);
 		let unsubscribe: Unsubscribe;
 		// TODO: Assert the caller's ID is uid using some protocol
 		if (documentId !== null) {
@@ -404,11 +404,11 @@ export function db(/* Inject filesystem APIs here? */): Router {
 				}
 
 				// Separate delete and set operations
-				const setOperations: Array<DocUpdate<DataItem>> = [];
-				const deleteOperations: Array<DocumentReference<DataItem>> = [];
+				const setOperations: Array<DocUpdate> = [];
+				const deleteOperations: Array<DocumentReference> = [];
 				for (const write of providedData) {
 					const collection = new CollectionReference(uid, write.ref.collectionId);
-					const ref = new DocumentReference<DataItem>(collection, write.ref.documentId);
+					const ref = new DocumentReference(collection, write.ref.documentId);
 
 					switch (write.type) {
 						case "set":

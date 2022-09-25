@@ -35,6 +35,10 @@ v16.13.1
 AUTH_SECRET={some random string of characters}
 # required, example: "wAheb^8v^YV^s6YaeYVW&8tyLa*ce4"
 
+# Where your MongoDB instance can be accessed
+DATABASE_URL={your MongoDB connection string}
+# required, example: "mongodb+srv://...mongodb.net/..."
+
 DB={path to your storage directory} # For attachment data
 # required, example: "~/server/db"
 
@@ -46,10 +50,6 @@ MAX_USERS={the limit to the number of users allowed to register new accounts}
 
 MAX_BYTES={the total number of bytes that Accountable attachments are permitted to occupy on the system}
 # optional, defaults to 20000000000 (20 GB)
-
-# Where your MongoDB instance can be accessed
-MONGO_CONNECTION_URL={your mongoose connection string}
-# required, example: "mongodb+srv://...mongodb.net/..."
 ```
 
 Run these commands to compile and run

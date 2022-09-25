@@ -45,11 +45,15 @@ export default defineConfig({
 		// and https://github.com/nodejs/readable-stream/issues/348
 		if (
 			warning.code === "CIRCULAR_DEPENDENCY" &&
-			(warning.importer?.includes("readable-stream") === true || // Required for "multer".
-				warning.importer?.includes("mongodb") === true ||
-				warning.importer?.includes("mongoose") === true)
+			warning.importer?.includes("readable-stream") === true // Required for "multer"
 		)
 			return;
+
+		// Ignore "Use of eval is strongly discouraged" warnings from
+		// prisma. Their `eval` calls are fairly tame, though this should
+		// be audited with each update.
+		const evalWhitelist = ["@prisma/client"];
+		if (warning.code === "EVAL" && evalWhitelist.some(e => warning.loc?.file?.includes(e))) return;
 
 		defaultHandler(warning);
 	},

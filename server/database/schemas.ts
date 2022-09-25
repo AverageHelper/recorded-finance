@@ -1,6 +1,5 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type { Infer, Struct, StructError } from "superstruct";
-import mongoose from "mongoose";
 import {
 	array,
 	enums,
@@ -158,8 +157,6 @@ export function isUserKeys(tbd: unknown): tbd is UserKeys {
 	return isValidForSchema(tbd, userKeys);
 }
 
-export type AnyDataItem = DataItem | UserKeys | User;
-
 export const allCollectionIds = [
 	"accounts",
 	"attachments",
@@ -172,38 +169,19 @@ export const allCollectionIds = [
 
 export type CollectionID = typeof allCollectionIds[number];
 
+export type DataItemKey = "accounts" | "attachments" | "locations" | "tags" | "transactions";
+
+export type DataOf<C extends CollectionID> = C extends "keys"
+	? UserKeys
+	: C extends "users"
+	? User
+	: C extends DataItemKey
+	? DataItem
+	: never;
+
 export function isCollectionId(tbd: string): tbd is CollectionID {
 	return allCollectionIds.includes(tbd as CollectionID);
 }
-
-const dataItemSchema = new mongoose.Schema<DataItem & { uid: string }>({
-	uid: { type: String, required: true },
-	ciphertext: { type: String, required: true },
-	objectType: { type: String, required: true },
-});
-
-const keysSchema = new mongoose.Schema<UserKeys & { uid: string }>({
-	uid: { type: String, required: true },
-	dekMaterial: { type: String, required: true },
-	passSalt: { type: String, required: true },
-	oldDekMaterial: String,
-	oldPassSalt: String,
-});
-
-const userSchema = new mongoose.Schema<User>({
-	uid: { type: String, required: true },
-	currentAccountId: { type: String, required: true },
-	passwordHash: { type: String, required: true },
-	passwordSalt: { type: String, required: true },
-});
-
-export const AccountModel = mongoose.model("Account", dataItemSchema);
-export const AttachmentModel = mongoose.model("Attachment", dataItemSchema);
-export const KeysModel = mongoose.model("Keys", keysSchema);
-export const LocationModel = mongoose.model("Location", dataItemSchema);
-export const TagModel = mongoose.model("Tag", dataItemSchema);
-export const TransactionModel = mongoose.model("Transaction", dataItemSchema);
-export const UserModel = mongoose.model("User", userSchema);
 
 const documentRef = object({
 	collectionId: enums(allCollectionIds),

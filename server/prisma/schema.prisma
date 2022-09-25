@@ -1,0 +1,61 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  uid               String     @id @default(auto()) @map("_id") @db.ObjectId
+  currentAccountId  String
+  passwordHash      String
+  passwordSalt      String
+  mfaRecoverySeed   String?
+  requiredAddtlAuth MFA[]
+  totpSeed          String?
+  keys              UserKeys?
+  data              DataItem[]
+}
+
+model UserKeys {
+  user           User    @relation(fields: [userId], references: [uid])
+  userId         String  @id @default(auto()) @map("_id") @db.ObjectId
+  dekMaterial    String
+  passSalt       String
+  oldDekMaterial String?
+  oldPassSalt    String?
+}
+
+model DataItem {
+  id           String       @id @default(auto()) @map("_id") @db.ObjectId
+  collectionId CollectionID
+  userId       String       @db.ObjectId
+  user         User         @relation(fields: [userId], references: [uid])
+  ciphertext   String
+  objectType   String
+  cryption     Cryption     @default(v0)
+}
+
+enum CollectionID {
+  accounts
+  attachments
+  keys
+  locations
+  tags
+  transactions
+  users
+}
+
+enum Cryption {
+  v0
+  v1
+}
+
+enum MFA {
+  totp
+}
