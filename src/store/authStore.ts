@@ -2,11 +2,11 @@ import type { AttachmentSchema, DatabaseSchema } from "../model/DatabaseSchema.j
 import type { Attachment } from "../model/Attachment.js";
 import type { HashStore, KeyMaterial, Unsubscribe, UserPreferences } from "../transport/index.js";
 import type { User } from "../transport/auth.js";
-import { AccountableError } from "../transport/errors/index.js";
+import { AccountableError, NetworkError } from "../transport/errors/index.js";
 import { attachment as newAttachment } from "../model/Attachment.js";
 import { BlobReader, Data64URIWriter, TextReader, ZipWriter } from "@zip.js/zip.js";
 import { bootstrap, updateUserStats } from "./uiStore.js";
-import { get, writable } from "svelte/store";
+import { derived, get, writable } from "svelte/store";
 import { t } from "../i18n.js";
 import { v4 as uuid } from "uuid";
 import {
@@ -32,18 +32,24 @@ import {
 import {
 	createUserWithAccountIdAndPassword,
 	deleteUser,
+	enrollTotp,
 	refreshSession,
 	signInWithAccountIdAndPassword,
 	signOut,
+	unenrollTotp as _unenrollTotp,
 	updateAccountId,
 	updatePassword as _updatePassword,
+	verifySessionWithTOTP,
 } from "../transport/auth.js";
+
+// TODO: Should probably intercept NetworkError in here, or perhaps closer to the REST calls
 
 type LoginProcessState = "AUTHENTICATING" | "GENERATING_KEYS" | "FETCHING_KEYS" | "DERIVING_PKEY";
 
 export const isNewLogin = writable(false);
-export const accountId = writable<string | null>(null);
-export const uid = writable<string | null>(null);
+export const currentUser = writable<User | null>(null);
+export const accountId = derived(currentUser, u => u?.accountId ?? null);
+export const uid = derived(currentUser, u => u?.uid ?? null);
 export const pKey = writable<HashStore | null>(null);
 export const loginProcessState = writable<LoginProcessState | null>(null);
 export const preferences = writable(defaultPrefs());
@@ -59,8 +65,7 @@ export function clearAuthCache(): void {
 	get(pKey)?.destroy();
 	pKey.set(null);
 	loginProcessState.set(null);
-	uid.set(null);
-	accountId.set(null);
+	currentUser.set(null);
 	isNewLogin.set(false);
 	preferences.set(defaultPrefs());
 	console.debug("authStore: cache cleared");
@@ -75,8 +80,7 @@ export function lockVault(): void {
 }
 
 export function onSignedIn(user: User): void {
-	accountId.set(user.accountId);
-	uid.set(user.uid);
+	currentUser.set(user);
 
 	const watcher = get(userPrefsWatcher);
 	if (watcher) {
@@ -126,7 +130,10 @@ export async function fetchSession(): Promise<void> {
 		await updateUserStats();
 		onSignedIn(user);
 	} catch (error) {
-		console.error(error);
+		// ignore "missing-token" errors, those are normal when we don't have a session yet
+		if (!(error instanceof NetworkError) || error.code !== "missing-token") {
+			console.error(error);
+		}
 	} finally {
 		// In any event, error or not:
 		loginProcessState.set(null);
@@ -142,6 +149,19 @@ export async function unlockVault(password: string): Promise<void> {
 	// TODO: Instead of re-authing, download the ledger and attempt a decrypt with the given password. If fail, throw. If succeed, continue.
 }
 
+async function finalizeLogin(password: string, user: User): Promise<void> {
+	await updateUserStats();
+
+	// Get the salt and dek material from server
+	loginProcessState.set("FETCHING_KEYS");
+	const material = await getDekMaterial();
+
+	// Derive a pKey from the password, and remember it
+	loginProcessState.set("DERIVING_PKEY");
+	pKey.set(await derivePKey(password, material.passSalt));
+	onSignedIn(user);
+}
+
 export async function login(accountId: string, password: string): Promise<void> {
 	try {
 		loginProcessState.set("AUTHENTICATING");
@@ -152,23 +172,73 @@ export async function login(accountId: string, password: string): Promise<void> 
 			accountId,
 			await hashed(password) // FIXME: Should use OPAQUE or SRP instead
 		);
-		await updateUserStats();
-
-		// Get the salt and dek material from server
-		loginProcessState.set("FETCHING_KEYS");
-		const material = await getDekMaterial();
-
-		// Derive a pKey from the password, and remember it
-		loginProcessState.set("DERIVING_PKEY");
-		pKey.set(await derivePKey(password, material.passSalt));
-		onSignedIn(user);
+		if (user.mfa.includes("totp")) throw new AccountableError("auth/unauthenticated");
+		await finalizeLogin(password, user);
 	} finally {
 		// In any event, error or not:
 		loginProcessState.set(null);
 	}
 }
 
-export async function getDekMaterial(this: void): Promise<KeyMaterial> {
+/**
+ * Verifies the given TOTP token. Returns the user's recovery token if
+ * they have not yet seen it.
+ */
+export async function loginWithTotp(password: string, token: string): Promise<void> {
+	try {
+		loginProcessState.set("AUTHENTICATING");
+		const [, { user }] = await verifySessionWithTOTP(auth, token);
+		await finalizeLogin(password, user);
+	} finally {
+		loginProcessState.set(null);
+	}
+}
+
+/**
+ * Requests a new TOTP secret from the Accountable server. If the user
+ * has not already confirmed a TOTP enrollment, then this function
+ * resolves with the user's secret. Present this secret to the user,
+ * perhaps as a QR code.
+ *
+ * @returns the user's new TOTP secret URI.
+ */
+export async function beginTotpEnrollment(): Promise<URL> {
+	const rawSecret = await enrollTotp(auth);
+	return new URL(rawSecret); // the server should have sent a valid URI
+}
+
+/**
+ * Verifies the given time-based token, and returns the user's recovery token.
+ *
+ * @param token The current time-based token.
+ * @throws an error if the user has already seen their recovery token
+ * @returns the user's recovery token.
+ */
+export async function confirmTotpEnrollment(token: string): Promise<string> {
+	const [recoveryToken] = await verifySessionWithTOTP(auth, token);
+	if (recoveryToken === null) throw new Error("You've already verified your enrollment"); // TODO: i18n
+	await fetchSession();
+
+	return recoveryToken;
+}
+
+/**
+ * Disables the user's TOTP requirement, and deletes the server's
+ * stored TOTP secret.
+ *
+ * @param password The user's password.
+ * @param token The current time-based token.
+ */
+export async function unenrollTotp(password: string, token: string): Promise<void> {
+	await _unenrollTotp(auth, await hashed(password), token);
+	await fetchSession();
+}
+
+/**
+ * Throws a {@link NetworkError} with code `"missing-mfa-credentials"` if
+ * the user still needs to verify their 2FA.
+ */
+export async function getDekMaterial(): Promise<KeyMaterial> {
 	const user = auth.currentUser;
 	if (!user) throw new Error(t("error.auth.unauthenticated"));
 
@@ -177,7 +247,7 @@ export async function getDekMaterial(this: void): Promise<KeyMaterial> {
 	return material;
 }
 
-export function createAccountId(this: void): string {
+export function createAccountId(): string {
 	return uuid().replace(/\W+/gu, "");
 }
 
@@ -251,7 +321,7 @@ export async function regenerateAccountId(currentPassword: string): Promise<void
 
 	const newAccountId = createAccountId();
 	await updateAccountId(user, newAccountId, await hashed(currentPassword));
-	accountId.set(newAccountId);
+	await fetchSession(); // updates the stored account ID
 	isNewLogin.set(true);
 }
 

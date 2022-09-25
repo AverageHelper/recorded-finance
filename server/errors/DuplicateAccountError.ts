@@ -1,13 +1,8 @@
-import { InternalError } from "./InternalError.js";
+import { ConflictError } from "./ConflictError.js";
 
-export class DuplicateAccountError extends InternalError {
+export class DuplicateAccountError extends ConflictError {
 	constructor() {
-		super({
-			status: 409,
-			code: "account-conflict",
-			message: "An account with that ID already exists",
-			harmless: true,
-		});
+		super("account-conflict", "An account with that ID already exists");
 		this.name = "DuplicateAccountError";
 	}
 }

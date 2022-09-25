@@ -1,11 +1,12 @@
 import "dotenv/config.js"; // SIDE-EFFECT: populates `process.env`
 
 export type EnvKey =
+	| "AUTH_SECRET" //
 	| "DB"
-	| "MONGO_CONNECTION_URL"
 	| "HOST"
 	| "MAX_BYTES"
 	| "MAX_USERS"
+	| "MONGO_CONNECTION_URL"
 	| "NODE_ENV";
 
 /**

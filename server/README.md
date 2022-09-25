@@ -30,12 +30,12 @@ v16.13.1
 ```sh
 # .env
 
-# Where your MongoDB instance can be accessed
-MONGO_CONNECTION_URL={your mongoose connection string}
-# required, example: "mongodb+srv://...mongodb.net/..."
+# A secret value used to sign JWTs and generate TOTP secrets. Keep this safe.
+# Consider generating this value with https://bitwarden.com/password-generator/
+AUTH_SECRET={some random string of characters}
+# required, example: "wAheb^8v^YV^s6YaeYVW&8tyLa*ce4"
 
-# Where your attachment data lives
-DB={path to your storage directory}
+DB={path to your storage directory} # For attachment data
 # required, example: "~/server/db"
 
 HOST={your frontend hostname, with protocol}
@@ -46,6 +46,10 @@ MAX_USERS={the limit to the number of users allowed to register new accounts}
 
 MAX_BYTES={the total number of bytes that Accountable attachments are permitted to occupy on the system}
 # optional, defaults to 20000000000 (20 GB)
+
+# Where your MongoDB instance can be accessed
+MONGO_CONNECTION_URL={your mongoose connection string}
+# required, example: "mongodb+srv://...mongodb.net/..."
 ```
 
 Run these commands to compile and run

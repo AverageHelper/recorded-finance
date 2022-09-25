@@ -7,11 +7,13 @@ import { UnreachableCaseError } from "../errors/index.js";
 import mongoose from "mongoose";
 import {
 	AccountModel,
+	assertSchema,
 	AttachmentModel,
 	KeysModel,
 	LocationModel,
 	TagModel,
 	TransactionModel,
+	user as userSchema,
 	UserModel,
 } from "./schemas.js";
 
@@ -136,11 +138,11 @@ export async function fetchDbDocs<T extends AnyDataItem>(
 	return (await Promise.all(refs.map(fetchDbDoc))) as NonEmptyArray<Snapshot<T>>;
 }
 
-export async function upsertUser(properties: User): Promise<void> {
+export async function upsertUser(properties: Required<User>): Promise<void> {
+	assertSchema(properties, userSchema); // assures nonempty fields
 	const uid = properties.uid;
-	if (!uid) throw new TypeError("uid property was empty");
 
-	await UserModel.findByIdAndUpdate(properties.uid, properties, { upsert: true });
+	await UserModel.findByIdAndUpdate(uid, properties, { upsert: true });
 }
 
 export async function destroyUser(uid: string): Promise<void> {

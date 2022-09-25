@@ -1,7 +1,6 @@
 import { env } from "../environment.js";
-import { promisify } from "node:util";
 import { simplifiedByteCount } from "../transformers/index.js";
-import fastFolderSize from "fast-folder-size";
+import getFolderSize from "get-folder-size";
 
 const defaultMaxUsers = 5;
 export const MAX_USERS = Number.parseInt(env("MAX_USERS") ?? `${defaultMaxUsers}`, 10);
@@ -19,4 +18,4 @@ if ((process.env.NODE_ENV as string) !== "test") {
 	);
 }
 
-export const folderSize = promisify(fastFolderSize);
+export const folderSize = getFolderSize.loose;

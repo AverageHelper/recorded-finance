@@ -82,12 +82,16 @@
 			"bad-gateway": "The CORS policy for this site does not allow access from the specified Origin.",
 			"bad-method": "That method is not allowed here. What are you trying to do?",
 			"expired-token": "You must sign in again in order to proceed",
+			"missing-mfa-credentials": "Você deve fornecer um código TOTP",
 			"missing-token": "Unauthorized",
 			"not-found": "No data found",
 			"not-implemented": "That feature is not implemented yet",
 			"not-owner": "Unauthorized",
 			"too-many-requests": "You are being throttled",
+			"totp-conflict": "Você já tem a autenticação TOTP habilitada",
+			"totp-secret-missing": "Você não tem um segredo TOTP para validar",
 			"wrong-credentials": "Incorrect account ID or passphrase",
+			"wrong-mfa-credentials": "Esse código é inválido",
 			"unknown": "Not sure what went wrong. Try again maybe?"
 		},
 		"sanity": {
@@ -355,6 +359,7 @@
 		"business-name": "ACME Co.",
 		"city-country": "Suaíli, Nova Guiné",
 		"income-transaction-title": "Dinheiro do banco",
+		"totp-code": "000000",
 		"transaction-note": "Isso é uma coisa"
 	},
 	"input": {
@@ -411,6 +416,7 @@
 	},
 	"login": {
 		"account-id": "ID da conta",
+		"totp": "token",
 		"checking-lock-state": "Verificando o estado de bloqueio...",
 		"current-account-id": "ID da conta atual",
 		"current-passphrase": "senha atual",

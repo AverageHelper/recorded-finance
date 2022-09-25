@@ -1,8 +1,36 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.12.0] - 2022-09-24
+### Added
+- Server endpoints to support TOTP 2FA. See our [API documentation](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/AverageHelper/accountable-svelte/HEAD/server/openapi.yaml) for details.
+
+### Changed
+- BREAKING: The server now requires the `AUTH_SECRET` environment variable to be set. This value should be randomly generated (perhaps using a [password generator](https://bitwarden.com/password-generator/)) and kept safe. This value lets the server sign JWTs and generate user secrets. See the [README](/README.md) for info.
+- The client now accepts "extra" values from server responses. This way, old clients can still talk to new server instances without much issue.
+
+### Fixed
+- The server now accepts user session tokens across reboots! Go ahead and restart your server all you want, clients should now take the change in stride!
+- The server no longer sends the user's password hash in their JWT. That was silly to do. Not sure why we did that. We don't do that anymore.
+
+## [0.11.3] - 2022-09-09
+### Security
+- Removed `git-diff`. They're vulnerable to shell injection. I've seen this myself in another project, and [has been observed by others](https://github.com/danday74/git-diff/issues/6).
+
+## [0.11.2] - 2022-09-09
+### Added
+- Automated our release process and changelog handling. This changelog entry is a test that I only need to add an entry here for a release to be automatically deployed. The [Releases](https://github.com/AverageHelper/accountable-svelte/releases) view should automatically see this entry.
+
+### Changed
+- Updated some CI/CD analysis tools.
+
+## [0.11.1] - 2022-09-07
+### Security
+- Addressed [CWE-20](https://cwe.mitre.org/data/definitions/20.html): The client now checks that the origin incoming server messages through the WebSocket channel match the expected origin.
 
 ## [0.11.0] - 2022-09-01
 ### Changed
@@ -13,9 +41,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The server now uses [Superstruct](https://github.com/ianstormtaylor/superstruct) (instead of Joi) for message validation. This helps to keep our front-end and back-end paradigms consistent, and keeps our subdependencies down (since Superstruct has none). But mostly, I did this because Superstruct plays better with Rollup than Joi does. :P
 
 ## [0.10.2] - 2022-08-13
-### Fixed
-- Fixed the "Add a Transaction" button adding erroneously to the navigation stack, which incorrectly required the user to press Back more times the more transactions they created in order to return to the Accounts list.
-
 ### Added
 - UI to manually select a preferred language.
 - Some Brazilian Portuguese translations.
@@ -27,6 +52,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The hamburger menu closes when the user selects a language.
 - Improved the cookie disclaimer.
 
+### Fixed
+- Fixed the "Add a Transaction" button adding erroneously to the navigation stack, which incorrectly required the user to press Back more times the more transactions they created in order to return to the Accounts list.
+
 ## [0.10.1] - 2022-08-05
 ### Fixed
 - Fixed annoying flashing text when entering the login screen.
@@ -34,9 +62,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.10.0] - 2022-08-05
 ### Changed
 - Ported front-end code from Vue to Svelte. It's [pretty cool](https://svelte.dev/).
-	- I want to experiment with Accountable under different front-end paradigms. So far, I've used [Flutter](https://github.com/AverageHelper/accountable-flutter), [Vue](https://github.com/AverageHelper/accountable-vue), and now [Svelte](https://github.com/AverageHelper/accountable-svelte). This version is the Svelte port.
-	- Svelte differs from Vue in that Svelte is a compiler, not a runtime. The bundled output contains only code needed for each component to work. There's no virtual DOM, but there's also no helpful front-end safety net.
-	- Eventually, I plan to separate the back-end code from the front-end, so I'm not duplicating that part across several front-end repositories.
+  - I want to experiment with Accountable under different front-end paradigms. So far, I've used [Flutter](https://github.com/AverageHelper/accountable-flutter), [Vue](https://github.com/AverageHelper/accountable-vue), and now [Svelte](https://github.com/AverageHelper/accountable-svelte). This version is the Svelte port.
+  - Svelte differs from Vue in that Svelte is a compiler, not a runtime. The bundled output contains only code needed for each component to work. There's no virtual DOM, but there's also no helpful front-end safety net.
+  - Eventually, I plan to separate the back-end code from the front-end, so I'm not duplicating that part across several front-end repositories.
 
 ## [0.9.1] - 2022-07-12
 ### Fixed
@@ -165,10 +193,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **Client:** Fixed weirdness when entering a negative amount into `CurrencyInput`
-
-Known issues:
-- Light mode doesn't exist anymore. I'll turn it back on when I've had time to design it better
-- The accounts list disappears with an error, something to do with server connection. I'm not sure why this happens, or why the Reload button doesn't work.
+- Known issues:
+  - Light mode doesn't exist anymore. I'll turn it back on when I've had time to design it better
+  - The accounts list disappears with an error, something to do with server connection. I'm not sure why this happens, or why the Reload button doesn't work.
 
 ## [0.5.0] - 2022-02-18
 ### Added
@@ -213,9 +240,9 @@ Known issues:
 
 ## [0.3.4] - 2022-01-31
 ### Changed
-Just some re-working to make our vendor bundle fit within the recommended 500 KiB:
-- Replace [Joi](https://github.com/sideway/joi) with [Superstruct](https://www.npmjs.com/package/superstruct) on the client
-- Tree-shake away Bootstrap's JavaScript bundle. Use Vue's own state mechanics instead.
+- Just some re-working to make our vendor bundle fit within the recommended 500 KiB:
+  - Replace [Joi](https://github.com/sideway/joi) with [Superstruct](https://www.npmjs.com/package/superstruct) on the client
+  - Tree-shake away Bootstrap's JavaScript bundle. Use Vue's own state mechanics instead.
 
 ## [0.3.3] - 2022-01-31
 ### Added
@@ -245,17 +272,20 @@ Just some re-working to make our vendor bundle fit within the recommended 500 Ki
 ### Added
 - Initial prerelease
 
-## [Initial commit] - 2021-10-01
+## [0.0.0] - 2021-10-01
 ### Added
 - Initial commit
 
-[Unreleased]: https://github.com/AverageHelper/accountable-svelte/compare/v0.11.0...HEAD
+[0.12.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.11.3...v0.12.0
+[0.11.3]: https://github.com/AverageHelper/accountable-svelte/compare/v0.11.2...v0.11.3
+[0.11.2]: https://github.com/AverageHelper/accountable-svelte/compare/v0.11.1...v0.11.2
+[0.11.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.11.0...v0.11.1
 [0.11.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.10.2...v0.11.0
 [0.10.2]: https://github.com/AverageHelper/accountable-svelte/compare/v0.10.1...v0.10.2
 [0.10.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.10.0...v0.10.1
 [0.10.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.9.1...v0.10.0
-<!-- [0.9.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.9.0...v0.9.1 doesn't exist -->
-[0.9.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.8.1...v0.9.1
+[0.9.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.9.0...v0.9.1
+[0.9.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.8.1...v0.9.0
 [0.8.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.6.4...v0.7.0
@@ -282,5 +312,5 @@ Just some re-working to make our vendor bundle fit within the recommended 500 Ki
 [0.3.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/AverageHelper/accountable-svelte/releases/tag/v0.1.0
-[Initial commit]: https://github.com/AverageHelper/accountable-svelte/commit/959ea3d235490742897b4bae8f26b36e957a0eeb
+[0.1.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.0.0...v0.1.0
+[0.0.0]: https://github.com/AverageHelper/accountable-svelte/releases/tag/v0.0.0

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { _ } from "../../i18n";
+	import { AccountableError, NetworkError } from "../../transport/errors";
 	import { accountsPath } from "../../router";
 	import { onMount } from "svelte";
 	import { useNavigate } from "svelte-navigator";
@@ -13,6 +14,7 @@
 		bootstrapError,
 		handleError,
 		loginProcessState,
+		loginWithTotp,
 		unlockVault,
 	} from "../../store";
 
@@ -20,6 +22,8 @@
 
 	$: accountId = $_accountId ?? "";
 	let password = "";
+	let token = "";
+	let needsTotp = false;
 	let isLoading = false;
 
 	let passwordField: TextField | undefined;
@@ -33,16 +37,33 @@
 		password = event.detail;
 	}
 
+	function onTotpInput(event: CustomEvent<string>) {
+		token = event.detail;
+	}
+
 	async function submit() {
 		try {
 			isLoading = true;
 
 			if (!accountId || !password) throw new Error($_("error.form.missing-required-fields"));
 
-			await unlockVault(password);
+			if (needsTotp) {
+				await loginWithTotp(password, token);
+			} else {
+				await unlockVault(password);
+			}
 
 			navigate(accountsPath(), { replace: true });
 		} catch (error) {
+			if (
+				(error instanceof NetworkError && error.code === "missing-mfa-credentials") ||
+				(error instanceof NetworkError && error.code === "missing-token") ||
+				(error instanceof AccountableError && error.code === "auth/unauthenticated")
+			) {
+				// Switch to TOTP mode
+				needsTotp = true;
+				return;
+			}
 			handleError(error);
 		} finally {
 			isLoading = false;
@@ -60,25 +81,38 @@
 		<form on:submit|preventDefault={submit}>
 			<p>{$_("locked.heading")}</p>
 
-			<TextField
-				value={accountId}
-				disabled={true}
-				label={$_("login.account-id")}
-				autocomplete="username"
-				showsRequired={false}
-				required
-			/>
-			<TextField
-				bind:this={passwordField}
-				value={password}
-				on:input={onPasswordInput}
-				type="password"
-				label={$_("login.passphrase")}
-				placeholder="********"
-				autocomplete="current-password"
-				showsRequired={false}
-				required
-			/>
+			{#if needsTotp}
+				<TextField
+					value={token}
+					on:input={onTotpInput}
+					disabled={isLoading}
+					label={$_("login.totp")}
+					placeholder={$_("example.totp-code")}
+					autocomplete="one-time-code"
+					showsRequired={false}
+					required
+				/>
+			{:else}
+				<TextField
+					value={accountId}
+					disabled={true}
+					label={$_("login.account-id")}
+					autocomplete="username"
+					showsRequired={false}
+					required
+				/>
+				<TextField
+					bind:this={passwordField}
+					value={password}
+					on:input={onPasswordInput}
+					type="password"
+					label={$_("login.passphrase")}
+					placeholder="********"
+					autocomplete="current-password"
+					showsRequired={false}
+					required
+				/>
+			{/if}
 			<ActionButton type="submit" kind="bordered-primary" disabled={isLoading}
 				>{$_("locked.unlock")}</ActionButton
 			>

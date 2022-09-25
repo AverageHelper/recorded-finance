@@ -10,8 +10,7 @@ import { deleteItem, ensure, getFileContents, moveFile, tmpDir } from "./databas
 import { dirname, resolve as resolvePath, sep as pathSeparator, join } from "node:path";
 import { array, enums, nonempty, nullable, object, optional, string, union } from "superstruct";
 import { handleErrors } from "./handleErrors.js";
-import { maxSpacePerUser } from "./auth/limits.js";
-import { ownersOnly, requireAuth } from "./auth/index.js";
+import { maxSpacePerUser, ownersOnly, requireAuth } from "./auth/index.js";
 import { requireEnv } from "./environment.js";
 import { respondData, respondError, respondSuccess } from "./responses.js";
 import { Router } from "express";
@@ -283,7 +282,7 @@ interface FileData {
 }
 
 // Function so we defer creation of the router until after we've set up websocket support
-export function db(this: void /* Inject filesystem APIs here? */): Router {
+export function db(/* Inject filesystem APIs here? */): Router {
 	return Router()
 		.ws("/users/:uid/:collectionId", webSocket)
 		.ws("/users/:uid/:collectionId/:documentId", webSocket)
@@ -388,14 +387,14 @@ export function db(this: void /* Inject filesystem APIs here? */): Router {
 				respondData(res, data);
 			})
 		)
-		.post<Params>(
+		.post(
 			"/users/:uid",
-			asyncWrapper(async (req, res) => {
+			asyncWrapper<Params>(async (req, res) => {
 				const uid = (req.params.uid ?? "") || null;
 				if (uid === null) throw new NotFoundError();
 
 				// ** Batched writes
-				const providedData = req.body as unknown;
+				const providedData = req.body;
 				if (!isArrayOf(providedData, isDocumentWriteBatch)) throw new BadRequestError();
 
 				// Ignore an empty batch

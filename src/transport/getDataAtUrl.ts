@@ -41,7 +41,7 @@ export function dataUriToBlob(dataUri: string): Blob {
 	const ia = new Uint8Array(ab);
 
 	// set the bytes of the buffer to the correct values
-	for (let i = 0; i < byteString.length; i++) {
+	for (let i = 0; i < byteString.length; i += 1) {
 		ia[i] = byteString.charCodeAt(i);
 	}
 

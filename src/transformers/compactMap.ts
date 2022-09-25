@@ -7,7 +7,7 @@ export function compactMap<T, U>(
 	array.forEach((value, index, array) => {
 		const newValue = callbackfn(value, index, array);
 		if (newValue !== null && newValue !== undefined) {
-			newArray.push(newValue as NonNullable<U>);
+			newArray.push(newValue);
 		}
 	});
 

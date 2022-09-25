@@ -16,7 +16,7 @@ export const asyncWrapper = <P = ParamsDictionary, ResBody = unknown, ReqBody = 
 	fn: AsyncRequestHandler<P, ResBody, ReqBody>
 ): RequestHandler<P, ResBody, ReqBody> => {
 	// Don't sneeze on this, it works
-	return function asyncUtilWrap(this: void, req, res, next): void {
+	return function asyncUtilWrap(req, res, next): void {
 		const fnReturn = fn(req, res, next);
 		// eslint-disable-next-line promise/prefer-await-to-then, promise/no-callback-in-promise
 		Promise.resolve(fnReturn).catch(next);

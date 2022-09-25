@@ -1,8 +1,6 @@
-/* eslint-disable deprecation/deprecation */
 import type { AccountableDB, DocumentReference } from "./db";
 import type { AttachmentRecordPackage } from "./attachments";
 import { AccountableError } from "./errors/index.js";
-import { previousStats } from "./db";
 import { deleteAt, downloadFrom, storageFile, uploadTo } from "./api-types/index.js";
 
 /**
@@ -80,8 +78,11 @@ export async function uploadString(ref: StorageReference, value: string): Promis
 	const itemPath = storageFile(uid, ref.docRef.id, `${ref.name}.json`);
 	const url = new URL(itemPath, ref.db.url);
 	const { usedSpace, totalSpace } = await uploadTo(url, value);
-	previousStats.usedSpace = usedSpace ?? null;
-	previousStats.totalSpace = totalSpace ?? null;
+	if (usedSpace !== undefined && totalSpace !== undefined) {
+		ref.db.setUserStats({ usedSpace, totalSpace });
+	} else {
+		ref.db.setUserStats(null);
+	}
 }
 
 /**
@@ -97,6 +98,9 @@ export async function deleteObject(ref: StorageReference): Promise<void> {
 	const itemPath = storageFile(uid, ref.docRef.id, `${ref.name}.json`);
 	const url = new URL(itemPath, ref.db.url);
 	const { usedSpace, totalSpace } = await deleteAt(url);
-	previousStats.usedSpace = usedSpace ?? null;
-	previousStats.totalSpace = totalSpace ?? null;
+	if (usedSpace !== undefined && totalSpace !== undefined) {
+		ref.db.setUserStats({ usedSpace, totalSpace });
+	} else {
+		ref.db.setUserStats(null);
+	}
 }
