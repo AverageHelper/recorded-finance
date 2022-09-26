@@ -174,7 +174,7 @@ export type DocumentData<T> = {
 	[K in keyof T]: Primitive;
 };
 
-const dataItem = object({
+export const dataItem = object({
 	ciphertext: nonempty(string()),
 	objectType: nonempty(string()),
 	cryption: optional(enums(["v0", "v1"] as const)),
@@ -185,7 +185,7 @@ export function isDataItem(tbd: unknown): tbd is DataItem {
 	return isValidForSchema(tbd, dataItem);
 }
 
-const userKeys = object({
+export const userKeys = object({
 	dekMaterial: nonempty(string()),
 	passSalt: nonempty(string()),
 	oldDekMaterial: optional(nonempty(string())),

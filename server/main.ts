@@ -5,6 +5,7 @@ import { db } from "./db.js";
 import { env } from "./environment.js";
 import { handleErrors } from "./handleErrors.js";
 import { lol } from "./routes/v0/index.js";
+import { migrateLegacyData } from "./database/io.js";
 import { NotFoundError } from "./errors/NotFoundError.js";
 import { ping } from "./routes/v0/ping.js";
 import { respondError } from "./responses.js";
@@ -17,6 +18,8 @@ import expressWs from "express-ws";
 import helmet from "helmet";
 
 const PORT = 40850;
+
+await migrateLegacyData();
 
 export const app = express()
 	.use(helmet()) // also disables 'x-powered-by' header
