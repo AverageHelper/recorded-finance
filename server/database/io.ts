@@ -299,7 +299,7 @@ export async function upsertDbDocs(updates: NonEmptyArray<DocUpdate>): Promise<v
 					passwordSalt: data.passwordSalt,
 					mfaRecoverySeed: data.mfaRecoverySeed ?? null,
 					totpSeed: data.totpSeed ?? null,
-					requiredAddtlAuth: data.requiredAddtlAuth?.sort() ?? [],
+					requiredAddtlAuth: Array.from(new Set(data.requiredAddtlAuth?.sort(sortStrings) ?? [])),
 				};
 				return dataSource.user.upsert({
 					where: { uid: docId },

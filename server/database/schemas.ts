@@ -143,7 +143,8 @@ export function sortStrings(a: string, b: string): number {
  */
 function requiredAddtlAuth(primitive: Prisma.JsonValue): Array<MFAOption> {
 	if (!Array.isArray(primitive)) return [];
-	return primitive.filter(isMfaOption).sort(sortStrings);
+	const result = primitive.filter(isMfaOption).sort(sortStrings);
+	return Array.from(new Set(result));
 }
 
 interface RawRequiredAddtlAuth {
