@@ -39,13 +39,12 @@ export async function migrateLegacyData(): Promise<void> {
 
 	const identity = <T>(t: T): T => t;
 
-	async function userIndexDb(): Promise<UserIndexDb | null>;
 	async function userIndexDb<T>(
 		cb: (db: UserIndexDb | null, write: (n: UserIndexDb | null) => void) => T
 	): Promise<T>;
 
 	async function userIndexDb(
-		cb: (db: UserIndexDb | null, write: (n: UserIndexDb | null) => void) => unknown = identity
+		cb: (db: UserIndexDb | null, write: (n: UserIndexDb | null) => void) => unknown
 	): Promise<unknown> {
 		await ensure(DB_DIR);
 		const file = joinPath(DB_DIR, "users.json");
@@ -108,7 +107,7 @@ export async function migrateLegacyData(): Promise<void> {
 
 		if (ref.id === "users") {
 			// Special handling, fetch all users
-			const data: UserIndexDb | null = await userIndexDb();
+			const data: UserIndexDb | null = await userIndexDb(identity);
 			if (!data) return [];
 			collection = data;
 		} else {
@@ -231,6 +230,7 @@ interface UserStats {
 }
 
 export async function statsForUser(uid: string): Promise<UserStats> {
+	// TODO: How do we translate this to MySQL?
 	const folder = dbFolderForUser(uid);
 	const totalSpace = Math.ceil(maxSpacePerUser);
 	const usedSpace = Math.ceil((await folderSize(folder)) ?? totalSpace);
