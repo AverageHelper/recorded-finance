@@ -237,26 +237,26 @@ export async function upsertDbDocs(updates: NonEmptyArray<DocUpdate>): Promise<v
 	if (!updates.every(u => u.ref.uid === uid))
 		throw new TypeError(`Not every UID matches the first: ${uid}`);
 
-	await Promise.all(
-		updates.map(async update => {
+	await dataSource.$transaction(
+		updates.map(update => {
 			const collectionId = update.ref.parent.id;
 			const docId = update.ref.id;
 			const userId = update.ref.uid;
 			if ("ciphertext" in update.data) {
+				// DataItem
 				if (!isDataItemKey(collectionId))
 					throw new TypeError(`Collection ID '${collectionId}' was found with DataItem data.`);
 				const data: DataItem = update.data;
-				await dataSource.dataItem.upsert({
+				const upsert = {
+					ciphertext: data.ciphertext,
+					objectType: data.objectType,
+					cryption: data.cryption,
+				};
+				return dataSource.dataItem.upsert({
 					where: { userId_collectionId_docId: { userId, collectionId, docId } },
-					update: {
-						ciphertext: data.ciphertext,
-						objectType: data.objectType,
-						cryption: data.cryption,
-					},
+					update: upsert,
 					create: {
-						ciphertext: data.ciphertext,
-						objectType: data.objectType,
-						cryption: data.cryption,
+						...upsert,
 						collectionId,
 						docId,
 						user: {
@@ -264,66 +264,49 @@ export async function upsertDbDocs(updates: NonEmptyArray<DocUpdate>): Promise<v
 						},
 					},
 				});
-				return;
 			} else if ("dekMaterial" in update.data) {
+				// Keys
 				const data: UserKeys = update.data;
-				await dataSource.userKeys.upsert({
+				const upsert = {
+					dekMaterial: data.dekMaterial,
+					passSalt: data.passSalt,
+					oldDekMaterial: data.oldDekMaterial,
+					oldPassSalt: data.oldPassSalt,
+				};
+				return dataSource.userKeys.upsert({
 					where: { userId: docId },
-					update: {
-						dekMaterial: data.dekMaterial,
-						passSalt: data.passSalt,
-						oldDekMaterial: data.oldDekMaterial,
-						oldPassSalt: data.oldPassSalt,
-					},
+					update: upsert,
 					create: {
-						dekMaterial: data.dekMaterial,
-						passSalt: data.passSalt,
-						oldDekMaterial: data.oldDekMaterial,
-						oldPassSalt: data.oldPassSalt,
+						...upsert,
 						user: {
 							connect: { uid: userId },
 						},
 					},
 				});
-				return;
 			} else if ("uid" in update.data) {
+				// User
 				const data: User = update.data;
-				await dataSource.user.upsert({
+				const upsert = {
+					uid: data.uid,
+					currentAccountId: data.currentAccountId,
+					passwordHash: data.passwordHash,
+					passwordSalt: data.passwordSalt,
+					mfaRecoverySeed: data.mfaRecoverySeed,
+					totpSeed: data.totpSeed,
+					requiredAddtlAuth: data.requiredAddtlAuth?.[0]
+						? {
+								connectOrCreate: {
+									where: { type: data.requiredAddtlAuth[0] },
+									create: { type: data.requiredAddtlAuth[0] },
+								},
+						  }
+						: undefined,
+				};
+				return dataSource.user.upsert({
 					where: { uid: docId },
-					update: {
-						uid: data.uid,
-						currentAccountId: data.currentAccountId,
-						passwordHash: data.passwordHash,
-						passwordSalt: data.passwordSalt,
-						mfaRecoverySeed: data.mfaRecoverySeed,
-						totpSeed: data.totpSeed,
-						requiredAddtlAuth: data.requiredAddtlAuth?.[0]
-							? {
-									connectOrCreate: {
-										where: { type: data.requiredAddtlAuth[0] },
-										create: { type: data.requiredAddtlAuth[0] },
-									},
-							  }
-							: undefined,
-					},
-					create: {
-						uid: data.uid,
-						currentAccountId: data.currentAccountId,
-						passwordHash: data.passwordHash,
-						passwordSalt: data.passwordSalt,
-						mfaRecoverySeed: data.mfaRecoverySeed,
-						totpSeed: data.totpSeed,
-						requiredAddtlAuth: data.requiredAddtlAuth?.[0]
-							? {
-									connectOrCreate: {
-										where: { type: data.requiredAddtlAuth[0] },
-										create: { type: data.requiredAddtlAuth[0] },
-									},
-							  }
-							: undefined,
-					},
+					update: upsert,
+					create: upsert,
 				});
-				return;
 			}
 
 			throw new UnreachableCaseError(update.data);
@@ -363,8 +346,8 @@ export async function deleteDbDocs(refs: NonEmptyArray<DocumentReference>): Prom
 	}
 
 	// Run deletes
-	// TODO: Use deleteMany instead
 	await dataSource.$transaction([
+		// Not sure about deleteMany here, since we need each doc to match each ref
 		...dataItemRefs.map(ref => {
 			const collectionId = ref.parent.id;
 			// We should have checked this when we grouped stuff, but ¯\_(ツ)_/¯
@@ -382,8 +365,10 @@ export async function deleteDbDocs(refs: NonEmptyArray<DocumentReference>): Prom
 				},
 			});
 		}),
-		...keyRefs.map(ref => dataSource.userKeys.delete({ where: { userId: ref.id } })),
-		...userRefs.map(ref => dataSource.user.delete({ where: { uid: ref.id } })),
+		dataSource.userKeys.deleteMany({ where: { userId: { in: keyRefs.map(r => r.id) } } }),
+		// ...keyRefs.map(ref => dataSource.userKeys.delete({ where: { userId: ref.id } })),
+		dataSource.user.deleteMany({ where: { uid: { in: userRefs.map(r => r.id) } } }),
+		// ...userRefs.map(ref => dataSource.user.delete({ where: { uid: ref.id } })),
 	]);
 }
 
