@@ -46,6 +46,7 @@ async function userWithAccountId(accountId: string): Promise<User | null> {
  * not to have been used before.
  */
 function newDocumentId(): string {
+	// TODO: Use the database's own UUID or CUID implementation
 	return uuid().replace(/-/gu, ""); // remove hyphens
 }
 

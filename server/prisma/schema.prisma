@@ -17,16 +17,11 @@ model User {
   currentAccountId  String
   passwordHash      String
   passwordSalt      String
-  requiredAddtlAuth MFA[]
+  requiredAddtlAuth Json /// Array of MFAValidation strings
   mfaRecoverySeed   String?
   totpSeed          String?
   keys              UserKeys?
   data              DataItem[]
-}
-
-model MFA {
-  type  MFAType @id
-  users User[]
 }
 
 model UserKeys {
@@ -64,8 +59,4 @@ enum CollectionID {
 enum Cryption {
   v0
   v1
-}
-
-enum MFAType {
-  totp
 }

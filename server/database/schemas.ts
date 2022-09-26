@@ -1,5 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type { Infer, Struct, StructError } from "superstruct";
+import type { Prisma } from "@prisma/client";
 import { UnreachableCaseError } from "../errors/UnreachableCaseError.js";
 import {
 	array,
@@ -56,6 +57,10 @@ export function assertSchema<T>(tbd: unknown, schema: Struct<T>): asserts tbd is
 const mfaOptions = ["totp"] as const;
 
 export type MFAOption = typeof mfaOptions[number];
+
+export function isMfaOption(tbd: unknown): tbd is MFAOption {
+	return is(tbd, enums(mfaOptions));
+}
 
 export const jwtPayload = type({
 	/** The ID of the signed-in user */
@@ -125,6 +130,39 @@ export const user = object({
 	totpSeed: optional(nullable(nonempty(string()))),
 });
 export type User = Infer<typeof user>;
+
+export function sortStrings(a: string, b: string): number {
+	if (a > b) return 1;
+	if (b > a) return -1;
+	return 0;
+}
+
+/**
+ * Returns the array if the given primitive is of the correct type.
+ * Returns an empty array otherwise.
+ */
+function requiredAddtlAuth(primitive: Prisma.JsonValue): Array<MFAOption> {
+	if (!Array.isArray(primitive)) return [];
+	return primitive.filter(isMfaOption).sort(sortStrings);
+}
+
+interface RawRequiredAddtlAuth {
+	requiredAddtlAuth: Prisma.JsonValue;
+}
+
+type WithRequiredAddtlAuth<T> = T & { requiredAddtlAuth: Array<MFAOption> };
+
+/**
+ * Computes a fully-typed `requiredAddtlAuth` property for the given `User`.
+ */
+export function computeRequiredAddtlAuth<User extends RawRequiredAddtlAuth>(
+	user: User
+): WithRequiredAddtlAuth<User> {
+	return {
+		...user,
+		requiredAddtlAuth: requiredAddtlAuth(user.requiredAddtlAuth),
+	};
+}
 
 export type Primitive = string | number | boolean | undefined | null;
 

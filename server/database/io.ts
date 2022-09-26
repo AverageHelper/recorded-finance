@@ -7,7 +7,13 @@ import type {
 	User,
 	UserKeys,
 } from "./schemas.js";
-import { assertSchema, isDataItemKey, user as userSchema } from "./schemas.js";
+import {
+	assertSchema,
+	computeRequiredAddtlAuth,
+	isDataItemKey,
+	sortStrings,
+	user as userSchema,
+} from "./schemas.js";
 import { folderSize, maxSpacePerUser } from "../auth/limits.js";
 import { join as joinPath } from "node:path";
 import { PrismaClient } from "@prisma/client";
@@ -18,7 +24,7 @@ import { UnreachableCaseError } from "../errors/index.js";
 const dataSource = new PrismaClient();
 process.stdout.write("Connected to MongoDB\n");
 
-// Profile database accesses
+// Log database accesses
 dataSource.$use(async (params, next) => {
 	const before = Date.now();
 	const result: unknown = await next(params);
@@ -94,7 +100,7 @@ export async function fetchDbCollection(
 			}));
 		case "users":
 			// Special handling: fetch all users
-			return await dataSource.user.findMany();
+			return (await dataSource.user.findMany()).map(computeRequiredAddtlAuth);
 		default:
 			throw new UnreachableCaseError(ref.id);
 	}
@@ -102,16 +108,16 @@ export async function fetchDbCollection(
 
 export async function findUserWithProperties(query: Partial<User>): Promise<User | null> {
 	if (Object.keys(query).length === 0) return null; // Fail gracefully for an empty query
-	return await dataSource.user.findFirst({
+	const first = await dataSource.user.findFirst({
 		where: {
 			...query,
-			requiredAddtlAuth: {
-				every: {
-					type: query.requiredAddtlAuth?.includes("totp") === true ? "totp" : undefined,
-				},
-			},
+			requiredAddtlAuth: query.requiredAddtlAuth
+				? { equals: query.requiredAddtlAuth.sort(sortStrings) }
+				: undefined,
 		},
 	});
+	if (first === null) return first;
+	return computeRequiredAddtlAuth(first);
 }
 
 /** A view of database data. */
@@ -165,12 +171,12 @@ export async function fetchDbDoc(ref: DocumentReference): Promise<Snapshot> {
 			return { ref, data };
 		}
 		case "users": {
-			const result = await dataSource.user.findUnique({
+			const rawResult = await dataSource.user.findUnique({
 				where: { uid: docId },
-				include: { requiredAddtlAuth: true },
 			});
-			if (result === null) return { ref, data: null };
+			if (rawResult === null) return { ref, data: null };
 
+			const result = computeRequiredAddtlAuth(rawResult);
 			const data: Identified<User> = {
 				_id: result.uid,
 				uid: result.uid,
@@ -178,7 +184,7 @@ export async function fetchDbDoc(ref: DocumentReference): Promise<Snapshot> {
 				mfaRecoverySeed: result.mfaRecoverySeed,
 				passwordHash: result.passwordHash,
 				passwordSalt: result.passwordSalt,
-				requiredAddtlAuth: result.requiredAddtlAuth.map(a => a.type),
+				requiredAddtlAuth: result.requiredAddtlAuth,
 				totpSeed: result.totpSeed,
 			};
 			return { ref, data };
@@ -250,7 +256,7 @@ export async function upsertDbDocs(updates: NonEmptyArray<DocUpdate>): Promise<v
 				const upsert = {
 					ciphertext: data.ciphertext,
 					objectType: data.objectType,
-					cryption: data.cryption,
+					cryption: data.cryption ?? "v0",
 				};
 				return dataSource.dataItem.upsert({
 					where: { userId_collectionId_docId: { userId, collectionId, docId } },
@@ -270,8 +276,8 @@ export async function upsertDbDocs(updates: NonEmptyArray<DocUpdate>): Promise<v
 				const upsert = {
 					dekMaterial: data.dekMaterial,
 					passSalt: data.passSalt,
-					oldDekMaterial: data.oldDekMaterial,
-					oldPassSalt: data.oldPassSalt,
+					oldDekMaterial: data.oldDekMaterial ?? null,
+					oldPassSalt: data.oldPassSalt ?? null,
 				};
 				return dataSource.userKeys.upsert({
 					where: { userId: docId },
@@ -291,16 +297,9 @@ export async function upsertDbDocs(updates: NonEmptyArray<DocUpdate>): Promise<v
 					currentAccountId: data.currentAccountId,
 					passwordHash: data.passwordHash,
 					passwordSalt: data.passwordSalt,
-					mfaRecoverySeed: data.mfaRecoverySeed,
-					totpSeed: data.totpSeed,
-					requiredAddtlAuth: data.requiredAddtlAuth?.[0]
-						? {
-								connectOrCreate: {
-									where: { type: data.requiredAddtlAuth[0] },
-									create: { type: data.requiredAddtlAuth[0] },
-								},
-						  }
-						: undefined,
+					mfaRecoverySeed: data.mfaRecoverySeed ?? null,
+					totpSeed: data.totpSeed ?? null,
+					requiredAddtlAuth: data.requiredAddtlAuth?.sort() ?? [],
 				};
 				return dataSource.user.upsert({
 					where: { uid: docId },
