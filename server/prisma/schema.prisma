@@ -12,6 +12,10 @@ datasource db {
   referentialIntegrity = "prisma"
 }
 
+// String by default is @db.VarChar(191), limited to 191 chars
+// Overriding to @db.Text increases the limit to 65,535 chars (~64 KiB)
+// Overriding to @db.MediumText increases the limit to 16,777,215 chars (~16 MiB)
+
 model User {
   uid               String     @id
   currentAccountId  String
@@ -27,9 +31,9 @@ model User {
 model UserKeys {
   userId         String  @id
   user           User    @relation(fields: [userId], references: [uid])
-  dekMaterial    String
+  dekMaterial    String  @db.Text
   passSalt       String
-  oldDekMaterial String?
+  oldDekMaterial String? @db.Text
   oldPassSalt    String?
 
   @@index([userId])
@@ -39,7 +43,7 @@ model DataItem {
   userId       String
   collectionId CollectionID
   docId        String
-  ciphertext   String
+  ciphertext   String       @db.Text
   objectType   String
   cryption     Cryption     @default(v0)
   user         User         @relation(fields: [userId], references: [uid])

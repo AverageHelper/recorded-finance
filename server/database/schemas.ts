@@ -8,10 +8,10 @@ import {
 	intersection,
 	is,
 	literal,
-	nonempty,
 	nullable,
 	object,
 	optional,
+	size,
 	string,
 	type,
 	union,
@@ -62,9 +62,17 @@ export function isMfaOption(tbd: unknown): tbd is MFAOption {
 	return is(tbd, enums(mfaOptions));
 }
 
+const NORMAL_MAX_CHARS = 191; // Prisma's `String` default is VARCHAR(191)
+const LARGE_MAX_CHARS = 65535; // When we override to TEXT
+// const HUGE_MAX_CHARS = 16777215; // When we override to MEDIUMTEXT
+
+export const nonemptyString = size(string(), 1, NORMAL_MAX_CHARS);
+export const nonemptyLargeString = size(string(), 1, LARGE_MAX_CHARS);
+// export const nonemptyHugeString = size(string(), 1, HUGE_MAX_CHARS);
+
 export const jwtPayload = type({
 	/** The ID of the signed-in user */
-	uid: nonempty(string()),
+	uid: nonemptyString,
 
 	/**
 	 * The MFA authentication methods the user used recently.
@@ -85,30 +93,30 @@ export const user = object({
 	 * The user's unique ID. This value never changes for the life
 	 * of the account.
 	 */
-	uid: nonempty(string()),
+	uid: nonemptyString,
 
 	/**
 	 * The user's account ID, used to identify the user at login.
 	 * The user may change this value at any time.
 	 */
-	currentAccountId: nonempty(string()),
+	currentAccountId: nonemptyString,
 
 	/**
 	 * The hash of the user's password.
 	 */
-	passwordHash: nonempty(string()),
+	passwordHash: nonemptyString,
 
 	/**
 	 * The salt with which the user's password was hashed.
 	 */
-	passwordSalt: nonempty(string()),
+	passwordSalt: nonemptyString,
 
 	/**
 	 * A value which is used to generate a special value that
 	 * will always be a valid TOTP code.
 	 * // TODO: Should we regenerate this every time it's used?
 	 */
-	mfaRecoverySeed: optional(nullable(nonempty(string()))),
+	mfaRecoverySeed: optional(nullable(nonemptyString)),
 
 	/**
 	 * Additional second-factor auth options that the user has enabled.
@@ -127,7 +135,7 @@ export const user = object({
 	 * on their account and they have not begun to set up TOTP as
 	 * their additional auth.
 	 */
-	totpSeed: optional(nullable(nonempty(string()))),
+	totpSeed: optional(nullable(nonemptyString)),
 });
 export type User = Infer<typeof user>;
 
@@ -175,8 +183,8 @@ export type DocumentData<T> = {
 };
 
 export const dataItem = object({
-	ciphertext: nonempty(string()),
-	objectType: nonempty(string()),
+	ciphertext: nonemptyLargeString,
+	objectType: nonemptyString,
 	cryption: optional(enums(["v0", "v1"] as const)),
 });
 export type DataItem = Infer<typeof dataItem>;
@@ -186,10 +194,10 @@ export function isDataItem(tbd: unknown): tbd is DataItem {
 }
 
 export const userKeys = object({
-	dekMaterial: nonempty(string()),
-	passSalt: nonempty(string()),
-	oldDekMaterial: optional(nonempty(string())),
-	oldPassSalt: optional(nonempty(string())),
+	dekMaterial: nonemptyLargeString,
+	passSalt: nonemptyString,
+	oldDekMaterial: optional(nonemptyLargeString),
+	oldPassSalt: optional(nonemptyString),
 });
 export type UserKeys = Infer<typeof userKeys>;
 
@@ -237,7 +245,7 @@ export type AnyData = DataItem | UserKeys | User;
 
 const documentRef = object({
 	collectionId: enums(allCollectionIds),
-	documentId: nonempty(string()),
+	documentId: nonemptyString,
 });
 
 const setBatch = object({
@@ -259,7 +267,7 @@ export function isDocumentWriteBatch(tbd: unknown): tbd is DocumentWriteBatch {
 }
 
 const identified = type({
-	_id: nonempty(string()),
+	_id: nonemptyString,
 });
 
 function _identified<T>(struct: Struct<T>): Struct<T & Infer<typeof identified>> {

@@ -4,11 +4,10 @@ import type { Infer } from "superstruct";
 import type { Request } from "express";
 import type { Unsubscribe } from "./database/index.js";
 import type { WebsocketRequestHandler } from "express-ws";
-import { allCollectionIds, identifiedDataItem, isValidForSchema } from "./database/schemas.js";
 import { asyncWrapper } from "./asyncWrapper.js";
 import { deleteItem, ensure, getFileContents, moveFile, tmpDir } from "./database/filesystem.js";
 import { dirname, resolve as resolvePath, sep as pathSeparator, join } from "node:path";
-import { array, enums, nonempty, nullable, object, optional, string, union } from "superstruct";
+import { array, enums, nullable, object, optional, union } from "superstruct";
 import { handleErrors } from "./handleErrors.js";
 import { maxSpacePerUser, ownersOnly, requireAuth } from "./auth/index.js";
 import { requireEnv } from "./environment.js";
@@ -19,6 +18,12 @@ import { statsForUser } from "./database/io.js";
 import { WebSocketCode } from "./networking/WebSocketCode.js";
 import { ws } from "./networking/websockets.js";
 import multer, { diskStorage } from "multer";
+import {
+	allCollectionIds,
+	identifiedDataItem,
+	isValidForSchema,
+	nonemptyString,
+} from "./database/schemas.js";
 import {
 	CollectionReference,
 	DocumentReference,
@@ -217,7 +222,7 @@ const upload = multer({
 });
 
 const watcherData = object({
-	message: nonempty(string()),
+	message: nonemptyString,
 	dataType: enums(["single", "multiple"] as const),
 	data: nullable(union([array(identifiedDataItem), identifiedDataItem])),
 });
@@ -236,8 +241,8 @@ const webSocket: WebsocketRequestHandler = ws(
 	},
 	// params
 	object({
-		uid: nonempty(string()),
-		documentId: optional(nullable(nonempty(string()))),
+		uid: nonemptyString,
+		documentId: optional(nullable(nonemptyString)),
 		collectionId: enums(allCollectionIds),
 	}),
 	// start
