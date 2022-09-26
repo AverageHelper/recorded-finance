@@ -17,6 +17,10 @@ import {
 	union,
 } from "superstruct";
 
+const NORMAL_MAX_CHARS = 191; // Prisma's `String` default is VARCHAR(191)
+const LARGE_MAX_CHARS = 65535; // When we override to TEXT
+// const HUGE_MAX_CHARS = 16777215; // When we override to MEDIUMTEXT
+
 // Copied from lodash
 export type ValueIteratorTypeGuard<T, S extends T> = (value: T) => value is S;
 
@@ -61,10 +65,6 @@ export type MFAOption = typeof mfaOptions[number];
 export function isMfaOption(tbd: unknown): tbd is MFAOption {
 	return is(tbd, enums(mfaOptions));
 }
-
-const NORMAL_MAX_CHARS = 191; // Prisma's `String` default is VARCHAR(191)
-const LARGE_MAX_CHARS = 65535; // When we override to TEXT
-// const HUGE_MAX_CHARS = 16777215; // When we override to MEDIUMTEXT
 
 export const nonemptyString = size(string(), 1, NORMAL_MAX_CHARS);
 export const nonemptyLargeString = size(string(), 1, LARGE_MAX_CHARS);
