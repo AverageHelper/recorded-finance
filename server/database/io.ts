@@ -208,7 +208,7 @@ export async function migrateLegacyData(): Promise<void> {
 
 // Start connecting to the database
 const dataSource = new PrismaClient();
-process.stdout.write("Connected to MongoDB\n");
+process.stdout.write("Connected to database\n");
 
 // Log database accesses
 dataSource.$use(async (params, next) => {
