@@ -1,4 +1,4 @@
-import type { CollectionID, DataOf, IdentifiedDataItem } from "./schemas.js";
+import type { AnyData, IdentifiedDataItem } from "./schemas.js";
 import type { CollectionReference, DocumentReference } from "./references.js";
 import type { DocUpdate } from "./io.js";
 import {
@@ -189,10 +189,7 @@ export async function setDocuments(updates: NonEmptyArray<DocUpdate>): Promise<v
 	}
 }
 
-export async function setDocument<ID extends CollectionID>(
-	ref: DocumentReference<ID>,
-	data: DataOf<ID>
-): Promise<void> {
+export async function setDocument(ref: DocumentReference, data: AnyData): Promise<void> {
 	await setDocuments([{ ref, data }]);
 }
 

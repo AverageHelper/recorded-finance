@@ -16,7 +16,7 @@ export interface StorageReference {
 	/**
 	 * The ID of the user which owns the storage object.
 	 */
-	readonly uid: Readonly<string>;
+	readonly uid: string;
 
 	/**
 	 * A reference to the document that owns this storage reference.
@@ -27,7 +27,7 @@ export interface StorageReference {
 	 * The short name of this object, which is the last component of the full path.
 	 * For example, if fullPath is 'full/path/image.png', name is 'image.png'.
 	 */
-	readonly name: Readonly<string>;
+	readonly name: string;
 }
 
 /**

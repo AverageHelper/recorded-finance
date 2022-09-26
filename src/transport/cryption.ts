@@ -79,7 +79,7 @@ export class HashStore {
 		this._hashedValue = btoa(value);
 	}
 
-	get value(): Readonly<string> {
+	get value(): string {
 		return atob(this._hashedValue);
 	}
 

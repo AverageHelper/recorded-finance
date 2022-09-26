@@ -12,7 +12,7 @@ interface ContextParams {
 export class Context {
 	private static readonly _bindings = new WeakMap<Request<unknown>, Context>();
 
-	public readonly uid: Readonly<string>;
+	public readonly uid: string;
 
 	constructor(uid: string) {
 		this.uid = uid;

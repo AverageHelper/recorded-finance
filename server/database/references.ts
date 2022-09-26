@@ -1,11 +1,11 @@
 import type { CollectionID } from "./schemas.js";
 import { isCollectionId } from "./schemas.js";
 
-export class CollectionReference<ID extends CollectionID = CollectionID> {
-	public readonly uid: Readonly<string>;
-	public readonly id: ID;
+export class CollectionReference {
+	public readonly uid: string;
+	public readonly id: CollectionID;
 
-	constructor(uid: string, id: ID) {
+	constructor(uid: string, id: CollectionID) {
 		if (!isCollectionId(id)) throw new TypeError(`${JSON.stringify(id)} is not a collection ID`);
 		this.uid = uid;
 		this.id = id;
@@ -22,17 +22,17 @@ export class CollectionReference<ID extends CollectionID = CollectionID> {
 	}
 }
 
-export class DocumentReference<ID extends CollectionID = CollectionID> {
-	public readonly id: Readonly<string>;
-	public readonly parent: Readonly<CollectionReference<ID>>;
+export class DocumentReference {
+	public readonly id: string;
+	public readonly parent: CollectionReference;
 
-	constructor(parent: CollectionReference<ID>, id: string) {
+	constructor(parent: CollectionReference, id: string) {
 		this.parent = parent;
 		this.id = id;
 	}
 
 	get uid(): string {
-		return this.parent.uid.slice();
+		return this.parent.uid;
 	}
 
 	get path(): string {

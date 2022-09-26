@@ -2,53 +2,63 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["referentialIntegrity"]
 }
 
 datasource db {
-  provider = "mongodb"
-  url      = env("DATABASE_URL")
+  provider             = "mysql"
+  url                  = env("DATABASE_URL")
+  referentialIntegrity = "prisma"
 }
 
 model User {
-  uid               String     @id @default(auto()) @map("_id") @db.ObjectId
+  uid               String     @id
   currentAccountId  String
   passwordHash      String
   passwordSalt      String
-  mfaRecoverySeed   String?
   requiredAddtlAuth MFA[]
+  mfaRecoverySeed   String?
   totpSeed          String?
   keys              UserKeys?
   data              DataItem[]
 }
 
+model MFA {
+  type  MFAType @id
+  users User[]
+}
+
 model UserKeys {
+  userId         String  @id
   user           User    @relation(fields: [userId], references: [uid])
-  userId         String  @id @default(auto()) @map("_id") @db.ObjectId
   dekMaterial    String
   passSalt       String
   oldDekMaterial String?
   oldPassSalt    String?
+
+  @@index([userId])
 }
 
 model DataItem {
-  id           String       @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String
   collectionId CollectionID
-  userId       String       @db.ObjectId
-  user         User         @relation(fields: [userId], references: [uid])
+  docId        String
   ciphertext   String
   objectType   String
   cryption     Cryption     @default(v0)
+  user         User         @relation(fields: [userId], references: [uid])
+
+  @@id([userId, collectionId, docId])
+  @@index([userId])
 }
 
 enum CollectionID {
   accounts
   attachments
-  keys
   locations
   tags
   transactions
-  users
 }
 
 enum Cryption {
@@ -56,6 +66,6 @@ enum Cryption {
   v1
 }
 
-enum MFA {
+enum MFAType {
   totp
 }

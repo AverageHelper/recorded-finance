@@ -1,5 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type { Infer, Struct, StructError } from "superstruct";
+import { UnreachableCaseError } from "../errors/UnreachableCaseError.js";
 import {
 	array,
 	enums,
@@ -169,19 +170,31 @@ export const allCollectionIds = [
 
 export type CollectionID = typeof allCollectionIds[number];
 
-export type DataItemKey = "accounts" | "attachments" | "locations" | "tags" | "transactions";
-
-export type DataOf<C extends CollectionID> = C extends "keys"
-	? UserKeys
-	: C extends "users"
-	? User
-	: C extends DataItemKey
-	? DataItem
-	: never;
-
 export function isCollectionId(tbd: string): tbd is CollectionID {
 	return allCollectionIds.includes(tbd as CollectionID);
 }
+
+/** A subset of {@link CollectionID} that's used as a discriminator for DataItem collections. */
+export type DataItemKey = "accounts" | "attachments" | "locations" | "tags" | "transactions";
+
+export function isDataItemKey(id: CollectionID): id is DataItemKey {
+	switch (id) {
+		case "accounts":
+		case "attachments":
+		case "locations":
+		case "tags":
+		case "transactions":
+			return true;
+
+		case "keys":
+		case "users":
+			return false;
+		default:
+			throw new UnreachableCaseError(id);
+	}
+}
+
+export type AnyData = DataItem | UserKeys | User;
 
 const documentRef = object({
 	collectionId: enums(allCollectionIds),

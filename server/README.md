@@ -35,9 +35,9 @@ v16.13.1
 AUTH_SECRET={some random string of characters}
 # required, example: "wAheb^8v^YV^s6YaeYVW&8tyLa*ce4"
 
-# Where your MongoDB instance can be accessed
-DATABASE_URL={your MongoDB connection string}
-# required, example: "mongodb+srv://...mongodb.net/..."
+# Where your PlanetScale instance can be accessed
+DATABASE_URL={your PlanetScale connection string}
+# required, example: "mysql://....connect.psdb.cloud/..."
 
 DB={path to your storage directory} # For attachment data
 # required, example: "~/server/db"

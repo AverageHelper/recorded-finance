@@ -1,15 +1,13 @@
 import type { CollectionReference, DocumentReference } from "./references.js";
 import type {
-	CollectionID,
+	AnyData,
 	DataItem,
-	DataItemKey,
-	DataOf,
 	Identified,
 	IdentifiedDataItem,
 	User,
 	UserKeys,
 } from "./schemas.js";
-import { assertSchema, user as userSchema } from "./schemas.js";
+import { assertSchema, isDataItemKey, user as userSchema } from "./schemas.js";
 import { folderSize, maxSpacePerUser } from "../auth/limits.js";
 import { join as joinPath } from "node:path";
 import { PrismaClient } from "@prisma/client";
@@ -54,8 +52,8 @@ export async function numberOfUsers(): Promise<number> {
 	return await dataSource.user.count();
 }
 
-export async function fetchDbCollection<ID extends CollectionID>(
-	ref: CollectionReference<ID>
+export async function fetchDbCollection(
+	ref: CollectionReference
 ): Promise<Array<IdentifiedDataItem>> {
 	const uid = ref.uid;
 
@@ -72,10 +70,10 @@ export async function fetchDbCollection<ID extends CollectionID>(
 						ciphertext: true,
 						cryption: true,
 						objectType: true,
-						id: true,
+						docId: true,
 					},
 				})
-			).map(v => ({ ...v, _id: v.id }));
+			).map(v => ({ ...v, _id: v.docId }));
 		case "keys":
 			return (
 				await dataSource.userKeys.findMany({
@@ -108,36 +106,21 @@ export async function findUserWithProperties(query: Partial<User>): Promise<User
 		where: {
 			...query,
 			requiredAddtlAuth: {
-				hasEvery: query.requiredAddtlAuth,
+				every: {
+					type: query.requiredAddtlAuth?.includes("totp") === true ? "totp" : undefined,
+				},
 			},
 		},
 	});
 }
 
 /** A view of database data. */
-interface Snapshot<ID extends CollectionID = CollectionID> {
+interface Snapshot {
 	/** The database reference. */
-	ref: DocumentReference<ID>;
+	ref: DocumentReference;
 
 	/** The stored data for the reference. */
-	data: Identified<DataOf<ID>> | null;
-}
-
-function isDataItemKey(id: CollectionID): id is DataItemKey {
-	switch (id) {
-		case "accounts":
-		case "attachments":
-		case "locations":
-		case "tags":
-		case "transactions":
-			return true;
-
-		case "keys":
-		case "users":
-			return false;
-		default:
-			throw new UnreachableCaseError(id);
-	}
+	data: Identified<AnyData> | null;
 }
 
 /**
@@ -148,22 +131,28 @@ function isDataItemKey(id: CollectionID): id is DataItemKey {
  */
 export async function fetchDbDoc(ref: DocumentReference): Promise<Snapshot> {
 	const collectionId = ref.parent.id;
-	const id = ref.id;
-	if (isDataItemKey(collectionId)) {
-		const result = await dataSource.dataItem.findFirst({ where: { id, collectionId } });
-		if (result === null) return { ref, data: null };
-
-		const data: Identified<DataItem> = {
-			_id: result.id,
-			objectType: result.objectType,
-			ciphertext: result.ciphertext,
-			cryption: result.cryption ?? "v0",
-		};
-		return { ref, data };
-	}
+	const docId = ref.id;
 	switch (collectionId) {
+		case "accounts":
+		case "attachments":
+		case "locations":
+		case "tags":
+		case "transactions": {
+			const result = await dataSource.dataItem.findFirst({
+				where: { docId, collectionId },
+			});
+			if (result === null) return { ref, data: null };
+
+			const data: Identified<DataItem> = {
+				_id: result.docId,
+				objectType: result.objectType,
+				ciphertext: result.ciphertext,
+				cryption: result.cryption ?? "v0",
+			};
+			return { ref, data };
+		}
 		case "keys": {
-			const result = await dataSource.userKeys.findUnique({ where: { userId: id } });
+			const result = await dataSource.userKeys.findUnique({ where: { userId: docId } });
 			if (result === null) return { ref, data: null };
 
 			const data: Identified<UserKeys> = {
@@ -176,7 +165,10 @@ export async function fetchDbDoc(ref: DocumentReference): Promise<Snapshot> {
 			return { ref, data };
 		}
 		case "users": {
-			const result = await dataSource.user.findUnique({ where: { uid: id } });
+			const result = await dataSource.user.findUnique({
+				where: { uid: docId },
+				include: { requiredAddtlAuth: true },
+			});
 			if (result === null) return { ref, data: null };
 
 			const data: Identified<User> = {
@@ -186,7 +178,7 @@ export async function fetchDbDoc(ref: DocumentReference): Promise<Snapshot> {
 				mfaRecoverySeed: result.mfaRecoverySeed,
 				passwordHash: result.passwordHash,
 				passwordSalt: result.passwordSalt,
-				requiredAddtlAuth: result.requiredAddtlAuth,
+				requiredAddtlAuth: result.requiredAddtlAuth.map(a => a.type),
 				totpSeed: result.totpSeed,
 			};
 			return { ref, data };
@@ -202,16 +194,17 @@ export async function fetchDbDoc(ref: DocumentReference): Promise<Snapshot> {
  * @param refs An array of document references.
  * @returns an array containing the given references and their associated data.
  */
-export async function fetchDbDocs<ID extends CollectionID>(
-	refs: NonEmptyArray<DocumentReference<ID>>
-): Promise<NonEmptyArray<Snapshot<ID>>> {
+export async function fetchDbDocs(
+	refs: NonEmptyArray<DocumentReference>
+): Promise<NonEmptyArray<Snapshot>> {
 	// Assert same UID on all refs
 	const uid = refs[0].uid;
 	if (!refs.every(u => u.uid === uid))
 		throw new TypeError(`Not every UID matches the first: ${uid}`);
 
-	// fetch the data
-	return (await Promise.all(refs.map(fetchDbDoc))) as NonEmptyArray<Snapshot<ID>>;
+	// Fetch the data
+	// TODO: Use findMany or a transaction instead
+	return (await Promise.all(refs.map(fetchDbDoc))) as NonEmptyArray<Snapshot>;
 }
 
 export async function upsertUser(properties: Required<User>): Promise<void> {
@@ -233,9 +226,9 @@ export async function destroyUser(uid: string): Promise<void> {
 	await dataSource.user.delete({ where: { uid } });
 }
 
-export interface DocUpdate<ID extends CollectionID = CollectionID> {
-	ref: DocumentReference<ID>;
-	data: DataOf<ID>;
+export interface DocUpdate {
+	ref: DocumentReference;
+	data: AnyData;
 }
 
 export async function upsertDbDocs(updates: NonEmptyArray<DocUpdate>): Promise<void> {
@@ -247,88 +240,158 @@ export async function upsertDbDocs(updates: NonEmptyArray<DocUpdate>): Promise<v
 	await Promise.all(
 		updates.map(async update => {
 			const collectionId = update.ref.parent.id;
-			const id = update.ref.id;
-			switch (collectionId) {
-				case "accounts":
-				case "attachments":
-				case "locations":
-				case "tags":
-				case "transactions": {
-					const data = (update as DocUpdate<DataItemKey>).data;
-					await dataSource.dataItem.upsert({
-						where: { id },
-						update: data,
-						create: { ...data, collectionId, userId: uid },
-					});
-					return;
-				}
-				case "keys": {
-					const data = (update as DocUpdate<"keys">).data;
-					await dataSource.userKeys.upsert({
-						where: { userId: id },
-						update: data,
-						create: data,
-					});
-					return;
-				}
-				case "users": {
-					const data = (update as DocUpdate<"users">).data;
-					await dataSource.user.upsert({
-						where: { uid: id },
-						update: data,
-						create: data,
-					});
-					return;
-				}
-				default:
-					throw new UnreachableCaseError(collectionId);
+			const docId = update.ref.id;
+			const userId = update.ref.uid;
+			if ("ciphertext" in update.data) {
+				if (!isDataItemKey(collectionId))
+					throw new TypeError(`Collection ID '${collectionId}' was found with DataItem data.`);
+				const data: DataItem = update.data;
+				await dataSource.dataItem.upsert({
+					where: { userId_collectionId_docId: { userId, collectionId, docId } },
+					update: {
+						ciphertext: data.ciphertext,
+						objectType: data.objectType,
+						cryption: data.cryption,
+					},
+					create: {
+						ciphertext: data.ciphertext,
+						objectType: data.objectType,
+						cryption: data.cryption,
+						collectionId,
+						docId,
+						user: {
+							connect: { uid: userId },
+						},
+					},
+				});
+				return;
+			} else if ("dekMaterial" in update.data) {
+				const data: UserKeys = update.data;
+				await dataSource.userKeys.upsert({
+					where: { userId: docId },
+					update: {
+						dekMaterial: data.dekMaterial,
+						passSalt: data.passSalt,
+						oldDekMaterial: data.oldDekMaterial,
+						oldPassSalt: data.oldPassSalt,
+					},
+					create: {
+						dekMaterial: data.dekMaterial,
+						passSalt: data.passSalt,
+						oldDekMaterial: data.oldDekMaterial,
+						oldPassSalt: data.oldPassSalt,
+						user: {
+							connect: { uid: userId },
+						},
+					},
+				});
+				return;
+			} else if ("uid" in update.data) {
+				const data: User = update.data;
+				await dataSource.user.upsert({
+					where: { uid: docId },
+					update: {
+						uid: data.uid,
+						currentAccountId: data.currentAccountId,
+						passwordHash: data.passwordHash,
+						passwordSalt: data.passwordSalt,
+						mfaRecoverySeed: data.mfaRecoverySeed,
+						totpSeed: data.totpSeed,
+						requiredAddtlAuth: data.requiredAddtlAuth?.[0]
+							? {
+									connectOrCreate: {
+										where: { type: data.requiredAddtlAuth[0] },
+										create: { type: data.requiredAddtlAuth[0] },
+									},
+							  }
+							: undefined,
+					},
+					create: {
+						uid: data.uid,
+						currentAccountId: data.currentAccountId,
+						passwordHash: data.passwordHash,
+						passwordSalt: data.passwordSalt,
+						mfaRecoverySeed: data.mfaRecoverySeed,
+						totpSeed: data.totpSeed,
+						requiredAddtlAuth: data.requiredAddtlAuth?.[0]
+							? {
+									connectOrCreate: {
+										where: { type: data.requiredAddtlAuth[0] },
+										create: { type: data.requiredAddtlAuth[0] },
+									},
+							  }
+							: undefined,
+					},
+				});
+				return;
 			}
+
+			throw new UnreachableCaseError(update.data);
 		})
 	);
 }
 
-export async function deleteDbDocs<ID extends CollectionID>(
-	refs: NonEmptyArray<DocumentReference<ID>>
-): Promise<void> {
+export async function deleteDbDocs(refs: NonEmptyArray<DocumentReference>): Promise<void> {
 	// Assert same UID on all refs
 	const uid = refs[0].uid;
 	if (!refs.every(u => u.uid === uid))
 		throw new TypeError(`Not every UID matches the first: ${uid}`);
 
-	await Promise.all(
-		refs.map(async ref => {
+	// Group refs by collection
+	const dataItemRefs: Array<DocumentReference> = [];
+	const keyRefs: Array<DocumentReference> = [];
+	const userRefs: Array<DocumentReference> = [];
+
+	for (const ref of refs) {
+		switch (ref.parent.id) {
+			case "accounts":
+			case "attachments":
+			case "locations":
+			case "tags":
+			case "transactions":
+				dataItemRefs.push(ref);
+				continue;
+			case "keys":
+				keyRefs.push(ref);
+				continue;
+			case "users":
+				userRefs.push(ref);
+				continue;
+			default:
+				throw new UnreachableCaseError(ref.parent.id);
+		}
+	}
+
+	// Run deletes
+	// TODO: Use deleteMany instead
+	await dataSource.$transaction([
+		...dataItemRefs.map(ref => {
 			const collectionId = ref.parent.id;
-			const id = ref.id;
-			switch (collectionId) {
-				case "accounts":
-				case "attachments":
-				case "locations":
-				case "tags":
-				case "transactions":
-					await dataSource.dataItem.delete({ where: { id } });
-					return;
-				case "keys":
-					await dataSource.userKeys.delete({ where: { userId: id } });
-					return;
-				case "users":
-					await dataSource.user.delete({ where: { uid: id } });
-					return;
-				default:
-					throw new UnreachableCaseError(collectionId);
-			}
-		})
-	);
+			// We should have checked this when we grouped stuff, but ¯\_(ツ)_/¯
+			if (!isDataItemKey(collectionId))
+				throw new TypeError(
+					`SANITY FAIL: Collection ID '${collectionId}' suddenly appeared among DataItem data.`
+				);
+			return dataSource.dataItem.delete({
+				where: {
+					userId_collectionId_docId: {
+						userId: ref.uid,
+						collectionId,
+						docId: ref.id,
+					},
+				},
+			});
+		}),
+		...keyRefs.map(ref => dataSource.userKeys.delete({ where: { userId: ref.id } })),
+		...userRefs.map(ref => dataSource.user.delete({ where: { uid: ref.id } })),
+	]);
 }
 
-export async function deleteDbDoc<ID extends CollectionID>(
-	ref: DocumentReference<ID>
-): Promise<void> {
+export async function deleteDbDoc(ref: DocumentReference): Promise<void> {
 	await deleteDbDocs([ref]);
 }
 
-export async function deleteDbCollection<ID extends CollectionID>(
-	ref: CollectionReference<ID>
-): Promise<void> {
+export async function deleteDbCollection(ref: CollectionReference): Promise<void> {
 	const uid = ref.uid;
 
 	switch (ref.id) {
