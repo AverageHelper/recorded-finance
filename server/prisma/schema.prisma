@@ -41,23 +41,16 @@ model UserKeys {
 
 model DataItem {
   userId       String
-  collectionId CollectionID
+  collectionId String
   docId        String
-  ciphertext   String       @db.Text
+  ciphertext   String   @db.Text
   objectType   String
-  cryption     Cryption     @default(v0)
-  user         User         @relation(fields: [userId], references: [uid])
+  cryption     Cryption @default(v0)
+  user         User     @relation(fields: [userId], references: [uid])
 
   @@id([userId, collectionId, docId])
   @@index([userId])
-}
-
-enum CollectionID {
-  accounts
-  attachments
-  locations
-  tags
-  transactions
+  @@index([userId, collectionId])
 }
 
 enum Cryption {
