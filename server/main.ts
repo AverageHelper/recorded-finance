@@ -17,38 +17,43 @@ import express from "express";
 import expressWs from "express-ws";
 import helmet from "helmet";
 
-const PORT = 40850;
-
-await migrateLegacyData();
-
 export const app = express()
 	.use(helmet()) // also disables 'x-powered-by' header
 	.use(cors());
 
-expressWs(app); // Set up websocket support. This is the reason our endpoint declarations need to be functions and not `const` declarations
+// TODO: Go back to running at root once we're done migrating
+async function main(): Promise<void> {
+	const PORT = 40850;
 
-app
-	.get("/v0/", lol)
-	.get("/v0/ping", ping)
-	.get("/v0/version", serverVersion)
-	.set("trust proxy", 1) // trust first proxy
-	.use(session)
-	.use(express.json({ limit: "5mb" }))
-	.use(express.urlencoded({ limit: "5mb", extended: true }))
-	.use("/v0/", auth()) // Auth endpoints
-	.use("/v0/db", db()) // Database endpoints (checks auth)
-	.use((req, res) => {
-		// Custom 404
-		respondError(res, new NotFoundError());
-	})
-	.use(handleErrors);
+	await migrateLegacyData();
 
-// process.stdout.write(`NODE_ENV: ${env("NODE_ENV") ?? "undefined"}\n`);
+	expressWs(app); // Set up websocket support. This is the reason our endpoint declarations need to be functions and not `const` declarations
 
-app.listen(PORT, () => {
-	process.stdout.write(
-		`Accountable storage server v${appVersion} listening on port ${PORT} in ${
-			env("NODE_ENV") ?? "unknown"
-		} environment\n`
-	);
-});
+	app
+		.get("/v0/", lol)
+		.get("/v0/ping", ping)
+		.get("/v0/version", serverVersion)
+		.set("trust proxy", 1) // trust first proxy
+		.use(session)
+		.use(express.json({ limit: "5mb" }))
+		.use(express.urlencoded({ limit: "5mb", extended: true }))
+		.use("/v0/", auth()) // Auth endpoints
+		.use("/v0/db", db()) // Database endpoints (checks auth)
+		.use((req, res) => {
+			// Custom 404
+			respondError(res, new NotFoundError());
+		})
+		.use(handleErrors);
+
+	// process.stdout.write(`NODE_ENV: ${env("NODE_ENV") ?? "undefined"}\n`);
+
+	app.listen(PORT, () => {
+		process.stdout.write(
+			`Accountable storage server v${appVersion} listening on port ${PORT} in ${
+				env("NODE_ENV") ?? "unknown"
+			} environment\n`
+		);
+	});
+}
+
+void main();

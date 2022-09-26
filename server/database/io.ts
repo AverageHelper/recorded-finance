@@ -122,11 +122,15 @@ export async function migrateLegacyData(): Promise<void> {
 	}
 
 	function isUser(tbd: AnyData): tbd is User {
-		return is(tbd, userSchema);
+		const sansObjectId: AnyData & { _id?: string } = { ...tbd };
+		delete sansObjectId["_id"];
+		return is(sansObjectId, userSchema);
 	}
 
 	function isDataItem(tbd: AnyData): tbd is Identified<DataItem | UserKeys> {
-		return is(tbd, dataItemSchema) || is(tbd, userKeysSchema);
+		const sansObjectId: AnyData & { _id?: string } = { ...tbd };
+		delete sansObjectId["_id"];
+		return is(sansObjectId, dataItemSchema) || is(sansObjectId, userKeysSchema);
 	}
 
 	function isNotUser(tbd: AnyData): tbd is Exclude<AnyData, User> {
@@ -150,10 +154,7 @@ export async function migrateLegacyData(): Promise<void> {
 			`${
 				badLegacyUsers.length
 			} legacy documents claim to be User documents, but do not fit the expected shape: ${JSON.stringify(
-				badLegacyUsers.map(u => {
-					if ("_id" in u) return u._id;
-					return u.uid;
-				})
+				badLegacyUsers
 			)}`
 		);
 	}
@@ -176,7 +177,7 @@ export async function migrateLegacyData(): Promise<void> {
 					`${
 						badLegacyDocs.length
 					} legacy documents claim to be DataItem documents, but do not fit the expected shape: ${JSON.stringify(
-						badLegacyDocs.map(u => u.uid)
+						badLegacyDocs
 					)}`
 				);
 			}

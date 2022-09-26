@@ -5,12 +5,26 @@ import { visualizer } from "rollup-plugin-visualizer";
 import analyze from "rollup-plugin-analyzer";
 import commonjs from "@rollup/plugin-commonjs";
 import json from "@rollup/plugin-json";
+import replace from "@rollup/plugin-replace";
 import typescript from "@rollup/plugin-typescript";
 
 const isProduction = process.env.NODE_ENV === "production";
 
+const HOME = process.env["HOME"];
+
 export default defineConfig({
 	plugins: [
+		// Prisma injects my home directory. Remove that:
+		HOME !== undefined
+			? replace({
+					values: {
+						[HOME]: "~",
+					},
+					delimiters: ["", ""],
+					preventAssignment: true,
+			  })
+			: null,
+
 		// Transpile source
 		typescript({
 			project: "./tsconfig.json",
@@ -57,10 +71,11 @@ export default defineConfig({
 
 		defaultHandler(warning);
 	},
+	// external: ["@prisma/client"], // FIXME: Prisma relies on __dirname, which only works in CJS. Mark as external to run ESM
 	input: "./main.ts",
 	output: {
 		file: "dist/server.js",
-		format: "module",
+		format: "cjs",
 		sourcemap: isProduction ? undefined : "inline",
 	},
 });
