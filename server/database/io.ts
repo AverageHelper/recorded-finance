@@ -26,7 +26,6 @@ import { Low, JSONFile } from "lowdb";
 import { PrismaClient } from "@prisma/client";
 import { requireEnv } from "../environment.js";
 import { UnreachableCaseError } from "../errors/index.js";
-import { useJobQueue } from "@averagehelper/job-queue";
 
 const MIGRATION_DRY_RUN = true;
 
@@ -39,9 +38,7 @@ export async function migrateLegacyData(): Promise<void> {
 
 	const identity = <T>(t: T): T => t;
 
-	async function userIndexDb<T>(
-		cb: (db: UserIndexDb | null, write: (n: UserIndexDb | null) => void) => T
-	): Promise<T> {
+	async function userIndexDb<T>(cb: (db: UserIndexDb | null) => T): Promise<T> {
 		await ensure(DB_DIR);
 		const file = joinPath(DB_DIR, "users.json");
 		const adapter = new JSONFile<UserIndexDb>(file);
@@ -49,23 +46,10 @@ export async function migrateLegacyData(): Promise<void> {
 		await db.read();
 
 		const data = db.data ? { ...db.data } : null;
-		const writeQueue = useJobQueue<Low<UserIndexDb>>(file);
-		const result = cb(data, newData => {
-			writeQueue.process(db => db.write());
-			db.data = newData;
-			writeQueue.createJob(db);
-		});
-
-		if (writeQueue.length === 0) return result;
-		return await new Promise(resolve => {
-			writeQueue.on("finish", () => resolve(result));
-		});
+		return cb(data);
 	}
 
-	async function dbForUser<T>(
-		uid: string,
-		cb: (db: UserDb | null, write: (n: UserDb | null) => void) => T
-	): Promise<T> {
+	async function dbForUser<T>(uid: string, cb: (db: UserDb | null) => T): Promise<T> {
 		if (!uid) throw new TypeError("uid should not be empty");
 
 		const folder = dbFolderForUser(uid);
@@ -77,17 +61,7 @@ export async function migrateLegacyData(): Promise<void> {
 		await db.read();
 
 		const data = db.data ? { ...db.data } : null;
-		const writeQueue = useJobQueue<Low<UserDb>>(file);
-		const result = cb(data, newData => {
-			writeQueue.process(db => db.write());
-			db.data = newData;
-			writeQueue.createJob(db);
-		});
-
-		if (writeQueue.length === 0) return result;
-		return await new Promise(resolve => {
-			writeQueue.on("finish", () => resolve(result));
-		});
+		return cb(data);
 	}
 
 	async function fetchLegacyDbCollection(
