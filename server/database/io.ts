@@ -41,11 +41,7 @@ export async function migrateLegacyData(): Promise<void> {
 
 	async function userIndexDb<T>(
 		cb: (db: UserIndexDb | null, write: (n: UserIndexDb | null) => void) => T
-	): Promise<T>;
-
-	async function userIndexDb(
-		cb: (db: UserIndexDb | null, write: (n: UserIndexDb | null) => void) => unknown
-	): Promise<unknown> {
+	): Promise<T> {
 		await ensure(DB_DIR);
 		const file = joinPath(DB_DIR, "users.json");
 		const adapter = new JSONFile<UserIndexDb>(file);
@@ -66,16 +62,10 @@ export async function migrateLegacyData(): Promise<void> {
 		});
 	}
 
-	async function dbForUser(uid: string): Promise<UserDb | null>;
 	async function dbForUser<T>(
 		uid: string,
 		cb: (db: UserDb | null, write: (n: UserDb | null) => void) => T
-	): Promise<T>;
-
-	async function dbForUser(
-		uid: string,
-		cb: (db: UserDb | null, write: (n: UserDb | null) => void) => unknown = identity
-	): Promise<unknown> {
+	): Promise<T> {
 		if (!uid) throw new TypeError("uid should not be empty");
 
 		const folder = dbFolderForUser(uid);
@@ -111,7 +101,7 @@ export async function migrateLegacyData(): Promise<void> {
 			if (!data) return [];
 			collection = data;
 		} else {
-			const data: UserDb | null = await dbForUser(ref.uid);
+			const data: UserDb | null = await dbForUser(ref.uid, identity);
 			if (!data) return [];
 			collection = data[ref.id] ?? {};
 		}
