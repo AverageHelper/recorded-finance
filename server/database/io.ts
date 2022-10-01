@@ -174,6 +174,18 @@ export async function migrateLegacyData(): Promise<void> {
 
 	// Get user data, funnel all documents to the new database
 	for (const user of legacyUsers) {
+		// User
+		if (!MIGRATION_DRY_RUN)
+			await upsertUser({
+				currentAccountId: user.currentAccountId,
+				mfaRecoverySeed: user.mfaRecoverySeed ?? null,
+				passwordHash: user.passwordHash,
+				passwordSalt: user.passwordSalt,
+				requiredAddtlAuth: user.requiredAddtlAuth ?? [],
+				totpSeed: user.totpSeed ?? null,
+				uid: user.uid,
+			});
+
 		// DataItem & UserKeys
 		for (const collectionId of allCollectionIds.filter(id => id !== "users")) {
 			const collectionRef = new CollectionReference(user.uid, collectionId);
