@@ -26,6 +26,7 @@ model User {
   totpSeed          String?
   keys              UserKeys?
   data              DataItem[]
+  fileData          FileData[]
 }
 
 model UserKeys {
@@ -51,6 +52,19 @@ model DataItem {
   @@id([userId, collectionId, docId])
   @@index([userId])
   @@index([userId, collectionId])
+}
+
+/// A file blob. These should be accessible within 4.5 MB requests.
+model FileData {
+  userId   String
+  fileName String
+  size     Int    @db.UnsignedInt
+  contents Bytes  @db.MediumBlob
+
+  user User @relation(fields: [userId], references: [uid])
+
+  @@id([userId, fileName])
+  @@index([userId])
 }
 
 enum Cryption {

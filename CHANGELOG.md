@@ -10,10 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Migration logic for moving from lowdb to MySQL. The move \*should\* happen automatically at startup. You may need to run the appropriate Prisma CLI command(s) to deploy the new schema to your database before startup. I'm sorry if you've relied on our local JSON file storage, or really want to stick with that, but it was always silly, and I should have done something like this months ago.
   - lowdb-to-MySQL migration logic and related dependencies will be removed in the next **SemVer Minor** release.
   - Why not wait until SemVer Major? Because we're still in 0.x.x, and you really should expect breaking changes at this phase anyway. 🤙
+  - There is a "dry run" mode, enabled by default, which will run the upload under known limitations and identify documents which would not fit the new database. To enable the actual data migration, go to `/server/database/io.ts` and change the value of the `MIGRATION_DRY_RUN` constant to `false`.
 
 ### Changed
 - BREAKING: We now use MySQL as our database. Accountable's hosted solution will (probably) use [PlanetScale](https://planetscale.com/), but feel free to point your own Accountable instance at whatever database server you want.
 - BREAKING: The server now requires the `DATABASE_URL` environment variable to be set. See the [README](/server/README.md) for details.
+- Attachments are no longer stored as local files. These are now limited to 4.2 MB, and stored in the database with everything else. The abstraction is arranged such that other storage adapters may be emplaced, but for now, this should suffice for most encrypted files the size of receipt images.
+
+### Removed
+- All local filesystem write APIs. Once the old database is abandoned, you may keep the legacy files as a backup, or destroy them.
 
 ## [0.12.0] - 2022-09-24
 ### Added

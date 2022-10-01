@@ -1161,7 +1161,7 @@ paths:
     post:
       tags:
         - database
-      summary: Attach binary data (at most 50 MB) to a document
+      summary: Attach binary data (at most 4.2 MB) to a document
       operationId: set-file
       security:
         - jwt: []

@@ -5,19 +5,18 @@ import type { Request } from "express";
 import type { Unsubscribe } from "./database/index.js";
 import type { WebsocketRequestHandler } from "express-ws";
 import { asyncWrapper } from "./asyncWrapper.js";
-import { deleteItem, ensure, getFileContents, moveFile, tmpDir } from "./database/filesystem.js";
-import { dirname, resolve as resolvePath, sep as pathSeparator, join } from "node:path";
 import { array, enums, nullable, object, optional, union } from "superstruct";
+import { BadRequestError, NotEnoughRoomError, NotFoundError } from "./errors/index.js";
+import { destroyFileData, fetchFileData, statsForUser, upsertFileData } from "./database/io.js";
 import { handleErrors } from "./handleErrors.js";
-import { maxSpacePerUser, ownersOnly, requireAuth } from "./auth/index.js";
-import { requireEnv } from "./environment.js";
-import { respondData, respondError, respondSuccess } from "./responses.js";
+import { maxSpacePerUser, MAX_FILE_BYTES, ownersOnly, requireAuth } from "./auth/index.js";
+import { respondData, respondSuccess } from "./responses.js";
+import { sep as pathSeparator } from "node:path";
 import { Router } from "express";
 import { simplifiedByteCount } from "./transformers/simplifiedByteCount.js";
-import { statsForUser } from "./database/io.js";
 import { WebSocketCode } from "./networking/WebSocketCode.js";
-import { ws } from "./networking/websockets.js";
-import multer, { diskStorage } from "multer";
+import { ws } from "./networking/websockets.js"; // TODO: Load websockets optionally, only if we're not on Vercel
+import multer, { memoryStorage } from "multer";
 import {
 	allCollectionIds,
 	identifiedDataItem,
@@ -43,12 +42,6 @@ import {
 	watchUpdatesToCollection,
 	watchUpdatesToDocument,
 } from "./database/index.js";
-import {
-	BadRequestError,
-	InternalError,
-	NotEnoughRoomError,
-	NotFoundError,
-} from "./errors/index.js";
 
 interface Params {
 	uid?: string;
@@ -106,120 +99,6 @@ function requireFilePathParameters(params: Params): Required<Omit<Params, "colle
 		fileName: assertPathSegment(fileName, "fileName"),
 	};
 }
-
-/**
- * Returns the path to a temporary storage place for user's data.
- * The parent folder of this file path is garanteed to exist.
- *
- * @throws a {@link BadRequestError} if the given params don't form a proper file path.
- * @returns a filesystem path for the given file params, or `null` if the path is invalid.
- */
-export async function temporaryFilePath(params: Params): Promise<string | null> {
-	const { uid, fileName } = requireFilePathParameters(params);
-
-	// Make sure fileName doesn't contain a path separator
-	if (fileName.includes("..") || fileName.includes(pathSeparator)) return null;
-
-	// Make sure uid doesn't contain stray path arguments
-	if (uid.includes("..") || uid.includes(pathSeparator)) return null;
-
-	const tmp = tmpDir();
-	const folder = resolvePath(tmp, `./accountable-attachment-temp/users/${uid}/attachments`);
-
-	const path = join(folder, fileName.trim());
-	if (path.includes("..")) {
-		console.error(`Someone might be trying a path traversal with '${path}'`);
-		return null;
-	}
-
-	await ensure(folder);
-	return path;
-}
-
-/**
- * Returns the path to the user's data. The parent folder of this file path
- * is garanteed to exist.
- *
- * @throws a {@link BadRequestError} if the given params don't form a proper file path.
- * @returns a filesystem path for the given file params, or `null` if the path is invalid.
- */
-async function permanentFilePath(params: Params): Promise<string | null> {
-	const { uid, fileName } = requireFilePathParameters(params);
-
-	// Make sure fileName doesn't contain a path separator
-	if (fileName.includes("..") || fileName.includes(pathSeparator)) return null;
-
-	// Make sure uid doesn't contain stray path arguments
-	if (uid.includes("..") || uid.includes(pathSeparator)) return null;
-
-	const DB_ROOT =
-		(process.env.NODE_ENV as string) === "test" //
-			? resolvePath("./db")
-			: requireEnv("DB");
-	const folder = resolvePath(DB_ROOT, `./users/${uid}/attachments`);
-
-	const path = join(folder, fileName.trim());
-	if (path.includes("..")) {
-		console.error(`Someone might be trying a path traversal with '${path}'`);
-		return null;
-	}
-
-	await ensure(folder);
-	console.debug(
-		`permanentFilePath(params: { uid: ${params.uid ?? "undefined"}, fileName: ${
-			params.fileName ?? "undefined"
-		} }): ${path}`
-	);
-	return path;
-}
-
-const upload = multer({
-	limits: {
-		fileSize: 50000000, // 50 MB
-		files: 1,
-	},
-	storage: diskStorage({
-		destination(req, _, cb) {
-			// eslint-disable-next-line promise/prefer-await-to-then
-			void temporaryFilePath(req.params).then(tmp => {
-				/* eslint-disable promise/no-callback-in-promise */
-				if (tmp === null) {
-					cb(new BadRequestError("Your UID or that file name don't add up to a valid path"), "");
-					return;
-				}
-				console.debug(`temporaryFilePath: ${tmp}`);
-				const path = dirname(tmp);
-				console.debug(`Writing uploaded file to '${path}'...`);
-				if (path === null || !path) {
-					cb(new BadRequestError("Your UID or that file name don't add up to a valid path"), "");
-				} else {
-					cb(null, path);
-				}
-				/* eslint-enable promise/no-callback-in-promise */
-			});
-		},
-		filename(req, _, cb) {
-			// Use the given file name
-			try {
-				const { fileName } = requireFilePathParameters(req.params);
-				if (fileName.includes("..")) {
-					console.error(`Someone might be trying a path traversal with '${fileName}'`);
-					cb(new BadRequestError("That file name doesn't add up to a valid path"), "");
-					return;
-				}
-				cb(null, fileName);
-			} catch (error) {
-				if (error instanceof Error) {
-					cb(error, "");
-				} else if (typeof error === "string") {
-					cb(new Error(error), "");
-				} else {
-					cb(new Error(JSON.stringify(error)), "");
-				}
-			}
-		},
-	}),
-});
 
 const watcherData = object({
 	message: nonemptyString,
@@ -287,7 +166,7 @@ interface FileData {
 }
 
 // Function so we defer creation of the router until after we've set up websocket support
-export function db(/* Inject filesystem APIs here? */): Router {
+export function db(): Router {
 	return Router()
 		.ws("/users/:uid/:collectionId", webSocket)
 		.ws("/users/:uid/:collectionId/:documentId", webSocket)
@@ -296,11 +175,12 @@ export function db(/* Inject filesystem APIs here? */): Router {
 		.get<Params>(
 			"/users/:uid/attachments/:documentId/blob/:fileName",
 			asyncWrapper(async (req, res) => {
-				const path = await permanentFilePath(req.params);
-				if (path === null)
-					throw new BadRequestError("Your UID or that file name don't add up to a valid path");
+				const { uid: userId, fileName } = requireFilePathParameters(req.params);
 
-				const contents = await getFileContents(path);
+				const file = await fetchFileData(userId, fileName);
+				if (file === null) throw new NotFoundError();
+
+				const contents = file.contents.toString("utf8");
 				const fileData: DocumentData<FileData> = {
 					contents,
 					_id: req.params.fileName ?? "unknown",
@@ -310,32 +190,33 @@ export function db(/* Inject filesystem APIs here? */): Router {
 		)
 		.post(
 			"/users/:uid/attachments/:documentId/blob/:fileName",
-			upload.single("file"),
+			multer({
+				storage: memoryStorage(),
+				limits: {
+					fileSize: MAX_FILE_BYTES, // 4.2 MB
+					files: 1,
+				},
+			}).single("file"),
 			asyncWrapper<Params>(async (req, res) => {
-				const uid: string | null = (req.params.uid ?? "") || null;
-				if (uid === null) throw new NotFoundError();
+				if (!req.file) throw new BadRequestError("You must include a file to store");
 
-				const { totalSpace, usedSpace } = await statsForUser(uid);
+				const userId: string | null = (req.params.uid ?? "") || null;
+				if (userId === null) throw new NotFoundError();
+				const { fileName } = requireFilePathParameters(req.params);
+
+				const { totalSpace, usedSpace } = await statsForUser(userId);
 				const userSizeDesc = simplifiedByteCount(usedSpace);
 				const maxSpacDesc = simplifiedByteCount(maxSpacePerUser);
-				console.debug(`User ${uid} has used ${userSizeDesc} of ${maxSpacDesc}`);
+				console.debug(`User ${userId} has used ${userSizeDesc} of ${maxSpacDesc}`);
 
 				const remainingSpace = totalSpace - usedSpace;
 				if (remainingSpace <= 0) throw new NotEnoughRoomError();
 
-				// Move the file from the staging area into permanet storage
-				const tempPath = await temporaryFilePath(req.params);
-				const permPath = await permanentFilePath(req.params);
-
-				if (tempPath === null || permPath === null) {
-					throw new BadRequestError("Your UID or that file name don't add up to a valid path");
-				}
-
-				console.debug(`temporaryFilePath: ${tempPath}`);
-				await moveFile(tempPath, permPath);
+				const contents = req.file.buffer; // this better be utf8
+				await upsertFileData({ userId, fileName, contents });
 
 				{
-					const { totalSpace, usedSpace } = await statsForUser(uid);
+					const { totalSpace, usedSpace } = await statsForUser(userId);
 					respondSuccess(res, { totalSpace, usedSpace });
 				}
 			})
@@ -343,28 +224,17 @@ export function db(/* Inject filesystem APIs here? */): Router {
 		.delete<Params>(
 			"/users/:uid/attachments/:documentId/blob/:fileName",
 			asyncWrapper(async (req, res) => {
-				const uid = (req.params.uid ?? "") || null;
-				if (uid === null) throw new NotFoundError();
+				const userId = (req.params.uid ?? "") || null;
+				if (userId === null) throw new NotFoundError();
 
-				const path = await permanentFilePath(req.params);
-				if (path === null)
-					throw new BadRequestError("Your UID or that file name don't add up to a valid path");
-
-				try {
-					await deleteItem(path);
-				} catch (error) {
-					if (error instanceof InternalError) {
-						return respondError(res, error);
-					}
-					console.error(`Unknown error`, error);
-					return respondError(res, new InternalError());
-				}
+				const { fileName } = requireFilePathParameters(req.params);
+				await destroyFileData(userId, fileName);
 
 				// Report the user's new usage
-				const { totalSpace, usedSpace } = await statsForUser(uid);
+				const { totalSpace, usedSpace } = await statsForUser(userId);
 				const userSizeDesc = simplifiedByteCount(usedSpace);
 				const maxSpacDesc = simplifiedByteCount(maxSpacePerUser);
-				console.debug(`User ${uid} has used ${userSizeDesc} of ${maxSpacDesc}`);
+				console.debug(`User ${userId} has used ${userSizeDesc} of ${maxSpacDesc}`);
 
 				// When done, get back to the caller with new stats
 				respondSuccess(res, { totalSpace, usedSpace });

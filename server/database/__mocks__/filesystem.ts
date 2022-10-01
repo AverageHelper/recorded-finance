@@ -1,21 +1,15 @@
 import type {
-	deleteItem as _deleteItem,
 	ensure as _ensure,
-	tmpDir as _tmpDir,
-	fileExists as _fileExists,
 	getFileContents as _getFileContents,
-	moveFile as _moveFile,
+	getFolderContents as _getFolderContents,
 } from "../filesystem.js";
 import { jest } from "@jest/globals";
 
-export const deleteItem = jest.fn<typeof _deleteItem>().mockResolvedValue(undefined);
-
+// eslint-disable-next-line deprecation/deprecation
 export const ensure = jest.fn<typeof _ensure>().mockResolvedValue(undefined);
 
-export const tmpDir = jest.fn<typeof _tmpDir>().mockReturnValue("/foo/bar");
+// eslint-disable-next-line deprecation/deprecation
+export const getFolderContents = jest.fn<typeof _getFolderContents>().mockResolvedValue([]);
 
-export const fileExists = jest.fn<typeof _fileExists>().mockResolvedValue(false);
-
+// eslint-disable-next-line deprecation/deprecation
 export const getFileContents = jest.fn<typeof _getFileContents>().mockResolvedValue("{}");
-
-export const moveFile = jest.fn<typeof _moveFile>().mockResolvedValue(undefined);

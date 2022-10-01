@@ -1,3 +1,4 @@
+import type { FileData } from "@prisma/client";
 import type {
 	AnyData,
 	DataItem,
@@ -18,38 +19,41 @@ import {
 	userKeys as userKeysSchema,
 } from "./schemas.js";
 import { CollectionReference, DocumentReference } from "./references.js";
-import { ensure, resolvePath } from "./filesystem.js";
-import { folderSize, maxSpacePerUser } from "../auth/limits.js";
+import { ensure, getFileContents, getFolderContents, resolvePath } from "./filesystem.js";
 import { is } from "superstruct";
-import { join as joinPath } from "node:path";
+import { join as joinPath, resolve, sep as pathSeparator } from "node:path";
 import { Low, JSONFile } from "lowdb";
+import { maxSpacePerUser, MAX_FILE_BYTES } from "../auth/limits.js";
+import { NotFoundError, UnreachableCaseError } from "../errors/index.js";
 import { PrismaClient } from "@prisma/client";
 import { requireEnv } from "../environment.js";
-import { UnreachableCaseError } from "../errors/index.js";
 
 const MIGRATION_DRY_RUN = true;
 
-const DB_DIR = resolvePath(requireEnv("DB"));
-process.stdout.write(`Legacy database and storage directory: ${DB_DIR}\n`);
-
 export async function migrateLegacyData(): Promise<void> {
+	/* eslint-disable deprecation/deprecation */
+	const DB_DIR = resolvePath(requireEnv("DB"));
+	process.stdout.write(`Legacy database and storage directory: ${DB_DIR}\n`);
+
 	type UserIndexDb = Record<string, User>;
 	type UserDb = Record<string, Record<string, AnyData>>;
 
-	const identity = <T>(t: T): T => t;
-
-	async function userIndexDb<T>(cb: (db: UserIndexDb | null) => T): Promise<T> {
+	async function userIndexDb(): Promise<UserIndexDb | null> {
 		await ensure(DB_DIR);
 		const file = joinPath(DB_DIR, "users.json");
 		const adapter = new JSONFile<UserIndexDb>(file);
 		const db = new Low(adapter);
 		await db.read();
 
-		const data = db.data ? { ...db.data } : null;
-		return cb(data);
+		return db.data ? { ...db.data } : null;
 	}
 
-	async function dbForUser<T>(uid: string, cb: (db: UserDb | null) => T): Promise<T> {
+	// The place where the user's encrypted attachments used to live
+	function dbFolderForUser(uid: string): string {
+		return joinPath(DB_DIR, "users", uid);
+	}
+
+	async function dbForUser(uid: string): Promise<UserDb | null> {
 		if (!uid) throw new TypeError("uid should not be empty");
 
 		const folder = dbFolderForUser(uid);
@@ -60,8 +64,7 @@ export async function migrateLegacyData(): Promise<void> {
 		const db = new Low(adapter);
 		await db.read();
 
-		const data = db.data ? { ...db.data } : null;
-		return cb(data);
+		return db.data ? { ...db.data } : null;
 	}
 
 	async function fetchLegacyDbCollection(
@@ -71,17 +74,56 @@ export async function migrateLegacyData(): Promise<void> {
 
 		if (ref.id === "users") {
 			// Special handling, fetch all users
-			const data: UserIndexDb | null = await userIndexDb(identity);
+			const data = await userIndexDb();
 			if (!data) return [];
 			collection = data;
 		} else {
-			const data: UserDb | null = await dbForUser(ref.uid, identity);
+			const data = await dbForUser(ref.uid);
 			if (!data) return [];
 			collection = data[ref.id] ?? {};
 		}
 
 		const entries = Object.entries(collection);
 		return entries.map(([key, value]) => ({ ...value, _id: key }));
+	}
+
+	/**
+	 * Returns the path to the user's data. The parent folder of this file path
+	 * is garanteed to exist.
+	 */
+	function legacyFolderForUser(uid: string): string | null {
+		// Make sure uid doesn't contain stray path arguments
+		if (uid.includes("..") || uid.includes(pathSeparator)) return null;
+
+		const DB_ROOT =
+			(process.env.NODE_ENV as string) === "test" //
+				? resolve("./db")
+				: requireEnv("DB");
+		const folder = resolve(DB_ROOT, `./users/${uid}/attachments`);
+
+		if (folder.includes("..")) {
+			console.error(`Someone might be trying a path traversal with '${folder}'`);
+			return null;
+		}
+
+		return folder;
+	}
+
+	/**
+	 * Returns the path to the user's data. The parent folder of this file path
+	 * is garanteed to exist.
+	 */
+	function legacyFilePath(uid: string, fileName: string): string | null {
+		const folder = legacyFolderForUser(uid);
+		if (folder === null) return null;
+
+		const path = joinPath(folder, fileName.trim());
+		if (path.includes("..")) {
+			console.error(`Someone might be trying a path traversal with '${path}'`);
+			return null;
+		}
+
+		return path;
 	}
 
 	function isUser(tbd: AnyData): tbd is User {
@@ -125,6 +167,8 @@ export async function migrateLegacyData(): Promise<void> {
 	// Grab all old data, funnel up to PlanetScale, and count the documents moved
 	let documentsMoved = 0;
 	let documentsNotMoved = badLegacyUsers.length;
+	let filesMoved = 0;
+	let filesNotMoved = 0;
 
 	const legacyUsers = rawLegacyUsers.filter(isUser);
 
@@ -154,12 +198,44 @@ export async function migrateLegacyData(): Promise<void> {
 				documentsMoved += legacyDocs.length;
 			}
 		}
+
+		// Move legacy attachment blobs
+		const userId = user.uid;
+		const userFolder = legacyFolderForUser(userId);
+		if (userFolder === null) throw new TypeError("Something went wrong. Why is userFolder null?");
+		const fileNames = await getFolderContents(userFolder);
+		for (const fileName of fileNames) {
+			const path = legacyFilePath(userId, fileName);
+			if (path === null) {
+				filesNotMoved += 1;
+			} else {
+				const blob = await getFileContents(path);
+				if (blob.length > MAX_FILE_BYTES) {
+					console.error(
+						`File at path ${path} is ${blob.length} bytes long, more than the ${MAX_FILE_BYTES} byte limit.`
+					);
+					filesNotMoved += 1;
+				} else {
+					const contents = Buffer.from(blob, "utf8");
+					if (!MIGRATION_DRY_RUN) {
+						await upsertFileData({ userId, fileName, contents });
+					}
+					filesMoved += 1;
+				}
+			}
+		}
 	}
 
-	console.info(`Finished migrating ${documentsMoved} legacy document(s).`);
+	console.info(
+		`Finished migrating ${documentsMoved} legacy document(s) and ${filesMoved} blob(s).`
+	);
 	if (documentsNotMoved > 0) {
-		console.info(`We could not move ${documentsNotMoved} documents.`);
-	} else {
+		console.info(`We could not move ${documentsNotMoved} document(s).`);
+	}
+	if (filesNotMoved > 0) {
+		console.info(`We could not move ${filesNotMoved} blob(s).`);
+	}
+	if (documentsNotMoved === 0 && filesNotMoved === 0) {
 		console.info("You may delete the old database if you'd like.");
 	}
 
@@ -167,6 +243,7 @@ export async function migrateLegacyData(): Promise<void> {
 		console.info('[This was a "dry" run of database migration. No actual data was moved.]');
 	}
 	/* eslint-enable no-console */
+	/* eslint-enable deprecation/deprecation */
 }
 
 // Start connecting to the database
@@ -182,22 +259,14 @@ dataSource.$use(async (params, next) => {
 	return result;
 });
 
-// The place where the user's encrypted attachments live
-function dbFolderForUser(uid: string): string {
-	// TODO: Move this to the database
-	return joinPath(DB_DIR, "users", uid);
-}
-
 interface UserStats {
 	totalSpace: number;
 	usedSpace: number;
 }
 
 export async function statsForUser(uid: string): Promise<UserStats> {
-	// TODO: How do we translate this to MySQL?
-	const folder = dbFolderForUser(uid);
 	const totalSpace = Math.ceil(maxSpacePerUser);
-	const usedSpace = Math.ceil((await folderSize(folder)) ?? totalSpace);
+	const usedSpace = await totalSizeOfFilesForUser(uid);
 
 	return { totalSpace, usedSpace };
 }
@@ -205,6 +274,76 @@ export async function statsForUser(uid: string): Promise<UserStats> {
 export async function numberOfUsers(): Promise<number> {
 	return await dataSource.user.count();
 }
+
+// MARK: - Pseudo Large-file Storage
+
+export async function fetchFileData(userId: string, fileName: string): Promise<FileData | null> {
+	return await dataSource.fileData.findUnique({
+		where: { userId_fileName: { userId, fileName } },
+	});
+}
+
+/**
+ * Returns the total number of bytes that comprise a given file.
+ */
+export async function totalSizeOfFile(userId: string, fileName: string): Promise<number | null> {
+	const file = await dataSource.fileData.findUnique({
+		where: { userId_fileName: { userId, fileName } },
+		select: { size: true },
+	});
+	if (file === null) throw new NotFoundError();
+	return file.size;
+}
+
+/**
+ * Returns the number of bytes of the user's stored files.
+ */
+export async function totalSizeOfFilesForUser(userId: string): Promise<number> {
+	const files = await dataSource.fileData.findMany({
+		where: { userId },
+		select: { size: true },
+	});
+	return files.reduce((prev, { size }) => prev + size, 0);
+}
+
+/**
+ * Stores the given file data, replacing existing data if it already exists.
+ */
+export async function upsertFileData(attachment: Omit<FileData, "size">): Promise<void> {
+	const userId = attachment.userId;
+	const fileName = attachment.fileName;
+	const contents = attachment.contents;
+	const size = contents.length;
+	await dataSource.fileData.upsert({
+		where: {
+			userId_fileName: { userId, fileName },
+		},
+		update: { contents, size },
+		create: {
+			contents,
+			size,
+			fileName,
+			user: {
+				connect: { uid: userId },
+			},
+		},
+	});
+}
+
+/**
+ * Deletes the file with the given name.
+ *
+ * @returns a `Promise` that resolves with the number of bytes deleted.
+ */
+export async function destroyFileData(userId: string, fileName: string): Promise<number> {
+	const file = await dataSource.fileData.delete({
+		where: { userId_fileName: { userId, fileName } },
+		select: { size: true },
+	});
+	return file?.size ?? 0;
+}
+
+// MARK: - Database
 
 export async function fetchDbCollection(
 	ref: CollectionReference

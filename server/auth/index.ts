@@ -338,14 +338,13 @@ export function auth(): Router {
 		)
 		.post("/logout", throttle(), (req, res) => {
 			const token = jwtTokenFromRequest(req);
-			if (token === null) {
-				return respondSuccess(res);
-			}
+
+			// ** Kill the session
+			req.session = null;
 
 			// ** Blacklist the JWT
-			addJwtToBlacklist(token);
+			if (token !== null) addJwtToBlacklist(token);
 
-			req.session = null;
 			respondSuccess(res);
 		})
 		.post<unknown, unknown, ReqBody>(
