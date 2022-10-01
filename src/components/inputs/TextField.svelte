@@ -97,6 +97,7 @@
 	export let label: string = "";
 	export let disabled: boolean = false;
 	export let autocapitalize: string = "none";
+	export let spellcheck: boolean | null = null;
 	export let required: boolean = false;
 	export let showsRequired: boolean = true;
 	export let accentColor: ColorID | "" = "";
@@ -165,6 +166,7 @@
 			{type}
 			{size}
 			{maxlength}
+			spellcheck={spellcheck ?? type !== "password"}
 			{required}
 			name={label || placeholder || ""}
 			data-test={dataTest}
@@ -186,6 +188,7 @@
 			{autocomplete}
 			placeholder={placeholder || (type === "password" ? "********" : "")}
 			{autocapitalize}
+			spellcheck={spellcheck ?? type !== "password"}
 			{required}
 			name={label || placeholder || ""}
 			{value}

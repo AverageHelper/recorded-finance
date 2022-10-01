@@ -1,56 +1,263 @@
-import type { AnyDataItem, Identified, IdentifiedDataItem, User } from "./schemas.js";
-import type { CollectionReference, DocumentReference } from "./references.js";
-import { assertSchema, user as userSchema } from "./schemas.js";
-import { deleteItem, ensure, resolvePath } from "./filesystem.js";
-import { folderSize, maxSpacePerUser } from "../auth/limits.js";
-import { join as joinPath } from "node:path";
+import type { FileData } from "@prisma/client";
+import type {
+	AnyData,
+	DataItem,
+	Identified,
+	IdentifiedDataItem,
+	User,
+	UserKeys,
+} from "./schemas.js";
+import {
+	allCollectionIds,
+	assertSchema,
+	computeRequiredAddtlAuth,
+	dataItem as dataItemSchema,
+	isDataItemKey,
+	isNonEmptyArray,
+	sortStrings,
+	user as userSchema,
+	userKeys as userKeysSchema,
+} from "./schemas.js";
+import { CollectionReference, DocumentReference } from "./references.js";
+import { ensure, getFileContents, getFolderContents, resolvePath } from "./filesystem.js";
+import { is } from "superstruct";
+import { join as joinPath, resolve, sep as pathSeparator } from "node:path";
 import { Low, JSONFile } from "lowdb";
-import { NotEnoughRoomError } from "../errors/index.js";
-import { rm } from "node:fs/promises";
+import { maxSpacePerUser, MAX_FILE_BYTES } from "../auth/limits.js";
+import { NotFoundError, UnreachableCaseError } from "../errors/index.js";
+import { PrismaClient } from "@prisma/client";
 import { requireEnv } from "../environment.js";
-import { simplifiedByteCount } from "../transformers/index.js";
-import { useJobQueue } from "@averagehelper/job-queue";
 
-export const DB_DIR = resolvePath(requireEnv("DB"));
-process.stdout.write(`Database and storage directory: ${DB_DIR}\n`);
+const MIGRATION_DRY_RUN = true;
 
-type UserIndexDb = Record<string, User>;
-type UserDb = Record<string, Record<string, AnyDataItem>>;
+export async function migrateLegacyData(): Promise<void> {
+	/* eslint-disable deprecation/deprecation */
+	const DB_DIR = resolvePath(requireEnv("DB"));
+	process.stdout.write(`Legacy database and storage directory: ${DB_DIR}\n`);
 
-/** Returns the first argument */
-const identity = <T>(t: T): T => t;
+	type UserIndexDb = Record<string, User>;
+	type UserDb = Record<string, Record<string, AnyData>>;
 
-async function userIndexDb(): Promise<UserIndexDb | null>;
-async function userIndexDb<T>(
-	cb: (db: UserIndexDb | null, write: (n: UserIndexDb | null) => void) => T
-): Promise<T>;
+	async function userIndexDb(): Promise<UserIndexDb | null> {
+		await ensure(DB_DIR);
+		const file = joinPath(DB_DIR, "users.json");
+		const adapter = new JSONFile<UserIndexDb>(file);
+		const db = new Low(adapter);
+		await db.read();
 
-async function userIndexDb(
-	cb: (db: UserIndexDb | null, write: (n: UserIndexDb | null) => void) => unknown = identity
-): Promise<unknown> {
-	await ensure(DB_DIR);
-	const file = joinPath(DB_DIR, "users.json");
-	const adapter = new JSONFile<UserIndexDb>(file);
-	const db = new Low(adapter);
-	await db.read();
+		return db.data ? { ...db.data } : null;
+	}
 
-	const data = db.data ? { ...db.data } : null;
-	const writeQueue = useJobQueue<Low<UserIndexDb>>(file);
-	const result = cb(data, newData => {
-		writeQueue.process(db => db.write());
-		db.data = newData;
-		writeQueue.createJob(db);
-	});
+	// The place where the user's encrypted attachments used to live
+	function dbFolderForUser(uid: string): string {
+		return joinPath(DB_DIR, "users", uid);
+	}
 
-	if (writeQueue.length === 0) return result;
-	return await new Promise(resolve => {
-		writeQueue.on("finish", () => resolve(result));
-	});
+	async function dbForUser(uid: string): Promise<UserDb | null> {
+		if (!uid) throw new TypeError("uid should not be empty");
+
+		const folder = dbFolderForUser(uid);
+		await ensure(folder);
+
+		const file = joinPath(folder, "db.json");
+		const adapter = new JSONFile<UserDb>(file);
+		const db = new Low(adapter);
+		await db.read();
+
+		return db.data ? { ...db.data } : null;
+	}
+
+	async function fetchLegacyDbCollection(
+		ref: CollectionReference
+	): Promise<Array<IdentifiedDataItem>> {
+		let collection: Record<string, AnyData>;
+
+		if (ref.id === "users") {
+			// Special handling, fetch all users
+			const data = await userIndexDb();
+			if (!data) return [];
+			collection = data;
+		} else {
+			const data = await dbForUser(ref.uid);
+			if (!data) return [];
+			collection = data[ref.id] ?? {};
+		}
+
+		const entries = Object.entries(collection);
+		return entries.map(([key, value]) => ({ ...value, _id: key }));
+	}
+
+	/**
+	 * Returns the path to the user's data. The parent folder of this file path
+	 * is garanteed to exist.
+	 */
+	function legacyFolderForUser(uid: string): string | null {
+		// Make sure uid doesn't contain stray path arguments
+		if (uid.includes("..") || uid.includes(pathSeparator)) return null;
+
+		const DB_ROOT =
+			(process.env.NODE_ENV as string) === "test" //
+				? resolve("./db")
+				: requireEnv("DB");
+		const folder = resolve(DB_ROOT, `./users/${uid}/attachments`);
+
+		if (folder.includes("..")) {
+			console.error(`Someone might be trying a path traversal with '${folder}'`);
+			return null;
+		}
+
+		return folder;
+	}
+
+	/**
+	 * Returns the path to the user's data. The parent folder of this file path
+	 * is garanteed to exist.
+	 */
+	function legacyFilePath(uid: string, fileName: string): string | null {
+		const folder = legacyFolderForUser(uid);
+		if (folder === null) return null;
+
+		const path = joinPath(folder, fileName.trim());
+		if (path.includes("..")) {
+			console.error(`Someone might be trying a path traversal with '${path}'`);
+			return null;
+		}
+
+		return path;
+	}
+
+	function isUser(tbd: AnyData): tbd is User {
+		const sansObjectId: AnyData & { _id?: string } = { ...tbd };
+		delete sansObjectId["_id"];
+		return is(sansObjectId, userSchema);
+	}
+
+	function isDataItem(tbd: AnyData): tbd is Identified<DataItem | UserKeys> {
+		const sansObjectId: AnyData & { _id?: string } = { ...tbd };
+		delete sansObjectId["_id"];
+		return is(sansObjectId, dataItemSchema) || is(sansObjectId, userKeysSchema);
+	}
+
+	function isNotUser(tbd: AnyData): tbd is Exclude<AnyData, User> {
+		return !isUser(tbd);
+	}
+
+	function isNotDataitem(tbd: AnyData): tbd is Exclude<AnyData, DataItem | UserKeys> {
+		return !isDataItem(tbd);
+	}
+
+	// Check if there's anything but attachments to migrate
+	const rawLegacyUsers = await fetchLegacyDbCollection(new CollectionReference("SUPER", "users"));
+	if (rawLegacyUsers.length === 0) return; // nothing to migrate!
+
+	/* eslint-disable no-console */
+	console.info(`Migrating legacy data from ${DB_DIR}`);
+
+	const badLegacyUsers = rawLegacyUsers.filter(isNotUser);
+	if (badLegacyUsers.length > 0) {
+		console.error(
+			`${
+				badLegacyUsers.length
+			} legacy documents claim to be User documents, but do not fit the expected shape: ${JSON.stringify(
+				badLegacyUsers
+			)}`
+		);
+	}
+
+	// Grab all old data, funnel up to PlanetScale, and count the documents moved
+	let documentsMoved = 0;
+	let documentsNotMoved = badLegacyUsers.length;
+	let filesMoved = 0;
+	let filesNotMoved = 0;
+
+	const legacyUsers = rawLegacyUsers.filter(isUser);
+
+	// Get user data, funnel all documents to the new database
+	for (const user of legacyUsers) {
+		// DataItem & UserKeys
+		for (const collectionId of allCollectionIds.filter(id => id !== "users")) {
+			const collectionRef = new CollectionReference(user.uid, collectionId);
+			const rawLegacyDocs = await fetchLegacyDbCollection(collectionRef);
+			const badLegacyDocs = rawLegacyDocs.filter(isNotDataitem);
+			if (badLegacyDocs.length > 0) {
+				console.error(
+					`${
+						badLegacyDocs.length
+					} legacy documents claim to be DataItem documents, but do not fit the expected shape: ${JSON.stringify(
+						badLegacyDocs
+					)}`
+				);
+			}
+			documentsNotMoved += badLegacyDocs.length;
+
+			const legacyDocs = rawLegacyDocs
+				.filter(isDataItem)
+				.map(data => ({ ref: new DocumentReference(collectionRef, data._id), data }));
+			if (isNonEmptyArray(legacyDocs)) {
+				if (!MIGRATION_DRY_RUN) await upsertDbDocs(legacyDocs);
+				documentsMoved += legacyDocs.length;
+			}
+		}
+
+		// Move legacy attachment blobs
+		const userId = user.uid;
+		const userFolder = legacyFolderForUser(userId);
+		if (userFolder === null) throw new TypeError("Something went wrong. Why is userFolder null?");
+		const fileNames = await getFolderContents(userFolder);
+		for (const fileName of fileNames) {
+			const path = legacyFilePath(userId, fileName);
+			if (path === null) {
+				filesNotMoved += 1;
+			} else {
+				const blob = await getFileContents(path);
+				if (blob.length > MAX_FILE_BYTES) {
+					console.error(
+						`File at path ${path} is ${blob.length} bytes long, more than the ${MAX_FILE_BYTES} byte limit.`
+					);
+					filesNotMoved += 1;
+				} else {
+					const contents = Buffer.from(blob, "utf8");
+					if (!MIGRATION_DRY_RUN) {
+						await upsertFileData({ userId, fileName, contents });
+					}
+					filesMoved += 1;
+				}
+			}
+		}
+	}
+
+	console.info(
+		`Finished migrating ${documentsMoved} legacy document(s) and ${filesMoved} blob(s).`
+	);
+	if (documentsNotMoved > 0) {
+		console.info(`We could not move ${documentsNotMoved} document(s).`);
+	}
+	if (filesNotMoved > 0) {
+		console.info(`We could not move ${filesNotMoved} blob(s).`);
+	}
+	if (documentsNotMoved === 0 && filesNotMoved === 0) {
+		console.info("You may delete the old database if you'd like.");
+	}
+
+	if (MIGRATION_DRY_RUN) {
+		console.info('[This was a "dry" run of database migration. No actual data was moved.]');
+	}
+	/* eslint-enable no-console */
+	/* eslint-enable deprecation/deprecation */
 }
 
-function dbFolderForUser(uid: string): string {
-	return joinPath(DB_DIR, "users", uid);
-}
+// Start connecting to the database
+const dataSource = new PrismaClient();
+process.stdout.write("Connected to database\n");
+
+// Log database accesses
+dataSource.$use(async (params, next) => {
+	const before = Date.now();
+	const result: unknown = await next(params);
+	const after = Date.now();
+	console.debug(`Query ${params.model ?? "undefined"}.${params.action} took ${after - before}ms`);
+	return result;
+});
 
 interface UserStats {
 	totalSpace: number;
@@ -58,120 +265,155 @@ interface UserStats {
 }
 
 export async function statsForUser(uid: string): Promise<UserStats> {
-	const folder = dbFolderForUser(uid);
 	const totalSpace = Math.ceil(maxSpacePerUser);
-	const usedSpace = Math.ceil((await folderSize(folder)) ?? totalSpace);
+	const usedSpace = await totalSizeOfFilesForUser(uid);
 
 	return { totalSpace, usedSpace };
 }
 
-async function dbForUser(uid: string): Promise<UserDb | null>;
-async function dbForUser<T>(
-	uid: string,
-	cb: (db: UserDb | null, write: (n: UserDb | null) => void) => T
-): Promise<T>;
-
-async function dbForUser(
-	uid: string,
-	cb: (db: UserDb | null, write: (n: UserDb | null) => void) => unknown = identity
-): Promise<unknown> {
-	if (!uid) throw new TypeError("uid should not be empty");
-
-	const folder = dbFolderForUser(uid);
-	await ensure(folder);
-
-	// Divide the disk space among a theoretical capacity of users
-	// TODO: Prevent new signups if we've used every slot, and take users with only key-data into account
-	const {
-		totalSpace: maxSizeOfUserFolder, //
-		usedSpace: sizeOfUserFolder,
-	} = await statsForUser(uid);
-	process.stdout.write(
-		`User ${uid} has used ${simplifiedByteCount(sizeOfUserFolder)} of ${simplifiedByteCount(
-			maxSpacePerUser
-		)}\n`
-	);
-
-	const file = joinPath(folder, "db.json");
-	const adapter = new JSONFile<UserDb>(file);
-	const db = new Low(adapter);
-	await db.read();
-
-	const data = db.data ? { ...db.data } : null;
-	const writeQueue = useJobQueue<Low<UserDb>>(file);
-	const result = cb(data, newData => {
-		// No one user may occupy more space than the max
-		const isNewDataLarger = JSON.stringify(newData).length > JSON.stringify(data).length;
-		const isUserOutOfRoom = sizeOfUserFolder >= maxSizeOfUserFolder;
-		if (isNewDataLarger && isUserOutOfRoom) throw new NotEnoughRoomError();
-
-		writeQueue.process(db => db.write());
-		db.data = newData;
-		writeQueue.createJob(db);
-	});
-
-	if (writeQueue.length === 0) return result;
-	return await new Promise(resolve => {
-		writeQueue.on("finish", () => resolve(result));
-	});
-}
-
-async function destroyDbForUser(uid: string): Promise<void> {
-	if (!uid) throw new TypeError("uid should not be empty");
-
-	const folder = joinPath(DB_DIR, "users", uid);
-	await rm(folder, { recursive: true, force: true });
-}
-
 export async function numberOfUsers(): Promise<number> {
-	const data: UserIndexDb | null = await userIndexDb();
-	if (!data) return 0;
-	return Object.keys(data).length;
+	return await dataSource.user.count();
 }
+
+// MARK: - Pseudo Large-file Storage
+
+export async function fetchFileData(userId: string, fileName: string): Promise<FileData | null> {
+	return await dataSource.fileData.findUnique({
+		where: { userId_fileName: { userId, fileName } },
+	});
+}
+
+/**
+ * Returns the total number of bytes that comprise a given file.
+ */
+export async function totalSizeOfFile(userId: string, fileName: string): Promise<number | null> {
+	const file = await dataSource.fileData.findUnique({
+		where: { userId_fileName: { userId, fileName } },
+		select: { size: true },
+	});
+	if (file === null) throw new NotFoundError();
+	return file.size;
+}
+
+/**
+ * Returns the number of bytes of the user's stored files.
+ */
+export async function totalSizeOfFilesForUser(userId: string): Promise<number> {
+	const files = await dataSource.fileData.findMany({
+		where: { userId },
+		select: { size: true },
+	});
+	return files.reduce((prev, { size }) => prev + size, 0);
+}
+
+/**
+ * Stores the given file data, replacing existing data if it already exists.
+ */
+export async function upsertFileData(attachment: Omit<FileData, "size">): Promise<void> {
+	const userId = attachment.userId;
+	const fileName = attachment.fileName;
+	const contents = attachment.contents;
+	const size = contents.length;
+	await dataSource.fileData.upsert({
+		where: {
+			userId_fileName: { userId, fileName },
+		},
+		update: { contents, size },
+		create: {
+			contents,
+			size,
+			fileName,
+			user: {
+				connect: { uid: userId },
+			},
+		},
+	});
+}
+
+/**
+ * Deletes the file with the given name.
+ *
+ * @returns a `Promise` that resolves with the number of bytes deleted.
+ */
+export async function destroyFileData(userId: string, fileName: string): Promise<number> {
+	const file = await dataSource.fileData.delete({
+		where: { userId_fileName: { userId, fileName } },
+		select: { size: true },
+	});
+	return file?.size ?? 0;
+}
+
+// MARK: - Database
 
 export async function fetchDbCollection(
-	ref: CollectionReference<AnyDataItem>
+	ref: CollectionReference
 ): Promise<Array<IdentifiedDataItem>> {
-	let collection: Record<string, AnyDataItem>;
+	const uid = ref.uid;
 
-	if (ref.id === "users") {
-		// Special handling, fetch all users
-		const data: UserIndexDb | null = await userIndexDb();
-		if (!data) return [];
-		collection = data;
-	} else {
-		const data: UserDb | null = await dbForUser(ref.uid);
-		if (!data) return [];
-		collection = data[ref.id] ?? {};
+	switch (ref.id) {
+		case "accounts":
+		case "attachments":
+		case "locations":
+		case "tags":
+		case "transactions":
+			return (
+				await dataSource.dataItem.findMany({
+					where: { userId: uid, collectionId: ref.id },
+					select: {
+						ciphertext: true,
+						cryption: true,
+						objectType: true,
+						docId: true,
+					},
+				})
+			).map(v => ({ ...v, _id: v.docId }));
+		case "keys":
+			return (
+				await dataSource.userKeys.findMany({
+					where: { userId: uid },
+					select: {
+						dekMaterial: true,
+						oldDekMaterial: true,
+						oldPassSalt: true,
+						passSalt: true,
+						userId: true,
+					},
+				})
+			).map(k => ({
+				...k,
+				_id: k.userId,
+				oldDekMaterial: k.oldDekMaterial ?? undefined,
+				oldPassSalt: k.oldPassSalt ?? undefined,
+			}));
+		case "users":
+			// Special handling: fetch all users
+			return (await dataSource.user.findMany()).map(computeRequiredAddtlAuth);
+		default:
+			throw new UnreachableCaseError(ref.id);
 	}
-
-	const entries = Object.entries(collection);
-	return entries.map(([key, value]) => ({ ...value, _id: key }));
 }
 
 export async function findUserWithProperties(query: Partial<User>): Promise<User | null> {
-	return await userIndexDb<User | null>(collection => {
-		if (!collection) return null;
-
-		const result = Object.values(collection).find<User>((v: User): v is User => {
-			// where all properties of `query` match those of `v`
-			return Object.keys(query).every(key => {
-				return v[key as keyof User] === query[key as keyof User];
-			});
-		});
-
-		if (!result) return null;
-		return { ...result };
+	if (Object.keys(query).length === 0) return null; // Fail gracefully for an empty query
+	const first = await dataSource.user.findFirst({
+		where: {
+			...query,
+			requiredAddtlAuth: query.requiredAddtlAuth
+				? { equals: query.requiredAddtlAuth.sort(sortStrings) }
+				: undefined,
+		},
 	});
+	if (first === null) return first;
+	return computeRequiredAddtlAuth(first);
 }
 
 /** A view of database data. */
-interface Snapshot<T extends AnyDataItem> {
+interface Snapshot {
 	/** The database reference. */
-	ref: DocumentReference<T>;
+	ref: DocumentReference;
 
 	/** The stored data for the reference. */
-	data: Identified<T> | null;
+	data: Identified<AnyData> | null;
 }
 
 /**
@@ -180,11 +422,63 @@ interface Snapshot<T extends AnyDataItem> {
  * @param ref A document reference.
  * @returns a view of database data.
  */
-export async function fetchDbDoc<T extends AnyDataItem>(
-	ref: DocumentReference<T>
-): Promise<Snapshot<T>> {
-	const [snap] = await fetchDbDocs([ref]);
-	return snap;
+export async function fetchDbDoc(ref: DocumentReference): Promise<Snapshot> {
+	const collectionId = ref.parent.id;
+	const docId = ref.id;
+	switch (collectionId) {
+		case "accounts":
+		case "attachments":
+		case "locations":
+		case "tags":
+		case "transactions": {
+			const result = await dataSource.dataItem.findFirst({
+				where: { docId, collectionId },
+			});
+			if (result === null) return { ref, data: null };
+
+			const data: Identified<DataItem> = {
+				_id: result.docId,
+				objectType: result.objectType,
+				ciphertext: result.ciphertext,
+				cryption: result.cryption ?? "v0",
+			};
+			return { ref, data };
+		}
+		case "keys": {
+			const result = await dataSource.userKeys.findUnique({ where: { userId: docId } });
+			if (result === null) return { ref, data: null };
+
+			const data: Identified<UserKeys> = {
+				_id: result.userId,
+				dekMaterial: result.dekMaterial,
+				oldDekMaterial: result.oldDekMaterial ?? undefined,
+				oldPassSalt: result.oldPassSalt ?? undefined,
+				passSalt: result.passSalt,
+			};
+			return { ref, data };
+		}
+		case "users": {
+			const rawResult = await dataSource.user.findUnique({
+				where: { uid: docId },
+			});
+			if (rawResult === null) return { ref, data: null };
+
+			const result = computeRequiredAddtlAuth(rawResult);
+			const data: Identified<User> = {
+				_id: result.uid,
+				uid: result.uid,
+				currentAccountId: result.currentAccountId,
+				mfaRecoverySeed: result.mfaRecoverySeed,
+				passwordHash: result.passwordHash,
+				passwordSalt: result.passwordSalt,
+				requiredAddtlAuth: result.requiredAddtlAuth,
+				totpSeed: result.totpSeed,
+			};
+			return { ref, data };
+		}
+		default:
+			throw new UnreachableCaseError(collectionId);
+	}
 }
 
 /**
@@ -193,136 +487,202 @@ export async function fetchDbDoc<T extends AnyDataItem>(
  * @param refs An array of document references.
  * @returns an array containing the given references and their associated data.
  */
-export async function fetchDbDocs<T extends AnyDataItem>(
-	refs: NonEmptyArray<DocumentReference<T>>
-): Promise<NonEmptyArray<Snapshot<T>>> {
+export async function fetchDbDocs(
+	refs: NonEmptyArray<DocumentReference>
+): Promise<NonEmptyArray<Snapshot>> {
 	// Assert same UID on all refs
 	const uid = refs[0].uid;
 	if (!refs.every(u => u.uid === uid))
 		throw new TypeError(`Not every UID matches the first: ${uid}`);
 
-	return (await dbForUser(uid, data => {
-		if (!data) return refs.map(ref => ({ ref, data: null }));
-
-		return refs.map<Snapshot<T>>(ref => {
-			const collection = data[ref.parent.id] ?? {};
-			const docs = collection[ref.id] as T | undefined;
-			if (!docs) {
-				return { ref, data: null };
-			}
-			return { ref, data: { ...docs, _id: ref.id } };
-		});
-	})) as NonEmptyArray<Snapshot<T>>;
+	// Fetch the data
+	// TODO: Use findMany or a transaction instead
+	return (await Promise.all(refs.map(fetchDbDoc))) as NonEmptyArray<Snapshot>;
 }
 
 export async function upsertUser(properties: Required<User>): Promise<void> {
 	assertSchema(properties, userSchema); // assures nonempty fields
 	const uid = properties.uid;
 
-	// Upsert to index
-	await userIndexDb<void>((data, write) => {
-		const userIndex = data ?? {};
-		userIndex[uid] = {
-			currentAccountId: properties.currentAccountId,
-			passwordHash: properties.passwordHash,
-			passwordSalt: properties.passwordSalt,
-			mfaRecoverySeed: properties.mfaRecoverySeed,
-			requiredAddtlAuth: properties.requiredAddtlAuth,
-			totpSeed: properties.totpSeed,
-			uid,
-		};
-		write(userIndex);
-	});
-
-	// Prep database
-	await dbForUser(uid, (data, write) => {
-		if (!data) write({});
+	await dataSource.user.upsert({
+		where: { uid },
+		update: properties,
+		create: properties,
 	});
 }
 
 export async function destroyUser(uid: string): Promise<void> {
 	if (!uid) throw new TypeError("uid was empty");
 
-	// Delete index
-	await userIndexDb<void>((data, write) => {
-		const userIndex = data ?? {};
-		delete userIndex[uid];
-		write(userIndex);
-	});
-
-	// Erase user data folder
-	await destroyDbForUser(uid);
+	await dataSource.dataItem.deleteMany({ where: { userId: uid } });
+	await dataSource.userKeys.deleteMany({ where: { userId: uid } });
+	await dataSource.user.delete({ where: { uid } });
 }
 
-export interface DocUpdate<T extends AnyDataItem> {
-	ref: DocumentReference<T>;
-	data: T;
+export interface DocUpdate {
+	ref: DocumentReference;
+	data: AnyData;
 }
 
-export async function upsertDbDocs<T extends AnyDataItem>(
-	updates: NonEmptyArray<DocUpdate<T>>
-): Promise<void> {
+export async function upsertDbDocs(updates: NonEmptyArray<DocUpdate>): Promise<void> {
 	// Assert same UID on all refs
 	const uid = updates[0].ref.uid;
 	if (!updates.every(u => u.ref.uid === uid))
 		throw new TypeError(`Not every UID matches the first: ${uid}`);
 
-	await dbForUser(uid, (storedData, write) => {
-		const db = storedData ?? {};
+	await dataSource.$transaction(
+		updates.map(update => {
+			const collectionId = update.ref.parent.id;
+			const docId = update.ref.id;
+			const userId = update.ref.uid;
+			if ("ciphertext" in update.data) {
+				// DataItem
+				if (!isDataItemKey(collectionId))
+					throw new TypeError(`Collection ID '${collectionId}' was found with DataItem data.`);
+				const data: DataItem = update.data;
+				const upsert = {
+					ciphertext: data.ciphertext,
+					objectType: data.objectType,
+					cryption: data.cryption ?? "v0",
+				};
+				return dataSource.dataItem.upsert({
+					where: { userId_collectionId_docId: { userId, collectionId, docId } },
+					update: upsert,
+					create: {
+						...upsert,
+						collectionId,
+						docId,
+						user: {
+							connect: { uid: userId },
+						},
+					},
+				});
+			} else if ("dekMaterial" in update.data) {
+				// Keys
+				const data: UserKeys = update.data;
+				const upsert = {
+					dekMaterial: data.dekMaterial,
+					passSalt: data.passSalt,
+					oldDekMaterial: data.oldDekMaterial ?? null,
+					oldPassSalt: data.oldPassSalt ?? null,
+				};
+				return dataSource.userKeys.upsert({
+					where: { userId: docId },
+					update: upsert,
+					create: {
+						...upsert,
+						user: {
+							connect: { uid: userId },
+						},
+					},
+				});
+			} else if ("uid" in update.data) {
+				// User
+				const data: User = update.data;
+				const upsert = {
+					uid: data.uid,
+					currentAccountId: data.currentAccountId,
+					passwordHash: data.passwordHash,
+					passwordSalt: data.passwordSalt,
+					mfaRecoverySeed: data.mfaRecoverySeed ?? null,
+					totpSeed: data.totpSeed ?? null,
+					requiredAddtlAuth: Array.from(new Set(data.requiredAddtlAuth?.sort(sortStrings) ?? [])),
+				};
+				return dataSource.user.upsert({
+					where: { uid: docId },
+					update: upsert,
+					create: upsert,
+				});
+			}
 
-		for (const { ref, data } of updates) {
-			db[ref.parent.id] ??= {}; // upsert an empty object
-			const collection = db[ref.parent.id] ?? {};
-			collection[ref.id] = { ...data };
-		}
-
-		write(db); // commit the database
-	});
+			throw new UnreachableCaseError(update.data);
+		})
+	);
 }
 
-export async function deleteDbDocs<T extends AnyDataItem>(
-	refs: NonEmptyArray<DocumentReference<T>>
-): Promise<void> {
+export async function deleteDbDocs(refs: NonEmptyArray<DocumentReference>): Promise<void> {
 	// Assert same UID on all refs
 	const uid = refs[0].uid;
 	if (!refs.every(u => u.uid === uid))
 		throw new TypeError(`Not every UID matches the first: ${uid}`);
 
-	await dbForUser(uid, (data, write) => {
-		if (!data) return;
+	// Group refs by collection
+	const dataItemRefs: Array<DocumentReference> = [];
+	const keyRefs: Array<DocumentReference> = [];
+	const userRefs: Array<DocumentReference> = [];
 
-		for (const ref of refs) {
-			const collection = data[ref.parent.id] ?? {};
-			delete collection[ref.id]; // eat the document
+	for (const ref of refs) {
+		switch (ref.parent.id) {
+			case "accounts":
+			case "attachments":
+			case "locations":
+			case "tags":
+			case "transactions":
+				dataItemRefs.push(ref);
+				continue;
+			case "keys":
+				keyRefs.push(ref);
+				continue;
+			case "users":
+				userRefs.push(ref);
+				continue;
+			default:
+				throw new UnreachableCaseError(ref.parent.id);
 		}
+	}
 
-		write(data); // commit the database
-	});
+	// Run deletes
+	await dataSource.$transaction([
+		// Not sure about deleteMany here, since we need each doc to match each ref
+		...dataItemRefs.map(ref => {
+			const collectionId = ref.parent.id;
+			// We should have checked this when we grouped stuff, but ¯\_(ツ)_/¯
+			if (!isDataItemKey(collectionId))
+				throw new TypeError(
+					`SANITY FAIL: Collection ID '${collectionId}' suddenly appeared among DataItem data.`
+				);
+			return dataSource.dataItem.delete({
+				where: {
+					userId_collectionId_docId: {
+						userId: ref.uid,
+						collectionId,
+						docId: ref.id,
+					},
+				},
+			});
+		}),
+		dataSource.userKeys.deleteMany({ where: { userId: { in: keyRefs.map(r => r.id) } } }),
+		// ...keyRefs.map(ref => dataSource.userKeys.delete({ where: { userId: ref.id } })),
+		dataSource.user.deleteMany({ where: { uid: { in: userRefs.map(r => r.id) } } }),
+		// ...userRefs.map(ref => dataSource.user.delete({ where: { uid: ref.id } })),
+	]);
 }
 
-export async function deleteDbDoc<T extends AnyDataItem>(ref: DocumentReference<T>): Promise<void> {
+export async function deleteDbDoc(ref: DocumentReference): Promise<void> {
 	await deleteDbDocs([ref]);
 }
 
-export async function deleteDbCollection<T extends AnyDataItem>(
-	ref: CollectionReference<T>
-): Promise<void> {
-	if (ref.id === "users") {
-		// Special handling, delete all users, burn everything
-		const usersDir = joinPath(DB_DIR, "users");
-		await deleteItem(usersDir);
+export async function deleteDbCollection(ref: CollectionReference): Promise<void> {
+	const uid = ref.uid;
 
-		// Clear the user index
-		await dbForUser(ref.uid, (data, write) => {
-			if (!data) return;
-			write({});
-		});
-		return;
+	switch (ref.id) {
+		case "accounts":
+		case "attachments":
+		case "locations":
+		case "tags":
+		case "transactions":
+			await dataSource.dataItem.deleteMany({ where: { userId: uid } });
+			return;
+		case "keys":
+			await dataSource.userKeys.deleteMany({ where: { userId: uid } });
+			return;
+		case "users":
+			// Special handling: delete all users, and burn everything
+			await dataSource.dataItem.deleteMany();
+			await dataSource.userKeys.deleteMany();
+			await dataSource.user.deleteMany();
+			return;
+		default:
+			throw new UnreachableCaseError(ref.id);
 	}
-
-	await dbForUser(ref.uid, (data, write) => {
-		if (!data) return;
-		delete data[ref.id]; // eat the collection
-		write(data); // commit the database
-	});
 }

@@ -38,10 +38,10 @@ export async function deleteAuthMaterial(uid: string): Promise<void> {
 
 export interface User {
 	/** The account ID of the user. */
-	readonly accountId: Readonly<string>;
+	readonly accountId: string;
 
 	/** The user's unique ID. Not alterable without creating a new account. */
-	readonly uid: Readonly<string>;
+	readonly uid: string;
 
 	/** The user's registered 2FA methods. */
 	readonly mfa: ReadonlyArray<MFAValidation>;

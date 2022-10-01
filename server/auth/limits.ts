@@ -1,6 +1,7 @@
 import { env } from "../environment.js";
 import { simplifiedByteCount } from "../transformers/index.js";
-import getFolderSize from "get-folder-size";
+
+export const MAX_FILE_BYTES = 4404019; // 4.4 MB, to not exceed Vercel's 4.5 MB limit
 
 const defaultMaxUsers = 5;
 export const MAX_USERS = Number.parseInt(env("MAX_USERS") ?? `${defaultMaxUsers}`, 10);
@@ -17,5 +18,3 @@ if ((process.env.NODE_ENV as string) !== "test") {
 		)} for each of our ${MAX_USERS} max users.\n`
 	);
 }
-
-export const folderSize = getFolderSize.loose;

@@ -46,6 +46,7 @@ async function userWithAccountId(accountId: string): Promise<User | null> {
  * not to have been used before.
  */
 function newDocumentId(): string {
+	// TODO: Use the database's own UUID or CUID implementation
 	return uuid().replace(/-/gu, ""); // remove hyphens
 }
 
@@ -337,14 +338,13 @@ export function auth(): Router {
 		)
 		.post("/logout", throttle(), (req, res) => {
 			const token = jwtTokenFromRequest(req);
-			if (token === null) {
-				return respondSuccess(res);
-			}
+
+			// ** Kill the session
+			req.session = null;
 
 			// ** Blacklist the JWT
-			addJwtToBlacklist(token);
+			if (token !== null) addJwtToBlacklist(token);
 
-			req.session = null;
 			respondSuccess(res);
 		})
 		.post<unknown, unknown, ReqBody>(

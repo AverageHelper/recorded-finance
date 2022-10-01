@@ -1,4 +1,4 @@
-import type { AnyDataItem, IdentifiedDataItem } from "./schemas.js";
+import type { AnyData, IdentifiedDataItem } from "./schemas.js";
 import type { CollectionReference, DocumentReference } from "./references.js";
 import type { DocUpdate } from "./io.js";
 import {
@@ -41,7 +41,7 @@ const documentWatchers = new Map<string, DocumentWatcher>();
 const collectionWatchers = new Map<string, CollectionWatcher>();
 
 export function watchUpdatesToDocument(
-	ref: DocumentReference<AnyDataItem>,
+	ref: DocumentReference,
 	onChange: SDataChangeCallback
 ): Unsubscribe {
 	console.debug(`Watching updates to document at ${ref.path}`);
@@ -73,7 +73,7 @@ export function watchUpdatesToDocument(
 }
 
 export function watchUpdatesToCollection(
-	ref: CollectionReference<AnyDataItem>,
+	ref: CollectionReference,
 	onChange: PDataChangeCallback
 ): Unsubscribe {
 	const handle: CollectionWatcher = { id: ref.id, onChange, plurality: "plural" };
@@ -97,7 +97,7 @@ export function watchUpdatesToCollection(
 }
 
 async function informWatchersForDocument(
-	ref: DocumentReference<AnyDataItem>,
+	ref: DocumentReference,
 	newItem: IdentifiedDataItem | null
 ): Promise<void> {
 	const docListeners = Array.from(documentWatchers.values()).filter(
@@ -120,7 +120,7 @@ async function informWatchersForDocument(
 }
 
 async function informWatchersForCollection(
-	ref: CollectionReference<AnyDataItem>,
+	ref: CollectionReference,
 	newItems: Array<IdentifiedDataItem>
 ): Promise<void> {
 	const listeners = Array.from(collectionWatchers.values()) //
@@ -133,9 +133,7 @@ async function informWatchersForCollection(
 	await Promise.all(listeners.map(l => l.onChange(newItems)));
 }
 
-export async function deleteDocuments(
-	refs: NonEmptyArray<DocumentReference<AnyDataItem>>
-): Promise<void> {
+export async function deleteDocuments(refs: NonEmptyArray<DocumentReference>): Promise<void> {
 	// TODO: Assert no more than 500 docs (so we aren't loading up EVERYTHING in one go)
 
 	// Fetch the data
@@ -152,7 +150,7 @@ export async function deleteDocuments(
 	}
 }
 
-export async function deleteDocument(ref: DocumentReference<AnyDataItem>): Promise<void> {
+export async function deleteDocument(ref: DocumentReference): Promise<void> {
 	// Fetch the data
 	const { data: oldData } = await fetchDbDoc(ref);
 
@@ -166,16 +164,14 @@ export async function deleteDocument(ref: DocumentReference<AnyDataItem>): Promi
 	}
 }
 
-export async function deleteCollection(ref: CollectionReference<AnyDataItem>): Promise<void> {
+export async function deleteCollection(ref: CollectionReference): Promise<void> {
 	await deleteDbCollection(ref);
 
 	// Tell listeners what happened
 	await informWatchersForCollection(ref, []);
 }
 
-export async function setDocuments<T extends AnyDataItem>(
-	updates: NonEmptyArray<DocUpdate<T>>
-): Promise<void> {
+export async function setDocuments(updates: NonEmptyArray<DocUpdate>): Promise<void> {
 	// TODO: Assert no more than 500 docs (so we aren't loading up EVERYTHING in one go)
 
 	await upsertDbDocs(updates);
@@ -193,10 +189,7 @@ export async function setDocuments<T extends AnyDataItem>(
 	}
 }
 
-export async function setDocument<T extends AnyDataItem>(
-	ref: DocumentReference<T>,
-	data: T
-): Promise<void> {
+export async function setDocument(ref: DocumentReference, data: AnyData): Promise<void> {
 	await setDocuments([{ ref, data }]);
 }
 

@@ -1,10 +1,9 @@
-import type { AnyDataItem, CollectionID } from "./schemas.js";
+import type { CollectionID } from "./schemas.js";
 import { isCollectionId } from "./schemas.js";
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export class CollectionReference<T extends AnyDataItem> {
-	public readonly uid: Readonly<string>;
-	public readonly id: Readonly<CollectionID>;
+export class CollectionReference {
+	public readonly uid: string;
+	public readonly id: CollectionID;
 
 	constructor(uid: string, id: CollectionID) {
 		if (!isCollectionId(id)) throw new TypeError(`${JSON.stringify(id)} is not a collection ID`);
@@ -23,17 +22,17 @@ export class CollectionReference<T extends AnyDataItem> {
 	}
 }
 
-export class DocumentReference<T extends AnyDataItem> {
-	public readonly id: Readonly<string>;
-	public readonly parent: Readonly<CollectionReference<T>>;
+export class DocumentReference {
+	public readonly id: string;
+	public readonly parent: CollectionReference;
 
-	constructor(parent: CollectionReference<T>, id: string) {
+	constructor(parent: CollectionReference, id: string) {
 		this.parent = parent;
 		this.id = id;
 	}
 
 	get uid(): string {
-		return this.parent.uid.slice();
+		return this.parent.uid;
 	}
 
 	get path(): string {

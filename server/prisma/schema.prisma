@@ -1,0 +1,73 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["referentialIntegrity"]
+}
+
+datasource db {
+  provider             = "mysql"
+  url                  = env("DATABASE_URL")
+  referentialIntegrity = "prisma"
+}
+
+// String by default is @db.VarChar(191), limited to 191 chars
+// Overriding to @db.Text increases the limit to 65,535 chars (~64 KiB)
+// Overriding to @db.MediumText increases the limit to 16,777,215 chars (~16 MiB)
+
+model User {
+  uid               String     @id
+  currentAccountId  String
+  passwordHash      String
+  passwordSalt      String
+  requiredAddtlAuth Json /// Array of MFAValidation strings
+  mfaRecoverySeed   String?
+  totpSeed          String?
+  keys              UserKeys?
+  data              DataItem[]
+  fileData          FileData[]
+}
+
+model UserKeys {
+  userId         String  @id
+  user           User    @relation(fields: [userId], references: [uid])
+  dekMaterial    String  @db.Text
+  passSalt       String
+  oldDekMaterial String? @db.Text
+  oldPassSalt    String?
+
+  @@index([userId])
+}
+
+model DataItem {
+  userId       String
+  collectionId String
+  docId        String
+  ciphertext   String   @db.Text
+  objectType   String
+  cryption     Cryption @default(v0)
+  user         User     @relation(fields: [userId], references: [uid])
+
+  @@id([userId, collectionId, docId])
+  @@index([userId])
+  @@index([userId, collectionId])
+}
+
+/// A file blob. These should be accessible within 4.5 MB requests.
+model FileData {
+  userId   String
+  fileName String
+  size     Int    @db.UnsignedInt
+  contents Bytes  @db.MediumBlob
+
+  user User @relation(fields: [userId], references: [uid])
+
+  @@id([userId, fileName])
+  @@index([userId])
+}
+
+enum Cryption {
+  v0
+  v1
+}

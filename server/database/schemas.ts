@@ -1,19 +1,25 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type { Infer, Struct, StructError } from "superstruct";
+import type { Prisma } from "@prisma/client";
+import { UnreachableCaseError } from "../errors/UnreachableCaseError.js";
 import {
 	array,
 	enums,
 	intersection,
 	is,
 	literal,
-	nonempty,
 	nullable,
 	object,
 	optional,
+	size,
 	string,
 	type,
 	union,
 } from "superstruct";
+
+const NORMAL_MAX_CHARS = 191; // Prisma's `String` default is VARCHAR(191)
+const LARGE_MAX_CHARS = 65535; // When we override to TEXT
+// const HUGE_MAX_CHARS = 16777215; // When we override to MEDIUMTEXT
 
 // Copied from lodash
 export type ValueIteratorTypeGuard<T, S extends T> = (value: T) => value is S;
@@ -56,9 +62,17 @@ const mfaOptions = ["totp"] as const;
 
 export type MFAOption = typeof mfaOptions[number];
 
+export function isMfaOption(tbd: unknown): tbd is MFAOption {
+	return is(tbd, enums(mfaOptions));
+}
+
+export const nonemptyString = size(string(), 1, NORMAL_MAX_CHARS);
+export const nonemptyLargeString = size(string(), 1, LARGE_MAX_CHARS);
+// export const nonemptyHugeString = size(string(), 1, HUGE_MAX_CHARS);
+
 export const jwtPayload = type({
 	/** The ID of the signed-in user */
-	uid: nonempty(string()),
+	uid: nonemptyString,
 
 	/**
 	 * The MFA authentication methods the user used recently.
@@ -79,30 +93,30 @@ export const user = object({
 	 * The user's unique ID. This value never changes for the life
 	 * of the account.
 	 */
-	uid: nonempty(string()),
+	uid: nonemptyString,
 
 	/**
 	 * The user's account ID, used to identify the user at login.
 	 * The user may change this value at any time.
 	 */
-	currentAccountId: nonempty(string()),
+	currentAccountId: nonemptyString,
 
 	/**
 	 * The hash of the user's password.
 	 */
-	passwordHash: nonempty(string()),
+	passwordHash: nonemptyString,
 
 	/**
 	 * The salt with which the user's password was hashed.
 	 */
-	passwordSalt: nonempty(string()),
+	passwordSalt: nonemptyString,
 
 	/**
 	 * A value which is used to generate a special value that
 	 * will always be a valid TOTP code.
 	 * // TODO: Should we regenerate this every time it's used?
 	 */
-	mfaRecoverySeed: optional(nullable(nonempty(string()))),
+	mfaRecoverySeed: optional(nullable(nonemptyString)),
 
 	/**
 	 * Additional second-factor auth options that the user has enabled.
@@ -121,9 +135,43 @@ export const user = object({
 	 * on their account and they have not begun to set up TOTP as
 	 * their additional auth.
 	 */
-	totpSeed: optional(nullable(nonempty(string()))),
+	totpSeed: optional(nullable(nonemptyString)),
 });
 export type User = Infer<typeof user>;
+
+export function sortStrings(a: string, b: string): number {
+	if (a > b) return 1;
+	if (b > a) return -1;
+	return 0;
+}
+
+/**
+ * Returns the array if the given primitive is of the correct type.
+ * Returns an empty array otherwise.
+ */
+function requiredAddtlAuth(primitive: Prisma.JsonValue): Array<MFAOption> {
+	if (!Array.isArray(primitive)) return [];
+	const result = primitive.filter(isMfaOption).sort(sortStrings);
+	return Array.from(new Set(result));
+}
+
+interface RawRequiredAddtlAuth {
+	requiredAddtlAuth: Prisma.JsonValue;
+}
+
+type WithRequiredAddtlAuth<T> = T & { requiredAddtlAuth: Array<MFAOption> };
+
+/**
+ * Computes a fully-typed `requiredAddtlAuth` property for the given `User`.
+ */
+export function computeRequiredAddtlAuth<User extends RawRequiredAddtlAuth>(
+	user: User
+): WithRequiredAddtlAuth<User> {
+	return {
+		...user,
+		requiredAddtlAuth: requiredAddtlAuth(user.requiredAddtlAuth),
+	};
+}
 
 export type Primitive = string | number | boolean | undefined | null;
 
@@ -134,9 +182,9 @@ export type DocumentData<T> = {
 	[K in keyof T]: Primitive;
 };
 
-const dataItem = object({
-	ciphertext: nonempty(string()),
-	objectType: nonempty(string()),
+export const dataItem = object({
+	ciphertext: nonemptyLargeString,
+	objectType: nonemptyString,
 	cryption: optional(enums(["v0", "v1"] as const)),
 });
 export type DataItem = Infer<typeof dataItem>;
@@ -145,19 +193,17 @@ export function isDataItem(tbd: unknown): tbd is DataItem {
 	return isValidForSchema(tbd, dataItem);
 }
 
-const userKeys = object({
-	dekMaterial: nonempty(string()),
-	passSalt: nonempty(string()),
-	oldDekMaterial: optional(nonempty(string())),
-	oldPassSalt: optional(nonempty(string())),
+export const userKeys = object({
+	dekMaterial: nonemptyLargeString,
+	passSalt: nonemptyString,
+	oldDekMaterial: optional(nonemptyLargeString),
+	oldPassSalt: optional(nonemptyString),
 });
 export type UserKeys = Infer<typeof userKeys>;
 
 export function isUserKeys(tbd: unknown): tbd is UserKeys {
 	return isValidForSchema(tbd, userKeys);
 }
-
-export type AnyDataItem = DataItem | UserKeys | User;
 
 export const allCollectionIds = [
 	"accounts",
@@ -175,9 +221,31 @@ export function isCollectionId(tbd: string): tbd is CollectionID {
 	return allCollectionIds.includes(tbd as CollectionID);
 }
 
+/** A subset of {@link CollectionID} that's used as a discriminator for DataItem collections. */
+export type DataItemKey = "accounts" | "attachments" | "locations" | "tags" | "transactions";
+
+export function isDataItemKey(id: CollectionID): id is DataItemKey {
+	switch (id) {
+		case "accounts":
+		case "attachments":
+		case "locations":
+		case "tags":
+		case "transactions":
+			return true;
+
+		case "keys":
+		case "users":
+			return false;
+		default:
+			throw new UnreachableCaseError(id);
+	}
+}
+
+export type AnyData = DataItem | UserKeys | User;
+
 const documentRef = object({
 	collectionId: enums(allCollectionIds),
-	documentId: nonempty(string()),
+	documentId: nonemptyString,
 });
 
 const setBatch = object({
@@ -199,7 +267,7 @@ export function isDocumentWriteBatch(tbd: unknown): tbd is DocumentWriteBatch {
 }
 
 const identified = type({
-	_id: nonempty(string()),
+	_id: nonemptyString,
 });
 
 function _identified<T>(struct: Struct<T>): Struct<T & Infer<typeof identified>> {

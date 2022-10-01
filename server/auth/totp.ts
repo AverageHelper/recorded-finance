@@ -1,4 +1,3 @@
-/* eslint-disable no-bitwise */
 import { createHmac } from "node:crypto";
 import { persistentSecret } from "./jwt.js";
 import { URL } from "node:url";
@@ -22,6 +21,7 @@ export function base32Encode(
 }
 
 function generateHOTP(base32Secret: string, counter: number): string {
+	/* eslint-disable no-bitwise */
 	const decodedSecret = base32Decode(base32Secret);
 
 	// Based on https://medium.com/onfrontiers-engineering/two-factor-authentication-flow-with-node-and-react-7cbdf249f13,
@@ -47,6 +47,7 @@ function generateHOTP(base32Secret: string, counter: number): string {
 		(((hmacResult[offset + 1] as number) & 0xff) << 16) |
 		(((hmacResult[offset + 2] as number) & 0xff) << 8) |
 		((hmacResult[offset + 3] as number) & 0xff);
+	/* eslint-enable no-bitwise */
 
 	// Compute an HOTP value
 	return `${code % 10 ** 6}`.padStart(6, "0");

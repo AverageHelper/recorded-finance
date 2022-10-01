@@ -5,12 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0] - 2022-10-01
+### Added
+- Migration logic for moving from lowdb to MySQL. The move \*should\* happen automatically at startup. You may need to run the appropriate Prisma CLI command(s) to deploy the new schema to your database before startup. I'm sorry if you've relied on our local JSON file storage, or really want to stick with that, but it was always silly, and I should have done something like this months ago.
+  - lowdb-to-MySQL migration logic and related dependencies will be removed in the next **SemVer Minor** release.
+  - Why not wait until SemVer Major? Because we're still in 0.x.x, and you really should expect breaking changes at this phase anyway. 🤙
+  - There is a "dry run" mode, enabled by default, which will run the upload under known limitations and identify documents which would not fit the new database. To enable the actual data migration, go to `/server/database/io.ts` and change the value of the `MIGRATION_DRY_RUN` constant to `false`.
+
+### Changed
+- BREAKING: We now use MySQL as our database. Accountable's hosted solution will (probably) use [PlanetScale](https://planetscale.com/), but feel free to point your own Accountable instance at whatever database server you want.
+- BREAKING: The server now requires the `DATABASE_URL` environment variable to be set. See the [README](/server/README.md) for details.
+- Attachments are no longer stored as local files. These are now limited to 4.2 MB, and stored in the database with everything else. The abstraction is arranged such that other storage adapters may be emplaced, but for now, this should suffice for most encrypted files the size of receipt images.
+
+### Removed
+- All local filesystem write APIs. Once the old database is abandoned, you may keep the legacy files as a backup, or destroy them.
+
 ## [0.12.0] - 2022-09-24
 ### Added
 - Server endpoints to support TOTP 2FA. See our [API documentation](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/AverageHelper/accountable-svelte/HEAD/server/openapi.yaml) for details.
 
 ### Changed
-- BREAKING: The server now requires the `AUTH_SECRET` environment variable to be set. This value should be randomly generated (perhaps using a [password generator](https://bitwarden.com/password-generator/)) and kept safe. This value lets the server sign JWTs and generate user secrets. See the [README](/README.md) for info.
+- BREAKING: The server now requires the `AUTH_SECRET` environment variable to be set. This value should be randomly generated (perhaps using a [password generator](https://bitwarden.com/password-generator/)) and kept safe. This value lets the server sign JWTs and generate user secrets. See the [README](/server/README.md) for info.
 - The client now accepts "extra" values from server responses. This way, old clients can still talk to new server instances without much issue.
 
 ### Fixed
@@ -276,6 +291,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial commit
 
+[0.13.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.11.3...v0.12.0
 [0.11.3]: https://github.com/AverageHelper/accountable-svelte/compare/v0.11.2...v0.11.3
 [0.11.2]: https://github.com/AverageHelper/accountable-svelte/compare/v0.11.1...v0.11.2
