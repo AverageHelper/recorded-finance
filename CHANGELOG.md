@@ -291,6 +291,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial commit
 
+[Unreleased]: https://github.com/AverageHelper/accountable-svelte/compare/v0.12.0...HEAD
 [0.12.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.11.3...v0.12.0
 [0.11.3]: https://github.com/AverageHelper/accountable-svelte/compare/v0.11.2...v0.11.3
 [0.11.2]: https://github.com/AverageHelper/accountable-svelte/compare/v0.11.1...v0.11.2
