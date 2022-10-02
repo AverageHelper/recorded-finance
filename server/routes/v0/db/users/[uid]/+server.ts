@@ -14,10 +14,7 @@ import {
 	setDocuments,
 } from "../../../../../database/index.js";
 
-export async function postDataBatch(
-	req: Request<Params, unknown, unknown>,
-	res: Response
-): Promise<void> {
+export async function POST(req: Request<Params, unknown, unknown>, res: Response): Promise<void> {
 	const uid = req.params.uid;
 
 	// ** Batched writes

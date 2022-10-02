@@ -2,16 +2,15 @@ import { asyncWrapper } from "../asyncWrapper.js";
 import { Router } from "express";
 import { throttle } from "./throttle.js";
 
-import { deleteTotpSecret } from "../routes/v0/totp/deleteTotpSecret.js";
-import { getSession } from "../routes/v0/getSession.js";
-import { getTotpSecret } from "../routes/v0/totp/getTotpSecret.js";
-import { postJoin } from "../routes/v0/postJoin.js";
-import { postLeave } from "../routes/v0/postLeave.js";
-import { postLogin } from "../routes/v0/postLogin.js";
-import { postLogout } from "../routes/v0/postLogout.js";
-import { postTotpValidate } from "../routes/v0/totp/postTotpValidate.js";
-import { postUpdateAccountId } from "../routes/v0/postUpdateAccountId.js";
-import { postUpdatePassword } from "../routes/v0/postUpdatePassword.js";
+import * as join from "../routes/v0/join/+server.js";
+import * as login from "../routes/v0/login/+server.js";
+import * as totpSecret from "../routes/v0/totp/secret/+server.js";
+import * as totpValidate from "../routes/v0/totp/validate/+server.js";
+import * as session from "../routes/v0/session/+server.js";
+import * as logout from "../routes/v0/logout/+server.js";
+import * as leave from "../routes/v0/leave/+server.js";
+import * as updatepassword from "../routes/v0/updatepassword/+server.js";
+import * as updateaccountid from "../routes/v0/updateaccountid/+server.js";
 
 // TODO: Implement WebAuthn (and test passkey support!)
 
@@ -24,14 +23,14 @@ import { postUpdatePassword } from "../routes/v0/postUpdatePassword.js";
  */
 export function auth(): Router {
 	return Router()
-		.post("/join", throttle(), asyncWrapper(postJoin))
-		.post("/login", throttle(), asyncWrapper(postLogin))
-		.get("/totp/secret", asyncWrapper(getTotpSecret))
-		.delete("/totp/secret", throttle(), asyncWrapper(deleteTotpSecret))
-		.post("/totp/validate", throttle(), asyncWrapper(postTotpValidate))
-		.get("/session", /* throttle(), */ asyncWrapper(getSession))
-		.post("/logout", throttle(), postLogout)
-		.post("/leave", throttle(), asyncWrapper(postLeave))
-		.post("/updatepassword", throttle(), asyncWrapper(postUpdatePassword))
-		.post("/updateaccountid", throttle(), asyncWrapper(postUpdateAccountId));
+		.post("/join", throttle(), asyncWrapper(join.POST))
+		.post("/login", throttle(), asyncWrapper(login.POST))
+		.get("/totp/secret", /* throttle(), */ asyncWrapper(totpSecret.GET))
+		.delete("/totp/secret", throttle(), asyncWrapper(totpSecret.DELETE))
+		.post("/totp/validate", throttle(), asyncWrapper(totpValidate.POST))
+		.get("/session", /* throttle(), */ asyncWrapper(session.GET))
+		.post("/logout", throttle(), logout.POST)
+		.post("/leave", throttle(), asyncWrapper(leave.POST))
+		.post("/updatepassword", throttle(), asyncWrapper(updatepassword.POST))
+		.post("/updateaccountid", throttle(), asyncWrapper(updateaccountid.POST));
 }

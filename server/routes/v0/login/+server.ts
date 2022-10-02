@@ -1,18 +1,18 @@
-import type { MFAOption } from "../../database/schemas.js";
+import type { MFAOption } from "../../../database/schemas.js";
 import type { Request, Response } from "express";
-import { newAccessToken } from "../../auth/jwt.js";
-import { compare } from "../../auth/generators.js";
-import { respondSuccess } from "../../responses.js";
-import { BadRequestError, UnauthorizedError } from "../../errors/index.js";
-import { statsForUser, userWithAccountId } from "../../database/io.js";
+import { newAccessToken } from "../../../auth/jwt.js";
+import { compare } from "../../../auth/generators.js";
+import { respondSuccess } from "../../../responses.js";
+import { BadRequestError, UnauthorizedError } from "../../../errors/index.js";
+import { statsForUser, userWithAccountId } from "../../../database/io.js";
 import { is, nonempty, string, type } from "superstruct";
 
-const reqBody = type({
-	account: nonempty(string()),
-	password: nonempty(string()),
-});
+export async function POST(req: Request, res: Response): Promise<void> {
+	const reqBody = type({
+		account: nonempty(string()),
+		password: nonempty(string()),
+	});
 
-export async function postLogin(req: Request, res: Response): Promise<void> {
 	if (!is(req.body, reqBody)) {
 		throw new BadRequestError("Improper parameter types");
 	}

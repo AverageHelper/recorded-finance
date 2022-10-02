@@ -1,19 +1,19 @@
 import type { Request, Response } from "express";
-import { BadRequestError, ConflictError, UnauthorizedError } from "../../../errors/index.js";
-import { generateSecret, generateTOTPSecretURI, verifyTOTP } from "../../../auth/totp.js";
-import { generateSecureToken } from "../../../auth/generators.js";
-import { metadataFromRequest } from "../../../auth/requireAuth.js";
-import { newAccessToken } from "../../../auth/jwt.js";
-import { respondSuccess } from "../../../responses.js";
-import { statsForUser, upsertUser } from "../../../database/io.js";
+import { BadRequestError, ConflictError, UnauthorizedError } from "../../../../errors/index.js";
+import { generateSecret, generateTOTPSecretURI, verifyTOTP } from "../../../../auth/totp.js";
+import { generateSecureToken } from "../../../../auth/generators.js";
+import { metadataFromRequest } from "../../../../auth/requireAuth.js";
+import { newAccessToken } from "../../../../auth/jwt.js";
+import { respondSuccess } from "../../../../responses.js";
+import { statsForUser, upsertUser } from "../../../../database/io.js";
 import safeCompare from "safe-compare";
 import { is, nonempty, string, type } from "superstruct";
 
-const reqBody = type({
-	token: nonempty(string()),
-});
+export async function POST(req: Request, res: Response): Promise<void> {
+	const reqBody = type({
+		token: nonempty(string()),
+	});
 
-export async function postTotpValidate(req: Request, res: Response): Promise<void> {
 	// ** Check that the given TOTP is valid for the user. If valid, but the user hasn't yet enabled a 2FA requirement, enable it
 
 	// Get credentials

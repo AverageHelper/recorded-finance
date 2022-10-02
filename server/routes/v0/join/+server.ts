@@ -1,18 +1,22 @@
 import type { Request, Response } from "express";
-import type { User } from "../../database/schemas.js";
-import { BadRequestError, DuplicateAccountError, NotEnoughRoomError } from "../../errors/index.js";
-import { generateHash, generateSalt } from "../../auth/generators.js";
-import { MAX_USERS } from "../../auth/limits.js";
-import { newAccessToken } from "../../auth/jwt.js";
-import { numberOfUsers, statsForUser, upsertUser, userWithAccountId } from "../../database/io.js";
-import { respondSuccess } from "../../responses.js";
+import type { User } from "../../../database/schemas.js";
+import { generateHash, generateSalt } from "../../../auth/generators.js";
+import { MAX_USERS } from "../../../auth/limits.js";
+import { newAccessToken } from "../../../auth/jwt.js";
+import { respondSuccess } from "../../../responses.js";
 import { v4 as uuid } from "uuid";
 import { is, nonempty, string, type } from "superstruct";
-
-const reqBody = type({
-	account: nonempty(string()),
-	password: nonempty(string()),
-});
+import {
+	BadRequestError,
+	DuplicateAccountError,
+	NotEnoughRoomError,
+} from "../../../errors/index.js";
+import {
+	numberOfUsers,
+	statsForUser,
+	upsertUser,
+	userWithAccountId,
+} from "../../../database/io.js";
 
 /**
  * Returns a fresh document ID that is virtually guaranteed
@@ -23,7 +27,12 @@ function newDocumentId(): string {
 	return uuid().replace(/-/gu, ""); // remove hyphens
 }
 
-export async function postJoin(req: Request, res: Response): Promise<void> {
+export async function POST(req: Request, res: Response): Promise<void> {
+	const reqBody = type({
+		account: nonempty(string()),
+		password: nonempty(string()),
+	});
+
 	if (!is(req.body, reqBody)) {
 		throw new BadRequestError("Improper parameter types");
 	}

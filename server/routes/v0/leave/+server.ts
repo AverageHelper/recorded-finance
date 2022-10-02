@@ -1,18 +1,18 @@
 import type { Request, Response } from "express";
-import { BadRequestError, UnauthorizedError } from "../../errors/index.js";
-import { compare } from "../../auth/generators.js";
-import { destroyUser, userWithAccountId } from "../../database/io.js";
-import { generateTOTPSecretURI, verifyTOTP } from "../../auth/totp.js";
-import { respondSuccess } from "../../responses.js";
+import { BadRequestError, UnauthorizedError } from "../../../errors/index.js";
+import { compare } from "../../../auth/generators.js";
+import { destroyUser, userWithAccountId } from "../../../database/io.js";
+import { generateTOTPSecretURI, verifyTOTP } from "../../../auth/totp.js";
+import { respondSuccess } from "../../../responses.js";
 import { is, nonempty, optional, string, type } from "superstruct";
 
-const reqBody = type({
-	account: nonempty(string()),
-	password: nonempty(string()),
-	token: optional(nonempty(string())),
-});
+export async function POST(req: Request, res: Response): Promise<void> {
+	const reqBody = type({
+		account: nonempty(string()),
+		password: nonempty(string()),
+		token: optional(nonempty(string())),
+	});
 
-export async function postLeave(req: Request, res: Response): Promise<void> {
 	if (!is(req.body, reqBody)) {
 		throw new BadRequestError("Improper parameter types");
 	}

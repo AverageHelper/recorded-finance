@@ -4,19 +4,11 @@ import { ownersOnly } from "./auth/ownersOnly.js";
 import { requireAuth } from "./auth/requireAuth.js";
 import { Router } from "express";
 
-import { getFileBlob } from "./routes/v0/db/users/[uid]/attachments/[documentId]/blob/[fileName]/getFileBlob.js";
-import {
-	postFileBlob,
-	upload,
-} from "./routes/v0/db/users/[uid]/attachments/[documentId]/blob/[fileName]/postFileBlob.js";
-import { deleteFileBlob } from "./routes/v0/db/users/[uid]/attachments/[documentId]/blob/[fileName]/deleteFileBlob.js";
 import { webSocket } from "./routes/v0/db/users/[uid]/[collectionId]/webSocket.js";
-import { getDataCollection } from "./routes/v0/db/users/[uid]/[collectionId]/getDataCollection.js";
-import { getDataDocument } from "./routes/v0/db/users/[uid]/[collectionId]/[documentId]/getDataDocument.js";
-import { postDataBatch } from "./routes/v0/db/users/[uid]/postDataBatch.js";
-import { postDataDocument } from "./routes/v0/db/users/[uid]/[collectionId]/[documentId]/postDataDocument.js";
-import { deleteDataCollection } from "./routes/v0/db/users/[uid]/[collectionId]/deleteDataCollection.js";
-import { deleteDataDocument } from "./routes/v0/db/users/[uid]/[collectionId]/[documentId]/deleteDataDocument.js";
+import * as fileBlob from "./routes/v0/db/users/[uid]/attachments/[documentId]/blob/[fileName]/+server.js";
+import * as dataBatch from "./routes/v0/db/users/[uid]/+server.js";
+import * as dataCollection from "./routes/v0/db/users/[uid]/[collectionId]/+server.js";
+import * as dataDocument from "./routes/v0/db/users/[uid]/[collectionId]/[documentId]/+server.js";
 
 export function db(): Router {
 	// Function, so we defer creation of the router until after we've set up websocket support
@@ -25,14 +17,18 @@ export function db(): Router {
 		.ws("/users/:uid/:collectionId/:documentId", webSocket)
 		.use(requireAuth) // require auth from here on in
 		.use("/users/:uid", ownersOnly)
-		.get("/users/:uid/attachments/:documentId/blob/:fileName", asyncWrapper(getFileBlob))
-		.post("/users/:uid/attachments/:documentId/blob/:fileName", upload, asyncWrapper(postFileBlob))
-		.delete("/users/:uid/attachments/:documentId/blob/:fileName", asyncWrapper(deleteFileBlob))
-		.get("/users/:uid/:collectionId", asyncWrapper(getDataCollection))
-		.get("/users/:uid/:collectionId/:documentId", asyncWrapper(getDataDocument))
-		.post("/users/:uid", asyncWrapper(postDataBatch))
-		.post("/users/:uid/:collectionId/:documentId", asyncWrapper(postDataDocument))
-		.delete("/users/:uid/:collectionId", asyncWrapper(deleteDataCollection))
-		.delete("/users/:uid/:collectionId/:documentId", asyncWrapper(deleteDataDocument))
+		.post("/users/:uid", asyncWrapper(dataBatch.POST))
+		.get("/users/:uid/attachments/:documentId/blob/:fileName", asyncWrapper(fileBlob.GET))
+		.post(
+			"/users/:uid/attachments/:documentId/blob/:fileName",
+			fileBlob.upload,
+			asyncWrapper(fileBlob.POST)
+		)
+		.delete("/users/:uid/attachments/:documentId/blob/:fileName", asyncWrapper(fileBlob.DELETE))
+		.get("/users/:uid/:collectionId", asyncWrapper(dataCollection.GET))
+		.delete("/users/:uid/:collectionId", asyncWrapper(dataCollection.DELETE))
+		.get("/users/:uid/:collectionId/:documentId", asyncWrapper(dataDocument.GET))
+		.post("/users/:uid/:collectionId/:documentId", asyncWrapper(dataDocument.POST))
+		.delete("/users/:uid/:collectionId/:documentId", asyncWrapper(dataDocument.DELETE))
 		.use(handleErrors);
 }
