@@ -28,9 +28,10 @@ import { maxSpacePerUser, MAX_FILE_BYTES } from "../auth/limits.js";
 import { NotFoundError, UnreachableCaseError } from "../errors/index.js";
 import { PrismaClient } from "@prisma/client";
 import { requireEnv } from "../environment.js";
+import { simplifiedByteCount } from "../transformers/simplifiedByteCount.js";
 import chunk from "lodash/chunk";
 
-const MIGRATION_DRY_RUN = false;
+const MIGRATION_DRY_RUN = true;
 
 function isPresent<T>(tbd: T): tbd is Exclude<T, null | undefined> {
 	return tbd !== null && tbd !== undefined;
@@ -231,10 +232,12 @@ export async function migrateLegacyData(): Promise<void> {
 		if (userFolder === null) throw new TypeError("Something went wrong. Why is userFolder null?");
 
 		const fileNames = await getFolderContents(userFolder);
+		console.log(`Preparing to move ${fileNames.length} files...`);
 		const filesToMove = await Promise.all(
 			fileNames.map(async fileName => {
 				const path = legacyFilePath(userId, fileName);
 				if (path === null) {
+					console.error(`No path for file ${fileName}`);
 					filesNotMoved += 1;
 					return null;
 				}
@@ -250,12 +253,17 @@ export async function migrateLegacyData(): Promise<void> {
 
 				filesMoved += 1;
 				const contents = Buffer.from(blob, "utf8");
+				console.log(`Prepared ${simplifiedByteCount(contents.length)} from ${fileName}`);
 				return { userId, fileName, contents };
 			})
 		);
 
+		const finalFilesToMove = filesToMove.filter(isPresent);
+		console.log(`Moving ${finalFilesToMove.length} files...`);
 		if (!MIGRATION_DRY_RUN) {
-			await dataSource.$transaction(filesToMove.filter(isPresent).map(upsertFileData));
+			for (const files of chunk(finalFilesToMove, 20)) {
+				await Promise.all(files.map(upsertFileData));
+			}
 		}
 	}
 
@@ -613,7 +621,8 @@ export async function upsertDbDocs(updates: Array<DocUpdate>): Promise<void> {
 	);
 
 	// FIXME: This gets REEEEEALLY slow after about 10 records
-	await dataSource.$transaction([
+	// await dataSource.$transaction([
+	await Promise.all([
 		...dataItemUpserts.map(data => {
 			const collectionId = data.collectionId;
 			const docId = data.docId;
