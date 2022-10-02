@@ -18,7 +18,6 @@
 	"type": "commonjs",
 	"main": "./dist/server.js",
 	"dependencies": {
-		"@averagehelper/job-queue": "1.0.1",
 		"@prisma/client": "4.3.1",
 		"atob-lite": "2.0.0",
 		"base32-decode": "1.0.0",
