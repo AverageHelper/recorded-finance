@@ -29,7 +29,7 @@ export function auth(): Router {
 		.delete("/totp/secret", throttle(), asyncWrapper(totpSecret.DELETE))
 		.post("/totp/validate", throttle(), asyncWrapper(totpValidate.POST))
 		.get("/session", /* throttle(), */ asyncWrapper(session.GET))
-		.post("/logout", throttle(), logout.POST)
+		.post("/logout", throttle(), asyncWrapper(logout.POST))
 		.post("/leave", throttle(), asyncWrapper(leave.POST))
 		.post("/updatepassword", throttle(), asyncWrapper(updatepassword.POST))
 		.post("/updateaccountid", throttle(), asyncWrapper(updateaccountid.POST));

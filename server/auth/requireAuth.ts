@@ -28,7 +28,7 @@ export async function metadataFromRequest(
 		console.debug("Request has no JWT");
 		throw new UnauthorizedError("missing-token");
 	}
-	if (blacklistHasJwt(token)) {
+	if (await blacklistHasJwt(token)) {
 		console.debug("Request has a blacklisted JWT");
 		throw new UnauthorizedError("expired-token");
 	}

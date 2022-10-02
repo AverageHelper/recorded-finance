@@ -12,9 +12,9 @@ export const persistentSecret = "wAheb^8v^YV^s6YaeYVW&8tyLa*ce4"; // from the RE
 
 export const session = jest.fn<typeof _session>();
 
-export const blacklistHasJwt = jest.fn<typeof _blacklistHasJwt>().mockReturnValue(false);
+export const blacklistHasJwt = jest.fn<typeof _blacklistHasJwt>().mockResolvedValue(false);
 
-export const addJwtToBlacklist = jest.fn<typeof _addJwtToBlacklist>();
+export const addJwtToBlacklist = jest.fn<typeof _addJwtToBlacklist>().mockResolvedValue(undefined);
 
 export const newAccessToken = jest.fn<typeof _newAccessToken>().mockResolvedValue("deft");
 
