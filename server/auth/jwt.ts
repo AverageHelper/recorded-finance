@@ -23,10 +23,13 @@ export const session = cookieSession({
 	maxAge: ONE_HOUR,
 });
 
+// TODO: Whitelist sessions instead (?)
 // const jwtWhitelist = new TemporarySet<string>();
+// TODO: Move these into the database, set a cron job to clear them
 const jwtBlacklist = new TemporarySet<string>();
 
 export function blacklistHasJwt(token: string): boolean {
+	// fetch from database
 	return jwtBlacklist.has(token);
 }
 
@@ -41,8 +44,11 @@ export function addJwtToBlacklist(token: string): void {
 		timeout = Math.min(timeout, timeLeft);
 	}
 	if (timeout > 0) {
+		// save to database
 		jwtBlacklist.add(token, timeout);
 	}
+
+	// Purge the old tokens (?)
 }
 
 // TODO: Be smarter about session storage. See https://gist.github.com/soulmachine/b368ce7292ddd7f91c15accccc02b8df
