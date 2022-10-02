@@ -39,9 +39,6 @@ AUTH_SECRET={some random string of characters}
 DATABASE_URL={your MySQL connection string}
 # required, example: "mysql://....connect.psdb.cloud/..."
 
-DB={path to your storage directory} # For attachment data
-# required, example: "~/server/db"
-
 HOST={your frontend hostname, with protocol}
 # required, example: HOST=https://example.com
 

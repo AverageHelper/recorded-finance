@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Changed
+- The `DB` environment variable is now ignored. All persistent data now lives on the database identified by the value of the `DATABASE_URL` environment variable. [See the README](/server/README.md) for details.
+
+### Removed
+- The database migration logic from [0.13.0](#0130---2022-10-01) has been removed. Your old data should now live on a MySQL server of your choosing!
+
 ## [0.13.1] - 2022-10-01
 ### Fixed
 - Migration is more reliable now.
@@ -295,6 +302,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial commit
 
+[Unreleased]: https://github.com/AverageHelper/accountable-svelte/compare/v0.13.1...HEAD
 [0.13.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.13.0...v0.13.1
 [0.13.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.11.3...v0.12.0
