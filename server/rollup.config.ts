@@ -8,7 +8,8 @@ import json from "@rollup/plugin-json";
 import replace from "@rollup/plugin-replace";
 import typescript from "@rollup/plugin-typescript";
 
-const isProduction = process.env.NODE_ENV === "production";
+// When we're built using the `--production` flag:
+const isProduction = process.env["NODE_ENV"] === "production";
 
 const HOME = process.env["HOME"];
 

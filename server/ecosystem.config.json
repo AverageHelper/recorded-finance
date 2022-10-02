@@ -1,0 +1,12 @@
+{
+	"apps": [
+		{
+			"name": "accountable",
+			"script": "./dist/server.js",
+			"source_map_support": true,
+			"watch": ["dist"],
+			"watch_delay": 1000,
+			"time": true
+		}
+	]
+}

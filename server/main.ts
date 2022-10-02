@@ -2,7 +2,6 @@ import "source-map-support/register.js";
 import { auth } from "./auth/index.js";
 import { cors } from "./cors.js";
 import { db } from "./db.js";
-import { env } from "./environment.js";
 import { handleErrors } from "./handleErrors.js";
 import { lol } from "./routes/v0/index.js";
 import { NotFoundError } from "./errors/NotFoundError.js";
@@ -41,9 +40,5 @@ app
 	.use(handleErrors);
 
 app.listen(PORT, () => {
-	process.stdout.write(
-		`Accountable storage server v${appVersion} listening on port ${PORT} in ${
-			env("NODE_ENV") ?? "unknown"
-		} environment\n`
-	);
+	process.stdout.write(`Accountable storage server v${appVersion} listening on port ${PORT}\n`);
 });
