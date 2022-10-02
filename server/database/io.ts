@@ -1,4 +1,4 @@
-import type { FileData } from "@prisma/client";
+import type { FileData, PrismaPromise, User as DBUser } from "@prisma/client";
 import type {
 	AnyData,
 	DataItem,
@@ -28,7 +28,11 @@ import { NotFoundError, UnreachableCaseError } from "../errors/index.js";
 import { PrismaClient } from "@prisma/client";
 import { requireEnv } from "../environment.js";
 
-const MIGRATION_DRY_RUN = true;
+const MIGRATION_DRY_RUN = false;
+
+function isPresent<T>(tbd: T): tbd is Exclude<T, null | undefined> {
+	return tbd !== null && tbd !== undefined;
+}
 
 export async function migrateLegacyData(): Promise<void> {
 	/* eslint-disable deprecation/deprecation */
@@ -173,19 +177,22 @@ export async function migrateLegacyData(): Promise<void> {
 	const legacyUsers = rawLegacyUsers.filter(isUser);
 
 	// Get user data, funnel all documents to the new database
-	for (const user of legacyUsers) {
-		// User
-		if (!MIGRATION_DRY_RUN)
-			await upsertUser({
-				currentAccountId: user.currentAccountId,
-				mfaRecoverySeed: user.mfaRecoverySeed ?? null,
-				passwordHash: user.passwordHash,
-				passwordSalt: user.passwordSalt,
-				requiredAddtlAuth: user.requiredAddtlAuth ?? [],
-				totpSeed: user.totpSeed ?? null,
-				uid: user.uid,
-			});
+	if (!MIGRATION_DRY_RUN)
+		await dataSource.$transaction(
+			legacyUsers.map(user =>
+				upsertUser({
+					currentAccountId: user.currentAccountId,
+					mfaRecoverySeed: user.mfaRecoverySeed ?? null,
+					passwordHash: user.passwordHash,
+					passwordSalt: user.passwordSalt,
+					requiredAddtlAuth: user.requiredAddtlAuth ?? [],
+					totpSeed: user.totpSeed ?? null,
+					uid: user.uid,
+				})
+			)
+		);
 
+	for (const user of legacyUsers) {
 		// DataItem & UserKeys
 		for (const collectionId of allCollectionIds.filter(id => id !== "users")) {
 			const collectionRef = new CollectionReference(user.uid, collectionId);
@@ -215,27 +222,33 @@ export async function migrateLegacyData(): Promise<void> {
 		const userId = user.uid;
 		const userFolder = legacyFolderForUser(userId);
 		if (userFolder === null) throw new TypeError("Something went wrong. Why is userFolder null?");
+
 		const fileNames = await getFolderContents(userFolder);
-		for (const fileName of fileNames) {
-			const path = legacyFilePath(userId, fileName);
-			if (path === null) {
-				filesNotMoved += 1;
-			} else {
+		const filesToMove = await Promise.all(
+			fileNames.map(async fileName => {
+				const path = legacyFilePath(userId, fileName);
+				if (path === null) {
+					filesNotMoved += 1;
+					return null;
+				}
+
 				const blob = await getFileContents(path);
 				if (blob.length > MAX_FILE_BYTES) {
 					console.error(
 						`File at path ${path} is ${blob.length} bytes long, more than the ${MAX_FILE_BYTES} byte limit.`
 					);
 					filesNotMoved += 1;
-				} else {
-					const contents = Buffer.from(blob, "utf8");
-					if (!MIGRATION_DRY_RUN) {
-						await upsertFileData({ userId, fileName, contents });
-					}
-					filesMoved += 1;
+					return null;
 				}
-			}
-		}
+
+				filesMoved += 1;
+				const contents = Buffer.from(blob, "utf8");
+				return { userId, fileName, contents };
+			})
+		);
+
+		if (!MIGRATION_DRY_RUN)
+			await dataSource.$transaction(filesToMove.filter(isPresent).map(upsertFileData));
 	}
 
 	console.info(
@@ -321,12 +334,13 @@ export async function totalSizeOfFilesForUser(userId: string): Promise<number> {
 /**
  * Stores the given file data, replacing existing data if it already exists.
  */
-export async function upsertFileData(attachment: Omit<FileData, "size">): Promise<void> {
+export function upsertFileData(attachment: Omit<FileData, "size">): PrismaPromise<FileData> {
 	const userId = attachment.userId;
 	const fileName = attachment.fileName;
 	const contents = attachment.contents;
 	const size = contents.length;
-	await dataSource.fileData.upsert({
+
+	return dataSource.fileData.upsert({
 		where: {
 			userId_fileName: { userId, fileName },
 		},
@@ -512,11 +526,11 @@ export async function fetchDbDocs(
 	return (await Promise.all(refs.map(fetchDbDoc))) as NonEmptyArray<Snapshot>;
 }
 
-export async function upsertUser(properties: Required<User>): Promise<void> {
+export function upsertUser(properties: Required<User>): PrismaPromise<DBUser> {
 	assertSchema(properties, userSchema); // assures nonempty fields
 	const uid = properties.uid;
 
-	await dataSource.user.upsert({
+	return dataSource.user.upsert({
 		where: { uid },
 		update: properties,
 		create: properties,
