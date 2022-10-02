@@ -1,7 +1,8 @@
-import type { FileData } from "@prisma/client";
+import type { FileData, PrismaPromise, User as DBUser } from "@prisma/client";
 import type {
 	AnyData,
 	DataItem,
+	DataItemKey,
 	Identified,
 	IdentifiedDataItem,
 	User,
@@ -27,8 +28,14 @@ import { maxSpacePerUser, MAX_FILE_BYTES } from "../auth/limits.js";
 import { NotFoundError, UnreachableCaseError } from "../errors/index.js";
 import { PrismaClient } from "@prisma/client";
 import { requireEnv } from "../environment.js";
+import { simplifiedByteCount } from "../transformers/simplifiedByteCount.js";
+import chunk from "lodash/chunk";
 
 const MIGRATION_DRY_RUN = true;
+
+function isPresent<T>(tbd: T): tbd is Exclude<T, null | undefined> {
+	return tbd !== null && tbd !== undefined;
+}
 
 export async function migrateLegacyData(): Promise<void> {
 	/* eslint-disable deprecation/deprecation */
@@ -173,6 +180,22 @@ export async function migrateLegacyData(): Promise<void> {
 	const legacyUsers = rawLegacyUsers.filter(isUser);
 
 	// Get user data, funnel all documents to the new database
+	if (!MIGRATION_DRY_RUN) {
+		await dataSource.$transaction(
+			legacyUsers.map(user =>
+				upsertUser({
+					currentAccountId: user.currentAccountId,
+					mfaRecoverySeed: user.mfaRecoverySeed ?? null,
+					passwordHash: user.passwordHash,
+					passwordSalt: user.passwordSalt,
+					requiredAddtlAuth: user.requiredAddtlAuth ?? [],
+					totpSeed: user.totpSeed ?? null,
+					uid: user.uid,
+				})
+			)
+		);
+	}
+
 	for (const user of legacyUsers) {
 		// DataItem & UserKeys
 		for (const collectionId of allCollectionIds.filter(id => id !== "users")) {
@@ -194,7 +217,11 @@ export async function migrateLegacyData(): Promise<void> {
 				.filter(isDataItem)
 				.map(data => ({ ref: new DocumentReference(collectionRef, data._id), data }));
 			if (isNonEmptyArray(legacyDocs)) {
-				if (!MIGRATION_DRY_RUN) await upsertDbDocs(legacyDocs);
+				if (!MIGRATION_DRY_RUN) {
+					for (const docs of chunk(legacyDocs, 25)) {
+						await upsertDbDocs(docs);
+					}
+				}
 				documentsMoved += legacyDocs.length;
 			}
 		}
@@ -203,25 +230,39 @@ export async function migrateLegacyData(): Promise<void> {
 		const userId = user.uid;
 		const userFolder = legacyFolderForUser(userId);
 		if (userFolder === null) throw new TypeError("Something went wrong. Why is userFolder null?");
+
 		const fileNames = await getFolderContents(userFolder);
-		for (const fileName of fileNames) {
-			const path = legacyFilePath(userId, fileName);
-			if (path === null) {
-				filesNotMoved += 1;
-			} else {
+		console.log(`Preparing to move ${fileNames.length} files...`);
+		const filesToMove = await Promise.all(
+			fileNames.map(async fileName => {
+				const path = legacyFilePath(userId, fileName);
+				if (path === null) {
+					console.error(`No path for file ${fileName}`);
+					filesNotMoved += 1;
+					return null;
+				}
+
 				const blob = await getFileContents(path);
 				if (blob.length > MAX_FILE_BYTES) {
 					console.error(
 						`File at path ${path} is ${blob.length} bytes long, more than the ${MAX_FILE_BYTES} byte limit.`
 					);
 					filesNotMoved += 1;
-				} else {
-					const contents = Buffer.from(blob, "utf8");
-					if (!MIGRATION_DRY_RUN) {
-						await upsertFileData({ userId, fileName, contents });
-					}
-					filesMoved += 1;
+					return null;
 				}
+
+				filesMoved += 1;
+				const contents = Buffer.from(blob, "utf8");
+				console.log(`Prepared ${simplifiedByteCount(contents.length)} from ${fileName}`);
+				return { userId, fileName, contents };
+			})
+		);
+
+		const finalFilesToMove = filesToMove.filter(isPresent);
+		console.log(`Moving ${finalFilesToMove.length} files...`);
+		if (!MIGRATION_DRY_RUN) {
+			for (const files of chunk(finalFilesToMove, 20)) {
+				await Promise.all(files.map(upsertFileData));
 			}
 		}
 	}
@@ -309,12 +350,16 @@ export async function totalSizeOfFilesForUser(userId: string): Promise<number> {
 /**
  * Stores the given file data, replacing existing data if it already exists.
  */
-export async function upsertFileData(attachment: Omit<FileData, "size">): Promise<void> {
+export function upsertFileData(
+	attachment: Omit<FileData, "size">
+): PrismaPromise<Pick<FileData, "size">> {
 	const userId = attachment.userId;
 	const fileName = attachment.fileName;
 	const contents = attachment.contents;
 	const size = contents.length;
-	await dataSource.fileData.upsert({
+
+	return dataSource.fileData.upsert({
+		select: { size: true },
 		where: {
 			userId_fileName: { userId, fileName },
 		},
@@ -500,11 +545,12 @@ export async function fetchDbDocs(
 	return (await Promise.all(refs.map(fetchDbDoc))) as NonEmptyArray<Snapshot>;
 }
 
-export async function upsertUser(properties: Required<User>): Promise<void> {
+export function upsertUser(properties: Required<User>): PrismaPromise<Pick<DBUser, "uid">> {
 	assertSchema(properties, userSchema); // assures nonempty fields
 	const uid = properties.uid;
 
-	await dataSource.user.upsert({
+	return dataSource.user.upsert({
+		select: { uid: true },
 		where: { uid },
 		update: properties,
 		create: properties,
@@ -524,80 +570,109 @@ export interface DocUpdate {
 	data: AnyData;
 }
 
-export async function upsertDbDocs(updates: NonEmptyArray<DocUpdate>): Promise<void> {
+export async function upsertDbDocs(updates: Array<DocUpdate>): Promise<void> {
+	if (!isNonEmptyArray(updates)) return;
+
 	// Assert same UID on all refs
-	const uid = updates[0].ref.uid;
-	if (!updates.every(u => u.ref.uid === uid))
-		throw new TypeError(`Not every UID matches the first: ${uid}`);
+	const userId = updates[0].ref.uid;
+	if (!updates.every(u => u.ref.uid === userId))
+		throw new TypeError(`Not every UID matches the first: ${userId}`);
 
-	await dataSource.$transaction(
-		updates.map(update => {
-			const collectionId = update.ref.parent.id;
-			const docId = update.ref.id;
-			const userId = update.ref.uid;
-			if ("ciphertext" in update.data) {
-				// DataItem
-				if (!isDataItemKey(collectionId))
-					throw new TypeError(`Collection ID '${collectionId}' was found with DataItem data.`);
-				const data: DataItem = update.data;
-				const upsert = {
-					ciphertext: data.ciphertext,
-					objectType: data.objectType,
-					cryption: data.cryption ?? "v0",
-				};
-				return dataSource.dataItem.upsert({
-					where: { userId_collectionId_docId: { userId, collectionId, docId } },
-					update: upsert,
-					create: {
-						...upsert,
-						collectionId,
-						docId,
-						user: {
-							connect: { uid: userId },
-						},
-					},
-				});
-			} else if ("dekMaterial" in update.data) {
-				// Keys
-				const data: UserKeys = update.data;
-				const upsert = {
-					dekMaterial: data.dekMaterial,
-					passSalt: data.passSalt,
-					oldDekMaterial: data.oldDekMaterial ?? null,
-					oldPassSalt: data.oldPassSalt ?? null,
-				};
-				return dataSource.userKeys.upsert({
-					where: { userId: docId },
-					update: upsert,
-					create: {
-						...upsert,
-						user: {
-							connect: { uid: userId },
-						},
-					},
-				});
-			} else if ("uid" in update.data) {
-				// User
-				const data: User = update.data;
-				const upsert = {
-					uid: data.uid,
-					currentAccountId: data.currentAccountId,
-					passwordHash: data.passwordHash,
-					passwordSalt: data.passwordSalt,
-					mfaRecoverySeed: data.mfaRecoverySeed ?? null,
-					totpSeed: data.totpSeed ?? null,
-					requiredAddtlAuth: Array.from(new Set(data.requiredAddtlAuth?.sort(sortStrings) ?? [])),
-				};
-				return dataSource.user.upsert({
-					where: { uid: docId },
-					update: upsert,
-					create: upsert,
-				});
-			}
+	const dataItemUpserts: Array<DataItem & { docId: string; collectionId: DataItemKey }> = [];
+	const dekMaterialUpserts: Array<UserKeys> = [];
+	const userUpserts: Array<User> = [];
 
-			throw new UnreachableCaseError(update.data);
-		})
+	updates.forEach(update => {
+		const collectionId = update.ref.parent.id;
+		const docId = update.ref.id;
+		if ("ciphertext" in update.data) {
+			// DataItem
+			if (!isDataItemKey(collectionId))
+				throw new TypeError(`Collection ID '${collectionId}' was found with DataItem data.`);
+			const data: DataItem = update.data;
+			dataItemUpserts.push({ ...data, docId, collectionId });
+			return;
+		} else if ("dekMaterial" in update.data) {
+			// Keys
+			const data: UserKeys = update.data;
+			dekMaterialUpserts.push(data);
+			return;
+		} else if ("uid" in update.data) {
+			// User
+			const data: User = update.data;
+			const upsert = {
+				uid: data.uid,
+				currentAccountId: data.currentAccountId,
+				passwordHash: data.passwordHash,
+				passwordSalt: data.passwordSalt,
+				mfaRecoverySeed: data.mfaRecoverySeed ?? null,
+				totpSeed: data.totpSeed ?? null,
+				requiredAddtlAuth: Array.from(new Set(data.requiredAddtlAuth?.sort(sortStrings) ?? [])),
+			};
+			userUpserts.push(upsert);
+			return;
+		}
+
+		throw new UnreachableCaseError(update.data);
+	});
+
+	console.debug(
+		`Upserting ${updates.length} records (${dataItemUpserts.length} DataItem, ${dekMaterialUpserts.length} UserKeys, ${userUpserts.length} User)...`
 	);
+
+	// FIXME: This gets REEEEEALLY slow after about 10 records
+	// await dataSource.$transaction([
+	await Promise.all([
+		...dataItemUpserts.map(data => {
+			const collectionId = data.collectionId;
+			const docId = data.docId;
+			const upsert = {
+				ciphertext: data.ciphertext,
+				objectType: data.objectType,
+				cryption: data.cryption ?? "v0",
+			};
+			return dataSource.dataItem.upsert({
+				select: { docId: true },
+				where: { userId_collectionId_docId: { userId, collectionId, docId } },
+				update: upsert,
+				create: {
+					...upsert,
+					collectionId,
+					docId,
+					user: {
+						connect: { uid: userId },
+					},
+				},
+			});
+		}),
+		...dekMaterialUpserts.map(data => {
+			const upsert = {
+				dekMaterial: data.dekMaterial,
+				passSalt: data.passSalt,
+				oldDekMaterial: data.oldDekMaterial ?? null,
+				oldPassSalt: data.oldPassSalt ?? null,
+			};
+			return dataSource.userKeys.upsert({
+				select: { userId: true },
+				where: { userId },
+				update: upsert,
+				create: {
+					...upsert,
+					user: {
+						connect: { uid: userId },
+					},
+				},
+			});
+		}),
+		...userUpserts.map(data => {
+			return dataSource.user.upsert({
+				select: { uid: true },
+				where: { uid: userId },
+				update: data,
+				create: { ...data, requiredAddtlAuth: data.requiredAddtlAuth ?? [] },
+			});
+		}),
+	]);
 }
 
 export async function deleteDbDocs(refs: NonEmptyArray<DocumentReference>): Promise<void> {
