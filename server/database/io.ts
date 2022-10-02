@@ -124,6 +124,45 @@ export async function destroyFileData(userId: string, fileName: string): Promise
 
 // MARK: - Database
 
+/**
+ * Resolves to `true` if the given token exists in the database.
+ */
+export async function jwtExistsInDatabase(token: string): Promise<boolean> {
+	const result = await dataSource.expiredJwt.findUnique({
+		where: { token },
+		select: { token: true },
+	});
+	return result !== null;
+}
+
+/**
+ * Stores the given token in a blacklist.
+ *
+ * The blacklist assumes that the JWT has an hour-long expiration
+ * window. Values will be purged sometime after that expiration
+ * window elapses.
+ */
+export async function addJwtToDatabase(token: string): Promise<void> {
+	await dataSource.expiredJwt.upsert({
+		where: { token },
+		update: {}, // nop if the value already exists
+		create: { token }, // database generates the timestamp
+	});
+}
+
+/**
+ * Purges the database of expired JWTs older than two hours.
+ */
+export async function purgeExpiredJwts(): Promise<void> {
+	const ONE_HOUR = 60 * 60 * 1000;
+	const twoHrsAgo = new Date(new Date().getTime() - 2 * ONE_HOUR);
+	await dataSource.expiredJwt.deleteMany({
+		where: {
+			createdAt: { lte: twoHrsAgo },
+		},
+	});
+}
+
 export async function fetchDbCollection(
 	ref: CollectionReference
 ): Promise<Array<IdentifiedDataItem>> {

@@ -40,6 +40,15 @@ model UserKeys {
   @@index([userId])
 }
 
+/// A JWT whose expiration window may not have elapsed yet.
+/// These tokens should not be accepted as valid.
+/// These tokens should be purged some time after
+/// their expiration wondow has elapsed.
+model ExpiredJwt {
+  token     String   @id
+  createdAt DateTime @default(now())
+}
+
 model DataItem {
   userId       String
   collectionId String
