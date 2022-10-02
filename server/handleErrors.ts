@@ -8,7 +8,7 @@ export const handleErrors: ErrorRequestHandler = (err: unknown, req, res, next) 
 	}
 	if (err instanceof InternalError) {
 		if (err.harmless) {
-			console.debug(`Sending response [${err.status}-${err.code} ${err.message}]`);
+			console.debug(`Sending response [${err.status} (${err.code}): ${err.message}]`);
 		} else {
 			console.error(err);
 		}

@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - The server's `DB` environment variable is now ignored. All persistent data now lives on the database identified by the value of the server's `DATABASE_URL` environment variable. [See the README](/server/README.md) for details.
-- Reorganized API implementations for better parity between [SvelteKit](https://kit.svelte.dev) and Express server.
+- Reorganized API implementations for better parity between [SvelteKit](https://kit.svelte.dev/docs/routing#server) and Express server.
 
 ### Removed
 - The database migration logic from [0.13.0](#0130---2022-10-01) has been removed. Your old data now lives on a MySQL server of your choosing.
