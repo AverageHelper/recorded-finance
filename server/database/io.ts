@@ -1,3 +1,4 @@
+import type { CollectionReference, DocumentReference } from "./references.js";
 import type { FileData, PrismaPromise, User as DBUser } from "@prisma/client";
 import type {
 	AnyData,
@@ -16,7 +17,6 @@ import {
 	sortStrings,
 	user as userSchema,
 } from "./schemas.js";
-import type { CollectionReference, DocumentReference } from "./references.js";
 import { maxSpacePerUser } from "../auth/limits.js";
 import { NotFoundError, UnreachableCaseError } from "../errors/index.js";
 import { PrismaClient } from "@prisma/client";
