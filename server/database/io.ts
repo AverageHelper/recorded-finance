@@ -172,7 +172,7 @@ export async function fetchDbCollection(
 	}
 }
 
-export async function findUserWithProperties(query: Partial<User>): Promise<User | null> {
+async function findUserWithProperties(query: Partial<User>): Promise<User | null> {
 	if (Object.keys(query).length === 0) return null; // Fail gracefully for an empty query
 	const first = await dataSource.user.findFirst({
 		where: {
@@ -184,6 +184,16 @@ export async function findUserWithProperties(query: Partial<User>): Promise<User
 	});
 	if (first === null) return first;
 	return computeRequiredAddtlAuth(first);
+}
+
+export async function userWithUid(uid: string): Promise<User | null> {
+	// Find first user whose UID matches
+	return await findUserWithProperties({ uid });
+}
+
+export async function userWithAccountId(accountId: string): Promise<User | null> {
+	// Find first user whose account ID matches
+	return await findUserWithProperties({ currentAccountId: accountId });
 }
 
 /** A view of database data. */

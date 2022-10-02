@@ -6,8 +6,8 @@ import { asyncWrapper } from "../asyncWrapper.js";
 import { BadRequestError, NotFoundError, UnauthorizedError } from "../errors/index.js";
 import { blacklistHasJwt, jwtTokenFromRequest, verifyJwt } from "./jwt.js";
 import { Context } from "./Context.js";
-import { findUserWithProperties } from "../database/io.js";
 import { StructError } from "superstruct";
+import { userWithUid } from "../database/io.js";
 
 interface Metadata {
 	/** The user's auth data. */
@@ -15,11 +15,6 @@ interface Metadata {
 
 	/** The MFA confirmations that the user has completed this session. */
 	validatedWithMfa: Array<MFAOption>;
-}
-
-async function userWithUid(uid: string): Promise<User | null> {
-	// Find first user whose UID matches
-	return await findUserWithProperties({ uid });
 }
 
 /**
