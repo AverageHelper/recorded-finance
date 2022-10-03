@@ -2,11 +2,9 @@ import "dotenv/config.js"; // SIDE-EFFECT: populates `process.env`
 
 export type EnvKey =
 	| "AUTH_SECRET" //
-	| "DB"
 	| "HOST"
 	| "MAX_BYTES"
-	| "MAX_USERS"
-	| "NODE_ENV";
+	| "MAX_USERS";
 
 /**
  * Retrieves an environment value for the given key, or `undefined` if none was set.

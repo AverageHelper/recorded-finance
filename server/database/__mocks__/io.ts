@@ -10,6 +10,8 @@ import type {
 	deleteDbDocs as _deleteDbDocs,
 	deleteDbDoc as _deleteDbDoc,
 	deleteDbCollection as _deleteDbCollection,
+	userWithUid as _userWithUid,
+	userWithAccountId as _userWithAccountId,
 } from "../io.js";
 import { jest } from "@jest/globals";
 
@@ -21,7 +23,9 @@ export const numberOfUsers = jest.fn<typeof _numberOfUsers>().mockResolvedValue(
 
 export const fetchDbCollection = jest.fn<typeof _fetchDbCollection>().mockResolvedValue([]);
 
-export const findUserWithProperties = jest.fn<() => Promise<unknown>>().mockResolvedValue(null);
+export const userWithUid = jest.fn<typeof _userWithUid>().mockResolvedValue(null);
+
+export const userWithAccountId = jest.fn<typeof _userWithAccountId>().mockResolvedValue(null);
 
 export const fetchDbDoc = jest
 	.fn<typeof _fetchDbDoc>()
@@ -31,7 +35,7 @@ export const fetchDbDocs = jest
 	.fn<typeof _fetchDbDocs>()
 	.mockRejectedValue(new EvalError("This is a test"));
 
-export const upsertUser = jest.fn<typeof _upsertUser>().mockResolvedValue(undefined);
+export const upsertUser = jest.fn<typeof _upsertUser>().mockResolvedValue({ uid: "test_user_123" });
 
 export const destroyUser = jest.fn<typeof _destroyUser>().mockResolvedValue(undefined);
 

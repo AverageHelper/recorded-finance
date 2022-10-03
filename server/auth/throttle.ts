@@ -1,7 +1,6 @@
-import type { RateLimiterRes } from "rate-limiter-flexible";
 import type { RequestHandler } from "express";
 import { asyncWrapper } from "../asyncWrapper.js";
-import { RateLimiterMemory } from "rate-limiter-flexible";
+import { RateLimiterMemory, RateLimiterRes } from "rate-limiter-flexible";
 import { ThrottledError } from "../errors/index.js";
 
 /**
@@ -33,7 +32,11 @@ export function throttle<
 			await rateLimiter.consume(remoteIp);
 			next();
 		} catch (error) {
-			next(new ThrottledError(error as RateLimiterRes));
+			if (error instanceof RateLimiterRes) {
+				next(new ThrottledError(error));
+			} else {
+				next(error);
+			}
 		}
 	});
 }

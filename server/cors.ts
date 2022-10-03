@@ -4,8 +4,6 @@ import { OriginError } from "./errors/index.js";
 import { URL } from "node:url";
 import _cors from "cors";
 
-const testMode = env("NODE_ENV") === "test";
-
 const allowedOriginHostnames = new Set<string>();
 
 // Add typical localhost variants
@@ -24,17 +22,16 @@ if (configuredHostUrl !== null) {
 	}
 }
 
-if (!testMode)
-	process.stdout.write(
-		`allowedOriginHostnames: ${JSON.stringify(Array.from(allowedOriginHostnames))}\n`
-	);
+process.stdout.write(
+	`allowedOriginHostnames: ${JSON.stringify(Array.from(allowedOriginHostnames))}\n`
+);
 
 const corsOptions: CorsOptions = {
 	credentials: true,
 	origin: (origin, callback) => {
 		// Allow requests with no origin (mobile apps, curl, etc.)
 		if (origin === undefined || !origin) {
-			if (!testMode) process.stdout.write(`Handling request that has no origin\n`);
+			process.stdout.write(`Handling request that has no origin\n`);
 			return callback(null, true);
 		}
 
@@ -43,22 +40,20 @@ const corsOptions: CorsOptions = {
 			const { hostname } = new URL(origin);
 
 			if (!allowedOriginHostnames.has(hostname)) {
-				if (!testMode)
-					process.stdout.write(
-						`Blocking request from origin: ${origin} (inferred hostname: ${hostname})\n`
-					);
+				process.stdout.write(
+					`Blocking request from origin: ${origin} (inferred hostname: ${hostname})\n`
+				);
 				return callback(new OriginError(), false);
 			}
 		} catch {
-			if (!testMode)
-				process.stdout.write(
-					`Blocking request from origin: ${origin} (inferred hostname: <invalid-url>)\n`
-				);
+			process.stdout.write(
+				`Blocking request from origin: ${origin} (inferred hostname: <invalid-url>)\n`
+			);
 			return callback(new OriginError(), false);
 		}
 
 		// Origin must be OK! Let 'em in
-		if (!testMode) process.stdout.write(`Handling request from origin: ${origin}\n`);
+		process.stdout.write(`Handling request from origin: ${origin}\n`);
 		return callback(null, true);
 	},
 };

@@ -1,8 +1,8 @@
 import type { JwtPayload, MFAOption, User } from "../database/schemas.js";
 import type { Request } from "express";
 import { isJwtPayload } from "../database/schemas.js";
+import { addJwtToDatabase, jwtExistsInDatabase } from "../database/io.js";
 import { requireEnv } from "../environment.js";
-import { TemporarySet } from "./TemporarySet.js";
 import cookieSession from "cookie-session";
 import jwt from "jsonwebtoken";
 
@@ -23,17 +23,14 @@ export const session = cookieSession({
 	maxAge: ONE_HOUR,
 });
 
-// const jwtWhitelist = new TemporarySet<string>();
-const jwtBlacklist = new TemporarySet<string>();
-
-export function blacklistHasJwt(token: string): boolean {
-	return jwtBlacklist.has(token);
+export async function blacklistHasJwt(token: string): Promise<boolean> {
+	return await jwtExistsInDatabase(token);
 }
 
-export function addJwtToBlacklist(token: string): void {
+export async function addJwtToBlacklist(token: string): Promise<void> {
 	const jwt = unverifiedJwt(token);
 
-	// Only blacklist for the duration the token has remaining
+	// Only blacklist for the duration the token has remaining time
 	let timeout = ONE_HOUR; // default to one hour
 	if (jwt !== null && typeof jwt !== "string") {
 		const timeLeft = ONE_HOUR - (Date.now() - (jwt.iat ?? timeout));
@@ -41,9 +38,11 @@ export function addJwtToBlacklist(token: string): void {
 		timeout = Math.min(timeout, timeLeft);
 	}
 	if (timeout > 0) {
-		jwtBlacklist.add(token, timeout);
+		await addJwtToDatabase(token);
 	}
 }
+
+// TODO: Regularly purge tokens from blacklist that are older than the max age
 
 // TODO: Be smarter about session storage. See https://gist.github.com/soulmachine/b368ce7292ddd7f91c15accccc02b8df
 export async function newAccessToken(

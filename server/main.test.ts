@@ -13,8 +13,6 @@ jest.unstable_mockModule("./auth/generators.js", () => mockGenerators);
 
 const { app } = await import("./main.js");
 
-await new Promise(resolve => setTimeout(resolve, 50));
-
 describe("Routes", () => {
 	describe("GET /v0/", () => {
 		test("responds with json", async () => {
