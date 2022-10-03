@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - The database migration logic from [0.13.0](#0130---2022-10-01) has been removed. Your old data now lives on a MySQL server of your choosing.
 
+## [0.13.2] - 2022-10-02
+### Fixed
+- Migration would throw for users with no attachments. That's fixed now.
+
 ## [0.13.1] - 2022-10-01
 ### Fixed
 - Migration is more reliable now.
@@ -304,7 +308,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial commit
 
-[0.14.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.13.1...v0.14.0
+[0.14.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.13.2...v0.14.0
+[0.13.2]: https://github.com/AverageHelper/accountable-svelte/compare/v0.13.1...v0.13.2
 [0.13.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.13.0...v0.13.1
 [0.13.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.11.3...v0.12.0
