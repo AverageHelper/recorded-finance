@@ -55,7 +55,7 @@ export async function getFolderContents(path: string): Promise<Array<string>> {
 	} catch (error) {
 		if ((error as NodeJS.ErrnoException).code === "ENOENT") {
 			console.warn(`No data found at path ${path}`);
-			throw new NotFoundError();
+			return [];
 		}
 		throw error;
 	}
