@@ -4,11 +4,11 @@ import { ownersOnly } from "./auth/ownersOnly.js";
 import { requireAuth } from "./auth/requireAuth.js";
 import { Router } from "express";
 
-import { webSocket } from "./routes/v0/db/users/[uid]/[collectionId]/webSocket.js";
-import * as fileBlob from "./routes/v0/db/users/[uid]/attachments/[documentId]/blob/[fileName]/+server.js";
-import * as dataBatch from "./routes/v0/db/users/[uid]/+server.js";
-import * as dataCollection from "./routes/v0/db/users/[uid]/[collectionId]/+server.js";
-import * as dataDocument from "./routes/v0/db/users/[uid]/[collectionId]/[documentId]/+server.js";
+import { webSocket } from "./api/v0/db/users/[uid]/[collectionId]/webSocket.js";
+import * as fileBlob from "./api/v0/db/users/[uid]/attachments/[documentId]/blob/[fileName]/+server.js";
+import * as dataBatch from "./api/v0/db/users/[uid]/+server.js";
+import * as dataCollection from "./api/v0/db/users/[uid]/[collectionId]/+server.js";
+import * as dataDocument from "./api/v0/db/users/[uid]/[collectionId]/[documentId]/+server.js";
 
 export function db(): Router {
 	// Function, so we defer creation of the router until after we've set up websocket support

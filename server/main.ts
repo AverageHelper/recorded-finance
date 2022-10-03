@@ -12,9 +12,9 @@ import express from "express";
 import expressWs from "express-ws";
 import helmet from "helmet";
 
-import * as lol from "./routes/v0/+server.js";
-import * as ping from "./routes/v0/ping/+server.js";
-import * as serverVersion from "./routes/v0/version/+server.js";
+import * as lol from "./api/v0/+server.js";
+import * as ping from "./api/v0/ping/+server.js";
+import * as serverVersion from "./api/v0/version/+server.js";
 
 const PORT = 40850;
 
