@@ -1,5 +1,4 @@
 import type { DocumentData } from "./database/index.js";
-import type { Response } from "express";
 import { InternalError } from "./errors/index.js";
 
 // See https://stackoverflow.com/a/54337073 for why "Vary: *" is necessary for Safari
@@ -7,7 +6,7 @@ const VARY = ["Vary", "*"] as const;
 const CACHE_CONTROL = ["Cache-Control", "no-store"] as const;
 
 export function respondSuccess(
-	res: Response,
+	res: APIResponse,
 	additionalValues?: Record<string, string | number | Array<string | number>>
 ): void {
 	res
@@ -17,7 +16,7 @@ export function respondSuccess(
 }
 
 export function respondData<T extends { _id: string } | { uid: string }>(
-	res: Response,
+	res: APIResponse,
 	data: DocumentData<T> | Array<DocumentData<T>> | null
 ): void {
 	res
@@ -26,7 +25,7 @@ export function respondData<T extends { _id: string } | { uid: string }>(
 		.json({ message: "Success!", data });
 }
 
-export function respondError(res: Response, err: InternalError): void {
+export function respondError(res: APIResponse, err: InternalError): void {
 	res.setHeader(...CACHE_CONTROL);
 	res.setHeader(...VARY);
 	err.headers.forEach((value, name) => {
@@ -35,6 +34,6 @@ export function respondError(res: Response, err: InternalError): void {
 	res.status(err.status).json({ message: err.message, code: err.code });
 }
 
-export function respondInternalError(res: Response): void {
+export function respondInternalError(res: APIResponse): void {
 	respondError(res, new InternalError());
 }

@@ -1,7 +1,7 @@
 import type { DocUpdate } from "../../../../../database/io.js";
-import type { Params } from "./Params";
-import type { Request, Response } from "express";
+import { assertMethod } from "../../../../../helpers/assertMethod.js";
 import { BadRequestError } from "../../../../../errors/index.js";
+import { pathSegments } from "../../../../../helpers/pathSegments.js";
 import { statsForUser } from "../../../../../database/io.js";
 import { respondSuccess } from "../../../../../responses.js";
 import {
@@ -14,11 +14,12 @@ import {
 	setDocuments,
 } from "../../../../../database/index.js";
 
-export async function POST(req: Request<Params, unknown, unknown>, res: Response): Promise<void> {
-	const uid = req.params.uid;
+export async function POST(req: APIRequest, res: APIResponse): Promise<void> {
+	assertMethod(req.method, "POST");
+	const { uid } = pathSegments(req, "uid");
 
 	// ** Batched writes
-	const providedData = req.body;
+	const providedData = req.body as unknown;
 	if (!isArrayOf(providedData, isDocumentWriteBatch)) throw new BadRequestError();
 
 	// Ignore an empty batch

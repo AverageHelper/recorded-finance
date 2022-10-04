@@ -1,3 +1,6 @@
-import type { RequestHandler } from "express";
+import { assertMethod } from "../../../helpers/assertMethod";
 
-export const GET: RequestHandler = (req, res) => res.json({ message: "Pong!" });
+export function GET(req: APIRequest, res: APIResponse): void {
+	assertMethod(req.method, "GET");
+	res.json({ message: "Pong!" });
+}

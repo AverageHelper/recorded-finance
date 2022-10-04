@@ -1,6 +1,6 @@
-import type { Params } from "./Params.js";
-import type { Request, Response } from "express";
+import { assertMethod } from "../../../../../../../helpers/assertMethod.js";
 import { BadRequestError, NotFoundError } from "../../../../../../../errors/index.js";
+import { pathSegments } from "../../../../../../../helpers/pathSegments.js";
 import { respondData, respondSuccess } from "../../../../../../../responses.js";
 import { statsForUser } from "../../../../../../../database/io.js";
 import {
@@ -14,23 +14,24 @@ import {
 	setDocument,
 } from "../../../../../../../database/index.js";
 
-function collectionRef(req: Request<Params>): CollectionReference | null {
-	const uid = req.params.uid;
-	const collectionId = req.params.collectionId;
+function collectionRef(req: APIRequest): CollectionReference | null {
+	const { uid, collectionId } = pathSegments(req, "uid", "collectionId");
 	if (!isCollectionId(collectionId)) return null;
 
 	return new CollectionReference(uid, collectionId);
 }
 
-function documentRef(req: Request<Params>): DocumentReference | null {
-	const documentId = req.params.documentId;
+function documentRef(req: APIRequest): DocumentReference | null {
+	const { documentId } = pathSegments(req, "documentId");
 	const collection = collectionRef(req);
 	if (!collection) return null;
 
 	return new DocumentReference(collection, documentId);
 }
 
-export async function GET(req: Request<Params>, res: Response): Promise<void> {
+export async function GET(req: APIRequest, res: APIResponse): Promise<void> {
+	assertMethod(req.method, "GET");
+
 	const ref = documentRef(req);
 	// console.debug(`Handling GET for document at ${ref?.path ?? "null"}`);
 	if (!ref) throw new NotFoundError();
@@ -40,10 +41,11 @@ export async function GET(req: Request<Params>, res: Response): Promise<void> {
 	respondData(res, data);
 }
 
-export async function POST(req: Request<Params, unknown, unknown>, res: Response): Promise<void> {
-	const uid = req.params.uid;
+export async function POST(req: APIRequest, res: APIResponse): Promise<void> {
+	assertMethod(req.method, "POST");
+	const { uid } = pathSegments(req, "uid");
 
-	const providedData = req.body;
+	const providedData = req.body as unknown;
 	if (!isDataItem(providedData) && !isUserKeys(providedData)) throw new BadRequestError();
 
 	const ref = documentRef(req);
@@ -54,8 +56,9 @@ export async function POST(req: Request<Params, unknown, unknown>, res: Response
 	respondSuccess(res, { totalSpace, usedSpace });
 }
 
-export async function DELETE(req: Request<Params>, res: Response): Promise<void> {
-	const uid = req.params.uid;
+export async function DELETE(req: APIRequest, res: APIResponse): Promise<void> {
+	assertMethod(req.method, "DELETE");
+	const { uid } = pathSegments(req, "uid");
 
 	const ref = documentRef(req);
 	if (!ref) throw new NotFoundError();

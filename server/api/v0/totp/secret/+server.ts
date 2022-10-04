@@ -1,4 +1,4 @@
-import type { Request, Response } from "express";
+import { assertMethod } from "../../../../helpers/assertMethod.js";
 import { BadRequestError, ConflictError, UnauthorizedError } from "../../../../errors/index.js";
 import { compare, generateSecureToken } from "../../../../auth/generators.js";
 import { generateTOTPSecretURI, verifyTOTP } from "../../../../auth/totp.js";
@@ -9,7 +9,8 @@ import { upsertUser } from "../../../../database/io.js";
 
 // MARK: - GET
 
-export async function GET(req: Request, res: Response): Promise<void> {
+export async function GET(req: APIRequest, res: APIResponse): Promise<void> {
+	assertMethod(req.method, "GET");
 	// ** TOTP Registration
 
 	const { user, validatedWithMfa } = await metadataFromRequest(req);
@@ -44,7 +45,8 @@ export async function GET(req: Request, res: Response): Promise<void> {
 
 // MARK: - DELETE
 
-export async function DELETE(req: Request, res: Response): Promise<void> {
+export async function DELETE(req: APIRequest, res: APIResponse): Promise<void> {
+	assertMethod(req.method, "DELETE");
 	const reqBody = type({
 		password: nonempty(string()),
 		token: nonempty(string()),

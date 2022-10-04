@@ -1,5 +1,5 @@
-import type { Request, Response } from "express";
 import type { User } from "../../../database/schemas.js";
+import { assertMethod } from "../../../helpers/assertMethod.js";
 import { generateHash, generateSalt } from "../../../auth/generators.js";
 import { MAX_USERS } from "../../../auth/limits.js";
 import { newAccessToken } from "../../../auth/jwt.js";
@@ -27,7 +27,8 @@ function newDocumentId(): string {
 	return uuid().replace(/-/gu, ""); // remove hyphens
 }
 
-export async function POST(req: Request, res: Response): Promise<void> {
+export async function POST(req: APIRequest, res: APIResponse): Promise<void> {
+	assertMethod(req.method, "POST");
 	const reqBody = type({
 		account: nonempty(string()),
 		password: nonempty(string()),

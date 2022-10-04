@@ -1,4 +1,4 @@
-import type { Request, Response } from "express";
+import { assertMethod } from "../../../helpers/assertMethod.js";
 import { BadRequestError, UnauthorizedError } from "../../../errors/index.js";
 import { compare } from "../../../auth/generators.js";
 import { destroyUser, userWithAccountId } from "../../../database/io.js";
@@ -6,7 +6,8 @@ import { generateTOTPSecretURI, verifyTOTP } from "../../../auth/totp.js";
 import { respondSuccess } from "../../../responses.js";
 import { is, nonempty, optional, string, type } from "superstruct";
 
-export async function POST(req: Request, res: Response): Promise<void> {
+export async function POST(req: APIRequest, res: APIResponse): Promise<void> {
+	assertMethod(req.method, "POST");
 	const reqBody = type({
 		account: nonempty(string()),
 		password: nonempty(string()),

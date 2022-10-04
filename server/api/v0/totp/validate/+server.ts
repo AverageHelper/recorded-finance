@@ -1,15 +1,16 @@
-import type { Request, Response } from "express";
+import { assertMethod } from "../../../../helpers/assertMethod.js";
 import { BadRequestError, ConflictError, UnauthorizedError } from "../../../../errors/index.js";
 import { generateSecret, generateTOTPSecretURI, verifyTOTP } from "../../../../auth/totp.js";
 import { generateSecureToken } from "../../../../auth/generators.js";
+import { is, nonempty, string, type } from "superstruct";
 import { metadataFromRequest } from "../../../../auth/requireAuth.js";
 import { newAccessToken } from "../../../../auth/jwt.js";
 import { respondSuccess } from "../../../../responses.js";
 import { statsForUser, upsertUser } from "../../../../database/io.js";
 import safeCompare from "safe-compare";
-import { is, nonempty, string, type } from "superstruct";
 
-export async function POST(req: Request, res: Response): Promise<void> {
+export async function POST(req: APIRequest, res: APIResponse): Promise<void> {
+	assertMethod(req.method, "POST");
 	const reqBody = type({
 		token: nonempty(string()),
 	});

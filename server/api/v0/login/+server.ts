@@ -1,13 +1,14 @@
 import type { MFAOption } from "../../../database/schemas.js";
-import type { Request, Response } from "express";
-import { newAccessToken } from "../../../auth/jwt.js";
-import { compare } from "../../../auth/generators.js";
-import { respondSuccess } from "../../../responses.js";
+import { assertMethod } from "../../../helpers/assertMethod.js";
 import { BadRequestError, UnauthorizedError } from "../../../errors/index.js";
-import { statsForUser, userWithAccountId } from "../../../database/io.js";
+import { compare } from "../../../auth/generators.js";
 import { is, nonempty, string, type } from "superstruct";
+import { newAccessToken } from "../../../auth/jwt.js";
+import { respondSuccess } from "../../../responses.js";
+import { statsForUser, userWithAccountId } from "../../../database/io.js";
 
-export async function POST(req: Request, res: Response): Promise<void> {
+export async function POST(req: APIRequest, res: APIResponse): Promise<void> {
+	assertMethod(req.method, "POST");
 	const reqBody = type({
 		account: nonempty(string()),
 		password: nonempty(string()),

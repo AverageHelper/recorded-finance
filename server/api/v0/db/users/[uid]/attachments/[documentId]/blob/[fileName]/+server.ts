@@ -1,10 +1,17 @@
 import type { DocumentData } from "../../../../../../../../../database/schemas.js";
 import type { Params } from "./Params";
-import type { Request, RequestHandler, Response } from "express";
+import type {
+	Request as ExpressRequest,
+	RequestHandler,
+	Response as ExpressResponse,
+} from "express";
+import { assertMethod } from "../../../../../../../../../helpers/assertMethod.js";
 import { maxSpacePerUser, MAX_FILE_BYTES } from "../../../../../../../../../auth/limits.js";
+import { pathSegments } from "../../../../../../../../../helpers/pathSegments.js";
 import { respondData, respondSuccess } from "../../../../../../../../../responses.js";
 import { sep as pathSeparator } from "node:path";
 import { simplifiedByteCount } from "../../../../../../../../../transformers/simplifiedByteCount.js";
+import multer, { memoryStorage } from "multer";
 import {
 	destroyFileData,
 	fetchFileData,
@@ -16,7 +23,6 @@ import {
 	NotEnoughRoomError,
 	NotFoundError,
 } from "../../../../../../../../../errors/index.js";
-import multer, { memoryStorage } from "multer";
 
 /**
  * Asserts that the given value is a valid file path segment.
@@ -40,8 +46,8 @@ function assertPathSegment(value: string, name: string): string {
 /**
  * Ensures that the appropriate parameters are present and valid file path segments.
  */
-function requireFilePathParameters(params: Params): Required<Params> {
-	const { uid, documentId, fileName } = params;
+function requireFilePathParameters(req: APIRequest): Required<Params> {
+	const { uid, documentId, fileName } = pathSegments(req, "uid", "documentId", "fileName");
 
 	return {
 		uid: assertPathSegment(uid, "uid"),
@@ -50,10 +56,13 @@ function requireFilePathParameters(params: Params): Required<Params> {
 	};
 }
 
-export async function DELETE(req: Request<Params>, res: Response): Promise<void> {
-	const userId = req.params.uid;
+export async function DELETE(req: APIRequest, res: APIResponse): Promise<void> {
+	assertMethod(req.method, "DELETE");
+	const params = pathSegments(req, "uid", "documentId", "fileName");
 
-	const { fileName } = requireFilePathParameters(req.params);
+	const userId = params.uid;
+
+	const { fileName } = requireFilePathParameters(req);
 	await destroyFileData(userId, fileName);
 
 	// Report the user's new usage
@@ -71,8 +80,9 @@ interface FileData {
 	_id: string;
 }
 
-export async function GET(req: Request<Params>, res: Response): Promise<void> {
-	const { uid: userId, fileName } = requireFilePathParameters(req.params);
+export async function GET(req: APIRequest, res: APIResponse): Promise<void> {
+	assertMethod(req.method, "GET");
+	const { uid: userId, fileName } = requireFilePathParameters(req);
 
 	const file = await fetchFileData(userId, fileName);
 	if (file === null) throw new NotFoundError();
@@ -80,7 +90,7 @@ export async function GET(req: Request<Params>, res: Response): Promise<void> {
 	const contents = file.contents.toString("utf8");
 	const fileData: DocumentData<FileData> = {
 		contents,
-		_id: req.params.fileName,
+		_id: fileName,
 	};
 	respondData(res, fileData);
 }
@@ -91,13 +101,21 @@ export const upload = multer({
 		fileSize: MAX_FILE_BYTES, // 4.2 MB
 		files: 1,
 	},
-}).single("file") as RequestHandler<Params & { [key: string]: string }>;
+}).single("file") as RequestHandler<{ [key: string]: string }>;
 
-export async function POST(req: Request<Params>, res: Response): Promise<void> {
-	if (!req.file) throw new BadRequestError("You must include a file to store");
+export async function POST(req: APIRequest, res: APIResponse): Promise<void> {
+	assertMethod(req.method, "POST");
 
-	const userId = req.params.uid;
-	const { fileName } = requireFilePathParameters(req.params);
+	// Mimic Multer's middleware environment (see https://stackoverflow.com/a/68882562)
+	await new Promise(resolve => {
+		upload(req as ExpressRequest, res as ExpressResponse, resolve);
+	});
+
+	// We assume multer would install the `file` on a Vercel request the same as on Express
+	const file = (req as ExpressRequest).file;
+	if (!file) throw new BadRequestError("You must include a file to store");
+
+	const { uid: userId, fileName } = requireFilePathParameters(req);
 
 	const { totalSpace, usedSpace } = await statsForUser(userId);
 	const userSizeDesc = simplifiedByteCount(usedSpace);
@@ -107,7 +125,7 @@ export async function POST(req: Request<Params>, res: Response): Promise<void> {
 	const remainingSpace = totalSpace - usedSpace;
 	if (remainingSpace <= 0) throw new NotEnoughRoomError();
 
-	const contents = req.file.buffer; // this better be utf8
+	const contents = file.buffer; // this better be utf8
 	await upsertFileData({ userId, fileName, contents });
 
 	{
