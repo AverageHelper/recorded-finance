@@ -126,10 +126,18 @@ export function wsFactory<T extends WebSocketMessages>(
 				if (isWebSocketCode(code)) {
 					cb(code, reason.toString("utf-8"));
 				} else {
-					cb(
-						WebSocketCode.UNEXPECTED_CONDITION,
-						`Closed with reason "${reason.toString("utf-8")}" and unknown code ${code}`
-					);
+					const msg = reason.toString("utf-8");
+					if (msg) {
+						cb(
+							WebSocketCode.UNEXPECTED_CONDITION,
+							`Client closed the connection with reason "${msg}" and unknown code ${code}`
+						);
+					} else {
+						cb(
+							WebSocketCode.UNEXPECTED_CONDITION,
+							`Client closed the connection with unknown code ${code}`
+						);
+					}
 				}
 			});
 		},

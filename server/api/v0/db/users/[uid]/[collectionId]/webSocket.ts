@@ -59,14 +59,20 @@ export const webSocket: WebsocketRequestHandler = ws(
 			setHeader: () => fakeRes,
 		} as unknown as APIResponse;
 		try {
+			console.debug("[WebSocket] Checking auth state...");
 			await requireAuth(req, fakeRes);
+			console.debug("[WebSocket] Success! User is logged in.");
 		} catch {
+			console.debug("[WebSocket] Fail! User is not logged in.");
 			close(WebSocketCode.VIOLATED_CONTRACT, "You must be logged in to access user data");
 			return;
 		}
 		try {
+			console.debug("[WebSocket] Checking that caller is owner...");
 			await assertCallerIsOwner(req, fakeRes);
+			console.debug("[WebSocket] Success! User is requesting their own data.");
 		} catch {
+			console.debug("[WebSocket] Fail! User is requesting someone else's data.");
 			close(WebSocketCode.VIOLATED_CONTRACT, "You cannot access data that isn't yours");
 			return;
 		}
