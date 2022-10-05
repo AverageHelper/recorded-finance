@@ -1,6 +1,6 @@
-import type { AnyData, IdentifiedDataItem } from "./schemas.js";
-import type { CollectionReference, DocumentReference } from "./references.js";
-import type { DocUpdate } from "./io.js";
+import type { AnyData, IdentifiedDataItem } from "./schemas";
+import type { CollectionReference, DocumentReference } from "./references";
+import type { DocUpdate } from "./io";
 import {
 	deleteDbCollection,
 	deleteDbDoc,
@@ -9,7 +9,7 @@ import {
 	fetchDbDoc,
 	fetchDbDocs,
 	upsertDbDocs,
-} from "./io.js";
+} from "./io";
 
 // Since all data is encrypted on the client, we only
 // need to bother about persistent I/O. We leave path-
@@ -200,8 +200,8 @@ export async function setDocument(ref: DocumentReference, data: AnyData): Promis
 	await setDocuments([{ ref, data }]);
 }
 
-export * from "./references.js";
-export * from "./schemas.js";
+export * from "./references";
+export * from "./schemas";
 
 export { fetchDbDoc as getDocument };
 export { fetchDbCollection as getCollection };

@@ -1,9 +1,9 @@
-import type { JwtPayload, MFAOption, User } from "../database/schemas.js";
-import { addJwtToDatabase, jwtExistsInDatabase } from "../database/io.js";
-import { isJwtPayload } from "../database/schemas.js";
-import { generateSecureToken } from "./generators.js";
-import { ONE_HOUR } from "../constants/time.js";
-import { requireEnv } from "../environment.js";
+import type { JwtPayload, MFAOption, User } from "../database/schemas";
+import { addJwtToDatabase, jwtExistsInDatabase } from "../database/io";
+import { isJwtPayload } from "../database/schemas";
+import { generateSecureToken } from "./generators";
+import { ONE_HOUR } from "../constants/time";
+import { requireEnv } from "../environment";
 import Cookies from "cookies";
 import jwt from "jsonwebtoken";
 import Keygrip from "keygrip";

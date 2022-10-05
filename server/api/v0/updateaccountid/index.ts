@@ -1,14 +1,15 @@
-import { apiHandler } from "../../../helpers/apiHandler.js";
-import { BadRequestError, UnauthorizedError } from "../../../errors/index.js";
-import { compare } from "../../../auth/generators.js";
-import { destroyUser, userWithAccountId } from "../../../database/io.js";
-import { generateTOTPSecretURI, verifyTOTP } from "../../../auth/totp.js";
-import { respondSuccess } from "../../../responses.js";
+import { apiHandler } from "../../../helpers/apiHandler";
+import { BadRequestError, UnauthorizedError } from "../../../errors";
+import { compare } from "../../../auth/generators";
+import { generateTOTPSecretURI, verifyTOTP } from "../../../auth/totp";
 import { is, nonempty, optional, string, type } from "superstruct";
+import { respondSuccess } from "../../../responses";
+import { upsertUser, userWithAccountId } from "../../../database/io";
 
 export const POST = apiHandler("POST", async (req, res) => {
 	const reqBody = type({
 		account: nonempty(string()),
+		newaccount: nonempty(string()),
 		password: nonempty(string()),
 		token: optional(nonempty(string())),
 	});
@@ -19,6 +20,7 @@ export const POST = apiHandler("POST", async (req, res) => {
 
 	// Ask for full credentials, so we aren't leaning on a repeatable token
 	const givenAccountId = req.body.account;
+	const newGivenAccountId = req.body.newaccount;
 	const givenPassword = req.body.password;
 
 	// ** Get credentials
@@ -27,7 +29,7 @@ export const POST = apiHandler("POST", async (req, res) => {
 		throw new UnauthorizedError("wrong-credentials");
 	}
 
-	// ** Verify password credentials
+	// ** Verify old credentials
 	const isPasswordGood = await compare(givenPassword, storedUser.passwordHash);
 	if (!isPasswordGood) {
 		throw new UnauthorizedError("wrong-credentials");
@@ -49,8 +51,19 @@ export const POST = apiHandler("POST", async (req, res) => {
 		if (!isValid) throw new UnauthorizedError("wrong-mfa-credentials");
 	}
 
-	// ** Delete the user
-	await destroyUser(storedUser.uid);
+	// ** Store new credentials
+	await upsertUser({
+		currentAccountId: newGivenAccountId,
+		mfaRecoverySeed: storedUser.mfaRecoverySeed ?? null,
+		passwordHash: storedUser.passwordHash,
+		passwordSalt: storedUser.passwordSalt,
+		requiredAddtlAuth: storedUser.requiredAddtlAuth ?? [],
+		totpSeed: storedUser.totpSeed ?? null,
+		uid: storedUser.uid,
+	});
 
+	// TODO: Invalidate the old jwt, send a new one
 	respondSuccess(res);
 });
+
+export default POST;

@@ -1,30 +1,32 @@
-import type { DocumentData } from "../../../../../../../../../database/schemas.js";
+import type { DocumentData } from "../../../../../../../../../database/schemas";
 import type { Params } from "./Params";
+import type { VercelRequest, VercelResponse } from "@vercel/node";
 import type {
 	Request as ExpressRequest,
 	RequestHandler,
 	Response as ExpressResponse,
 } from "express";
-import { apiHandler } from "../../../../../../../../../helpers/apiHandler.js";
-import { assertCallerIsOwner } from "../../../../../../../../../auth/assertCallerIsOwner.js";
-import { maxSpacePerUser, MAX_FILE_BYTES } from "../../../../../../../../../auth/limits.js";
-import { pathSegments } from "../../../../../../../../../helpers/pathSegments.js";
-import { requireAuth } from "../../../../../../../../../auth/requireAuth.js";
-import { respondData, respondSuccess } from "../../../../../../../../../responses.js";
+import { apiHandler } from "../../../../../../../../../helpers/apiHandler";
+import { assertCallerIsOwner } from "../../../../../../../../../auth/assertCallerIsOwner";
+import { maxSpacePerUser, MAX_FILE_BYTES } from "../../../../../../../../../auth/limits";
+import { pathSegments } from "../../../../../../../../../helpers/pathSegments";
+import { requireAuth } from "../../../../../../../../../auth/requireAuth";
+import { respondData, respondError, respondSuccess } from "../../../../../../../../../responses";
 import { sep as pathSeparator } from "node:path";
-import { simplifiedByteCount } from "../../../../../../../../../transformers/simplifiedByteCount.js";
+import { simplifiedByteCount } from "../../../../../../../../../transformers/simplifiedByteCount";
 import multer, { memoryStorage } from "multer";
 import {
 	destroyFileData,
 	fetchFileData,
 	statsForUser,
 	upsertFileData,
-} from "../../../../../../../../../database/io.js";
+} from "../../../../../../../../../database/io";
 import {
+	BadMethodError,
 	BadRequestError,
 	NotEnoughRoomError,
 	NotFoundError,
-} from "../../../../../../../../../errors/index.js";
+} from "../../../../../../../../../errors";
 
 /**
  * Asserts that the given value is a valid file path segment.
@@ -137,3 +139,20 @@ export const POST = apiHandler("POST", async (req, res) => {
 		respondSuccess(res, { totalSpace, usedSpace });
 	}
 });
+
+export default async (req: VercelRequest, res: VercelResponse): Promise<void> => {
+	switch (req.method) {
+		case "GET":
+			await GET(req, res);
+			break;
+		case "DELETE":
+			await DELETE(req, res);
+			break;
+		case "POST":
+			await POST(req, res);
+			break;
+		default:
+			respondError(res, new BadMethodError());
+			break;
+	}
+};

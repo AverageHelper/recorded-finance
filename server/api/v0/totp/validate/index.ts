@@ -1,12 +1,12 @@
-import { apiHandler } from "../../../../helpers/apiHandler.js";
-import { BadRequestError, ConflictError, UnauthorizedError } from "../../../../errors/index.js";
-import { generateSecret, generateTOTPSecretURI, verifyTOTP } from "../../../../auth/totp.js";
-import { generateSecureToken } from "../../../../auth/generators.js";
+import { apiHandler } from "../../../../helpers/apiHandler";
+import { BadRequestError, ConflictError, UnauthorizedError } from "../../../../errors";
+import { generateSecret, generateTOTPSecretURI, verifyTOTP } from "../../../../auth/totp";
+import { generateSecureToken } from "../../../../auth/generators";
 import { is, nonempty, string, type } from "superstruct";
-import { metadataFromRequest } from "../../../../auth/requireAuth.js";
-import { newAccessToken } from "../../../../auth/jwt.js";
-import { respondSuccess } from "../../../../responses.js";
-import { statsForUser, upsertUser } from "../../../../database/io.js";
+import { metadataFromRequest } from "../../../../auth/requireAuth";
+import { newAccessToken } from "../../../../auth/jwt";
+import { respondSuccess } from "../../../../responses";
+import { statsForUser, upsertUser } from "../../../../database/io";
 import safeCompare from "safe-compare";
 
 export const POST = apiHandler("POST", async (req, res) => {
@@ -79,3 +79,5 @@ export const POST = apiHandler("POST", async (req, res) => {
 		respondSuccess(res, { access_token, uid, totalSpace, usedSpace });
 	}
 });
+
+export default POST;

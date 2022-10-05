@@ -1,4 +1,4 @@
-import type { EnvKey } from "../environment.js";
+import type { EnvKey } from "../environment";
 
 export function env(key: EnvKey): string | undefined {
 	switch (key) {

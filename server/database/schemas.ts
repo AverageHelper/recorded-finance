@@ -1,7 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type { Infer, Struct, StructError } from "superstruct";
 import type { Prisma } from "@prisma/client";
-import { UnreachableCaseError } from "../errors/UnreachableCaseError.js";
+import { UnreachableCaseError } from "../errors";
 import {
 	array,
 	enums,

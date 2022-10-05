@@ -1,11 +1,11 @@
-import type { MFAOption } from "../../../database/schemas.js";
-import { apiHandler } from "../../../helpers/apiHandler.js";
-import { BadRequestError, UnauthorizedError } from "../../../errors/index.js";
-import { compare } from "../../../auth/generators.js";
+import type { MFAOption } from "../../../database/schemas";
+import { apiHandler } from "../../../helpers/apiHandler";
+import { BadRequestError, UnauthorizedError } from "../../../errors";
+import { compare } from "../../../auth/generators";
 import { is, nonempty, string, type } from "superstruct";
-import { newAccessToken } from "../../../auth/jwt.js";
-import { respondSuccess } from "../../../responses.js";
-import { statsForUser, userWithAccountId } from "../../../database/io.js";
+import { newAccessToken } from "../../../auth/jwt";
+import { respondSuccess } from "../../../responses";
+import { statsForUser, userWithAccountId } from "../../../database/io";
 
 export const POST = apiHandler("POST", async (req, res) => {
 	const reqBody = type({
@@ -49,3 +49,5 @@ export const POST = apiHandler("POST", async (req, res) => {
 	const { totalSpace, usedSpace } = await statsForUser(uid);
 	respondSuccess(res, { access_token, validate, uid, totalSpace, usedSpace });
 });
+
+export default POST;

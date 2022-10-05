@@ -1,16 +1,16 @@
-import { asyncWrapper } from "../asyncWrapper.js";
+import { asyncWrapper } from "../asyncWrapper";
 import { Router } from "express";
-import { throttle } from "./throttle.js";
+import { throttle } from "./throttle";
 
-import * as join from "../api/v0/join/+server.js";
-import * as login from "../api/v0/login/+server.js";
-import * as totpSecret from "../api/v0/totp/secret/+server.js";
-import * as totpValidate from "../api/v0/totp/validate/+server.js";
-import * as session from "../api/v0/session/+server.js";
-import * as logout from "../api/v0/logout/+server.js";
-import * as leave from "../api/v0/leave/+server.js";
-import * as updatepassword from "../api/v0/updatepassword/+server.js";
-import * as updateaccountid from "../api/v0/updateaccountid/+server.js";
+import * as join from "../api/v0/join";
+import * as login from "../api/v0/login";
+import * as totpSecret from "../api/v0/totp/secret";
+import * as totpValidate from "../api/v0/totp/validate";
+import * as session from "../api/v0/session";
+import * as logout from "../api/v0/logout";
+import * as leave from "../api/v0/leave";
+import * as updatepassword from "../api/v0/updatepassword";
+import * as updateaccountid from "../api/v0/updateaccountid";
 
 // TODO: Implement WebAuthn (and test passkey support!)
 

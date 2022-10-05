@@ -1,5 +1,5 @@
-import { InternalError } from "./errors/index.js";
-import { respondError, respondInternalError } from "./responses.js";
+import { InternalError } from "./errors";
+import { respondError, respondInternalError } from "./responses";
 
 export async function handleErrors(
 	req: APIRequest,

@@ -1,22 +1,13 @@
-import type { User } from "../../../database/schemas.js";
-import { apiHandler } from "../../../helpers/apiHandler.js";
-import { generateHash, generateSalt } from "../../../auth/generators.js";
-import { MAX_USERS } from "../../../auth/limits.js";
-import { newAccessToken } from "../../../auth/jwt.js";
-import { respondSuccess } from "../../../responses.js";
-import { v4 as uuid } from "uuid";
+import type { User } from "../../../database/schemas";
+import { apiHandler } from "../../../helpers/apiHandler";
+import { BadRequestError, DuplicateAccountError, NotEnoughRoomError } from "../../../errors";
+import { generateHash, generateSalt } from "../../../auth/generators";
 import { is, nonempty, string, type } from "superstruct";
-import {
-	BadRequestError,
-	DuplicateAccountError,
-	NotEnoughRoomError,
-} from "../../../errors/index.js";
-import {
-	numberOfUsers,
-	statsForUser,
-	upsertUser,
-	userWithAccountId,
-} from "../../../database/io.js";
+import { MAX_USERS } from "../../../auth/limits";
+import { newAccessToken } from "../../../auth/jwt";
+import { numberOfUsers, statsForUser, upsertUser, userWithAccountId } from "../../../database/io";
+import { respondSuccess } from "../../../responses";
+import { v4 as uuid } from "uuid";
 
 /**
  * Returns a fresh document ID that is virtually guaranteed
@@ -71,3 +62,5 @@ export const POST = apiHandler("POST", async (req, res) => {
 	const { totalSpace, usedSpace } = await statsForUser(user.uid);
 	respondSuccess(res, { access_token, uid, totalSpace, usedSpace });
 });
+
+export default POST;

@@ -1,11 +1,17 @@
-import { apiHandler } from "../../../../helpers/apiHandler.js";
-import { BadRequestError, ConflictError, UnauthorizedError } from "../../../../errors/index.js";
-import { compare, generateSecureToken } from "../../../../auth/generators.js";
-import { generateTOTPSecretURI, verifyTOTP } from "../../../../auth/totp.js";
+import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { apiHandler } from "../../../../helpers/apiHandler";
+import {
+	BadMethodError,
+	BadRequestError,
+	ConflictError,
+	UnauthorizedError,
+} from "../../../../errors";
+import { compare, generateSecureToken } from "../../../../auth/generators";
+import { generateTOTPSecretURI, verifyTOTP } from "../../../../auth/totp";
 import { is, nonempty, string, type } from "superstruct";
-import { metadataFromRequest } from "../../../../auth/requireAuth.js";
-import { respondSuccess } from "../../../../responses.js";
-import { upsertUser } from "../../../../database/io.js";
+import { metadataFromRequest } from "../../../../auth/requireAuth";
+import { respondError, respondSuccess } from "../../../../responses";
+import { upsertUser } from "../../../../database/io";
 
 // MARK: - GET
 
@@ -97,3 +103,17 @@ export const DELETE = apiHandler("DELETE", async (req, res) => {
 	// TODO: Re-issue an auth token with updated validatedWithMfa information
 	respondSuccess(res);
 });
+
+export default async (req: VercelRequest, res: VercelResponse): Promise<void> => {
+	switch (req.method) {
+		case "GET":
+			await GET(req, res);
+			break;
+		case "DELETE":
+			await DELETE(req, res);
+			break;
+		default:
+			respondError(res, new BadMethodError());
+			break;
+	}
+};

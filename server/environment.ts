@@ -1,4 +1,4 @@
-import "dotenv/config.js"; // SIDE-EFFECT: populates `process.env`
+import "dotenv/config"; // SIDE-EFFECT: populates `process.env`
 
 export type EnvKey =
 	| "AUTH_SECRET" //

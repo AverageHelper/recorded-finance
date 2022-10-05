@@ -1,4 +1,4 @@
-import type { CollectionReference, DocumentReference } from "./references.js";
+import type { CollectionReference, DocumentReference } from "./references";
 import type { FileData, PrismaPromise, User as DBUser } from "@prisma/client";
 import type {
 	AnyData,
@@ -8,7 +8,7 @@ import type {
 	IdentifiedDataItem,
 	User,
 	UserKeys,
-} from "./schemas.js";
+} from "./schemas";
 import {
 	assertSchema,
 	computeRequiredAddtlAuth,
@@ -16,10 +16,10 @@ import {
 	isNonEmptyArray,
 	sortStrings,
 	user as userSchema,
-} from "./schemas.js";
-import { maxSpacePerUser } from "../auth/limits.js";
-import { NotFoundError, UnreachableCaseError } from "../errors/index.js";
-import { ONE_HOUR } from "../constants/time.js";
+} from "./schemas";
+import { maxSpacePerUser } from "../auth/limits";
+import { NotFoundError, UnreachableCaseError } from "../errors";
+import { ONE_HOUR } from "../constants/time";
 import { PrismaClient } from "@prisma/client";
 
 // Start connecting to the database

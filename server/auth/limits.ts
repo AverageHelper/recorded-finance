@@ -1,5 +1,5 @@
-import { env } from "../environment.js";
-import { simplifiedByteCount } from "../transformers/index.js";
+import { env } from "../environment";
+import { simplifiedByteCount } from "../transformers";
 
 export const MAX_FILE_BYTES = 4404019; // 4.4 MB, to not exceed Vercel's 4.5 MB limit
 

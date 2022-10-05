@@ -1,11 +1,11 @@
-import type { DocUpdate } from "../../../../../database/io.js";
-import { apiHandler } from "../../../../../helpers/apiHandler.js";
-import { assertCallerIsOwner } from "../../../../../auth/assertCallerIsOwner.js";
-import { BadRequestError } from "../../../../../errors/index.js";
-import { pathSegments } from "../../../../../helpers/pathSegments.js";
-import { statsForUser } from "../../../../../database/io.js";
-import { requireAuth } from "../../../../../auth/requireAuth.js";
-import { respondSuccess } from "../../../../../responses.js";
+import type { DocUpdate } from "../../../../../database/io";
+import { apiHandler } from "../../../../../helpers/apiHandler";
+import { assertCallerIsOwner } from "../../../../../auth/assertCallerIsOwner";
+import { BadRequestError } from "../../../../../errors";
+import { pathSegments } from "../../../../../helpers/pathSegments";
+import { statsForUser } from "../../../../../database/io";
+import { requireAuth } from "../../../../../auth/requireAuth";
+import { respondSuccess } from "../../../../../responses";
 import {
 	CollectionReference,
 	DocumentReference,
@@ -14,7 +14,7 @@ import {
 	isDocumentWriteBatch,
 	isNonEmptyArray,
 	setDocuments,
-} from "../../../../../database/index.js";
+} from "../../../../../database";
 
 export const POST = apiHandler("POST", async (req, res) => {
 	await requireAuth(req, res);
@@ -64,3 +64,5 @@ export const POST = apiHandler("POST", async (req, res) => {
 	const { totalSpace, usedSpace } = await statsForUser(uid);
 	respondSuccess(res, { totalSpace, usedSpace });
 });
+
+export default POST;

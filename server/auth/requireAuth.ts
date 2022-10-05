@@ -1,10 +1,10 @@
 import type { JsonWebTokenError } from "jsonwebtoken";
-import type { MFAOption, User } from "../database/schemas.js";
-import { assertSchema, jwtPayload } from "../database/schemas.js";
-import { BadRequestError, NotFoundError, UnauthorizedError } from "../errors/index.js";
-import { blacklistHasJwt, jwtTokenFromRequest, verifyJwt } from "./jwt.js";
+import type { MFAOption, User } from "../database/schemas";
+import { assertSchema, jwtPayload } from "../database/schemas";
+import { BadRequestError, NotFoundError, UnauthorizedError } from "../errors";
+import { blacklistHasJwt, jwtTokenFromRequest, verifyJwt } from "./jwt";
 import { StructError } from "superstruct";
-import { userWithUid } from "../database/io.js";
+import { userWithUid } from "../database/io";
 
 interface Metadata {
 	/** The user's auth data. */

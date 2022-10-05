@@ -1,5 +1,5 @@
 import type { RateLimiterRes } from "rate-limiter-flexible";
-import { InternalError } from "./InternalError.js";
+import { InternalError } from "./InternalError";
 
 export class ThrottledError extends InternalError {
 	constructor(rateLimiterRes: RateLimiterRes) {

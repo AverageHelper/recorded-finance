@@ -1,5 +1,5 @@
-import type { CollectionID } from "./schemas.js";
-import { isCollectionId } from "./schemas.js";
+import type { CollectionID } from "./schemas";
+import { isCollectionId } from "./schemas";
 
 export class CollectionReference {
 	public readonly uid: string;

@@ -4,7 +4,7 @@ import type {
 	newAccessToken as _newAccessToken,
 	jwtTokenFromRequest as _jwtTokenFromRequest,
 	verifyJwt as _verifyJwt,
-} from "../jwt.js";
+} from "../jwt";
 import { jest } from "@jest/globals";
 
 export const persistentSecret = "wAheb^8v^YV^s6YaeYVW&8tyLa*ce4"; // from the README

@@ -1,23 +1,23 @@
 import type { Infer } from "superstruct";
-import type { Unsubscribe } from "../../../../../../database/index.js";
+import type { Unsubscribe } from "./database";
 import type { WebsocketRequestHandler } from "express-ws";
 import { array, enums, nullable, object, optional, union } from "superstruct";
-import { assertCallerIsOwner } from "../../../../../../auth/assertCallerIsOwner.js";
-import { requireAuth } from "../../../../../../auth/requireAuth.js";
-import { WebSocketCode } from "../../../../../../networking/WebSocketCode.js";
-import { ws } from "../../../../../../networking/websockets.js";
+import { assertCallerIsOwner } from "./auth/assertCallerIsOwner";
+import { requireAuth } from "./auth/requireAuth";
+import { WebSocketCode } from "./networking/WebSocketCode";
+import { ws } from "./networking/websockets";
 import {
 	allCollectionIds,
 	identifiedDataItem,
 	isValidForSchema,
 	nonemptyString,
-} from "../../../../../../database/schemas.js";
+} from "./database/schemas";
 import {
 	CollectionReference,
 	DocumentReference,
 	watchUpdatesToCollection,
 	watchUpdatesToDocument,
-} from "../../../../../../database/index.js";
+} from "./database";
 
 const watcherData = object({
 	message: nonemptyString,

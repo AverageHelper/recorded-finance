@@ -3,7 +3,7 @@ import type {
 	generateSecureToken as _generateSecureToken,
 	generateSalt as _generateSalt,
 	generateHash as _generateHash,
-} from "../generators.js";
+} from "../generators";
 import { jest } from "@jest/globals";
 
 export const compare = jest

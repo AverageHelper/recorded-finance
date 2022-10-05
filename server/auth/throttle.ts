@@ -1,7 +1,7 @@
 import type { RequestHandler } from "express";
-import { asyncWrapper } from "../asyncWrapper.js";
+import { asyncWrapper } from "../asyncWrapper";
 import { RateLimiterMemory, RateLimiterRes } from "rate-limiter-flexible";
-import { ThrottledError } from "../errors/index.js";
+import { ThrottledError } from "../errors";
 
 /**
  * // TODO: Better throttling

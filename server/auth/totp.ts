@@ -1,5 +1,5 @@
 import { createHmac } from "node:crypto";
-import { persistentSecret } from "./jwt.js";
+import { persistentSecret } from "./jwt";
 import { URL } from "node:url";
 import _base32Decode from "base32-decode";
 import _base32Encode from "base32-encode";

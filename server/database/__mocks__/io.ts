@@ -12,7 +12,7 @@ import type {
 	deleteDbCollection as _deleteDbCollection,
 	userWithUid as _userWithUid,
 	userWithAccountId as _userWithAccountId,
-} from "../io.js";
+} from "../io";
 import { jest } from "@jest/globals";
 
 export const statsForUser = jest

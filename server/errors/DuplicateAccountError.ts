@@ -1,4 +1,4 @@
-import { ConflictError } from "./ConflictError.js";
+import { ConflictError } from "./ConflictError";
 
 export class DuplicateAccountError extends ConflictError {
 	constructor() {

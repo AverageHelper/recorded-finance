@@ -1,8 +1,8 @@
-import { apiHandler } from "../../../helpers/apiHandler.js";
-import { metadataFromRequest } from "../../../auth/requireAuth.js";
-import { newAccessToken } from "../../../auth/jwt.js";
-import { respondSuccess } from "../../../responses.js";
-import { statsForUser } from "../../../database/io.js";
+import { apiHandler } from "../../../helpers/apiHandler";
+import { metadataFromRequest } from "../../../auth/requireAuth";
+import { newAccessToken } from "../../../auth/jwt";
+import { respondSuccess } from "../../../responses";
+import { statsForUser } from "../../../database/io";
 
 export const GET = apiHandler("GET", async (req, res) => {
 	// ** If the user has the cookie set, respond with a JWT for the user
@@ -24,3 +24,5 @@ export const GET = apiHandler("GET", async (req, res) => {
 		usedSpace,
 	});
 });
+
+export default GET;

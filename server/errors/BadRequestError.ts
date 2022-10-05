@@ -1,4 +1,4 @@
-import { InternalError } from "./InternalError.js";
+import { InternalError } from "./InternalError";
 
 export class BadRequestError extends InternalError {
 	constructor(message: string = "Invalid data") {

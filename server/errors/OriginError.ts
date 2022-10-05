@@ -1,4 +1,4 @@
-import { InternalError } from "./InternalError.js";
+import { InternalError } from "./InternalError";
 
 export class OriginError extends InternalError {
 	constructor() {

@@ -1,17 +1,17 @@
 import { jest } from "@jest/globals";
-import { version } from "./version.js";
+import { version } from "./version";
 import request from "supertest";
 
 /* eslint-disable jest/no-mocks-import */
-import * as mockEnvironment from "./__mocks__/environment.js";
-import * as mockGenerators from "./auth/__mocks__/generators.js";
+import * as mockEnvironment from "./__mocks__/environment";
+import * as mockGenerators from "./auth/__mocks__/generators";
 /* eslint-enable jest/no-mocks-import */
 
 // See https://github.com/facebook/jest/issues/10025 on why `jest.mock` doesn't work under ESM
-jest.unstable_mockModule("./environment.js", () => mockEnvironment);
-jest.unstable_mockModule("./auth/generators.js", () => mockGenerators);
+jest.unstable_mockModule("./environment", () => mockEnvironment);
+jest.unstable_mockModule("./auth/generators", () => mockGenerators);
 
-const { app } = await import("./main.js");
+const { app } = await import("./main");
 
 describe("Routes", () => {
 	describe("GET /v0/", () => {

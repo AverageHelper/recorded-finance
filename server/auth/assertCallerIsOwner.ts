@@ -1,6 +1,6 @@
-import { pathSegments } from "../helpers/pathSegments.js";
-import { metadataFromRequest, requireAuth } from "./requireAuth.js";
-import { UnauthorizedError } from "../errors/index.js";
+import { pathSegments } from "../helpers/pathSegments";
+import { metadataFromRequest, requireAuth } from "./requireAuth";
+import { UnauthorizedError } from "../errors";
 import safeCompare from "tsscmp";
 
 /**

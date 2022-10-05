@@ -1,19 +1,19 @@
-import "source-map-support/register.js";
-import { asyncWrapper } from "./asyncWrapper.js";
-import { auth } from "./auth/index.js";
-import { cors } from "./cors.js";
-import { db } from "./db.js";
-import { NotFoundError } from "./errors/NotFoundError.js";
-import { respondError } from "./responses.js";
-import { version as appVersion } from "./version.js";
+import "source-map-support/register";
+import { asyncWrapper } from "./asyncWrapper";
+import { auth } from "./auth";
+import { cors } from "./cors";
+import { db } from "./db";
+import { NotFoundError } from "./errors";
+import { respondError } from "./responses";
+import { version as appVersion } from "./version";
 // import csurf from "csurf"; // TODO: Might be important later
 import express from "express";
 import expressWs from "express-ws";
 import helmet from "helmet";
 
-import * as lol from "./api/v0/+server.js";
-import * as ping from "./api/v0/ping/+server.js";
-import * as serverVersion from "./api/v0/version/+server.js";
+import * as lol from "./api/v0";
+import * as ping from "./api/v0/ping";
+import * as serverVersion from "./api/v0/version";
 
 const PORT = 40850;
 

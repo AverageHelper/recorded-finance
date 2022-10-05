@@ -1,10 +1,11 @@
-import { apiHandler } from "../../../../../../../helpers/apiHandler.js";
-import { assertCallerIsOwner } from "../../../../../../../auth/assertCallerIsOwner.js";
-import { BadRequestError, NotFoundError } from "../../../../../../../errors/index.js";
-import { pathSegments } from "../../../../../../../helpers/pathSegments.js";
-import { requireAuth } from "../../../../../../../auth/requireAuth.js";
-import { respondData, respondSuccess } from "../../../../../../../responses.js";
-import { statsForUser } from "../../../../../../../database/io.js";
+import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { apiHandler } from "../../../../../../../helpers/apiHandler";
+import { assertCallerIsOwner } from "../../../../../../../auth/assertCallerIsOwner";
+import { BadMethodError, BadRequestError, NotFoundError } from "../../../../../../../errors";
+import { pathSegments } from "../../../../../../../helpers/pathSegments";
+import { requireAuth } from "../../../../../../../auth/requireAuth";
+import { respondData, respondError, respondSuccess } from "../../../../../../../responses";
+import { statsForUser } from "../../../../../../../database/io";
 import {
 	CollectionReference,
 	DocumentReference,
@@ -14,7 +15,7 @@ import {
 	isDataItem,
 	isUserKeys,
 	setDocument,
-} from "../../../../../../../database/index.js";
+} from "../../../../../../../database";
 
 function collectionRef(req: APIRequest): CollectionReference | null {
 	const { uid, collectionId } = pathSegments(req, "uid", "collectionId");
@@ -83,3 +84,20 @@ export const DELETE = apiHandler("DELETE", async (req, res) => {
 
 	respondSuccess(res, { totalSpace, usedSpace });
 });
+
+export default async (req: VercelRequest, res: VercelResponse): Promise<void> => {
+	switch (req.method) {
+		case "GET":
+			await GET(req, res);
+			break;
+		case "DELETE":
+			await DELETE(req, res);
+			break;
+		case "POST":
+			await POST(req, res);
+			break;
+		default:
+			respondError(res, new BadMethodError());
+			break;
+	}
+};
