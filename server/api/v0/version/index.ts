@@ -6,3 +6,7 @@ export const GET = apiHandler("GET", (req, res) => {
 });
 
 export default GET;
+
+export const config = {
+	runtime: "experimental-edge",
+};
