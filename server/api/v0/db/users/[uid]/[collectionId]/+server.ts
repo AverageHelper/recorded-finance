@@ -20,6 +20,12 @@ function collectionRef(req: APIRequest): CollectionReference | null {
 }
 
 export const GET = apiHandler("GET", async (req, res) => {
+	const { collectionId } = pathSegments(req, "collectionId");
+	if (collectionId === ".websocket") {
+		console.debug(`Received GET request for a collection called '.websocket'. Why are we here?`);
+		return; // we were never meant to be here
+	}
+
 	await requireAuth(req, res);
 	await assertCallerIsOwner(req, res);
 	const ref = collectionRef(req);

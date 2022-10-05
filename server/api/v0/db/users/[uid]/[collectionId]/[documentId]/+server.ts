@@ -32,6 +32,12 @@ function documentRef(req: APIRequest): DocumentReference | null {
 }
 
 export const GET = apiHandler("GET", async (req, res) => {
+	const { documentId } = pathSegments(req, "documentId");
+	if (documentId === ".websocket") {
+		console.debug(`Received GET request for a document called '.websocket'. Why are we here?`);
+		return; // we were never meant to be here
+	}
+
 	await requireAuth(req, res);
 	await assertCallerIsOwner(req, res);
 
