@@ -2,6 +2,8 @@ import type { Infer } from "superstruct";
 import type { Unsubscribe } from "../../../../../../database/index.js";
 import type { WebsocketRequestHandler } from "express-ws";
 import { array, enums, nullable, object, optional, union } from "superstruct";
+import { assertCallerIsOwner } from "../../../../../../auth/assertCallerIsOwner.js";
+import { requireAuth } from "../../../../../../auth/requireAuth.js";
 import { WebSocketCode } from "../../../../../../networking/WebSocketCode.js";
 import { ws } from "../../../../../../networking/websockets.js"; // TODO: Load websockets optionally, only if we're not on Vercel
 import {
@@ -42,12 +44,35 @@ export const webSocket: WebsocketRequestHandler = ws(
 		documentId: optional(nullable(nonemptyString)),
 	}),
 	// start
-	(context, params) => {
-		const { onClose, onMessage, send, close } = context;
+	async (context, params) => {
+		const { req, onClose, onMessage, send, close } = context;
 		const { uid, collectionId, documentId = null } = params;
+
+		// FIXME: Wish I could get request cookies here without corresponding response.
+		// This leans a lot on implementation detail which may change later.
+		// Options:
+		// - Fork `cookies` to add a proper fallback when `res` is not provided
+		// - Parse, verify, and read cookies myself, manually
+		// - Don't use `express-ws`, use a third-party event delivery service like with Vercel
+		const fakeRes = {
+			getHeader: () => [],
+			setHeader: () => fakeRes,
+		} as unknown as APIResponse;
+		try {
+			await requireAuth(req, fakeRes);
+		} catch {
+			close(WebSocketCode.VIOLATED_CONTRACT, "You must be logged in to access user data");
+			return;
+		}
+		try {
+			await assertCallerIsOwner(req, fakeRes);
+		} catch {
+			close(WebSocketCode.VIOLATED_CONTRACT, "You cannot access data that isn't yours");
+			return;
+		}
+
 		const collection = new CollectionReference(uid, collectionId);
 		let unsubscribe: Unsubscribe;
-		// TODO: Assert the caller's ID is uid using some protocol
 		if (documentId !== null) {
 			const ref = new DocumentReference(collection, documentId);
 			unsubscribe = watchUpdatesToDocument(ref, data => {

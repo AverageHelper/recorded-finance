@@ -1,6 +1,8 @@
-import { assertMethod } from "../../../../../../helpers/assertMethod.js";
+import { apiHandler } from "../../../../../../helpers/apiHandler.js";
+import { assertCallerIsOwner } from "../../../../../../auth/assertCallerIsOwner.js";
 import { NotFoundError } from "../../../../../../errors/index.js";
 import { pathSegments } from "../../../../../../helpers/pathSegments.js";
+import { requireAuth } from "../../../../../../auth/requireAuth.js";
 import { respondData, respondSuccess } from "../../../../../../responses.js";
 import { statsForUser } from "../../../../../../database/io.js";
 import {
@@ -17,17 +19,19 @@ function collectionRef(req: APIRequest): CollectionReference | null {
 	return new CollectionReference(uid, collectionId);
 }
 
-export async function GET(req: APIRequest, res: APIResponse): Promise<void> {
-	assertMethod(req.method, "GET");
+export const GET = apiHandler("GET", async (req, res) => {
+	await requireAuth(req, res);
+	await assertCallerIsOwner(req, res);
 	const ref = collectionRef(req);
 	if (!ref) throw new NotFoundError();
 
 	const items = await getCollection(ref);
 	respondData(res, items);
-}
+});
 
-export async function DELETE(req: APIRequest, res: APIResponse): Promise<void> {
-	assertMethod(req.method, "DELETE");
+export const DELETE = apiHandler("DELETE", async (req, res) => {
+	await requireAuth(req, res);
+	await assertCallerIsOwner(req, res);
 	const { uid } = pathSegments(req, "uid");
 
 	const ref = collectionRef(req);
@@ -43,4 +47,4 @@ export async function DELETE(req: APIRequest, res: APIResponse): Promise<void> {
 	// TODO: Also delete associated files
 
 	respondSuccess(res, { totalSpace, usedSpace });
-}
+});

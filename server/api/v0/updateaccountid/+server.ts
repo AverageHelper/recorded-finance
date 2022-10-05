@@ -1,4 +1,4 @@
-import { assertMethod } from "../../../helpers/assertMethod.js";
+import { apiHandler } from "../../../helpers/apiHandler.js";
 import { BadRequestError, UnauthorizedError } from "../../../errors/index.js";
 import { compare } from "../../../auth/generators.js";
 import { generateTOTPSecretURI, verifyTOTP } from "../../../auth/totp.js";
@@ -6,8 +6,7 @@ import { is, nonempty, optional, string, type } from "superstruct";
 import { respondSuccess } from "../../../responses.js";
 import { upsertUser, userWithAccountId } from "../../../database/io.js";
 
-export async function POST(req: APIRequest, res: APIResponse): Promise<void> {
-	assertMethod(req.method, "POST");
+export const POST = apiHandler("POST", async (req, res) => {
 	const reqBody = type({
 		account: nonempty(string()),
 		newaccount: nonempty(string()),
@@ -65,4 +64,4 @@ export async function POST(req: APIRequest, res: APIResponse): Promise<void> {
 
 	// TODO: Invalidate the old jwt, send a new one
 	respondSuccess(res);
-}
+});

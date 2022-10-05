@@ -1,4 +1,4 @@
-import { assertMethod } from "../../../../helpers/assertMethod.js";
+import { apiHandler } from "../../../../helpers/apiHandler.js";
 import { BadRequestError, ConflictError, UnauthorizedError } from "../../../../errors/index.js";
 import { compare, generateSecureToken } from "../../../../auth/generators.js";
 import { generateTOTPSecretURI, verifyTOTP } from "../../../../auth/totp.js";
@@ -9,11 +9,10 @@ import { upsertUser } from "../../../../database/io.js";
 
 // MARK: - GET
 
-export async function GET(req: APIRequest, res: APIResponse): Promise<void> {
-	assertMethod(req.method, "GET");
+export const GET = apiHandler("GET", async (req, res) => {
 	// ** TOTP Registration
 
-	const { user, validatedWithMfa } = await metadataFromRequest(req);
+	const { user, validatedWithMfa } = await metadataFromRequest(req, res);
 	const uid = user.uid;
 	const accountId = user.currentAccountId;
 
@@ -41,12 +40,11 @@ export async function GET(req: APIRequest, res: APIResponse): Promise<void> {
 	});
 
 	respondSuccess(res, { secret });
-}
+});
 
 // MARK: - DELETE
 
-export async function DELETE(req: APIRequest, res: APIResponse): Promise<void> {
-	assertMethod(req.method, "DELETE");
+export const DELETE = apiHandler("DELETE", async (req, res) => {
 	const reqBody = type({
 		password: nonempty(string()),
 		token: nonempty(string()),
@@ -57,7 +55,7 @@ export async function DELETE(req: APIRequest, res: APIResponse): Promise<void> {
 
 	// ** TOTP Un-registration
 
-	const { user /* validatedWithMfa */ } = await metadataFromRequest(req);
+	const { user /* validatedWithMfa */ } = await metadataFromRequest(req, res);
 	const uid = user.uid;
 	const accountId = user.currentAccountId;
 
@@ -98,4 +96,4 @@ export async function DELETE(req: APIRequest, res: APIResponse): Promise<void> {
 
 	// TODO: Re-issue an auth token with updated validatedWithMfa information
 	respondSuccess(res);
-}
+});

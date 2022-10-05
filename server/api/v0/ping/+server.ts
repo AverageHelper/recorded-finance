@@ -1,6 +1,5 @@
-import { assertMethod } from "../../../helpers/assertMethod";
+import { apiHandler } from "../../../helpers/apiHandler";
 
-export function GET(req: APIRequest, res: APIResponse): void {
-	assertMethod(req.method, "GET");
+export const GET = apiHandler("GET", (req, res) => {
 	res.json({ message: "Pong!" });
-}
+});

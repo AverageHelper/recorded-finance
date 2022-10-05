@@ -19,6 +19,7 @@ import {
 } from "./schemas.js";
 import { maxSpacePerUser } from "../auth/limits.js";
 import { NotFoundError, UnreachableCaseError } from "../errors/index.js";
+import { ONE_HOUR } from "../constants/time.js";
 import { PrismaClient } from "@prisma/client";
 
 // Start connecting to the database
@@ -154,7 +155,6 @@ export async function addJwtToDatabase(token: string): Promise<void> {
  * Purges the database of expired JWTs older than two hours.
  */
 export async function purgeExpiredJwts(): Promise<void> {
-	const ONE_HOUR = 60 * 60 * 1000;
 	const twoHrsAgo = new Date(new Date().getTime() - 2 * ONE_HOUR);
 	await dataSource.expiredJwt.deleteMany({
 		where: {

@@ -1,8 +1,10 @@
 import type { DocUpdate } from "../../../../../database/io.js";
-import { assertMethod } from "../../../../../helpers/assertMethod.js";
+import { apiHandler } from "../../../../../helpers/apiHandler.js";
+import { assertCallerIsOwner } from "../../../../../auth/assertCallerIsOwner.js";
 import { BadRequestError } from "../../../../../errors/index.js";
 import { pathSegments } from "../../../../../helpers/pathSegments.js";
 import { statsForUser } from "../../../../../database/io.js";
+import { requireAuth } from "../../../../../auth/requireAuth.js";
 import { respondSuccess } from "../../../../../responses.js";
 import {
 	CollectionReference,
@@ -14,8 +16,9 @@ import {
 	setDocuments,
 } from "../../../../../database/index.js";
 
-export async function POST(req: APIRequest, res: APIResponse): Promise<void> {
-	assertMethod(req.method, "POST");
+export const POST = apiHandler("POST", async (req, res) => {
+	await requireAuth(req, res);
+	await assertCallerIsOwner(req, res);
 	const { uid } = pathSegments(req, "uid");
 
 	// ** Batched writes
@@ -57,4 +60,4 @@ export async function POST(req: APIRequest, res: APIResponse): Promise<void> {
 
 	const { totalSpace, usedSpace } = await statsForUser(uid);
 	respondSuccess(res, { totalSpace, usedSpace });
-}
+});

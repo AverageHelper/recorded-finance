@@ -1,15 +1,15 @@
-import type { Request, Response } from "express";
-import { addJwtToBlacklist, jwtTokenFromRequest } from "../../../auth/jwt.js";
+import { addJwtToBlacklist, jwtTokenFromRequest, killSession } from "../../../auth/jwt.js";
+import { apiHandler } from "../../../helpers/apiHandler.js";
 import { respondSuccess } from "../../../responses.js";
 
-export async function POST(req: Request, res: Response): Promise<void> {
-	const token = jwtTokenFromRequest(req);
+export const POST = apiHandler("POST", async (req, res) => {
+	const token = jwtTokenFromRequest(req, res);
 
-	// ** Kill the session
-	req.session = null;
+	killSession(req, res);
 
-	// ** Blacklist the JWT
-	if (token !== null) await addJwtToBlacklist(token);
+	if (token !== null) {
+		await addJwtToBlacklist(token);
+	}
 
 	respondSuccess(res);
-}
+});

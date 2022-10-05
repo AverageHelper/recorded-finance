@@ -1,6 +1,8 @@
-import { assertMethod } from "../../../../../../../helpers/assertMethod.js";
+import { apiHandler } from "../../../../../../../helpers/apiHandler.js";
+import { assertCallerIsOwner } from "../../../../../../../auth/assertCallerIsOwner.js";
 import { BadRequestError, NotFoundError } from "../../../../../../../errors/index.js";
 import { pathSegments } from "../../../../../../../helpers/pathSegments.js";
+import { requireAuth } from "../../../../../../../auth/requireAuth.js";
 import { respondData, respondSuccess } from "../../../../../../../responses.js";
 import { statsForUser } from "../../../../../../../database/io.js";
 import {
@@ -29,8 +31,9 @@ function documentRef(req: APIRequest): DocumentReference | null {
 	return new DocumentReference(collection, documentId);
 }
 
-export async function GET(req: APIRequest, res: APIResponse): Promise<void> {
-	assertMethod(req.method, "GET");
+export const GET = apiHandler("GET", async (req, res) => {
+	await requireAuth(req, res);
+	await assertCallerIsOwner(req, res);
 
 	const ref = documentRef(req);
 	// console.debug(`Handling GET for document at ${ref?.path ?? "null"}`);
@@ -39,10 +42,11 @@ export async function GET(req: APIRequest, res: APIResponse): Promise<void> {
 	const { data } = await getDocument(ref);
 	// console.debug(`Found item: ${JSON.stringify(data, undefined, "  ")}`);
 	respondData(res, data);
-}
+});
 
-export async function POST(req: APIRequest, res: APIResponse): Promise<void> {
-	assertMethod(req.method, "POST");
+export const POST = apiHandler("POST", async (req, res) => {
+	await requireAuth(req, res);
+	await assertCallerIsOwner(req, res);
 	const { uid } = pathSegments(req, "uid");
 
 	const providedData = req.body as unknown;
@@ -54,10 +58,11 @@ export async function POST(req: APIRequest, res: APIResponse): Promise<void> {
 	await setDocument(ref, providedData);
 	const { totalSpace, usedSpace } = await statsForUser(uid);
 	respondSuccess(res, { totalSpace, usedSpace });
-}
+});
 
-export async function DELETE(req: APIRequest, res: APIResponse): Promise<void> {
-	assertMethod(req.method, "DELETE");
+export const DELETE = apiHandler("DELETE", async (req, res) => {
+	await requireAuth(req, res);
+	await assertCallerIsOwner(req, res);
 	const { uid } = pathSegments(req, "uid");
 
 	const ref = documentRef(req);
@@ -71,4 +76,4 @@ export async function DELETE(req: APIRequest, res: APIResponse): Promise<void> {
 	const { totalSpace, usedSpace } = await statsForUser(uid);
 
 	respondSuccess(res, { totalSpace, usedSpace });
-}
+});

@@ -1,4 +1,4 @@
-import { assertMethod } from "../../../../helpers/assertMethod.js";
+import { apiHandler } from "../../../../helpers/apiHandler.js";
 import { BadRequestError, ConflictError, UnauthorizedError } from "../../../../errors/index.js";
 import { generateSecret, generateTOTPSecretURI, verifyTOTP } from "../../../../auth/totp.js";
 import { generateSecureToken } from "../../../../auth/generators.js";
@@ -9,8 +9,7 @@ import { respondSuccess } from "../../../../responses.js";
 import { statsForUser, upsertUser } from "../../../../database/io.js";
 import safeCompare from "safe-compare";
 
-export async function POST(req: APIRequest, res: APIResponse): Promise<void> {
-	assertMethod(req.method, "POST");
+export const POST = apiHandler("POST", async (req, res) => {
 	const reqBody = type({
 		token: nonempty(string()),
 	});
@@ -18,7 +17,7 @@ export async function POST(req: APIRequest, res: APIResponse): Promise<void> {
 	// ** Check that the given TOTP is valid for the user. If valid, but the user hasn't yet enabled a 2FA requirement, enable it
 
 	// Get credentials
-	const { user } = await metadataFromRequest(req);
+	const { user } = await metadataFromRequest(req, res);
 	const uid = user.uid;
 
 	if (!is(req.body, reqBody)) {
@@ -72,11 +71,11 @@ export async function POST(req: APIRequest, res: APIResponse): Promise<void> {
 		});
 	}
 
-	const access_token = await newAccessToken(req, user, ["totp"]);
+	const access_token = await newAccessToken(req, res, user, ["totp"]);
 	const { totalSpace, usedSpace } = await statsForUser(uid);
 	if (recovery_token !== null) {
 		respondSuccess(res, { access_token, recovery_token, uid, totalSpace, usedSpace });
 	} else {
 		respondSuccess(res, { access_token, uid, totalSpace, usedSpace });
 	}
-}
+});

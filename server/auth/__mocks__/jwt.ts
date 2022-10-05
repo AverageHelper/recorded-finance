@@ -1,5 +1,4 @@
 import type {
-	session as _session,
 	blacklistHasJwt as _blacklistHasJwt,
 	addJwtToBlacklist as _addJwtToBlacklist,
 	newAccessToken as _newAccessToken,
@@ -8,9 +7,7 @@ import type {
 } from "../jwt.js";
 import { jest } from "@jest/globals";
 
-export const persistentSecret = "wAheb^8v^YV^s6YaeYVW&8tyLa*ce4"; // from the README lol
-
-export const session = jest.fn<typeof _session>();
+export const persistentSecret = "wAheb^8v^YV^s6YaeYVW&8tyLa*ce4"; // from the README
 
 export const blacklistHasJwt = jest.fn<typeof _blacklistHasJwt>().mockResolvedValue(false);
 

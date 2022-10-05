@@ -1,19 +1,27 @@
-import type { ErrorRequestHandler } from "express";
 import { InternalError } from "./errors/index.js";
 import { respondError, respondInternalError } from "./responses.js";
 
-export const handleErrors: ErrorRequestHandler = (err: unknown, req, res, next) => {
-	if (res.headersSent) {
-		return next(err);
-	}
-	if (err instanceof InternalError) {
-		if (err.harmless) {
-			console.debug(`Sending response [${err.status} (${err.code}): ${err.message}]`);
-		} else {
-			console.error(err);
+export async function handleErrors(
+	req: APIRequest,
+	res: APIResponse,
+	cb: APIRequestHandler
+): Promise<void> {
+	try {
+		await cb(req, res);
+	} catch (error) {
+		if (!res.writable) {
+			console.error(error);
+			return; // Something was already sent, assume some other function sent the error and don't try anything
 		}
-		return respondError(res, err);
+		if (error instanceof InternalError) {
+			if (error.harmless) {
+				console.debug(`Sending response [${error.status} (${error.code}): ${error.message}]`);
+			} else {
+				console.error(error);
+			}
+			return respondError(res, error);
+		}
+		console.error(error);
+		return respondInternalError(res);
 	}
-	console.error(err);
-	return respondInternalError(res);
-};
+}

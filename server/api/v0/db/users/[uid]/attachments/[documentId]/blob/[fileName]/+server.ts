@@ -5,9 +5,11 @@ import type {
 	RequestHandler,
 	Response as ExpressResponse,
 } from "express";
-import { assertMethod } from "../../../../../../../../../helpers/assertMethod.js";
+import { apiHandler } from "../../../../../../../../../helpers/apiHandler.js";
+import { assertCallerIsOwner } from "../../../../../../../../../auth/assertCallerIsOwner.js";
 import { maxSpacePerUser, MAX_FILE_BYTES } from "../../../../../../../../../auth/limits.js";
 import { pathSegments } from "../../../../../../../../../helpers/pathSegments.js";
+import { requireAuth } from "../../../../../../../../../auth/requireAuth.js";
 import { respondData, respondSuccess } from "../../../../../../../../../responses.js";
 import { sep as pathSeparator } from "node:path";
 import { simplifiedByteCount } from "../../../../../../../../../transformers/simplifiedByteCount.js";
@@ -56,8 +58,9 @@ function requireFilePathParameters(req: APIRequest): Required<Params> {
 	};
 }
 
-export async function DELETE(req: APIRequest, res: APIResponse): Promise<void> {
-	assertMethod(req.method, "DELETE");
+export const DELETE = apiHandler("DELETE", async (req, res) => {
+	await requireAuth(req, res);
+	await assertCallerIsOwner(req, res);
 	const params = pathSegments(req, "uid", "documentId", "fileName");
 
 	const userId = params.uid;
@@ -73,15 +76,16 @@ export async function DELETE(req: APIRequest, res: APIResponse): Promise<void> {
 
 	// When done, get back to the caller with new stats
 	respondSuccess(res, { totalSpace, usedSpace });
-}
+});
 
 interface FileData {
 	contents: string;
 	_id: string;
 }
 
-export async function GET(req: APIRequest, res: APIResponse): Promise<void> {
-	assertMethod(req.method, "GET");
+export const GET = apiHandler("GET", async (req, res) => {
+	await requireAuth(req, res);
+	await assertCallerIsOwner(req, res);
 	const { uid: userId, fileName } = requireFilePathParameters(req);
 
 	const file = await fetchFileData(userId, fileName);
@@ -93,20 +97,20 @@ export async function GET(req: APIRequest, res: APIResponse): Promise<void> {
 		_id: fileName,
 	};
 	respondData(res, fileData);
-}
+});
 
-export const upload = multer({
-	storage: memoryStorage(),
-	limits: {
-		fileSize: MAX_FILE_BYTES, // 4.2 MB
-		files: 1,
-	},
-}).single("file") as RequestHandler<{ [key: string]: string }>;
-
-export async function POST(req: APIRequest, res: APIResponse): Promise<void> {
-	assertMethod(req.method, "POST");
+export const POST = apiHandler("POST", async (req, res) => {
+	await requireAuth(req, res);
+	await assertCallerIsOwner(req, res);
 
 	// Mimic Multer's middleware environment (see https://stackoverflow.com/a/68882562)
+	const upload = multer({
+		storage: memoryStorage(),
+		limits: {
+			fileSize: MAX_FILE_BYTES, // 4.2 MB
+			files: 1,
+		},
+	}).single("file") as RequestHandler<{ [key: string]: string }>;
 	await new Promise(resolve => {
 		upload(req as ExpressRequest, res as ExpressResponse, resolve);
 	});
@@ -132,4 +136,4 @@ export async function POST(req: APIRequest, res: APIResponse): Promise<void> {
 		const { totalSpace, usedSpace } = await statsForUser(userId);
 		respondSuccess(res, { totalSpace, usedSpace });
 	}
-}
+});

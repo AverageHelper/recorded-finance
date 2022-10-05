@@ -1,5 +1,5 @@
 import type { User } from "../../../database/schemas.js";
-import { assertMethod } from "../../../helpers/assertMethod.js";
+import { apiHandler } from "../../../helpers/apiHandler.js";
 import { generateHash, generateSalt } from "../../../auth/generators.js";
 import { MAX_USERS } from "../../../auth/limits.js";
 import { newAccessToken } from "../../../auth/jwt.js";
@@ -27,8 +27,7 @@ function newDocumentId(): string {
 	return uuid().replace(/-/gu, ""); // remove hyphens
 }
 
-export async function POST(req: APIRequest, res: APIResponse): Promise<void> {
-	assertMethod(req.method, "POST");
+export const POST = apiHandler("POST", async (req, res) => {
 	const reqBody = type({
 		account: nonempty(string()),
 		password: nonempty(string()),
@@ -68,7 +67,7 @@ export async function POST(req: APIRequest, res: APIResponse): Promise<void> {
 	await upsertUser(user);
 
 	// ** Generate an auth token and send it along
-	const access_token = await newAccessToken(req, user, []);
+	const access_token = await newAccessToken(req, res, user, []);
 	const { totalSpace, usedSpace } = await statsForUser(user.uid);
 	respondSuccess(res, { access_token, uid, totalSpace, usedSpace });
-}
+});

@@ -1,20 +1,23 @@
-import type { RequestHandler, Request, Response, NextFunction } from "express";
+import type {
+	RequestHandler,
+	Request as ExpressRequest,
+	Response as ExpressResponse,
+	NextFunction,
+} from "express";
 
-type AsyncRequestHandler<P = ParamsDictionary, ResBody = unknown, ReqBody = unknown> = (
-	req: Request<P, ResBody, ReqBody>,
-	res: Response,
+type AsyncRequestHandler = (
+	req: ExpressRequest,
+	res: ExpressResponse,
 	next: NextFunction
-) => Promise<void>;
+) => void | Promise<void>;
 
 /**
- * Wraps an asynchronous promise handler in a normal handler.
+ * Wraps an asynchronous request handler in a normal Express handler.
  *
  * @param fn The asynchronous request handler to call.
  * @returns a request handler that passes thrown errors to `next`
  */
-export const asyncWrapper = <P = ParamsDictionary, ResBody = unknown, ReqBody = unknown>(
-	fn: AsyncRequestHandler<P, ResBody, ReqBody>
-): RequestHandler<P, ResBody, ReqBody> => {
+export const asyncWrapper = (fn: AsyncRequestHandler): RequestHandler => {
 	// Don't sneeze on this, it works
 	return function asyncUtilWrap(req, res, next): void {
 		const fnReturn = fn(req, res, next);
