@@ -154,7 +154,7 @@ export function wsFactory<T extends WebSocketMessages>(
 					if (error instanceof WebSocketError) {
 						close(ws, error.code, error.reason);
 					} else {
-						console.error(error);
+						console.error("Unknown WebSocket message error:", error);
 						close(ws, WebSocketCode.UNEXPECTED_CONDITION, "Internal error");
 					}
 				}
@@ -190,7 +190,7 @@ export function ws<P, T extends WebSocketMessages>(
 			if (error instanceof StructError) {
 				return context.close(WebSocketCode.VIOLATED_CONTRACT, error.message);
 			}
-			console.error(error);
+			console.error("Unknown error trying to validate WebSocket inputs:", error);
 			return context.close(WebSocketCode.UNEXPECTED_CONDITION, "Internal error");
 		}
 

@@ -9,19 +9,25 @@ export async function handleErrors(
 	try {
 		await cb(req, res);
 	} catch (error) {
-		if (!res.writable) {
-			console.error(error);
+		if (res.headersSent) {
+			console.error("Handled error when headers were already sent:", error);
 			return; // Something was already sent, assume some other function sent the error and don't try anything
 		}
 		if (error instanceof InternalError) {
-			if (error.harmless) {
-				console.debug(`Sending response [${error.status} (${error.code}): ${error.message}]`);
-			} else {
-				console.error(error);
+			console.debug(`Sending response [${error.status} (${error.code}): ${error.message}]`);
+			if (!error.harmless) {
+				console.error("Non-harmless internal error:", error);
 			}
 			return respondError(res, error);
 		}
-		console.error(error);
+
+		// These extra details may save us when the call stack is too deep for us to figure where this error came from:
+		console.error(
+			`Unknown internal error for ${req.method ?? "unknown"} request at ${
+				req.url ?? "unknown URL"
+			}:`,
+			error
+		);
 		return respondInternalError(res);
 	}
 }

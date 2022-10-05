@@ -62,12 +62,16 @@ export function watchUpdatesToDocument(
 			}
 		})
 		.catch((error: unknown) => {
-			console.error(error);
+			console.error(`Error on initial data load from document watcher at path ${ref.path}:`, error);
+			console.debug(
+				`Removing listener '${handle.id}' for document ${ref.path} due to error on initial load`
+			);
+			documentWatchers.delete(handle.id);
 		});
 	/* eslint-enable promise/prefer-await-to-then */
 
 	return (): void => {
-		console.debug(`Removing listener ${handle.id} for document ${ref.path}`);
+		console.debug(`Removing listener '${handle.id}' for document ${ref.path}`);
 		documentWatchers.delete(handle.id);
 	};
 }
@@ -86,12 +90,19 @@ export function watchUpdatesToCollection(
 			await informWatchersForCollection(ref, data);
 		})
 		.catch((error: unknown) => {
-			console.error(error);
+			console.error(
+				`Error on initial data load from collection watcher at path ${ref.path}:`,
+				error
+			);
+			console.debug(
+				`Removing listener '${handle.id}' for collection ${ref.path} due to error on initial load`
+			);
+			collectionWatchers.delete(handle.id);
 		});
 	/* eslint-enable promise/prefer-await-to-then */
 
 	return (): void => {
-		console.debug(`Removing listener ${handle.id} for collection ${ref.path}`);
+		console.debug(`Removing listener '${handle.id}' for collection ${ref.path}`);
 		collectionWatchers.delete(handle.id);
 	};
 }
@@ -134,8 +145,6 @@ async function informWatchersForCollection(
 }
 
 export async function deleteDocuments(refs: NonEmptyArray<DocumentReference>): Promise<void> {
-	// TODO: Assert no more than 500 docs (so we aren't loading up EVERYTHING in one go)
-
 	// Fetch the data
 	const before = await fetchDbDocs(refs);
 
@@ -172,8 +181,6 @@ export async function deleteCollection(ref: CollectionReference): Promise<void> 
 }
 
 export async function setDocuments(updates: NonEmptyArray<DocUpdate>): Promise<void> {
-	// TODO: Assert no more than 500 docs (so we aren't loading up EVERYTHING in one go)
-
 	await upsertDbDocs(updates);
 
 	// Tell listeners what happened
