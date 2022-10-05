@@ -17,6 +17,7 @@ import {
 	postTo,
 	totpSecret,
 	totpValidate,
+	urlForApi,
 } from "./api-types/index.js";
 
 function authRef(uid: string): DocumentReference<KeyMaterial> {
@@ -76,7 +77,7 @@ export async function createUserWithAccountIdAndPassword(
 	if (!password)
 		throw new TypeError(t("error.sanity.empty-param", { values: { name: "password" } }));
 
-	const join = new URL(authJoin(), db.url);
+	const join = urlForApi(db, authJoin());
 	const { access_token, uid, usedSpace, totalSpace } = await postTo(join, { account, password });
 	if (access_token === undefined || uid === undefined)
 		throw new TypeError(t("error.server.missing-access-token"));
@@ -98,7 +99,7 @@ export async function createUserWithAccountIdAndPassword(
  * @throws a `NetworkError` if something goes wrong with the request.
  */
 export async function signOut(db: AccountableDB): Promise<void> {
-	const logout = new URL(authLogOut(), db.url);
+	const logout = urlForApi(db, authLogOut());
 	await postTo(logout, {});
 	db.clearUser();
 	db.setUserStats(null);
@@ -130,7 +131,7 @@ export async function signInWithAccountIdAndPassword(
 	if (!password)
 		throw new TypeError(t("error.sanity.empty-param", { values: { name: "password" } }));
 
-	const login = new URL(authLogIn(), db.url);
+	const login = urlForApi(db, authLogIn());
 	const {
 		access_token,
 		uid,
@@ -167,7 +168,7 @@ export async function signInWithAccountIdAndPassword(
 export async function enrollTotp(db: AccountableDB): Promise<string> {
 	if (!db.currentUser) throw new AccountableError("auth/unauthenticated");
 
-	const enroll = new URL(totpSecret(), db.url);
+	const enroll = urlForApi(db, totpSecret());
 	const { secret } = await getFrom(enroll);
 
 	if (secret === undefined) throw new TypeError("Expected secret from server, but got nothing"); // TODO: I18N
@@ -187,7 +188,7 @@ export async function unenrollTotp(
 		throw new TypeError(t("error.sanity.empty-param", { values: { name: "password" } }));
 	if (!token) throw new TypeError(t("error.sanity.empty-param", { values: { name: "token" } }));
 
-	const unenroll = new URL(totpSecret(), db.url);
+	const unenroll = urlForApi(db, totpSecret());
 	await deleteAt(unenroll, { password, token });
 }
 
@@ -211,7 +212,7 @@ export async function verifySessionWithTOTP(
 	const user = db.currentUser;
 	if (!user) throw new AccountableError("auth/unauthenticated");
 
-	const validate = new URL(totpValidate(), db.url);
+	const validate = urlForApi(db, totpValidate());
 	const {
 		access_token,
 		recovery_token,
@@ -240,7 +241,7 @@ export async function verifySessionWithTOTP(
  * @throws a `NetworkError` if something goes wrong with the request.
  */
 export async function refreshSession(db: AccountableDB): Promise<UserCredential> {
-	const session = new URL(authRefreshSession(), db.url);
+	const session = urlForApi(db, authRefreshSession());
 	const {
 		account,
 		access_token,
@@ -280,7 +281,7 @@ export async function deleteUser(db: AccountableDB, user: User, password: string
 	if (!password)
 		throw new TypeError(t("error.sanity.empty-param", { values: { name: "password" } }));
 
-	const leave = new URL(authLeave(), db.url);
+	const leave = urlForApi(db, authLeave());
 	if (db.currentUser?.uid === user.uid) {
 		db.clearUser();
 		db.setUserStats(null);
@@ -310,7 +311,7 @@ export async function updateAccountId(
 	if (!password)
 		throw new TypeError(t("error.sanity.empty-param", { values: { name: "password" } }));
 
-	const updateaccountid = new URL(authUpdateAccountId(), db.url);
+	const updateaccountid = urlForApi(db, authUpdateAccountId());
 	await postTo(updateaccountid, {
 		account: user.accountId,
 		newaccount: newAccountId,
@@ -339,7 +340,7 @@ export async function updatePassword(
 	if (!newPassword)
 		throw new TypeError(t("error.sanity.empty-param", { values: { name: "newPassword" } }));
 
-	const updatepassword = new URL(authUpdatePassword(), db.url);
+	const updatepassword = urlForApi(db, authUpdatePassword());
 	await postTo(updatepassword, {
 		account: user.accountId,
 		password: oldPassword,

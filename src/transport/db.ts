@@ -18,6 +18,7 @@ import {
 	deleteAt,
 	getFrom,
 	postTo,
+	urlForApi,
 } from "./api-types/index.js";
 import {
 	DocumentSnapshot,
@@ -249,7 +250,7 @@ export class WriteBatch {
 		if (!currentUser) throw new AccountableError("database/unauthenticated");
 
 		const uid = currentUser.uid;
-		const batch = new URL(databaseBatchWrite(uid), this.#db.url);
+		const batch = urlForApi(this.#db, databaseBatchWrite(uid));
 
 		const data: Array<DocumentWriteBatch> = [];
 
@@ -342,7 +343,7 @@ export async function getDoc<D, T extends PrimitiveRecord<D>>(
 	const collection = reference.parent.id;
 	const doc = reference.id;
 
-	const docPath = new URL(databaseDocument(uid, collection, doc), reference.db.url);
+	const docPath = urlForApi(reference.db, databaseDocument(uid, collection, doc));
 	const { data } = await getFrom(docPath);
 
 	if (data === undefined) throw new TypeError(t("error.server.no-data"));
@@ -370,7 +371,7 @@ export async function setDoc<D, T extends PrimitiveRecord<D>>(
 	const uid = currentUser.uid;
 	const collection = reference.parent.id;
 	const doc = reference.id;
-	const docPath = new URL(databaseDocument(uid, collection, doc), reference.db.url);
+	const docPath = urlForApi(reference.db, databaseDocument(uid, collection, doc));
 
 	const { usedSpace, totalSpace } = await postTo(docPath, data);
 	if (usedSpace !== undefined && totalSpace !== undefined) {
@@ -392,7 +393,7 @@ export async function deleteDoc(reference: DocumentReference): Promise<void> {
 	const uid = currentUser.uid;
 	const collection = reference.parent.id;
 	const doc = reference.id;
-	const docPath = new URL(databaseDocument(uid, collection, doc), reference.db.url);
+	const docPath = urlForApi(reference.db, databaseDocument(uid, collection, doc));
 
 	const { usedSpace, totalSpace } = await deleteAt(docPath);
 	if (usedSpace !== undefined && totalSpace !== undefined) {
@@ -411,7 +412,7 @@ export async function getDocs<T>(query: CollectionReference<T>): Promise<QuerySn
 
 	const uid = currentUser.uid;
 	const collection = query.id;
-	const collPath = new URL(databaseCollection(uid, collection), query.db.url);
+	const collPath = urlForApi(query.db, databaseCollection(uid, collection));
 
 	const { data } = await getFrom(collPath);
 	if (data === undefined) throw new TypeError(t("error.server.no-data"));

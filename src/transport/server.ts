@@ -1,5 +1,5 @@
 import type { AccountableDB } from "./db";
-import { getFrom, version } from "./api-types/index.js";
+import { getFrom, urlForApi, version } from "./api-types/index.js";
 import { t } from "../i18n";
 import { UnexpectedResponseError } from "./errors/index.js";
 
@@ -9,7 +9,7 @@ import { UnexpectedResponseError } from "./errors/index.js";
  * @returns The server's reported version string.
  */
 export async function getServerVersion(db: AccountableDB): Promise<string> {
-	const response = await getFrom(new URL(version(), db.url));
+	const response = await getFrom(urlForApi(db, version()));
 	if (response.version === undefined || !response.version)
 		throw new UnexpectedResponseError(t("error.server.no-version"));
 

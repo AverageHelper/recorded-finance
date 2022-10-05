@@ -1,7 +1,7 @@
 import type { AccountableDB, DocumentReference } from "./db";
 import type { AttachmentRecordPackage } from "./attachments";
 import { AccountableError } from "./errors/index.js";
-import { deleteAt, downloadFrom, storageFile, uploadTo } from "./api-types/index.js";
+import { deleteAt, downloadFrom, storageFile, uploadTo, urlForApi } from "./api-types/index.js";
 
 /**
  * Represents a reference to an Accountable Storage object. Developers can
@@ -61,7 +61,7 @@ export async function downloadString(ref: StorageReference): Promise<string> {
 		throw new AccountableError("storage/invalid-argument");
 
 	const itemPath = storageFile(uid, ref.docRef.id, `${ref.name}.json`);
-	const url = new URL(itemPath, ref.db.url);
+	const url = urlForApi(ref.db, itemPath);
 	return await downloadFrom(url);
 }
 
@@ -76,7 +76,7 @@ export async function uploadString(ref: StorageReference, value: string): Promis
 	if (uid === undefined || !uid) throw new AccountableError("storage/unauthenticated");
 
 	const itemPath = storageFile(uid, ref.docRef.id, `${ref.name}.json`);
-	const url = new URL(itemPath, ref.db.url);
+	const url = urlForApi(ref.db, itemPath);
 	const { usedSpace, totalSpace } = await uploadTo(url, value);
 	if (usedSpace !== undefined && totalSpace !== undefined) {
 		ref.db.setUserStats({ usedSpace, totalSpace });
@@ -96,7 +96,7 @@ export async function deleteObject(ref: StorageReference): Promise<void> {
 	if (uid === undefined || !uid) throw new AccountableError("storage/unauthenticated");
 
 	const itemPath = storageFile(uid, ref.docRef.id, `${ref.name}.json`);
-	const url = new URL(itemPath, ref.db.url);
+	const url = urlForApi(ref.db, itemPath);
 	const { usedSpace, totalSpace } = await deleteAt(url);
 	if (usedSpace !== undefined && totalSpace !== undefined) {
 		ref.db.setUserStats({ usedSpace, totalSpace });

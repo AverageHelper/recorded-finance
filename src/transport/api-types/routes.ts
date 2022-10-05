@@ -2,7 +2,17 @@
  * As defined in /openapi.yaml
  * ~~~~~~~~~ */
 
-const BASE = "/v0";
+import type { AccountableDB } from "../db";
+import { join } from "path-browserify";
+
+const BASE = "/v0"; // Express
+// const BASE = "/api/v0"; // Vercel
+
+export function urlForApi(db: AccountableDB, path: string): URL {
+	// Preserve the path in db.url, if defined. URL natively strips it
+	const pathname = db.url.pathname;
+	return new URL(join(pathname, path), db.url);
+}
 
 /**
  * Route for:
