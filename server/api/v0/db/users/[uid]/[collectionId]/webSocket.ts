@@ -5,7 +5,7 @@ import { array, enums, nullable, object, optional, union } from "superstruct";
 import { assertCallerIsOwner } from "../../../../../../auth/assertCallerIsOwner.js";
 import { requireAuth } from "../../../../../../auth/requireAuth.js";
 import { WebSocketCode } from "../../../../../../networking/WebSocketCode.js";
-import { ws } from "../../../../../../networking/websockets.js"; // TODO: Load websockets optionally, only if we're not on Vercel
+import { ws } from "../../../../../../networking/websockets.js";
 import {
 	allCollectionIds,
 	identifiedDataItem,
