@@ -65,7 +65,7 @@ export async function newAccessToken(
 		});
 	});
 
-	const cookies = new Cookies(req, res, keys);
+	const cookies = new Cookies(req, res, { keys });
 	cookies.set(SESSION_COOKIE_NAME, token, {
 		maxAge: ONE_HOUR,
 		path: "/v0",
@@ -86,7 +86,7 @@ export async function newAccessToken(
  * the related session tokens as well, separately.
  */
 export function killSession(req: APIRequest, res: APIResponse): void {
-	const cookies = new Cookies(req, res, keys);
+	const cookies = new Cookies(req, res, { keys });
 	const twoHrsAgo = new Date(new Date().getTime() - 2 * ONE_HOUR);
 	const gibberish = generateSecureToken(5);
 
@@ -116,7 +116,7 @@ export function killSession(req: APIRequest, res: APIResponse): void {
  */
 export function jwtTokenFromRequest(req: APIRequest, res: APIResponse): string | null {
 	// Get session token from cookies, if it exists
-	const cookies = new Cookies(req, res, keys);
+	const cookies = new Cookies(req, res, { keys });
 	const token = cookies.get(SESSION_COOKIE_NAME, { signed: true }) ?? "";
 	if (token) {
 		return token;
