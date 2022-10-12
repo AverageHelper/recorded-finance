@@ -8,7 +8,11 @@ import type {
 } from "express";
 import { apiHandler } from "../../../../../../../../../helpers/apiHandler";
 import { assertCallerIsOwner } from "../../../../../../../../../auth/assertCallerIsOwner";
+import { BadMethodError } from "../../../../../../../../../errors/BadMethodError";
+import { BadRequestError } from "../../../../../../../../../errors/BadRequestError";
 import { maxSpacePerUser, MAX_FILE_BYTES } from "../../../../../../../../../auth/limits";
+import { NotEnoughRoomError } from "../../../../../../../../../errors/NotEnoughRoomError";
+import { NotFoundError } from "../../../../../../../../../errors/NotFoundError";
 import { pathSegments } from "../../../../../../../../../helpers/pathSegments";
 import { requireAuth } from "../../../../../../../../../auth/requireAuth";
 import { respondData, respondError, respondSuccess } from "../../../../../../../../../responses";
@@ -21,12 +25,6 @@ import {
 	statsForUser,
 	upsertFileData,
 } from "../../../../../../../../../database/io";
-import {
-	BadMethodError,
-	BadRequestError,
-	NotEnoughRoomError,
-	NotFoundError,
-} from "../../../../../../../../../errors";
 
 /**
  * Asserts that the given value is a valid file path segment.

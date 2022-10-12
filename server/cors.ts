@@ -1,6 +1,6 @@
 import type { CorsOptions } from "cors";
 import { env } from "./environment";
-import { OriginError } from "./errors";
+import { OriginError } from "./errors/OriginError";
 import { URL } from "node:url";
 import _cors from "cors";
 

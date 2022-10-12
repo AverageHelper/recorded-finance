@@ -1,4 +1,4 @@
-import { InternalError } from "./errors";
+import { InternalError } from "./errors/InternalError";
 import { respondError, respondInternalError } from "./responses";
 
 export async function handleErrors(

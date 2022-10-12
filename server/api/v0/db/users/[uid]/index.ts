@@ -1,7 +1,7 @@
 import type { DocUpdate } from "../../../../../database/io";
 import { apiHandler } from "../../../../../helpers/apiHandler";
 import { assertCallerIsOwner } from "../../../../../auth/assertCallerIsOwner";
-import { BadRequestError } from "../../../../../errors";
+import { BadRequestError } from "../../../../../errors/BadRequestError";
 import { pathSegments } from "../../../../../helpers/pathSegments";
 import { statsForUser } from "../../../../../database/io";
 import { requireAuth } from "../../../../../auth/requireAuth";

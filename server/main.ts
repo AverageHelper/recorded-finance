@@ -3,7 +3,7 @@ import { asyncWrapper } from "./asyncWrapper";
 import { auth } from "./auth";
 import { cors } from "./cors";
 import { db } from "./db";
-import { NotFoundError } from "./errors";
+import { NotFoundError } from "./errors/NotFoundError";
 import { respondError } from "./responses";
 import { version as appVersion } from "./version";
 // import csurf from "csurf"; // TODO: Might be important later

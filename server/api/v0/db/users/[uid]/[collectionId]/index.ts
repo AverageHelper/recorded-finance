@@ -1,7 +1,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { apiHandler } from "../../../../../../helpers/apiHandler";
 import { assertCallerIsOwner } from "../../../../../../auth/assertCallerIsOwner";
-import { BadMethodError, NotFoundError } from "../../../../../../errors";
+import { BadMethodError } from "../../../../../../errors/BadMethodError";
+import { NotFoundError } from "../../../../../../errors/NotFoundError";
 import { pathSegments } from "../../../../../../helpers/pathSegments";
 import { requireAuth } from "../../../../../../auth/requireAuth";
 import { respondData, respondError, respondSuccess } from "../../../../../../responses";

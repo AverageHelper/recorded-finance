@@ -1,16 +1,14 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { apiHandler } from "../../../../helpers/apiHandler";
-import {
-	BadMethodError,
-	BadRequestError,
-	ConflictError,
-	UnauthorizedError,
-} from "../../../../errors";
+import { BadMethodError } from "../../../../errors/BadMethodError";
+import { BadRequestError } from "../../../../errors/BadRequestError";
+import { ConflictError } from "../../../../errors/ConflictError";
 import { compare, generateSecureToken } from "../../../../auth/generators";
 import { generateTOTPSecretURI, verifyTOTP } from "../../../../auth/totp";
 import { is, nonempty, string, type } from "superstruct";
 import { metadataFromRequest } from "../../../../auth/requireAuth";
 import { respondError, respondSuccess } from "../../../../responses";
+import { UnauthorizedError } from "../../../../errors/UnauthorizedError";
 import { upsertUser } from "../../../../database/io";
 
 // MARK: - GET

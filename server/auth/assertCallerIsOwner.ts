@@ -1,6 +1,6 @@
 import { pathSegments } from "../helpers/pathSegments";
 import { metadataFromRequest, requireAuth } from "./requireAuth";
-import { UnauthorizedError } from "../errors";
+import { UnauthorizedError } from "../errors/UnauthorizedError";
 import safeCompare from "tsscmp";
 
 /**

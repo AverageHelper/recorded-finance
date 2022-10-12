@@ -1,10 +1,11 @@
 import { apiHandler } from "../../../helpers/apiHandler";
-import { BadRequestError, UnauthorizedError } from "../../../errors";
+import { BadRequestError } from "../../../errors/BadRequestError";
 import { compare } from "../../../auth/generators";
 import { destroyUser, userWithAccountId } from "../../../database/io";
 import { generateTOTPSecretURI, verifyTOTP } from "../../../auth/totp";
-import { respondSuccess } from "../../../responses";
 import { is, nonempty, optional, string, type } from "superstruct";
+import { respondSuccess } from "../../../responses";
+import { UnauthorizedError } from "../../../errors/UnauthorizedError";
 
 export const POST = apiHandler("POST", async (req, res) => {
 	const reqBody = type({

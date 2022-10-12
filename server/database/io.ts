@@ -19,9 +19,10 @@ import {
 } from "./schemas";
 import { maxSpacePerUser } from "../auth/limits";
 import { newPubNubCipherKey } from "../auth/pubnub";
-import { NotFoundError, UnreachableCaseError } from "../errors";
+import { NotFoundError } from "../errors/NotFoundError";
 import { ONE_HOUR } from "../constants/time";
 import { PrismaClient } from "@prisma/client";
+import { UnreachableCaseError } from "../errors/UnreachableCaseError";
 
 // Start connecting to the database
 const dataSource = new PrismaClient();

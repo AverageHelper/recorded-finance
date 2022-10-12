@@ -1,5 +1,5 @@
 import type { DocumentData } from "./database";
-import { InternalError } from "./errors";
+import { InternalError } from "./errors/InternalError";
 
 // See https://stackoverflow.com/a/54337073 for why "Vary: *" is necessary for Safari
 const VARY = ["Vary", "*"] as const;

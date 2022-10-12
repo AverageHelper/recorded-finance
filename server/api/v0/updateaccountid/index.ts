@@ -1,9 +1,10 @@
 import { apiHandler } from "../../../helpers/apiHandler";
-import { BadRequestError, UnauthorizedError } from "../../../errors";
+import { BadRequestError } from "../../../errors/BadRequestError";
 import { compare } from "../../../auth/generators";
 import { generateTOTPSecretURI, verifyTOTP } from "../../../auth/totp";
 import { is, nonempty, optional, string, type } from "superstruct";
 import { respondSuccess } from "../../../responses";
+import { UnauthorizedError } from "../../../errors/UnauthorizedError";
 import { upsertUser, userWithAccountId } from "../../../database/io";
 
 export const POST = apiHandler("POST", async (req, res) => {

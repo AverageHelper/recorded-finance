@@ -1,9 +1,11 @@
 import type { JsonWebTokenError } from "jsonwebtoken";
 import type { MFAOption, User } from "../database/schemas";
 import { assertSchema, jwtPayload } from "../database/schemas";
-import { BadRequestError, NotFoundError, UnauthorizedError } from "../errors";
+import { BadRequestError } from "../errors/BadRequestError";
 import { blacklistHasJwt, jwtFromRequest, verifyJwt } from "./jwt";
+import { NotFoundError } from "../errors/NotFoundError";
 import { StructError } from "superstruct";
+import { UnauthorizedError } from "../errors/UnauthorizedError";
 import { userWithUid } from "../database/io";
 
 interface Metadata {

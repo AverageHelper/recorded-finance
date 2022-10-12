@@ -1,11 +1,12 @@
 import type { MFAOption } from "../../../database/schemas";
 import { apiHandler } from "../../../helpers/apiHandler";
-import { BadRequestError, UnauthorizedError } from "../../../errors";
+import { BadRequestError } from "../../../errors/BadRequestError";
 import { compare } from "../../../auth/generators";
 import { is, nonempty, string, type } from "superstruct";
 import { newAccessTokens, setSession } from "../../../auth/jwt";
 import { respondSuccess } from "../../../responses";
 import { statsForUser, userWithAccountId } from "../../../database/io";
+import { UnauthorizedError } from "../../../errors/UnauthorizedError";
 
 export const POST = apiHandler("POST", async (req, res) => {
 	const reqBody = type({

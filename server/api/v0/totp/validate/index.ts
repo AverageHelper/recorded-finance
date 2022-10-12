@@ -1,5 +1,6 @@
 import { apiHandler } from "../../../../helpers/apiHandler";
-import { BadRequestError, ConflictError, UnauthorizedError } from "../../../../errors";
+import { BadRequestError } from "../../../../errors/BadRequestError";
+import { ConflictError } from "../../../../errors/ConflictError";
 import { generateSecret, generateTOTPSecretURI, verifyTOTP } from "../../../../auth/totp";
 import { generateSecureToken } from "../../../../auth/generators";
 import { is, nonempty, string, type } from "superstruct";
@@ -8,6 +9,7 @@ import { newAccessTokens, setSession } from "../../../../auth/jwt";
 import { newPubNubCipherKey } from "../../../../auth/pubnub";
 import { respondSuccess } from "../../../../responses";
 import { statsForUser, upsertUser } from "../../../../database/io";
+import { UnauthorizedError } from "../../../../errors/UnauthorizedError";
 import safeCompare from "safe-compare";
 
 export const POST = apiHandler("POST", async (req, res) => {

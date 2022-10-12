@@ -1,11 +1,13 @@
 import type { User } from "../../../database/schemas";
 import { apiHandler } from "../../../helpers/apiHandler";
-import { BadRequestError, DuplicateAccountError, NotEnoughRoomError } from "../../../errors";
+import { BadRequestError } from "../../../errors/BadRequestError";
+import { DuplicateAccountError } from "../../../errors/DuplicateAccountError";
 import { generateHash, generateSalt } from "../../../auth/generators";
 import { is, nonempty, string, type } from "superstruct";
 import { MAX_USERS } from "../../../auth/limits";
 import { newAccessTokens, setSession } from "../../../auth/jwt";
 import { newPubNubCipherKey } from "../../../auth/pubnub";
+import { NotEnoughRoomError } from "../../../errors/NotEnoughRoomError";
 import { numberOfUsers, statsForUser, upsertUser, userWithAccountId } from "../../../database/io";
 import { respondSuccess } from "../../../responses";
 import { v4 as uuid } from "uuid";
