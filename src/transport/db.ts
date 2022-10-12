@@ -329,12 +329,10 @@ export function bootstrap(url?: string): AccountableDB {
 	}
 
 	// VITE_ env variables get type definitions in env.d.ts
-	const serverUrl = url ?? import.meta.env.VITE_ACCOUNTABLE_SERVER_URL;
+	let serverUrl = url ?? import.meta.env.VITE_ACCOUNTABLE_SERVER_URL;
 
 	if (serverUrl === undefined || !serverUrl) {
-		throw new TypeError(
-			t("error.sanity.missing-env-var", { values: { key: "VITE_ACCOUNTABLE_SERVER_URL" } })
-		);
+		serverUrl = `https://${window.location.hostname}/api/`;
 	}
 
 	db = new AccountableDB(serverUrl);

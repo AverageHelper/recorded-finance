@@ -51,7 +51,7 @@ See [the server's README](/server/README.md) for info on that.
 ```sh
 # .env
 
-# Where your server lives (required)
+# Where your server lives (optional for Vercel, required with Express)
 VITE_ACCOUNTABLE_SERVER_URL={your Accountable backend URL}:40850
 
 # Enables the "Login" menu item (optional, defaults to "true")
@@ -102,7 +102,8 @@ Some questions I've asked myself while developing this. You might have these que
 JavaScript is not a safe spot to store cookies. The nascent versions of Accountable's front-end client stored the user's login token in a JavaScript variable. I later learned a better way: don't handle the token myself, let the browser handle it with [standard cookie security APIs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#restrict_access_to_cookies).
 
 Accountable's back-end server still responds to successful login requests with the token in the response body, but the server also now asks requesting clients to set the token as a cookie with the following attributes:
-- `HttpOnly` - According to [MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#restrict_access_to_cookies): "A cookie with the HttpOnly attribute is inaccessible to the JavaScript [`Document.cookie`](https://developer.mozilla.org/en-US/docs/Web/API/Document/cookie) API; it's only sent to the server. For example, cookies that persist in server-side sessions _don't need to be available to JavaScript_ and should have the `HttpOnly` attribute. This precaution helps mitigate cross-site scripting ([XSS](https://developer.mozilla.org/en-US/docs/Web/Security/Types_of_attacks#cross-site_scripting_(xss))) attacks." (emphasis mine)
+
+- `HttpOnly` - According to [MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#restrict_access_to_cookies): "A cookie with the HttpOnly attribute is inaccessible to the JavaScript [`Document.cookie`](https://developer.mozilla.org/en-US/docs/Web/API/Document/cookie) API; it's only sent to the server. For example, cookies that persist in server-side sessions _don't need to be available to JavaScript_ and should have the `HttpOnly` attribute. This precaution helps mitigate cross-site scripting ([XSS](<https://developer.mozilla.org/en-US/docs/Web/Security/Types_of_attacks#cross-site_scripting_(xss)>)) attacks." (emphasis mine)
 - `Secure` - Not set if the server is running on `localhost`. According to [MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#restrict_access_to_cookies): "A cookie with the Secure attribute is only sent to the server with an encrypted request over the HTTPS protocol."
 
 If create your own Accountable client, please don't mishandle the token. If you dig back in our git history to find and use a version that uses the old JavaScript way, know that you may be getting into avoidable security vulnerabilities.
@@ -125,15 +126,16 @@ I've missed some steps before. For example, version [0.9.0](/CHANGELOG.md#090---
 2. When I'm ready to cut the release, I rename `"Unreleased"` to the next [SemVer](https://semver.org/spec/v2.0.0.html)-appropriate number.
 3. I run `npm run release`, which fixes the changelog's footer links and the `version` fields in [package.json](/package.json) and [package-lock.json](/package-lock.json).
 4. I push a PR.
-	- The CI (Continuous Integration) bots check that there's a new version in the changelog, and if so, check that I've run `npm run release` on the branch. (The usual CI checks also occur.)
+   - The CI (Continuous Integration) bots check that there's a new version in the changelog, and if so, check that I've run `npm run release` on the branch. (The usual CI checks also occur.)
 5. I merge the PR.
-	- The CD (Continuous Deployment) bots dispatch a new git tag and GitHub Release using the content of the [CHANGELOG.md](/CHANGELOG.md).
+   - The CD (Continuous Deployment) bots dispatch a new git tag and GitHub Release using the content of the [CHANGELOG.md](/CHANGELOG.md).
 
 Once the release is tagged and deployed, it's up to server maintainers (including me) to pull down the latest changes. I might do something about that later.
 
 ### Analytics?
 
 Google Analytics is spoopy as heck, and even [illegal in the EU](https://noyb.eu/en/austrian-dsb-eu-us-data-transfers-google-analytics-illegal). Right now, we don't have any analytics at all. We're considering respectful options:
+
 - [Fathom](https://usefathom.com)
 - [Simple Analytics](https://www.simpleanalytics.com)
 - [Matomo](https://matomo.org)

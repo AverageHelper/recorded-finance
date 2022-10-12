@@ -5,6 +5,7 @@
 		"start": "./node_modules/.bin/nodemon --watch ./dist ./dist/server.js",
 		"prebuild": "rm -rf ./dist && npm run export-version",
 		"build": "npm run lint && ./node_modules/.bin/rollup --config rollup.config.ts --configPlugin typescript",
+		"deploy": "./node_modules/.bin/vercel pull --environment=production && ./node_modules/.bin/vercel build && ./node_modules/.bin/vercel deploy --prebuilt",
 		"prisma:generate": "./node_modules/.bin/prisma generate --schema ./prisma/schema.prisma",
 		"prisma:introspect": "./node_modules/.bin/prisma db pull",
 		"prisma:push": "./node_modules/.bin/prisma db push",
