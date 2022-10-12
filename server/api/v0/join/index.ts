@@ -4,7 +4,8 @@ import { BadRequestError, DuplicateAccountError, NotEnoughRoomError } from "../.
 import { generateHash, generateSalt } from "../../../auth/generators";
 import { is, nonempty, string, type } from "superstruct";
 import { MAX_USERS } from "../../../auth/limits";
-import { newAccessToken } from "../../../auth/jwt";
+import { newAccessTokens, setSession } from "../../../auth/jwt";
+import { newPubNubCipherKey } from "../../../auth/pubnub";
 import { numberOfUsers, statsForUser, upsertUser, userWithAccountId } from "../../../database/io";
 import { respondSuccess } from "../../../responses";
 import { v4 as uuid } from "uuid";
@@ -46,11 +47,13 @@ export const POST = apiHandler("POST", async (req, res) => {
 	const passwordSalt = await generateSalt();
 	const passwordHash = await generateHash(givenPassword, passwordSalt);
 	const uid = newDocumentId();
+	const pubnubCipherKey = await newPubNubCipherKey();
 	const user: Required<User> = {
 		currentAccountId: givenAccountId,
 		mfaRecoverySeed: null,
 		passwordHash,
 		passwordSalt,
+		pubnubCipherKey,
 		requiredAddtlAuth: [],
 		totpSeed: null,
 		uid,
@@ -58,9 +61,18 @@ export const POST = apiHandler("POST", async (req, res) => {
 	await upsertUser(user);
 
 	// ** Generate an auth token and send it along
-	const access_token = await newAccessToken(req, res, user, []);
+	const { access_token, pubnub_token } = await newAccessTokens(user, []);
 	const { totalSpace, usedSpace } = await statsForUser(user.uid);
-	respondSuccess(res, { access_token, uid, totalSpace, usedSpace });
+
+	setSession(req, res, access_token);
+	respondSuccess(res, {
+		access_token,
+		pubnub_cipher_key: pubnubCipherKey,
+		pubnub_token,
+		uid,
+		totalSpace,
+		usedSpace,
+	});
 });
 
 export default POST;

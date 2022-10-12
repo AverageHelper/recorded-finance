@@ -3,7 +3,7 @@ import { apiHandler } from "../../../helpers/apiHandler";
 import { BadRequestError, UnauthorizedError } from "../../../errors";
 import { compare } from "../../../auth/generators";
 import { is, nonempty, string, type } from "superstruct";
-import { newAccessToken } from "../../../auth/jwt";
+import { newAccessTokens, setSession } from "../../../auth/jwt";
 import { respondSuccess } from "../../../responses";
 import { statsForUser, userWithAccountId } from "../../../database/io";
 
@@ -44,10 +44,21 @@ export const POST = apiHandler("POST", async (req, res) => {
 			: "none";
 
 	// ** Generate an auth token and send it along
-	const access_token = await newAccessToken(req, res, user, []);
 	const uid = user.uid;
+	const pubnub_cipher_key = user.pubnubCipherKey;
+	const { access_token, pubnub_token } = await newAccessTokens(user, []);
 	const { totalSpace, usedSpace } = await statsForUser(uid);
-	respondSuccess(res, { access_token, validate, uid, totalSpace, usedSpace });
+
+	setSession(req, res, access_token);
+	respondSuccess(res, {
+		access_token,
+		pubnub_cipher_key,
+		pubnub_token,
+		validate,
+		uid,
+		totalSpace,
+		usedSpace,
+	});
 });
 
 export default POST;

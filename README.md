@@ -51,14 +51,17 @@ See [the server's README](/server/README.md) for info on that.
 ```sh
 # .env
 
-# Where your server lives
-VITE_ACCOUNTABLE_SERVER_URL={your Accountable backend URL here}:40850
+# Where your server lives (required)
+VITE_ACCOUNTABLE_SERVER_URL={your Accountable backend URL}:40850
 
-# Enable the "Login" menu item
+# Enables the "Login" menu item (optional, defaults to "true")
 VITE_ENABLE_LOGIN=true
 
-# Enable the "signup" behaviors
+# Enables the "signup" behaviors (optional, defaults to "false")
 VITE_ENABLE_SIGNUP=false
+
+# Optional if the back-end runs on Express, required with Vercel
+VITE_PUBNUB_SUBSCRIBE_KEY={your subscribe key from PubNub}
 ```
 
 If you're hosting the Accountable server on the same machine that hosts the Accountable client, do NOT use `localhost` for the `VITE_ACCOUNTABLE_SERVER_URL`. You must set this to a URL that _clients_—that is, web browsers—can use to access your Accountable backend.
@@ -66,7 +69,7 @@ If you're hosting the Accountable server on the same machine that hosts the Acco
 Using `localhost` for this will cause clients to try _themselves_ as the Accountable server, and that's usually not what you want.
 
 ```sh
-$ cd accountable-svelte          # Be in the root directory
+$ cd accountable-svelte       # Be in the root directory
 $ npm ci                      # Install dependencies
 $ npm run build:client:quick  # Compile the client
 $ npm run dev:client          # Start a local webserver
@@ -127,3 +130,12 @@ I've missed some steps before. For example, version [0.9.0](/CHANGELOG.md#090---
 	- The CD (Continuous Deployment) bots dispatch a new git tag and GitHub Release using the content of the [CHANGELOG.md](/CHANGELOG.md).
 
 Once the release is tagged and deployed, it's up to server maintainers (including me) to pull down the latest changes. I might do something about that later.
+
+### Analytics?
+
+Google Analytics is spoopy as heck, and even [illegal in the EU](https://noyb.eu/en/austrian-dsb-eu-us-data-transfers-google-analytics-illegal). Right now, we don't have any analytics at all. We're considering respectful options:
+- [Fathom](https://usefathom.com)
+- [Simple Analytics](https://www.simpleanalytics.com)
+- [Matomo](https://matomo.org)
+- [Plausible](https://plausible.io)
+- [Piwik](https://piwik.org)

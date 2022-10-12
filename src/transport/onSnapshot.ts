@@ -1,6 +1,7 @@
 import type { CollectionReference, DocumentReference, Query } from "./db.js";
 import type { DocumentData } from "./schemas.js";
 import type { Infer } from "superstruct";
+import type { ListenerParameters } from "pubnub";
 import { documentData } from "./schemas.js";
 import { AccountableError, UnexpectedResponseError, UnreachableCaseError } from "./errors/index.js";
 import { array, enums, is, nonempty, nullable, object, string, union } from "superstruct";
@@ -315,6 +316,72 @@ export function onSnapshot<T>(
 
 	if (!db.currentUser) throw new AccountableError("database/unauthenticated");
 
+	let previousSnap: QuerySnapshot<T> | null = null;
+	function handleData({ data }: WatcherData): void {
+		switch (type) {
+			case "collection": {
+				if (!data || !isArray(data))
+					throw new UnexpectedResponseError(t("error.ws.data-not-array"));
+				const collectionRef = collection(db, queryOrReference.id);
+				const snaps: Array<QueryDocumentSnapshot<T>> = data.map(doc => {
+					const id = doc["_id"];
+					if (!isString(id)) {
+						const err = new TypeError(t("error.server.id-not-string"));
+						onErrorCallback(err);
+						throw err;
+					}
+					const ref = docRef(collectionRef.db, collectionRef.id, id);
+					return new QueryDocumentSnapshot<T>(ref, doc as T);
+				});
+				previousSnap = new QuerySnapshot<T>(previousSnap ?? collectionRef, snaps);
+				(onNextCallback as QuerySnapshotCallback<T>)(previousSnap);
+				return;
+			}
+
+			case "document": {
+				if (isArray(data)) throw new UnexpectedResponseError(t("error.ws.data-is-array"));
+				const collectionRef = collection(db, queryOrReference.parent.id);
+				const ref = docRef(collectionRef.db, collectionRef.id, queryOrReference.id);
+				const snap = new QueryDocumentSnapshot<T>(ref, data as T | null);
+				(onNextCallback as DocumentSnapshotCallback<T>)(snap);
+				return;
+			}
+
+			default:
+				throw new UnreachableCaseError(type);
+		}
+	}
+
+	const pubnub = db.pubnub;
+	if (pubnub) {
+		// Vercel doesn't support direct WebSockets. Use PubNub instead
+		const channel =
+			type === "collection"
+				? `${db.currentUser.uid}/${queryOrReference.id}`
+				: `${db.currentUser.uid}/${queryOrReference.parent.id}/${queryOrReference.id}`;
+		const listener: ListenerParameters = {
+			message(event) {
+				if (event.channel !== channel) return;
+				if (is(event.message, watcherData)) {
+					handleData(event.message);
+				}
+			},
+			status(event) {
+				if (!event.affectedChannels.includes(channel)) return;
+				console.debug(
+					`Received status category '${event.category}' for watcher at channel '${channel}'`
+				);
+			},
+		};
+		pubnub.addListener(listener);
+		pubnub.subscribe({ channels: [channel] });
+
+		return () => {
+			pubnub.unsubscribe({ channels: [channel] });
+			pubnub.removeListener(listener);
+		};
+	}
+
 	const uid = db.currentUser.uid;
 	const baseUrl = new URL(`ws://${db.url.hostname}:${db.url.port}`);
 	let url: URL;
@@ -348,40 +415,7 @@ export function onSnapshot<T>(
 		},
 	});
 
-	let previousSnap: QuerySnapshot<T> | null = null;
-	onMessage("data", message => {
-		const data = message.data;
-		if (data === undefined) throw new UnexpectedResponseError(t("error.ws.message-data-undefined"));
-
-		// console.debug(`Got ${type} message from ${url}`);
-		if (type === "collection") {
-			if (!data || !isArray(data)) throw new UnexpectedResponseError(t("error.ws.data-not-array"));
-			const collectionRef = collection(db, queryOrReference.id);
-			const snaps: Array<QueryDocumentSnapshot<T>> = data.map(doc => {
-				const id = doc["_id"];
-				if (!isString(id)) {
-					const err = new TypeError(t("error.server.id-not-string"));
-					onErrorCallback(err);
-					throw err;
-				}
-				const ref = docRef(collectionRef.db, collectionRef.id, id);
-				return new QueryDocumentSnapshot<T>(ref, doc as unknown as T);
-			});
-			previousSnap = new QuerySnapshot<T>(previousSnap ?? collectionRef, snaps);
-			(onNextCallback as QuerySnapshotCallback<T>)(previousSnap);
-
-			return;
-		} else if (type === "document") {
-			if (isArray(data)) throw new UnexpectedResponseError(t("error.ws.data-is-array"));
-			const collectionRef = collection(db, queryOrReference.parent.id);
-			const ref = docRef(collectionRef.db, collectionRef.id, queryOrReference.id);
-			const snap = new QueryDocumentSnapshot<T>(ref, data as T | null);
-			(onNextCallback as DocumentSnapshotCallback<T>)(snap);
-			return;
-		}
-
-		throw new UnreachableCaseError(type);
-	});
+	onMessage("data", handleData);
 
 	onClose((code, _reason) => {
 		console.debug(

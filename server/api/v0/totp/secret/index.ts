@@ -40,6 +40,7 @@ export const GET = apiHandler("GET", async (req, res) => {
 		mfaRecoverySeed: user.mfaRecoverySeed ?? null,
 		passwordHash: user.passwordHash,
 		passwordSalt: user.passwordSalt,
+		pubnubCipherKey: user.pubnubCipherKey,
 		requiredAddtlAuth: [], // TODO: Leave other 2FA alone
 		totpSeed,
 		uid,
@@ -95,6 +96,7 @@ export const DELETE = apiHandler("DELETE", async (req, res) => {
 		mfaRecoverySeed: user.mfaRecoverySeed ?? null,
 		passwordHash: user.passwordHash,
 		passwordSalt: user.passwordSalt,
+		pubnubCipherKey: user.pubnubCipherKey,
 		requiredAddtlAuth: [], // TODO: Leave other 2FA alone
 		totpSeed: null,
 		uid,

@@ -58,6 +58,7 @@ export const POST = apiHandler("POST", async (req, res) => {
 		mfaRecoverySeed: storedUser.mfaRecoverySeed ?? null,
 		passwordHash,
 		passwordSalt,
+		pubnubCipherKey: storedUser.pubnubCipherKey,
 		requiredAddtlAuth: storedUser.requiredAddtlAuth ?? [],
 		totpSeed: storedUser.totpSeed ?? null,
 		uid: storedUser.uid,

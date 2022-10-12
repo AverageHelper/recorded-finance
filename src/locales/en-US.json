@@ -131,7 +131,6 @@
 			"endpoints-closing-down": "Endpoint(s) closing down for now",
 			"invalid-response": "Invalid server response: {response}",
 			"internet-gone": "Internet connection lost",
-			"message-data-undefined": "Message data is undefined",
 			"no-reason-given": "No reason given",
 			"not-json": "The message could not be parsed as JSON: {message}",
 			"server-closed-without-reason": "The server closed the connection without telling us why"

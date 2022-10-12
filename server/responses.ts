@@ -7,7 +7,7 @@ const CACHE_CONTROL = ["Cache-Control", "no-store"] as const;
 
 export function respondSuccess(
 	res: APIResponse,
-	additionalValues?: Record<string, string | number | Array<string | number>>
+	additionalValues?: Record<string, string | number | null | Array<string | number>>
 ): void {
 	res
 		.setHeader(...CACHE_CONTROL) //

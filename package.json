@@ -37,6 +37,7 @@
 		"fuse.js": "6.6.2",
 		"lodash-es": "4.17.21",
 		"path-browserify": "1.0.1",
+		"pubnub": "7.2.0",
 		"qrcode": "1.5.1",
 		"superstruct": "0.15.5",
 		"svelte-i18n": "3.4.0",
@@ -53,6 +54,7 @@
 		"@types/jest": "27.5.2",
 		"@types/lodash-es": "4.17.6",
 		"@types/path-browserify": "1.0.0",
+		"@types/pubnub": "7.2.0",
 		"@types/qrcode": "1.5.0",
 		"@types/semver": "7.3.12",
 		"@types/uuid": "8.3.4",
@@ -89,6 +91,7 @@
 		"ts-node": "10.9.1",
 		"typescript": "4.8.3",
 		"vite": "3.0.2",
+		"vite-plugin-environment": "1.1.2",
 		"vite-tsconfig-paths": "3.5.0"
 	}
 }

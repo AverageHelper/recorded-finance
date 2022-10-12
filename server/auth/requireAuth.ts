@@ -2,7 +2,7 @@ import type { JsonWebTokenError } from "jsonwebtoken";
 import type { MFAOption, User } from "../database/schemas";
 import { assertSchema, jwtPayload } from "../database/schemas";
 import { BadRequestError, NotFoundError, UnauthorizedError } from "../errors";
-import { blacklistHasJwt, jwtTokenFromRequest, verifyJwt } from "./jwt";
+import { blacklistHasJwt, jwtFromRequest, verifyJwt } from "./jwt";
 import { StructError } from "superstruct";
 import { userWithUid } from "../database/io";
 
@@ -18,7 +18,7 @@ interface Metadata {
  * Retrieves user metadata from the request headers and session cookies in the request.
  */
 export async function metadataFromRequest(req: APIRequest, res: APIResponse): Promise<Metadata> {
-	const token = jwtTokenFromRequest(req, res);
+	const token = jwtFromRequest(req, res);
 	if (token === null) {
 		console.debug("Request has no JWT");
 		throw new UnauthorizedError("missing-token");

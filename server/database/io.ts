@@ -18,6 +18,7 @@ import {
 	user as userSchema,
 } from "./schemas";
 import { maxSpacePerUser } from "../auth/limits";
+import { newPubNubCipherKey } from "../auth/pubnub";
 import { NotFoundError, UnreachableCaseError } from "../errors";
 import { ONE_HOUR } from "../constants/time";
 import { PrismaClient } from "@prisma/client";
@@ -203,9 +204,24 @@ export async function fetchDbCollection(
 				oldDekMaterial: k.oldDekMaterial ?? undefined,
 				oldPassSalt: k.oldPassSalt ?? undefined,
 			}));
-		case "users":
+		case "users": {
 			// Special handling: fetch all users
-			return (await dataSource.user.findMany()).map(computeRequiredAddtlAuth);
+			const rawUsers = (await dataSource.user.findMany()).map(computeRequiredAddtlAuth);
+			return await Promise.all(
+				rawUsers.map(async user => {
+					// Upsert the cipher key if it doesn't exist
+					let pubnubCipherKey = user.pubnubCipherKey;
+					if (pubnubCipherKey === null) {
+						pubnubCipherKey = await newPubNubCipherKey();
+						await dataSource.user.update({
+							where: { uid: user.uid },
+							data: { pubnubCipherKey },
+						});
+					}
+					return { ...user, pubnubCipherKey };
+				})
+			);
+		}
 		default:
 			throw new UnreachableCaseError(ref.id);
 	}
@@ -222,7 +238,19 @@ async function findUserWithProperties(query: Partial<User>): Promise<User | null
 		},
 	});
 	if (first === null) return first;
-	return computeRequiredAddtlAuth(first);
+
+	// Upsert the cipher key if it doesn't exist
+	let pubnubCipherKey = first.pubnubCipherKey;
+	if (pubnubCipherKey === null) {
+		pubnubCipherKey = await newPubNubCipherKey();
+		await dataSource.user.update({
+			where: { uid: first.uid },
+			data: { pubnubCipherKey },
+		});
+	}
+
+	// If the user has no pubnub_cipher_key, upsert one
+	return computeRequiredAddtlAuth({ ...first, pubnubCipherKey });
 }
 
 export async function userWithUid(uid: string): Promise<User | null> {
@@ -303,6 +331,16 @@ export async function fetchDbDoc(ref: DocumentReference): Promise<Snapshot> {
 				return { ref, data: null };
 			}
 
+			// Upsert the cipher key if it doesn't exist
+			let pubnubCipherKey = rawResult.pubnubCipherKey;
+			if (pubnubCipherKey === null) {
+				pubnubCipherKey = await newPubNubCipherKey();
+				await dataSource.user.update({
+					where: { uid: rawResult.uid },
+					data: { pubnubCipherKey },
+				});
+			}
+
 			const result = computeRequiredAddtlAuth(rawResult);
 			const data: Identified<User> = {
 				_id: result.uid,
@@ -311,6 +349,7 @@ export async function fetchDbDoc(ref: DocumentReference): Promise<Snapshot> {
 				mfaRecoverySeed: result.mfaRecoverySeed,
 				passwordHash: result.passwordHash,
 				passwordSalt: result.passwordSalt,
+				pubnubCipherKey,
 				requiredAddtlAuth: result.requiredAddtlAuth,
 				totpSeed: result.totpSeed,
 			};
@@ -401,6 +440,7 @@ export async function upsertDbDocs(updates: Array<DocUpdate>): Promise<void> {
 				currentAccountId: data.currentAccountId,
 				passwordHash: data.passwordHash,
 				passwordSalt: data.passwordSalt,
+				pubnubCipherKey: data.pubnubCipherKey,
 				mfaRecoverySeed: data.mfaRecoverySeed ?? null,
 				totpSeed: data.totpSeed ?? null,
 				requiredAddtlAuth: Array.from(new Set(data.requiredAddtlAuth?.sort(sortStrings) ?? [])),
@@ -523,9 +563,7 @@ export async function deleteDbDocs(refs: NonEmptyArray<DocumentReference>): Prom
 			});
 		}),
 		dataSource.userKeys.deleteMany({ where: { userId: { in: keyRefs.map(r => r.id) } } }),
-		// ...keyRefs.map(ref => dataSource.userKeys.delete({ where: { userId: ref.id } })),
 		dataSource.user.deleteMany({ where: { uid: { in: userRefs.map(r => r.id) } } }),
-		// ...userRefs.map(ref => dataSource.user.delete({ where: { uid: ref.id } })),
 	]);
 }
 

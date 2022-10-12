@@ -80,6 +80,9 @@ export const jwtPayload = type({
 	 * has 2FA auth enabled.
 	 */
 	validatedWithMfa: array(enums(mfaOptions)),
+
+	/** The token used to authenticate PubNub subscriptions. */
+	pubnubToken: nonemptyString,
 });
 
 export type JwtPayload = Infer<typeof jwtPayload>;
@@ -136,6 +139,11 @@ export const user = object({
 	 * their additional auth.
 	 */
 	totpSeed: optional(nullable(nonemptyString)),
+
+	/**
+	 * The AES-256 cipher key used by PubNub for message-level encryption.
+	 */
+	pubnubCipherKey: nonemptyString,
 });
 export type User = Infer<typeof user>;
 

@@ -3,6 +3,7 @@ import { svelte } from "@sveltejs/vite-plugin-svelte";
 import { visualizer } from "rollup-plugin-visualizer";
 import analyze from "rollup-plugin-analyzer";
 import autoprefixer from "autoprefixer";
+import env from "vite-plugin-environment";
 import path from "node:path";
 import sveltePreprocess from "svelte-preprocess";
 import tsconfigPaths from "vite-tsconfig-paths";
@@ -10,6 +11,16 @@ import typescript from "@rollup/plugin-typescript";
 
 export default defineConfig({
 	plugins: [
+		// See https://github.com/ElMassimo/vite-plugin-environment#usage-with-default-values
+		env(
+			{
+				VITE_ACCOUNTABLE_SERVER_URL: undefined, // required
+				VITE_ENABLE_LOGIN: "true",
+				VITE_ENABLE_SIGNUP: "false",
+				VITE_PUBNUB_SUBSCRIBE_KEY: null, // optional
+			},
+			{ defineOn: "import.meta.env" }
+		),
 		svelte({
 			emitCss: true,
 			preprocess: sveltePreprocess({

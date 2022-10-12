@@ -2,6 +2,7 @@ import type { JwtPayload, MFAOption, User } from "../database/schemas";
 import { addJwtToDatabase, jwtExistsInDatabase } from "../database/io";
 import { isJwtPayload } from "../database/schemas";
 import { generateSecureToken } from "./generators";
+import { newPubNubTokenForUser, revokePubNubToken } from "./pubnub";
 import { ONE_HOUR } from "../constants/time";
 import { requireEnv } from "../environment";
 import Cookies from "cookies";
@@ -26,7 +27,8 @@ export async function blacklistHasJwt(token: string): Promise<boolean> {
  */
 export async function addJwtToBlacklist(token: string): Promise<void> {
 	try {
-		await verifyJwt(token);
+		const payload = await verifyJwt(token);
+		await revokePubNubToken(payload.pubnubToken, payload.uid);
 		await addJwtToDatabase(token);
 	} catch {
 		// The token was expired or otherwise invalid. No need to blacklist
@@ -36,37 +38,50 @@ export async function addJwtToBlacklist(token: string): Promise<void> {
 // TODO: Regularly purge tokens from blacklist that are older than the max age
 
 // TODO: Be smarter about session storage. See https://gist.github.com/soulmachine/b368ce7292ddd7f91c15accccc02b8df and https://expressjs.com/en/advanced/best-practice-security.html#use-cookies-securely
-export async function newAccessToken(
-	req: APIRequest,
-	res: APIResponse,
+
+interface AccessTokens {
+	/**
+	 * A token that permits access to the user's data.
+	 */
+	access_token: string;
+
+	/**
+	 * A token that permits the user to subscribe to data change notifications via PubNub.
+	 */
+	pubnub_token: string;
+}
+
+/**
+ * Creates a new set of access tokens for the given user and 2FA metadata.
+ * These tokens are valid for about an hour after creation.
+ *
+ * - The `access_token` should be sent to the client using {@link setSession}.
+ * - The `pubnub_token` should be sent to the client directly in a response body.
+ */
+export async function newAccessTokens(
 	user: User,
 	validatedWithMfa: Array<MFAOption>
-): Promise<string> {
+): Promise<AccessTokens> {
 	const options: jwt.SignOptions = { expiresIn: "1h" };
 	const payload: JwtPayload = {
+		pubnubToken: await newPubNubTokenForUser(user.uid),
 		uid: user.uid,
 		validatedWithMfa,
 	};
 
-	const token = await new Promise<string>((resolve, reject) => {
-		jwt.sign(payload, persistentSecret, options, (err, token) => {
-			if (err) {
-				reject(err);
-				return;
-			}
-			if (token !== undefined) {
-				resolve(token);
-				return;
-			}
-			const error = new TypeError(
-				`Failed to create JWT for user ${user.uid}: Both error and token parameters were empty.`
-			);
-			reject(error);
-		});
-	});
+	return {
+		access_token: await createJwt(payload, options),
+		pubnub_token: payload.pubnubToken,
+	};
+}
 
+/**
+ * Sets the session cookie with the given value, or revokes the cookie if the value is `null`.
+ */
+export function setSession(req: APIRequest, res: APIResponse, value: string | null): void {
 	const cookies = new Cookies(req, res, { keys });
-	cookies.set(SESSION_COOKIE_NAME, token, {
+
+	const opts: Cookies.SetOption = {
 		maxAge: ONE_HOUR,
 		path: "/v0",
 		sameSite: "strict",
@@ -74,9 +89,24 @@ export async function newAccessToken(
 		signed: true,
 		overwrite: true,
 		// secure: true, if the requester is HTTPS
-	});
+	};
 
-	return token;
+	if (value === null) {
+		// Ask the client to revoke the session cookies.
+		// Browsers are supposed to get rid of the cookie if `Expires`
+		// is set in the past or `Max-Age` is zero or negative. We do
+		// both, and set the value to gibberish. If a user agent doesn't
+		// get rid of the cookie, that's fine, because the token should go
+		// into a blacklist anyway. (See https://stackoverflow.com/a/53573622)
+		const gibberish = generateSecureToken(5);
+		const twoHrsAgo = new Date(new Date().getTime() - 2 * ONE_HOUR);
+		opts.maxAge = -1;
+		opts.expires = twoHrsAgo;
+		cookies.set(SESSION_COOKIE_NAME, gibberish, opts);
+	} else {
+		// Set session cookies
+		cookies.set(SESSION_COOKIE_NAME, value, opts);
+	}
 }
 
 /**
@@ -86,25 +116,7 @@ export async function newAccessToken(
  * the related session tokens as well, separately.
  */
 export function killSession(req: APIRequest, res: APIResponse): void {
-	const cookies = new Cookies(req, res, { keys });
-	const twoHrsAgo = new Date(new Date().getTime() - 2 * ONE_HOUR);
-	const gibberish = generateSecureToken(5);
-
-	// Browsers are supposed to get rid of the cookie if `Expires`
-	// is set in the past or `Max-Age` is zero or negative. We do
-	// both, and set the value to gibberish. If a user agent doesn't
-	// get rid of the cookie, that's fine, because the token goes
-	// into a blacklist anyway. (See https://stackoverflow.com/a/53573622)
-	cookies.set(SESSION_COOKIE_NAME, gibberish, {
-		expires: twoHrsAgo,
-		maxAge: -1,
-		path: "/v0",
-		sameSite: "strict",
-		httpOnly: true,
-		signed: true,
-		overwrite: true,
-		// secure: true, if the requester is HTTPS
-	});
+	setSession(req, res, null);
 }
 
 /**
@@ -114,7 +126,7 @@ export function killSession(req: APIRequest, res: APIResponse): void {
  * Checks the `Cookie` header for the token. If no data is found there,
  * then we check the `Authorization` header for a "Bearer" token.
  */
-export function jwtTokenFromRequest(req: APIRequest, res: APIResponse): string | null {
+export function jwtFromRequest(req: APIRequest, res: APIResponse): string | null {
 	// Get session token from cookies, if it exists
 	const cookies = new Cookies(req, res, { keys });
 	const token = cookies.get(SESSION_COOKIE_NAME, { signed: true }) ?? "";
@@ -131,8 +143,8 @@ export function jwtTokenFromRequest(req: APIRequest, res: APIResponse): string |
 	return null;
 }
 
-export async function verifyJwt(token: string): Promise<jwt.JwtPayload> {
-	return await new Promise<jwt.JwtPayload>((resolve, reject) => {
+export async function verifyJwt(token: string): Promise<JwtPayload> {
+	return await new Promise<JwtPayload>((resolve, reject) => {
 		jwt.verify(token, persistentSecret, (err, payload) => {
 			// Fail if failed i guess
 			if (err) return reject(err);
@@ -151,6 +163,25 @@ export async function verifyJwt(token: string): Promise<jwt.JwtPayload> {
 				"Failed to verify JWT: Both error and payload parameters were empty."
 			);
 			return reject(error);
+		});
+	});
+}
+
+async function createJwt(payload: JwtPayload, options: jwt.SignOptions): Promise<string> {
+	return await new Promise<string>((resolve, reject) => {
+		jwt.sign(payload, persistentSecret, options, (err, token) => {
+			if (err) {
+				reject(err);
+				return;
+			}
+			if (token !== undefined) {
+				resolve(token);
+				return;
+			}
+			const error = new TypeError(
+				`Failed to create JWT for user ${payload.uid}: Both error and token parameters were empty.`
+			);
+			reject(error);
 		});
 	});
 }

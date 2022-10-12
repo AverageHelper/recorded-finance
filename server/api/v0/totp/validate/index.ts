@@ -4,7 +4,8 @@ import { generateSecret, generateTOTPSecretURI, verifyTOTP } from "../../../../a
 import { generateSecureToken } from "../../../../auth/generators";
 import { is, nonempty, string, type } from "superstruct";
 import { metadataFromRequest } from "../../../../auth/requireAuth";
-import { newAccessToken } from "../../../../auth/jwt";
+import { newAccessTokens, setSession } from "../../../../auth/jwt";
+import { newPubNubCipherKey } from "../../../../auth/pubnub";
 import { respondSuccess } from "../../../../responses";
 import { statsForUser, upsertUser } from "../../../../database/io";
 import safeCompare from "safe-compare";
@@ -50,6 +51,7 @@ export const POST = apiHandler("POST", async (req, res) => {
 				passwordSalt: user.passwordSalt,
 				requiredAddtlAuth: user.requiredAddtlAuth ?? [],
 				totpSeed: user.totpSeed,
+				pubnubCipherKey: user.pubnubCipherKey,
 				uid,
 			});
 		}
@@ -63,6 +65,7 @@ export const POST = apiHandler("POST", async (req, res) => {
 		await upsertUser({
 			currentAccountId: user.currentAccountId,
 			mfaRecoverySeed,
+			pubnubCipherKey: user.pubnubCipherKey ?? (await newPubNubCipherKey()),
 			passwordHash: user.passwordHash,
 			passwordSalt: user.passwordSalt,
 			requiredAddtlAuth: ["totp"], // TODO: Leave other 2FA alone
@@ -71,12 +74,30 @@ export const POST = apiHandler("POST", async (req, res) => {
 		});
 	}
 
-	const access_token = await newAccessToken(req, res, user, ["totp"]);
+	const pubnub_cipher_key = await newPubNubCipherKey();
+	const { access_token, pubnub_token } = await newAccessTokens(user, ["totp"]);
 	const { totalSpace, usedSpace } = await statsForUser(uid);
+
+	setSession(req, res, access_token);
 	if (recovery_token !== null) {
-		respondSuccess(res, { access_token, recovery_token, uid, totalSpace, usedSpace });
+		respondSuccess(res, {
+			access_token,
+			pubnub_cipher_key,
+			pubnub_token,
+			recovery_token,
+			uid,
+			totalSpace,
+			usedSpace,
+		});
 	} else {
-		respondSuccess(res, { access_token, uid, totalSpace, usedSpace });
+		respondSuccess(res, {
+			access_token,
+			pubnub_cipher_key,
+			pubnub_token,
+			uid,
+			totalSpace,
+			usedSpace,
+		});
 	}
 });
 

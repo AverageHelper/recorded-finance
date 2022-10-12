@@ -22,6 +22,8 @@ $ npm -v && node -v
 v16.13.1
 ```
 
+The server supports self-hosting out of the box using Express. If you wish to host the back-end using Vercel Serverless Functions, you should set up an account with [Vercel](https://vercel.com) and [PubNub](https://www.pubnub.com).
+
 ### Compile and Run the Server
 
 - Clone the repository
@@ -47,6 +49,15 @@ MAX_USERS={the limit to the number of users allowed to register new accounts}
 
 MAX_BYTES={the total number of bytes that Accountable attachments are permitted to occupy on the system}
 # optional, defaults to 20000000000 (20 GB)
+
+PUBNUB_PUBLISH_KEY={publish key given by PubNub}
+# optional with Express, required with Vercel, key given by PubNub
+
+PUBNUB_SUBSCRIBE_KEY={subscribe key given by PubNub}
+# optional with Express, required with Vercel, key given by PubNub
+
+PUBNUB_SECRET_KEY={secret key given by PubNub}
+# optional with Express, required with Vercel, key given by PubNub
 ```
 
 Run these commands to compile and run

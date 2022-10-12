@@ -1,6 +1,6 @@
 import { apiHandler } from "../../../helpers/apiHandler";
 import { metadataFromRequest } from "../../../auth/requireAuth";
-import { newAccessToken } from "../../../auth/jwt";
+import { newAccessTokens, setSession } from "../../../auth/jwt";
 import { respondSuccess } from "../../../responses";
 import { statsForUser } from "../../../database/io";
 
@@ -9,15 +9,20 @@ export const GET = apiHandler("GET", async (req, res) => {
 
 	const metadata = await metadataFromRequest(req, res); // throws if bad
 
-	const access_token = await newAccessToken(req, res, metadata.user, metadata.validatedWithMfa);
-	const uid = metadata.user.uid;
-	const account = metadata.user.currentAccountId;
-	const requiredAddtlAuth = metadata.user.requiredAddtlAuth ?? [];
+	const user = metadata.user;
+	const uid = user.uid;
+	const pubnub_cipher_key = user.pubnubCipherKey;
+	const account = user.currentAccountId;
+	const requiredAddtlAuth = user.requiredAddtlAuth ?? [];
+	const { access_token, pubnub_token } = await newAccessTokens(user, metadata.validatedWithMfa);
 	const { totalSpace, usedSpace } = await statsForUser(uid);
 
+	setSession(req, res, access_token);
 	respondSuccess(res, {
 		account,
 		access_token,
+		pubnub_cipher_key,
+		pubnub_token,
 		requiredAddtlAuth,
 		uid,
 		totalSpace,

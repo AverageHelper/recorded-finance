@@ -11,6 +11,7 @@ import { isPrimitive } from "./schemas.js";
 import { isString } from "../helpers/isString";
 import { t } from "../i18n";
 import { v4 as uuid } from "uuid";
+import PubNub from "pubnub";
 import {
 	databaseBatchWrite,
 	databaseCollection,
@@ -30,11 +31,13 @@ import {
 export class AccountableDB {
 	#currentUser: User | null;
 	#lastKnownUserStats: UserStats | null;
+	#pubnub: PubNub | null;
 	public readonly url: Readonly<URL>;
 
 	constructor(url: string) {
 		this.#currentUser = null;
 		this.#lastKnownUserStats = null;
+		this.#pubnub = null;
 		this.url = new URL(url);
 	}
 
@@ -44,6 +47,31 @@ export class AccountableDB {
 
 	get lastKnownUserStats(): UserStats | null {
 		return this.#lastKnownUserStats;
+	}
+
+	get pubnub(): PubNub | null {
+		return this.#pubnub;
+	}
+
+	setUser(user: User, pubnubToken: string): void {
+		this.#currentUser = user;
+
+		const subscribeKey = import.meta.env.VITE_PUBNUB_SUBSCRIBE_KEY;
+		if (subscribeKey !== undefined && subscribeKey) {
+			if (user.pubnubCipherKey === null) throw new TypeError(t("error.cryption.missing-pek"));
+
+			this.#pubnub?.unsubscribeAll();
+			this.#pubnub?.stop();
+			// This should be the only PubNub instance for this database
+			this.#pubnub = new PubNub({
+				subscribeKey,
+				cipherKey: user.pubnubCipherKey,
+				uuid: user.uid,
+				ssl: true,
+				restore: false, // cache subscribed channels, and re-subscribe in the event of network failure
+			});
+			this.#pubnub.setToken(pubnubToken);
+		}
 	}
 
 	setUserStats(stats: UserStats | null): void {
@@ -57,12 +85,12 @@ export class AccountableDB {
 		}
 	}
 
-	setUser(user: User): void {
-		this.#currentUser = user;
-	}
-
 	clearUser(): void {
+		this.#pubnub?.unsubscribeAll();
+		this.#pubnub?.stop();
+		this.#pubnub = null; // listeners go away too
 		this.#currentUser = null;
+		this.setUserStats(null);
 	}
 
 	toString(): string {
@@ -425,7 +453,7 @@ export async function getDocs<T>(query: CollectionReference<T>): Promise<QuerySn
 			delete data["_id"];
 			if (!isString(id)) throw new TypeError(t("error.server.id-not-string"));
 
-			return new QueryDocumentSnapshot(doc(query.db, query.id, id), data as unknown as T);
+			return new QueryDocumentSnapshot(doc(query.db, query.id, id), data as T);
 		})
 	);
 }
