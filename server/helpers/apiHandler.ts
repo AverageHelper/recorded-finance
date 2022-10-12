@@ -12,7 +12,9 @@ type HTTPMethod = "GET" | "POST" | "DELETE";
  */
 export function apiHandler(method: HTTPMethod, cb: APIRequestHandler): APIRequestHandler {
 	return async (req, res) => {
-		assertMethod(req.method, method);
-		await handleErrors(req, res, cb);
+		await handleErrors(req, res, async (req, res) => {
+			assertMethod(req.method, method);
+			await cb(req, res);
+		});
 	};
 }
