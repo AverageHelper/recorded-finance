@@ -1,6 +1,6 @@
 import type { JwtPayload, MFAOption, User } from "../database/schemas";
 import { addJwtToDatabase, jwtExistsInDatabase } from "../database/io";
-import { isJwtPayload } from "../database/schemas";
+import { assertJwtPayload } from "../database/schemas";
 import { generateSecureToken } from "./generators";
 import { newPubNubTokenForUser, revokePubNubToken } from "./pubnub";
 import { ONE_HOUR } from "../constants/time";
@@ -151,8 +151,11 @@ export async function verifyJwt(token: string): Promise<JwtPayload> {
 
 			// Check payload contents
 			if (payload !== undefined) {
-				if (!isJwtPayload(payload))
-					return reject(new TypeError(`Malformed JWT: ${JSON.stringify(payload)}`));
+				try {
+					assertJwtPayload(payload);
+				} catch (error) {
+					return reject(error);
+				}
 
 				// Parameters are valid!
 				return resolve(payload);

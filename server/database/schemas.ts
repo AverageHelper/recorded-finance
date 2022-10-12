@@ -4,6 +4,7 @@ import type { Prisma } from "@prisma/client";
 import { UnreachableCaseError } from "../errors";
 import {
 	array,
+	assert,
 	enums,
 	intersection,
 	is,
@@ -82,13 +83,13 @@ export const jwtPayload = type({
 	validatedWithMfa: array(enums(mfaOptions)),
 
 	/** The token used to authenticate PubNub subscriptions. */
-	pubnubToken: nonemptyString,
+	pubnubToken: nonemptyLargeString,
 });
 
 export type JwtPayload = Infer<typeof jwtPayload>;
 
-export function isJwtPayload(tbd: unknown): tbd is JwtPayload {
-	return isValidForSchema(tbd, jwtPayload);
+export function assertJwtPayload(tbd: unknown): asserts tbd is JwtPayload {
+	return assert(tbd, jwtPayload);
 }
 
 export const user = object({
