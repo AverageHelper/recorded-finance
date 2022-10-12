@@ -31,7 +31,7 @@ export const POST = apiHandler("POST", async (req, res) => {
 		return respondSuccess(res, { totalSpace, usedSpace });
 	}
 
-	if (providedData.length > 500)
+	if (Array.isArray(providedData) && providedData.length > 500)
 		throw new BadRequestError("Batch operations cannot contain more than 500 documents");
 
 	// Separate delete and set operations

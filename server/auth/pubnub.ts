@@ -45,7 +45,7 @@ export function publishWriteForRef(
 			console.debug(`Posted write for channel '${channel}'`);
 		})
 		.catch(error => {
-			console.error(`Failed to post write for channel '${channel}' due to error`, error);
+			console.error("Failed to post write for channel '%s' due to error", channel, error);
 		});
 	/* eslint-enable promise/prefer-await-to-then */
 }

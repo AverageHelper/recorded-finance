@@ -23,9 +23,9 @@ export async function handleErrors(
 
 		// These extra details may save us when the call stack is too deep for us to figure where this error came from:
 		console.error(
-			`Unknown internal error for ${req.method ?? "unknown"} request at ${
-				req.url ?? "unknown URL"
-			}:`,
+			`Unknown internal error for %s request at %s:`,
+			req.method ?? "unknown",
+			req.url ?? "unknown URL",
 			error
 		);
 		return respondInternalError(res);
