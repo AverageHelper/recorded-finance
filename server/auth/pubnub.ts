@@ -9,10 +9,10 @@ import PubNub from "pubnub";
  * @param ref The collection that was written to.
  * @param newData The new data in the collection.
  */
-export async function publishWriteForRef(
+export function publishWriteForRef(
 	ref: CollectionReference,
 	newData: Array<IdentifiedDataItem>
-): Promise<void>;
+): void;
 
 /**
  * Publishes a write event for the given document to PubNub.
@@ -20,22 +20,32 @@ export async function publishWriteForRef(
  * @param ref The document that was written to.
  * @param newData The new data in the document, or `null` if the document was deleted.
  */
-export async function publishWriteForRef(
+export function publishWriteForRef(
 	ref: DocumentReference,
 	newData: IdentifiedDataItem | null
-): Promise<void>;
+): void;
 
-export async function publishWriteForRef(
+export function publishWriteForRef(
 	ref: CollectionReference | DocumentReference,
 	newData: Array<IdentifiedDataItem> | IdentifiedDataItem | null
-): Promise<void> {
+): void {
 	const channel = pubNubChannelNameForRef(ref);
-	await pubnubForUser(ref.uid, pubnub =>
+	console.debug(`Posting write for channel '${channel}'...`);
+	/* eslint-disable promise/prefer-await-to-then */
+	// We don't want I/O to wait for us here
+	void pubnubForUser(ref.uid, pubnub =>
 		pubnub.publish({
 			channel,
 			message: newData,
 		})
-	);
+	)
+		.then(() => {
+			console.debug(`Posted write for channel '${channel}'`);
+		})
+		.catch(error => {
+			console.error(`Failed to post write for channel '${channel}' due to error`, error);
+		});
+	/* eslint-enable promise/prefer-await-to-then */
 }
 
 /**
