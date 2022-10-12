@@ -29,6 +29,8 @@ export function publishWriteForRef(
 	ref: CollectionReference | DocumentReference,
 	newData: Array<IdentifiedDataItem> | IdentifiedDataItem | null
 ): void {
+	// TODO: This should be a no-op when we're in Express
+
 	const channel = pubNubChannelNameForRef(ref);
 	console.debug(`Posting write for channel '${channel}'...`);
 	/* eslint-disable promise/prefer-await-to-then */
