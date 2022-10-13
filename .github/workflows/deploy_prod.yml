@@ -119,6 +119,7 @@ jobs:
       - name: Build Project Artifacts
         run: |
           cd server
+          npm run export-version
           ./node_modules/.bin/vercel build --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy to Production
