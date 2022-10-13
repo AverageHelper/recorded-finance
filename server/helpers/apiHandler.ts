@@ -2,6 +2,7 @@ import { assertMethod } from "./assertMethod";
 import { env } from "../environment";
 import { handleErrors } from "../handleErrors";
 import { OriginError } from "../errors/OriginError";
+import { respondOk } from "../responses";
 import { URL } from "node:url";
 
 type HTTPMethod = "GET" | "POST" | "DELETE";
@@ -18,8 +19,7 @@ export function apiHandler(method: HTTPMethod, cb: APIRequestHandler): APIReques
 		await handleErrors(req, res, async (req, res) => {
 			cors(req, res);
 			if (req.method === "OPTIONS") {
-				res.status(200).end();
-				return;
+				return respondOk(res);
 			}
 
 			assertMethod(req.method, method);

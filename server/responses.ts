@@ -5,6 +5,14 @@ import { InternalError } from "./errors/InternalError";
 const VARY = ["Vary", "*"] as const;
 const CACHE_CONTROL = ["Cache-Control", "no-store"] as const;
 
+export function respondOk(res: APIResponse): void {
+	res
+		.setHeader(...CACHE_CONTROL) //
+		.setHeader(...VARY)
+		.status(200)
+		.end();
+}
+
 export function respondSuccess(
 	res: APIResponse,
 	additionalValues?: Record<string, string | number | null | Array<string | number>>
