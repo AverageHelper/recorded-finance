@@ -30,17 +30,19 @@ async function assertCors(req: APIRequest, res: APIResponse): Promise<void> {
 	if (corsOptions.allowedHeaders !== undefined) {
 		res.setHeader("Access-Control-Allow-Headers", corsOptions.allowedHeaders);
 	}
-	const origin = await new Promise<StaticOrigin | undefined>((resolve, reject) => {
-		if (typeof corsOptions.origin === "function") {
-			corsOptions.origin(req.headers.origin, (err, origin) => {
-				if (err) return reject(err);
-				return resolve(origin);
-			});
+	if (req.headers.origin !== undefined) {
+		const origin = await new Promise<StaticOrigin | undefined>((resolve, reject) => {
+			if (typeof corsOptions.origin === "function") {
+				corsOptions.origin(req.headers.origin, (err, origin) => {
+					if (err) return reject(err);
+					return resolve(origin);
+				});
+			}
+		});
+		if (typeof origin === "string") {
+			res.setHeader("Access-Control-Allow-Origin", origin);
+		} else if (origin === true) {
+			res.setHeader("Access-Control-Allow-Origin", req.headers.origin);
 		}
-	});
-	if (typeof origin === "string") {
-		res.setHeader("Access-Control-Allow-Origin", origin);
-	} else if (origin === true) {
-		res.setHeader("Access-Control-Allow-Origin", "*");
 	}
 }
