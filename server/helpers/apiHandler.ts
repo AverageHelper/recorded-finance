@@ -54,6 +54,12 @@ if (configuredHostUrl !== null) {
 console.debug(`allowedOriginHostnames: ${JSON.stringify(Array.from(allowedOriginHostnames))}`);
 
 function cors(req: APIRequest, res: APIResponse): void {
+	// TODO: Helmet
+	res.setHeader(
+		"Access-Control-Allow-Headers",
+		"X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
+	);
+
 	// Allow requests with no origin (mobile apps, curl, etc.)
 	const origin = req.headers.origin;
 	if (origin === undefined || !origin) {
@@ -83,8 +89,4 @@ function cors(req: APIRequest, res: APIResponse): void {
 	console.debug(`Handling request from origin: ${cleanOrigin}`);
 	res.setHeader("Access-Control-Allow-Origin", cleanOrigin);
 	res.setHeader("Access-Control-Allow-Credentials", "true");
-	res.setHeader(
-		"Access-Control-Allow-Headers",
-		"X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
-	);
 }
