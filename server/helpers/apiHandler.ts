@@ -15,11 +15,12 @@ type HTTPMethod = "GET" | "POST" | "DELETE";
 export function apiHandler(method: HTTPMethod, cb: APIRequestHandler): APIRequestHandler {
 	return async (req, res) => {
 		await handleErrors(req, res, async (req, res) => {
-			assertCors(req, res);
+			cors(req, res);
 			if (req.method === "OPTIONS") {
 				res.status(200).end();
 				return;
 			}
+
 			assertMethod(req.method, method);
 			await cb(req, res);
 		});
@@ -35,7 +36,7 @@ allowedOriginHostnames.add("::1");
 
 console.debug(`allowedOriginHostnames: ${JSON.stringify(Array.from(allowedOriginHostnames))}`);
 
-function assertCors(req: APIRequest, res: APIResponse): void {
+function cors(req: APIRequest, res: APIResponse): void {
 	// Allow requests with no origin (mobile apps, curl, etc.)
 	const origin = req.headers.origin;
 	if (origin === undefined || !origin) {
@@ -43,22 +44,27 @@ function assertCors(req: APIRequest, res: APIResponse): void {
 		return;
 	}
 
-	// Guard Origin
-	try {
-		const { hostname } = new URL(origin);
+	// Guard origin based on hostname
+	let hostname: string;
+	let cleanOrigin: string;
 
-		if (!allowedOriginHostnames.has(hostname)) {
-			console.debug(`Blocking request from origin: ${origin} (inferred hostname: ${hostname}`);
-			throw new OriginError();
-		}
+	try {
+		const url = new URL(origin);
+		hostname = url.hostname;
+		cleanOrigin = url.origin;
 	} catch {
 		console.debug(`Blocking request from origin: ${origin} (inferred hostname: <invalid-url>`);
 		throw new OriginError();
 	}
 
+	if (!allowedOriginHostnames.has(hostname)) {
+		console.debug(`Blocking request from origin: ${origin} (inferred hostname: ${hostname}`);
+		throw new OriginError();
+	}
+
 	// Origin must be OK! Let 'em in
-	console.debug(`Handling request from origin: ${origin}`);
-	res.setHeader("Access-Control-Allow-Origin", origin);
+	console.debug(`Handling request from origin: ${cleanOrigin}`);
+	res.setHeader("Access-Control-Allow-Origin", cleanOrigin);
 	res.setHeader("Access-Control-Allow-Credentials", "true");
 	res.setHeader(
 		"Access-Control-Allow-Headers",
