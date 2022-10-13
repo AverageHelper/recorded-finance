@@ -13,7 +13,7 @@
 		"lint": "npm run export-version && npm run lintonly",
 		"lint:fix": "npm run export-version && npm run lintonly -- --fix",
 		"lintonly": "./node_modules/.bin/eslint . --ext .js,.ts -c ./.eslintrc",
-		"test": "NODE_OPTIONS='--experimental-vm-modules' ./node_modules/.bin/jest --forceExit",
+		"test": "npm run export-version && NODE_OPTIONS='--experimental-vm-modules' ./node_modules/.bin/jest --forceExit",
 		"test:watch": "npm run test -- --watch",
 		"export-version": "./node_modules/.bin/genversion ./version.ts -esd"
 	},
