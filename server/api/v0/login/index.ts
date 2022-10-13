@@ -1,5 +1,5 @@
 import type { MFAOption } from "../../../database/schemas";
-import { apiHandler } from "../../../helpers/apiHandler";
+import { apiHandler, dispatchRequests } from "../../../helpers/apiHandler";
 import { BadRequestError } from "../../../errors/BadRequestError";
 import { compare } from "../../../auth/generators";
 import { is, nonempty, string, type } from "superstruct";
@@ -62,4 +62,4 @@ export const POST = apiHandler("POST", async (req, res) => {
 	});
 });
 
-export default POST;
+export default dispatchRequests({ POST });

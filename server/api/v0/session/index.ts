@@ -1,4 +1,4 @@
-import { apiHandler } from "../../../helpers/apiHandler";
+import { apiHandler, dispatchRequests } from "../../../helpers/apiHandler";
 import { metadataFromRequest } from "../../../auth/requireAuth";
 import { newAccessTokens, setSession } from "../../../auth/jwt";
 import { respondSuccess } from "../../../responses";
@@ -30,4 +30,4 @@ export const GET = apiHandler("GET", async (req, res) => {
 	});
 });
 
-export default GET;
+export default dispatchRequests({ GET });

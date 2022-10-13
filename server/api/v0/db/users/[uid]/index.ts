@@ -1,5 +1,5 @@
 import type { DocUpdate } from "../../../../../database/io";
-import { apiHandler } from "../../../../../helpers/apiHandler";
+import { apiHandler, dispatchRequests } from "../../../../../helpers/apiHandler";
 import { assertCallerIsOwner } from "../../../../../auth/assertCallerIsOwner";
 import { BadRequestError } from "../../../../../errors/BadRequestError";
 import { pathSegments } from "../../../../../helpers/pathSegments";
@@ -65,4 +65,4 @@ export const POST = apiHandler("POST", async (req, res) => {
 	respondSuccess(res, { totalSpace, usedSpace });
 });
 
-export default POST;
+export default dispatchRequests({ POST });

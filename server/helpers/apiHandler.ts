@@ -1,11 +1,59 @@
 import { assertMethod } from "./assertMethod";
+import { BadMethodError } from "../errors/BadMethodError";
 import { env } from "../environment";
 import { handleErrors } from "../handleErrors";
 import { OriginError } from "../errors/OriginError";
-import { respondOk } from "../responses";
+import { respondError, respondOk } from "../responses";
 import { URL } from "node:url";
 
+// Only the methods we care about
 type HTTPMethod = "GET" | "POST" | "DELETE";
+
+/**
+ * Returns a Vercel request handler that dispatches `GET`, `DELETE`,
+ * and `POST` requests to their respective handlers. `OPTIONS` requests
+ * are handled as normal CORS preflight requests. Requests with other
+ * methods, or methods for which no handler is defined, receive an
+ * HTTP 405 error.
+ *
+ * ```ts
+ * import { dispatchRequests } from "/path/to/apiHandler";
+ * const GET = (req, res) => res.json("Hello, world!");
+ *
+ * export default dispatchRequests({ GET });
+ * ```
+ */
+export function dispatchRequests(
+	handlers: Partial<Record<HTTPMethod, APIRequestHandler>>
+): VercelRequestHandler {
+	return async (req, res) => {
+		switch (req.method) {
+			// Normal requests:
+			case "GET":
+			case "DELETE":
+			case "POST": {
+				const handler = handlers[req.method];
+				if (handler) {
+					await handler(req, res);
+					break;
+				} else {
+					respondError(res, new BadMethodError());
+					break;
+				}
+			}
+
+			// CORS preflight:
+			case "OPTIONS":
+				cors(req, res);
+				return respondOk(res);
+
+			// Everything else:
+			default:
+				respondError(res, new BadMethodError());
+				break;
+		}
+	};
+}
 
 /**
  * Creates a serverless function for a given HTTP method and handles errors.

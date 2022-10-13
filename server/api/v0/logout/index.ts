@@ -1,5 +1,5 @@
 import { addJwtToBlacklist, jwtFromRequest, killSession } from "../../../auth/jwt";
-import { apiHandler } from "../../../helpers/apiHandler";
+import { apiHandler, dispatchRequests } from "../../../helpers/apiHandler";
 import { respondSuccess } from "../../../responses";
 
 export const POST = apiHandler("POST", async (req, res) => {
@@ -14,4 +14,4 @@ export const POST = apiHandler("POST", async (req, res) => {
 	respondSuccess(res);
 });
 
-export default POST;
+export default dispatchRequests({ POST });

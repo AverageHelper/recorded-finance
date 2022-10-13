@@ -1,4 +1,4 @@
-import { apiHandler } from "../../../helpers/apiHandler";
+import { apiHandler, dispatchRequests } from "../../../helpers/apiHandler";
 import { BadRequestError } from "../../../errors/BadRequestError";
 import { compare } from "../../../auth/generators";
 import { generateTOTPSecretURI, verifyTOTP } from "../../../auth/totp";
@@ -68,4 +68,4 @@ export const POST = apiHandler("POST", async (req, res) => {
 	respondSuccess(res);
 });
 
-export default POST;
+export default dispatchRequests({ POST });

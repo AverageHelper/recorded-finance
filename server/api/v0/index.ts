@@ -1,7 +1,7 @@
-import { apiHandler } from "../../helpers/apiHandler";
+import { apiHandler, dispatchRequests } from "../../helpers/apiHandler";
 
 export const GET = apiHandler("GET", (req, res) => {
 	res.json({ message: "lol" });
 });
 
-export default GET;
+export default dispatchRequests({ GET });

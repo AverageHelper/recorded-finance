@@ -1,5 +1,5 @@
 import type { User } from "../../../database/schemas";
-import { apiHandler } from "../../../helpers/apiHandler";
+import { apiHandler, dispatchRequests } from "../../../helpers/apiHandler";
 import { BadRequestError } from "../../../errors/BadRequestError";
 import { DuplicateAccountError } from "../../../errors/DuplicateAccountError";
 import { generateHash, generateSalt } from "../../../auth/generators";
@@ -77,4 +77,4 @@ export const POST = apiHandler("POST", async (req, res) => {
 	});
 });
 
-export default POST;
+export default dispatchRequests({ POST });

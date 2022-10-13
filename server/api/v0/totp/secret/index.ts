@@ -1,13 +1,11 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { apiHandler } from "../../../../helpers/apiHandler";
-import { BadMethodError } from "../../../../errors/BadMethodError";
+import { apiHandler, dispatchRequests } from "../../../../helpers/apiHandler";
 import { BadRequestError } from "../../../../errors/BadRequestError";
 import { ConflictError } from "../../../../errors/ConflictError";
 import { compare, generateSecureToken } from "../../../../auth/generators";
 import { generateTOTPSecretURI, verifyTOTP } from "../../../../auth/totp";
 import { is, nonempty, string, type } from "superstruct";
 import { metadataFromRequest } from "../../../../auth/requireAuth";
-import { respondError, respondSuccess } from "../../../../responses";
+import { respondSuccess } from "../../../../responses";
 import { UnauthorizedError } from "../../../../errors/UnauthorizedError";
 import { upsertUser } from "../../../../database/io";
 
@@ -104,16 +102,4 @@ export const DELETE = apiHandler("DELETE", async (req, res) => {
 	respondSuccess(res);
 });
 
-export default async (req: VercelRequest, res: VercelResponse): Promise<void> => {
-	switch (req.method) {
-		case "GET":
-			await GET(req, res);
-			break;
-		case "DELETE":
-			await DELETE(req, res);
-			break;
-		default:
-			respondError(res, new BadMethodError());
-			break;
-	}
-};
+export default dispatchRequests({ GET, DELETE });

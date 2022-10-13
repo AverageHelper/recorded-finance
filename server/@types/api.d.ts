@@ -6,4 +6,6 @@ declare global {
 	type APIResponse = ExpressResponse | VercelResponse;
 
 	type APIRequestHandler = (req: APIRequest, res: APIResponse) => void | Promise<void>;
+
+	type VercelRequestHandler = (req: VercelRequest, res: VercelResponse) => void | Promise<void>;
 }

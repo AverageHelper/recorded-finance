@@ -1,11 +1,9 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { apiHandler } from "../../../../../../helpers/apiHandler";
+import { apiHandler, dispatchRequests } from "../../../../../../helpers/apiHandler";
 import { assertCallerIsOwner } from "../../../../../../auth/assertCallerIsOwner";
-import { BadMethodError } from "../../../../../../errors/BadMethodError";
 import { NotFoundError } from "../../../../../../errors/NotFoundError";
 import { pathSegments } from "../../../../../../helpers/pathSegments";
 import { requireAuth } from "../../../../../../auth/requireAuth";
-import { respondData, respondError, respondSuccess } from "../../../../../../responses";
+import { respondData, respondSuccess } from "../../../../../../responses";
 import { statsForUser } from "../../../../../../database/io";
 import {
 	CollectionReference,
@@ -57,16 +55,4 @@ export const DELETE = apiHandler("DELETE", async (req, res) => {
 	respondSuccess(res, { totalSpace, usedSpace });
 });
 
-export default async (req: VercelRequest, res: VercelResponse): Promise<void> => {
-	switch (req.method) {
-		case "GET":
-			await GET(req, res);
-			break;
-		case "DELETE":
-			await DELETE(req, res);
-			break;
-		default:
-			respondError(res, new BadMethodError());
-			break;
-	}
-};
+export default dispatchRequests({ GET, DELETE });
