@@ -128,8 +128,10 @@ export function killSession(req: APIRequest, res: APIResponse): void {
  */
 export function jwtFromRequest(req: APIRequest, res: APIResponse): string | null {
 	// Get session token from cookies, if it exists
+	console.debug(`Getting cookies: ${JSON.stringify(req.cookies)}`);
 	const cookies = new Cookies(req, res, { keys, secure: true });
 	const token = cookies.get(SESSION_COOKIE_NAME, { signed: true }) ?? "";
+	console.debug(`Value for cookie '${SESSION_COOKIE_NAME}': ${JSON.stringify(token)}`);
 	if (token) {
 		return token;
 	}
