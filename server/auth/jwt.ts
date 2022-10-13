@@ -83,7 +83,7 @@ export function setSession(req: APIRequest, res: APIResponse, value: string | nu
 
 	const opts: Cookies.SetOption = {
 		maxAge: ONE_HOUR,
-		path: "/v0",
+		path: "/",
 		sameSite: "strict",
 		httpOnly: true,
 		secure: true,
