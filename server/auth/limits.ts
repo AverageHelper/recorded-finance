@@ -11,8 +11,8 @@ const defaultMaxSpace = 20000000000;
 const totalSpace = Number.parseInt(env("MAX_BYTES") ?? `${defaultMaxSpace}`, 10);
 export const maxSpacePerUser = totalSpace / MAX_USERS;
 
-process.stdout.write(
+console.debug(
 	`We have ${simplifiedByteCount(totalSpace)} available. That's ${simplifiedByteCount(
 		maxSpacePerUser
-	)} for each of our ${MAX_USERS} max users.\n`
+	)} for each of our ${MAX_USERS} max users.`
 );

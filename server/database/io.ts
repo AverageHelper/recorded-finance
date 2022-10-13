@@ -26,7 +26,7 @@ import { UnreachableCaseError } from "../errors/UnreachableCaseError";
 
 // Start connecting to the database
 const dataSource = new PrismaClient();
-process.stdout.write("Connected to database\n");
+console.debug("Connected to database");
 
 // Log database accesses
 dataSource.$use(async (params, next) => {
