@@ -150,11 +150,8 @@
 
 			navigate(accountsPath(), { replace: true });
 		} catch (error) {
-			if (
-				(error instanceof NetworkError && error.code === "missing-mfa-credentials") ||
-				(error instanceof NetworkError && error.code === "missing-token") ||
-				(error instanceof AccountableError && error.code === "auth/unauthenticated")
-			) {
+			// FIXME: Better semantics here:
+			if (error instanceof AccountableError && error.code === "auth/unauthenticated") {
 				// Switch to TOTP mode
 				needsTotp = true;
 				console.debug(`Entering ${mode} mode`);
