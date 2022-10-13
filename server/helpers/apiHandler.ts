@@ -54,7 +54,6 @@ if (configuredHostUrl !== null) {
 console.debug(`allowedOriginHostnames: ${JSON.stringify(Array.from(allowedOriginHostnames))}`);
 
 function cors(req: APIRequest, res: APIResponse): void {
-	// TODO: Helmet
 	res.setHeader(
 		"Access-Control-Allow-Headers",
 		"X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
