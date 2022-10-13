@@ -86,9 +86,9 @@ export function setSession(req: APIRequest, res: APIResponse, value: string | nu
 		path: "/v0",
 		sameSite: "strict",
 		httpOnly: true,
+		secure: true,
 		signed: true,
 		overwrite: true,
-		secure: true,
 	};
 
 	if (value === null) {

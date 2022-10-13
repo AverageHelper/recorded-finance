@@ -3,7 +3,7 @@
 	"version": "0.8.0",
 	"scripts": {
 		"start": "./node_modules/.bin/nodemon --watch ./dist ./dist/server.js",
-		"deploy": "./node_modules/.bin/vercel pull --environment=production && ./node_modules/.bin/vercel build && ./node_modules/.bin/vercel deploy --prebuilt",
+		"deploy": "./node_modules/.bin/vercel pull --yes --environment=preview && ./node_modules/.bin/vercel build && ./node_modules/.bin/vercel deploy --prebuilt",
 		"prebuild": "rm -rf ./dist && npm run export-version",
 		"build": "npm run lint && npm run build:only",
 		"build:only": "./node_modules/.bin/rollup --config rollup.config.ts --configPlugin typescript",
