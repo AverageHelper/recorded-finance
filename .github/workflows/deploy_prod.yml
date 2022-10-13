@@ -8,48 +8,120 @@ on:
     branches: [main]
 
 jobs:
-  build:
-    strategy:
-      matrix:
-        include:
-          - node-version: 16.x # See https://nodejs.org/en/about/releases/
-
+  build_client:
+    name: Build Client
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
 
-      - name: Use Node.js ${{ matrix.node-version }}
+      - name: Set up Node
         uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 16.x
           cache: "npm"
 
-      - name: Install Dependencies
-        run: |
-          npm ci  # client dependencies
-          pushd server
-          npm ci  # server dependencies
-          popd
+      - name: Cache Dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.npm
+            node_modules
+          key: ${{ runner.os }}-node-client-${{ github.sha }}
 
-      - name: Build Client
+      - name: Cache Build
+        id: client_build_cache
+        uses: actions/cache@v3
+        with:
+          path: dist
+          key: ${{ runner.os }}-build-client-${{ github.sha }}
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Lint and Build
+        # only if git hash changed since last run (i.e. no cache hit)
+        if: steps.client_build_cache.outputs.cache-hit != 'true'
         run: npm run build:client
         env:
           VITE_ENABLE_LOGIN: true
           VITE_ENABLE_SIGNUP: true
           VITE_PUBNUB_SUBSCRIBE_KEY: ${{ secrets.VITE_PUBNUB_SUBSCRIBE_KEY }}
 
+  build_server:
+    name: Build Server
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+          cache: "npm"
+
+      - name: Cache Dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.npm
+            server/node_modules
+          key: ${{ runner.os }}-node-server-${{ github.sha }}
+
+      - name: Cache Build
+        id: server_build_cache
+        uses: actions/cache@v3
+        with:
+          path: server/dist
+          key: ${{ runner.os }}-build-server-${{ github.sha }}
+
+      - name: Install Dependencies
+        run: |
+          cd server
+          npm ci
+
+      - name: Lint and Build
+        # only if git hash changed since last run (i.e. no cache hit)
+        if: steps.server_build_cache.outputs.cache-hit != 'true'
+        run: npm run build:server
+
+  deploy:
+    name: Deploy to Production
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Load Server Dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.npm
+            server/node_modules
+          key: ${{ runner.os }}-node-server-${{ github.sha }}
+
+      - name: Load Client Build
+        uses: actions/cache@v3
+        with:
+          path: dist
+          key: ${{ runner.os }}-build-client-${{ github.sha }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+          cache: "npm"
+
       - name: Pull Vercel Environment Information
         run: |
           cd server
-          ./node_modules/.bin/vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+          ./node_modules/.bin/vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Build Project Artifacts
         run: |
           cd server
-          ./node_modules/.bin/vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+          ./node_modules/.bin/vercel build --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy to Production
         run: |
           cd server
-          ./node_modules/.bin/vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+          ./node_modules/.bin/vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
