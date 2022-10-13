@@ -43,6 +43,7 @@ jobs:
         env:
           VITE_ENABLE_LOGIN: true
           VITE_ENABLE_SIGNUP: true
+          VITE_PUBNUB_PUBLISH_KEY: ${{ secrets.VITE_PUBNUB_PUBLISH_KEY }}
           VITE_PUBNUB_SUBSCRIBE_KEY: ${{ secrets.VITE_PUBNUB_SUBSCRIBE_KEY }}
 
   build_server:

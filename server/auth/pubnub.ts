@@ -132,7 +132,7 @@ async function pubnubForUser<T>(uid: string, cb: (pubnub: PubNub) => T | Promise
 	// This should be the only PubNub instance for the calling user
 	const pubnub = new PubNub({
 		secretKey: requireEnv("PUBNUB_SECRET_KEY"), // only used on the server
-		publishKey: requireEnv("PUBNUB_PUBLISH_KEY"), // only used on the server
+		publishKey: requireEnv("PUBNUB_PUBLISH_KEY"), // shared by client and server
 		subscribeKey: requireEnv("PUBNUB_SUBSCRIBE_KEY"), // shared by client and server
 		cipherKey, // shared by client and server, only for this user
 		uuid: "server", // clients shouldn't use this UUID
