@@ -79,7 +79,7 @@ export async function newAccessTokens(
  * Sets the session cookie with the given value, or revokes the cookie if the value is `null`.
  */
 export function setSession(req: APIRequest, res: APIResponse, value: string | null): void {
-	const cookies = new Cookies(req, res, { keys });
+	const cookies = new Cookies(req, res, { keys, secure: true });
 
 	const opts: Cookies.SetOption = {
 		maxAge: ONE_HOUR,
@@ -88,7 +88,7 @@ export function setSession(req: APIRequest, res: APIResponse, value: string | nu
 		httpOnly: true,
 		signed: true,
 		overwrite: true,
-		// secure: true, if the requester is HTTPS
+		secure: true,
 	};
 
 	if (value === null) {
