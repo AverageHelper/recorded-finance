@@ -1,6 +1,7 @@
 import { assertMethod } from "./assertMethod";
 import { handleErrors } from "../handleErrors";
-import { corsOptions } from "../cors";
+import { OriginError } from "../errors/OriginError";
+import { URL } from "node:url";
 
 type HTTPMethod = "GET" | "POST" | "DELETE";
 
@@ -14,7 +15,7 @@ type HTTPMethod = "GET" | "POST" | "DELETE";
 export function apiHandler(method: HTTPMethod, cb: APIRequestHandler): APIRequestHandler {
 	return async (req, res) => {
 		await handleErrors(req, res, async (req, res) => {
-			await assertCors(req, res);
+			assertCors(req, res);
 			if (req.method === "OPTIONS") {
 				res.status(200).end();
 				return;
@@ -25,28 +26,38 @@ export function apiHandler(method: HTTPMethod, cb: APIRequestHandler): APIReques
 	};
 }
 
-type StaticOrigin = boolean | string | RegExp | Array<boolean | string | RegExp>;
+const allowedOriginHostnames = new Set<string>();
 
-async function assertCors(req: APIRequest, res: APIResponse): Promise<void> {
-	if (corsOptions.credentials === true) {
-		res.setHeader("Access-Control-Allow-Credentials", "true");
+// Add typical localhost variants
+allowedOriginHostnames.add("localhost");
+allowedOriginHostnames.add("127.0.0.1");
+allowedOriginHostnames.add("::1");
+
+console.debug(`allowedOriginHostnames: ${JSON.stringify(Array.from(allowedOriginHostnames))}`);
+
+function assertCors(req: APIRequest, res: APIResponse): void {
+	// Allow requests with no origin (mobile apps, curl, etc.)
+	const origin = req.headers.origin;
+	if (origin === undefined || !origin) {
+		console.debug(`Handling request that has no origin`);
+		return;
 	}
-	if (corsOptions.allowedHeaders !== undefined) {
-		res.setHeader("Access-Control-Allow-Headers", corsOptions.allowedHeaders);
-	}
-	if (req.headers.origin !== undefined) {
-		const origin = await new Promise<StaticOrigin | undefined>((resolve, reject) => {
-			if (typeof corsOptions.origin === "function") {
-				corsOptions.origin(req.headers.origin, (err, origin) => {
-					if (err) return reject(err);
-					return resolve(origin);
-				});
-			}
-		});
-		if (typeof origin === "string") {
-			res.setHeader("Access-Control-Allow-Origin", origin);
-		} else if (origin === true) {
-			res.setHeader("Access-Control-Allow-Origin", req.headers.origin);
+
+	// Guard Origin
+	try {
+		const { hostname } = new URL(origin);
+
+		if (!allowedOriginHostnames.has(hostname)) {
+			console.debug(`Blocking request from origin: ${origin} (inferred hostname: ${hostname}`);
+			throw new OriginError();
 		}
+	} catch {
+		console.debug(`Blocking request from origin: ${origin} (inferred hostname: <invalid-url>`);
+		throw new OriginError();
 	}
+
+	// Origin must be OK! Let 'em in
+	console.debug(`Handling request from origin: ${origin}`);
+	res.setHeader("Access-Control-Allow-Origin", origin);
+	res.setHeader("Access-Control-Allow-Credentials", "true");
 }

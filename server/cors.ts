@@ -26,7 +26,7 @@ process.stdout.write(
 	`allowedOriginHostnames: ${JSON.stringify(Array.from(allowedOriginHostnames))}\n`
 );
 
-export const corsOptions: CorsOptions = {
+const corsOptions: CorsOptions = {
 	credentials: true,
 	origin: (origin, callback) => {
 		// Allow requests with no origin (mobile apps, curl, etc.)
