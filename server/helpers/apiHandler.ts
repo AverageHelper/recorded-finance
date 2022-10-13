@@ -15,6 +15,10 @@ export function apiHandler(method: HTTPMethod, cb: APIRequestHandler): APIReques
 	return async (req, res) => {
 		await handleErrors(req, res, async (req, res) => {
 			await assertCors(req, res);
+			if (req.method === "OPTIONS") {
+				res.status(200).end();
+				return;
+			}
 			assertMethod(req.method, method);
 			await cb(req, res);
 		});
