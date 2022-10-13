@@ -18,10 +18,8 @@ export function apiHandler(method: HTTPMethod, cb: APIRequestHandler): APIReques
 	return async (req, res) => {
 		await handleErrors(req, res, async (req, res) => {
 			cors(req, res);
-			if (req.method === "OPTIONS") {
-				return respondOk(res);
-			}
 
+			if (req.method === "OPTIONS") return respondOk(res);
 			assertMethod(req.method, method);
 			await cb(req, res);
 		});
