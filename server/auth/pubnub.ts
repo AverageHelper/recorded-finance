@@ -80,7 +80,7 @@ export async function newPubNubTokenForUser(uid: string): Promise<string> {
 					// Only the user's own documents.
 					// Channels should be named `[uid]/[channelId]`
 					// or `[uid]/[channelId]/[documentId]`
-					[`^${uid}/[A-Za-z0-9]+/?[A-Za-z0-9]+$`]: { read: true },
+					[`^${uid}/[a-z]+/?[A-Za-z0-9]+$`]: { read: true },
 				},
 				uuids: {
 					// Only the user's own metadata
