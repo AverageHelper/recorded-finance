@@ -5,7 +5,7 @@ import type { ListenerParameters } from "pubnub";
 import { documentData } from "./schemas.js";
 import { AccountableError, UnexpectedResponseError, UnreachableCaseError } from "./errors/index.js";
 import { array, enums, is, nonempty, nullable, object, string, union } from "superstruct";
-import { collection, doc as docRef } from "./db.js";
+import { collection, doc as docRef, getDoc, getDocs } from "./db.js";
 import { databaseCollection, databaseDocument } from "./api-types/index.js";
 import { isArray } from "../helpers/isArray.js";
 import { isString } from "../helpers/isString.js";
@@ -317,7 +317,7 @@ export function onSnapshot<T>(
 	if (!db.currentUser) throw new AccountableError("database/unauthenticated");
 
 	let previousSnap: QuerySnapshot<T> | null = null;
-	function handleData({ data }: WatcherData): void {
+	function handleData({ data }: Pick<WatcherData, "data">): void {
 		switch (type) {
 			case "collection": {
 				if (!data || !isArray(data))
@@ -378,7 +378,25 @@ export function onSnapshot<T>(
 		pubnub.addListener(listener);
 		pubnub.subscribe({ channels: [channel] });
 
-		// TODO: Run an initial fetch, since the back-end doesn't do that for us
+		// Run an initial fetch, just like Express used to, since the Vercel back-end doesn't do that for us
+		switch (queryOrReference.type) {
+			case "collection":
+				// eslint-disable-next-line promise/prefer-await-to-then
+				void getDocs<DocumentData>(queryOrReference).then(snap => {
+					const data = snap.docs.map(doc => doc.data());
+					handleData({ data });
+				});
+				break;
+			case "document":
+				// eslint-disable-next-line promise/prefer-await-to-then
+				void getDoc(queryOrReference).then(snap => {
+					const data = snap.data() ?? null;
+					handleData({ data });
+				});
+				break;
+			default:
+				throw new UnreachableCaseError(queryOrReference);
+		}
 
 		return () => {
 			console.debug(`[onSnapshot] Unsubscribing from channel '${channel}'`);
