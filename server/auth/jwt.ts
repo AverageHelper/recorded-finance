@@ -80,7 +80,7 @@ export async function newAccessTokens(
  */
 export function setSession(req: APIRequest, res: APIResponse, value: string | null): void {
 	const cookies = new Cookies(req, res, { keys, secure: true });
-	let domain = env("HOST") ?? requireEnv("VERCEL_URL");
+	let domain = env("VERCEL_URL") ?? requireEnv("HOST");
 	if (domain.startsWith("https://")) {
 		domain = domain.slice(8);
 	} else if (domain.startsWith("http://")) {
