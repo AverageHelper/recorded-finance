@@ -359,6 +359,7 @@ export function onSnapshot<T>(
 			type === "collection"
 				? `${db.currentUser.uid}/${queryOrReference.id}`
 				: `${db.currentUser.uid}/${queryOrReference.parent.id}/${queryOrReference.id}`;
+		console.debug(`[onSnapshot] Subscribing to channel '${channel}'`);
 		const listener: ListenerParameters = {
 			message(event) {
 				if (event.channel !== channel) return;
@@ -377,7 +378,10 @@ export function onSnapshot<T>(
 		pubnub.addListener(listener);
 		pubnub.subscribe({ channels: [channel] });
 
+		// TODO: Run an initial fetch, since the back-end doesn't do that for us
+
 		return () => {
+			console.debug(`[onSnapshot] Unsubscribing from channel '${channel}'`);
 			pubnub.unsubscribe({ channels: [channel] });
 			pubnub.removeListener(listener);
 		};
