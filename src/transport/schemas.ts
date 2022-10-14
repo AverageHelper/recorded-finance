@@ -11,7 +11,6 @@ import {
 	nonempty,
 	nullable,
 	number,
-	object,
 	optional,
 	string,
 	type,
@@ -90,7 +89,7 @@ export function isRawServerResponse(tbd: unknown): tbd is RawServerResponse {
 
 export type RawServerResponse = Infer<typeof rawServerResponse>;
 
-const fileData = object({
+const fileData = type({
 	contents: string(),
 	_id: string(),
 });

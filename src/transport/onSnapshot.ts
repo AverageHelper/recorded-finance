@@ -4,7 +4,7 @@ import type { Infer } from "superstruct";
 import type { ListenerParameters } from "pubnub";
 import { documentData } from "./schemas.js";
 import { AccountableError, UnexpectedResponseError, UnreachableCaseError } from "./errors/index.js";
-import { array, enums, is, nonempty, nullable, object, string, union } from "superstruct";
+import { array, enums, is, nonempty, nullable, string, type as object, union } from "superstruct";
 import { collection, doc as docRef, getDoc, getDocs } from "./db.js";
 import { databaseCollection, databaseDocument } from "./api-types/index.js";
 import { isArray } from "../helpers/isArray.js";
