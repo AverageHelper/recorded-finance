@@ -383,7 +383,7 @@ export function onSnapshot<T>(
 			case "collection":
 				// eslint-disable-next-line promise/prefer-await-to-then
 				void getDocs<DocumentData>(queryOrReference).then(snap => {
-					const data = snap.docs.map(doc => doc.data());
+					const data = snap.docs.map(doc => ({ ...doc.data(), _id: doc.id }));
 					handleData({ data });
 				});
 				break;
@@ -391,7 +391,7 @@ export function onSnapshot<T>(
 				// eslint-disable-next-line promise/prefer-await-to-then
 				void getDoc(queryOrReference).then(snap => {
 					const data = snap.data() ?? null;
-					handleData({ data });
+					handleData({ data: { ...data, _id: snap.id } });
 				});
 				break;
 			default:
