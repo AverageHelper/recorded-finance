@@ -367,7 +367,8 @@ export function onSnapshot<T>(
 				}
 			},
 			status(event) {
-				if (!event.affectedChannels.includes(channel)) return;
+				// FIXME: The types disagree about `affectedChannels`, but a 403 makes it `undefined`
+				if (event.affectedChannels?.includes(channel) !== true) return;
 				console.debug(
 					`Received status category '${event.category}' for watcher at channel '${channel}'`
 				);
