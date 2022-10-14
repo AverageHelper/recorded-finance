@@ -1,10 +1,11 @@
 import type { JwtPayload, MFAOption, User } from "../database/schemas";
 import { addJwtToDatabase, jwtExistsInDatabase } from "../database/io";
 import { assertJwtPayload } from "../database/schemas";
+import { env, requireEnv } from "../environment";
 import { generateSecureToken } from "./generators";
 import { newPubNubTokenForUser, revokePubNubToken } from "./pubnub";
 import { ONE_HOUR } from "../constants/time";
-import { requireEnv } from "../environment";
+import { URL } from "node:url";
 import Cookies from "cookies";
 import jwt from "jsonwebtoken";
 import Keygrip from "keygrip";
@@ -80,9 +81,18 @@ export async function newAccessTokens(
  */
 export function setSession(req: APIRequest, res: APIResponse, value: string | null): void {
 	const cookies = new Cookies(req, res, { keys, secure: true });
+	let domain = env("HOST") ?? requireEnv("VERCEL_URL");
+	const origin = req.headers.origin ?? "";
+	if (origin) {
+		try {
+			const url = new URL(origin);
+			domain = url.hostname;
+		} catch {}
+	}
 
 	const opts: Cookies.SetOption = {
 		maxAge: ONE_HOUR,
+		domain,
 		path: "/",
 		sameSite: "strict",
 		httpOnly: true,
