@@ -75,13 +75,15 @@ export async function newPubNubTokenForUser(uid: string): Promise<string> {
 		pubnub.grantToken({
 			ttl: 60, // 1 hour
 			authorized_uuid: uid,
-			resources: {
+			patterns: {
 				channels: {
 					// Only the user's own documents.
 					// Channels should be named `[uid]/[channelId]`
 					// or `[uid]/[channelId]/[documentId]`
 					[`^${uid}/[a-z]+/?[A-Za-z0-9]+$`]: { read: true },
 				},
+			},
+			resources: {
 				uuids: {
 					// Only the user's own metadata
 					[uid]: { read: true },
