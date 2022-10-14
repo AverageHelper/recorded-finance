@@ -87,6 +87,9 @@ export function setSession(req: APIRequest, res: APIResponse, value: string | nu
 		try {
 			const url = new URL(origin);
 			domain = url.hostname;
+			if (url.port) {
+				domain += `:${url.port}`;
+			}
 		} catch {}
 	}
 
