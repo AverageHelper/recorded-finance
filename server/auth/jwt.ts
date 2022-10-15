@@ -81,11 +81,16 @@ export async function newAccessTokens(
 export function setSession(req: APIRequest, res: APIResponse, value: string | null): void {
 	const cookies = new Cookies(req, res, { keys, secure: true });
 	let domain = env("VERCEL_URL") ?? requireEnv("HOST");
+
+	// Strip protocol
 	if (domain.startsWith("https://")) {
 		domain = domain.slice(8);
 	} else if (domain.startsWith("http://")) {
 		domain = domain.slice(7);
 	}
+
+	// Strip port
+	domain = domain.split(":")[0] ?? "";
 
 	const opts: Cookies.SetOption = {
 		maxAge: ONE_HOUR,
