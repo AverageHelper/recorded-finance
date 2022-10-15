@@ -2,6 +2,7 @@ import type { DocumentData, DocumentWriteBatch, RawServerResponse } from "../sch
 import { assertRawServerResponse, isFileData } from "../schemas.js";
 import { describeCode, HttpStatusCode } from "../../helpers/HttpStatusCode.js";
 import { NetworkError, UnexpectedResponseError } from "../errors/index.js";
+import { StructError } from "superstruct";
 
 export interface ServerResponse extends RawServerResponse {
 	status: HttpStatusCode;
@@ -86,7 +87,13 @@ async function doRequest(
 		try {
 			assertRawServerResponse(json);
 		} catch (error) {
-			throw new UnexpectedResponseError(`Invalid server response: ${JSON.stringify(error)}`); // TODO: i18n
+			let message: string;
+			if (error instanceof StructError) {
+				message = error.message;
+			} else {
+				message = JSON.stringify(error, undefined, "  ");
+			}
+			throw new UnexpectedResponseError(`Invalid server response: ${message}`); // TODO: i18n
 		}
 
 		result = {
