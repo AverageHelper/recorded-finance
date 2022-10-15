@@ -1,6 +1,6 @@
 import type { DocumentData, DocumentWriteBatch, RawServerResponse } from "../schemas.js";
+import { assertRawServerResponse, isFileData } from "../schemas.js";
 import { describeCode, HttpStatusCode } from "../../helpers/HttpStatusCode.js";
-import { isFileData, isRawServerResponse } from "../schemas.js";
 import { NetworkError, UnexpectedResponseError } from "../errors/index.js";
 
 export interface ServerResponse extends RawServerResponse {
@@ -83,10 +83,11 @@ async function doRequest(
 		const response = await fetch(url.href, request);
 
 		const json: unknown = await response.json();
-		if (!isRawServerResponse(json))
-			throw new UnexpectedResponseError(
-				`Invalid server response: ${JSON.stringify(json, undefined, "  ")}`
-			); // TODO: i18n
+		try {
+			assertRawServerResponse(json);
+		} catch (error) {
+			throw new UnexpectedResponseError(`Invalid server response: ${JSON.stringify(error)}`); // TODO: i18n
+		}
 
 		result = {
 			// `fetch` does not always return statusText, per spec: https://fetch.spec.whatwg.org/#concept-response-status-message

@@ -4,6 +4,7 @@ import { isArray } from "../helpers/isArray";
 import { isObject } from "../helpers/isObject";
 import {
 	array,
+	assert as assertSchema,
 	boolean,
 	define,
 	enums,
@@ -83,8 +84,8 @@ const rawServerResponse = type({
 	requiredAddtlAuth: optional(array(string())), // expects ["totp"] or empty, but don't crash if we get something else
 });
 
-export function isRawServerResponse(tbd: unknown): tbd is RawServerResponse {
-	return is(tbd, rawServerResponse);
+export function assertRawServerResponse(tbd: unknown): asserts tbd is RawServerResponse {
+	assertSchema(tbd, rawServerResponse);
 }
 
 export type RawServerResponse = Infer<typeof rawServerResponse>;
