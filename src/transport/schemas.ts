@@ -25,6 +25,10 @@ export function isPrimitive(tbd: unknown): tbd is Primitive {
 	return is(tbd, primitive);
 }
 
+function isPrimitiveOrArray(tbd: unknown): tbd is Primitive | Array<Primitive> {
+	return is(tbd, union([primitive, array(primitive)]));
+}
+
 export type DocumentData = Record<string, Primitive>;
 export type PrimitiveRecord<T> = {
 	[K in keyof T]: Primitive;
@@ -59,7 +63,7 @@ export function isRecord(tbd: unknown): tbd is Record<string, unknown> {
 
 export const documentData = define<DocumentData>(
 	"documentData",
-	value => isRecord(value) && Object.values(value).every(isPrimitive)
+	value => isRecord(value) && Object.values(value).every(isPrimitiveOrArray)
 );
 
 export const mfaValidation = enums(["totp"] as const);
