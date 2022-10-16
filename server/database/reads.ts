@@ -1,0 +1,285 @@
+import type { AnyData, DataItem, Identified, IdentifiedDataItem, User, UserKeys } from "./schemas";
+import type { CollectionReference, DocumentReference } from "./references";
+import type { FileData } from "@prisma/client";
+import { computeRequiredAddtlAuth } from "./schemas";
+import { dataSource } from "./io";
+import { generateAESCipherKey } from "../auth/generators";
+import { maxSpacePerUser } from "../auth/limits";
+import { NotFoundError } from "../errors/NotFoundError";
+import { UnreachableCaseError } from "../errors/UnreachableCaseError";
+
+interface UserStats {
+	totalSpace: number;
+	usedSpace: number;
+}
+
+export async function statsForUser(uid: string): Promise<UserStats> {
+	const totalSpace = Math.ceil(maxSpacePerUser);
+	const usedSpace = await totalSizeOfFilesForUser(uid);
+
+	return { totalSpace, usedSpace };
+}
+
+export async function numberOfUsers(): Promise<number> {
+	return await dataSource.user.count();
+}
+
+// MARK: - Pseudo Large-file Storage
+
+export async function fetchFileData(userId: string, fileName: string): Promise<FileData | null> {
+	return await dataSource.fileData.findUnique({
+		where: { userId_fileName: { userId, fileName } },
+	});
+}
+
+/**
+ * Returns the total number of bytes that comprise a given file.
+ */
+export async function totalSizeOfFile(userId: string, fileName: string): Promise<number | null> {
+	const file = await dataSource.fileData.findUnique({
+		where: { userId_fileName: { userId, fileName } },
+		select: { size: true },
+	});
+	if (file === null) throw new NotFoundError();
+	return file.size;
+}
+
+/**
+ * Returns the number of bytes of the user's stored files.
+ */
+export async function totalSizeOfFilesForUser(userId: string): Promise<number> {
+	const files = await dataSource.fileData.findMany({
+		where: { userId },
+		select: { size: true },
+	});
+	return files.reduce((prev, { size }) => prev + size, 0);
+}
+
+// MARK: - Database
+
+/**
+ * Resolves to `true` if the given token exists in the database.
+ */
+export async function jwtExistsInDatabase(token: string): Promise<boolean> {
+	const result = await dataSource.expiredJwt.findUnique({
+		where: { token },
+		select: { token: true },
+	});
+	return result !== null;
+}
+
+export async function fetchDbCollection(
+	ref: CollectionReference
+): Promise<Array<IdentifiedDataItem>> {
+	const uid = ref.uid;
+
+	switch (ref.id) {
+		case "accounts":
+		case "attachments":
+		case "locations":
+		case "tags":
+		case "transactions":
+			return (
+				await dataSource.dataItem.findMany({
+					where: { userId: uid, collectionId: ref.id },
+					select: {
+						ciphertext: true,
+						cryption: true,
+						objectType: true,
+						docId: true,
+					},
+				})
+			).map(v => ({ ...v, _id: v.docId }));
+		case "keys":
+			return (
+				await dataSource.userKeys.findMany({
+					where: { userId: uid },
+					select: {
+						dekMaterial: true,
+						oldDekMaterial: true,
+						oldPassSalt: true,
+						passSalt: true,
+						userId: true,
+					},
+				})
+			).map(k => ({
+				...k,
+				_id: k.userId,
+				oldDekMaterial: k.oldDekMaterial ?? undefined,
+				oldPassSalt: k.oldPassSalt ?? undefined,
+			}));
+		case "users": {
+			// Special handling: fetch all users
+			const rawUsers = (await dataSource.user.findMany()).map(computeRequiredAddtlAuth);
+			return await Promise.all(
+				rawUsers.map(async user => {
+					// Upsert the cipher key if it doesn't exist
+					let pubnubCipherKey = user.pubnubCipherKey;
+					if (pubnubCipherKey === null) {
+						pubnubCipherKey = await generateAESCipherKey();
+						await dataSource.user.update({
+							where: { uid: user.uid },
+							data: { pubnubCipherKey },
+						});
+					}
+					return { ...user, pubnubCipherKey };
+				})
+			);
+		}
+		default:
+			throw new UnreachableCaseError(ref.id);
+	}
+}
+
+async function findUserWithProperties(
+	query: Partial<Pick<User, "uid" | "currentAccountId">>
+): Promise<User | null> {
+	if (Object.keys(query).length === 0) return null; // Fail gracefully for an empty query
+	const first = await dataSource.user.findFirst({
+		where: {
+			uid: query.uid,
+			currentAccountId: query.currentAccountId,
+		},
+	});
+	if (first === null) return first;
+
+	// Upsert the cipher key if it doesn't exist
+	let pubnubCipherKey = first.pubnubCipherKey;
+	if (pubnubCipherKey === null) {
+		pubnubCipherKey = await generateAESCipherKey();
+		await dataSource.user.update({
+			where: { uid: first.uid },
+			data: { pubnubCipherKey },
+		});
+	}
+
+	// If the user has no pubnub_cipher_key, upsert one
+	return computeRequiredAddtlAuth({ ...first, pubnubCipherKey });
+}
+
+export async function userWithUid(uid: string): Promise<User | null> {
+	// Find first user whose UID matches
+	return await findUserWithProperties({ uid });
+}
+
+export async function userWithAccountId(accountId: string): Promise<User | null> {
+	// Find first user whose account ID matches
+	return await findUserWithProperties({ currentAccountId: accountId });
+}
+
+/** A view of database data. */
+interface Snapshot {
+	/** The database reference. */
+	ref: DocumentReference;
+
+	/** The stored data for the reference. */
+	data: Identified<AnyData> | null;
+}
+
+/**
+ * Fetches the referenced data item from the database.
+ *
+ * @param ref A document reference.
+ * @returns a view of database data.
+ */
+export async function fetchDbDoc(ref: DocumentReference): Promise<Snapshot> {
+	console.debug(`Retrieving document at ${ref.path}...`);
+	const collectionId = ref.parent.id;
+	const docId = ref.id;
+	switch (collectionId) {
+		case "accounts":
+		case "attachments":
+		case "locations":
+		case "tags":
+		case "transactions": {
+			const result = await dataSource.dataItem.findFirst({
+				where: { docId, collectionId },
+			});
+			if (result === null) {
+				console.debug(`Got nothing at ${ref.path}`);
+				return { ref, data: null };
+			}
+
+			const data: Identified<DataItem> = {
+				_id: result.docId,
+				objectType: result.objectType,
+				ciphertext: result.ciphertext,
+				cryption: result.cryption ?? "v0",
+			};
+			console.debug(`Got document at ${ref.path}`);
+			return { ref, data };
+		}
+		case "keys": {
+			const result = await dataSource.userKeys.findUnique({ where: { userId: docId } });
+			if (result === null) {
+				console.debug(`Got nothing at ${ref.path}`);
+				return { ref, data: null };
+			}
+
+			const data: Identified<UserKeys> = {
+				_id: result.userId,
+				dekMaterial: result.dekMaterial,
+				oldDekMaterial: result.oldDekMaterial ?? undefined,
+				oldPassSalt: result.oldPassSalt ?? undefined,
+				passSalt: result.passSalt,
+			};
+			console.debug(`Got document at ${ref.path}`);
+			return { ref, data };
+		}
+		case "users": {
+			const rawResult = await dataSource.user.findUnique({
+				where: { uid: docId },
+			});
+			if (rawResult === null) {
+				console.debug(`Got nothing at ${ref.path}`);
+				return { ref, data: null };
+			}
+
+			// Upsert the cipher key if it doesn't exist
+			let pubnubCipherKey = rawResult.pubnubCipherKey;
+			if (pubnubCipherKey === null) {
+				pubnubCipherKey = await generateAESCipherKey();
+				await dataSource.user.update({
+					where: { uid: rawResult.uid },
+					data: { pubnubCipherKey },
+				});
+			}
+
+			const result = computeRequiredAddtlAuth(rawResult);
+			const data: Identified<User> = {
+				_id: result.uid,
+				uid: result.uid,
+				currentAccountId: result.currentAccountId,
+				mfaRecoverySeed: result.mfaRecoverySeed,
+				passwordHash: result.passwordHash,
+				passwordSalt: result.passwordSalt,
+				pubnubCipherKey,
+				requiredAddtlAuth: result.requiredAddtlAuth,
+				totpSeed: result.totpSeed,
+			};
+			console.debug(`Got nothing at ${ref.path}`);
+			return { ref, data };
+		}
+		default:
+			throw new UnreachableCaseError(collectionId);
+	}
+}
+
+/**
+ * Fetches the referenced data items from the database.
+ *
+ * @param refs An array of document references.
+ * @returns an array containing the given references and their associated data.
+ */
+export async function fetchDbDocs(
+	refs: NonEmptyArray<DocumentReference>
+): Promise<NonEmptyArray<Snapshot>> {
+	// Assert same UID on all refs
+	const uid = refs[0].uid;
+	if (!refs.every(u => u.uid === uid))
+		throw new TypeError(`Not every UID matches the first: ${uid}`);
+
+	// Fetch the data
+	// TODO: Use findMany or a transaction instead
+	return (await Promise.all(refs.map(fetchDbDoc))) as NonEmptyArray<Snapshot>;
+}

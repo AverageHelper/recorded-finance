@@ -5,7 +5,7 @@ import { compare } from "../../../auth/generators";
 import { is, nonempty, string, type } from "superstruct";
 import { newAccessTokens, setSession } from "../../../auth/jwt";
 import { respondSuccess } from "../../../responses";
-import { statsForUser, userWithAccountId } from "../../../database/io";
+import { statsForUser, userWithAccountId } from "../../../database/reads";
 import { UnauthorizedError } from "../../../errors/UnauthorizedError";
 
 export const POST = apiHandler("POST", async (req, res) => {

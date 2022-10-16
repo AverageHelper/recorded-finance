@@ -2,14 +2,14 @@ import { apiHandler, dispatchRequests } from "../../../../helpers/apiHandler";
 import { BadRequestError } from "../../../../errors/BadRequestError";
 import { ConflictError } from "../../../../errors/ConflictError";
 import { generateSecret, generateTOTPSecretURI, verifyTOTP } from "../../../../auth/totp";
-import { generateSecureToken } from "../../../../auth/generators";
+import { generateAESCipherKey, generateSecureToken } from "../../../../auth/generators";
 import { is, nonempty, string, type } from "superstruct";
 import { metadataFromRequest } from "../../../../auth/requireAuth";
 import { newAccessTokens, setSession } from "../../../../auth/jwt";
-import { newPubNubCipherKey } from "../../../../auth/pubnub";
 import { respondSuccess } from "../../../../responses";
-import { statsForUser, upsertUser } from "../../../../database/io";
+import { statsForUser } from "../../../../database/reads";
 import { UnauthorizedError } from "../../../../errors/UnauthorizedError";
+import { upsertUser } from "../../../../database/writes";
 import safeCompare from "safe-compare";
 
 export const POST = apiHandler("POST", async (req, res) => {
@@ -67,7 +67,7 @@ export const POST = apiHandler("POST", async (req, res) => {
 		await upsertUser({
 			currentAccountId: user.currentAccountId,
 			mfaRecoverySeed,
-			pubnubCipherKey: user.pubnubCipherKey ?? (await newPubNubCipherKey()),
+			pubnubCipherKey: user.pubnubCipherKey ?? (await generateAESCipherKey()),
 			passwordHash: user.passwordHash,
 			passwordSalt: user.passwordSalt,
 			requiredAddtlAuth: ["totp"], // TODO: Leave other 2FA alone
@@ -76,7 +76,7 @@ export const POST = apiHandler("POST", async (req, res) => {
 		});
 	}
 
-	const pubnub_cipher_key = await newPubNubCipherKey();
+	const pubnub_cipher_key = await generateAESCipherKey();
 	const { access_token, pubnub_token } = await newAccessTokens(user, ["totp"]);
 	const { totalSpace, usedSpace } = await statsForUser(uid);
 

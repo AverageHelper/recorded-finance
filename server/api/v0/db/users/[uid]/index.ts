@@ -1,9 +1,9 @@
-import type { DocUpdate } from "../../../../../database/io";
+import type { DocUpdate } from "../../../../../database/writes";
 import { apiHandler, dispatchRequests } from "../../../../../helpers/apiHandler";
 import { assertCallerIsOwner } from "../../../../../auth/assertCallerIsOwner";
 import { BadRequestError } from "../../../../../errors/BadRequestError";
 import { pathSegments } from "../../../../../helpers/pathSegments";
-import { statsForUser } from "../../../../../database/io";
+import { statsForUser } from "../../../../../database/reads";
 import { requireAuth } from "../../../../../auth/requireAuth";
 import { respondSuccess } from "../../../../../responses";
 import {

@@ -1,20 +1,13 @@
 import type { AnyData, IdentifiedDataItem } from "./schemas";
 import type { CollectionReference, DocumentReference } from "./references";
-import type { DocUpdate } from "./io";
+import type { DocUpdate } from "./writes";
+import { deleteDbCollection, deleteDbDoc, deleteDbDocs, upsertDbDocs } from "./writes";
+import { fetchDbCollection, fetchDbDoc, fetchDbDocs } from "./reads";
 import { publishWriteForRef } from "../auth/pubnub";
-import {
-	deleteDbCollection,
-	deleteDbDoc,
-	deleteDbDocs,
-	fetchDbCollection,
-	fetchDbDoc,
-	fetchDbDocs,
-	upsertDbDocs,
-} from "./io";
 
 // Since all data is encrypted on the client, we only
 // need to bother about persistent I/O. We leave path-
-// level access-guarding to the Express frontend.
+// level access guards to the API endpoints.
 
 export type Unsubscribe = () => void;
 

@@ -6,7 +6,7 @@ import { blacklistHasJwt, jwtFromRequest, verifyJwt } from "./jwt";
 import { NotFoundError } from "../errors/NotFoundError";
 import { StructError } from "superstruct";
 import { UnauthorizedError } from "../errors/UnauthorizedError";
-import { userWithUid } from "../database/io";
+import { userWithUid } from "../database/reads";
 
 interface Metadata {
 	/** The user's auth data. */

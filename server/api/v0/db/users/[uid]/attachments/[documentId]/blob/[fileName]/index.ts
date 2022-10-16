@@ -8,6 +8,8 @@ import type {
 import { apiHandler, dispatchRequests } from "../../../../../../../../../helpers/apiHandler";
 import { assertCallerIsOwner } from "../../../../../../../../../auth/assertCallerIsOwner";
 import { BadRequestError } from "../../../../../../../../../errors/BadRequestError";
+import { destroyFileData, upsertFileData } from "../../../../../../../../../database/writes";
+import { fetchFileData, statsForUser } from "../../../../../../../../../database/reads";
 import { maxSpacePerUser, MAX_FILE_BYTES } from "../../../../../../../../../auth/limits";
 import { NotEnoughRoomError } from "../../../../../../../../../errors/NotEnoughRoomError";
 import { NotFoundError } from "../../../../../../../../../errors/NotFoundError";
@@ -17,12 +19,6 @@ import { respondData, respondSuccess } from "../../../../../../../../../response
 import { sep as pathSeparator } from "node:path";
 import { simplifiedByteCount } from "../../../../../../../../../transformers/simplifiedByteCount";
 import multer, { memoryStorage } from "multer";
-import {
-	destroyFileData,
-	fetchFileData,
-	statsForUser,
-	upsertFileData,
-} from "../../../../../../../../../database/io";
 
 /**
  * Asserts that the given value is a valid file path segment.

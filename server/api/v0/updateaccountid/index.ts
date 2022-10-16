@@ -5,7 +5,8 @@ import { generateTOTPSecretURI, verifyTOTP } from "../../../auth/totp";
 import { is, nonempty, optional, string, type } from "superstruct";
 import { respondSuccess } from "../../../responses";
 import { UnauthorizedError } from "../../../errors/UnauthorizedError";
-import { upsertUser, userWithAccountId } from "../../../database/io";
+import { upsertUser } from "../../../database/writes";
+import { userWithAccountId } from "../../../database/reads";
 
 export const POST = apiHandler("POST", async (req, res) => {
 	const reqBody = type({

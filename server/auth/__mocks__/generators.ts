@@ -4,6 +4,7 @@ import type {
 	generateSalt as _generateSalt,
 	generateHash as _generateHash,
 } from "../generators";
+import { generateAESCipherKey as _generateAESCipherKey } from "../generators";
 import { jest } from "@jest/globals";
 
 export const compare = jest
@@ -17,3 +18,7 @@ export const generateSecureToken = jest
 export const generateSalt = jest.fn<typeof _generateSalt>().mockResolvedValue("INSECURE_SALT");
 
 export const generateHash = jest.fn<typeof _generateHash>().mockResolvedValue("INSECURE_HASH");
+
+export const generateAESCipherKey = jest
+	.fn<typeof _generateAESCipherKey>()
+	.mockImplementation(_generateAESCipherKey);

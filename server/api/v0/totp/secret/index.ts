@@ -7,7 +7,7 @@ import { is, nonempty, string, type } from "superstruct";
 import { metadataFromRequest } from "../../../../auth/requireAuth";
 import { respondSuccess } from "../../../../responses";
 import { UnauthorizedError } from "../../../../errors/UnauthorizedError";
-import { upsertUser } from "../../../../database/io";
+import { upsertUser } from "../../../../database/writes";
 
 // MARK: - GET
 

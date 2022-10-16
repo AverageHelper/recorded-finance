@@ -1,6 +1,6 @@
 import type { CollectionReference, DocumentReference, IdentifiedDataItem } from "../database";
-import { randomBytes } from "node:crypto";
 import { requireEnv } from "../environment";
+import { userWithUid } from "../database/reads";
 import PubNub from "pubnub";
 
 /**
@@ -110,13 +110,6 @@ export async function revokePubNubToken(token: string, uid: string): Promise<voi
 }
 
 /**
- * Generates a new 32-character key for PubNub's AES 256 message-level encryption.
- */
-export async function newPubNubCipherKey(): Promise<string> {
-	return await Promise.resolve(randomBytes(16).toString("hex"));
-}
-
-/**
  * Creates a {@link PubNub} client instance for the given user. The client
  * is destroyed immediately after the callback resolves or rejects.
  *
@@ -126,7 +119,6 @@ export async function newPubNubCipherKey(): Promise<string> {
  * @returns The value returned by the callback.
  */
 async function pubnubForUser<T>(uid: string, cb: (pubnub: PubNub) => T | Promise<T>): Promise<T> {
-	const { userWithUid } = await import("../database/io"); // FIXME: This import shouldn't be circular
 	const user = await userWithUid(uid);
 	if (!user) throw new TypeError(`No user exists with uid '${uid}'`);
 	const cipherKey = user.pubnubCipherKey;

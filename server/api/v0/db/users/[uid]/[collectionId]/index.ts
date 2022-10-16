@@ -4,7 +4,7 @@ import { NotFoundError } from "../../../../../../errors/NotFoundError";
 import { pathSegments } from "../../../../../../helpers/pathSegments";
 import { requireAuth } from "../../../../../../auth/requireAuth";
 import { respondData, respondSuccess } from "../../../../../../responses";
-import { statsForUser } from "../../../../../../database/io";
+import { statsForUser } from "../../../../../../database/reads";
 import {
 	CollectionReference,
 	deleteCollection,
