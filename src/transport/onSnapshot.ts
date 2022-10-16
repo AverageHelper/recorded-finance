@@ -378,31 +378,43 @@ export function onSnapshot<T>(
 		pubnub.addListener(listener);
 		pubnub.subscribe({ channels: [channel] });
 
+		const unsubscribe = (): void => {
+			console.debug(`[onSnapshot] Unsubscribing from channel '${channel}'`);
+			pubnub.unsubscribe({ channels: [channel] });
+			pubnub.removeListener(listener);
+		};
+
 		// Run an initial fetch, just like Express used to, since the Vercel back-end doesn't do that for us
 		switch (queryOrReference.type) {
 			case "collection":
-				// eslint-disable-next-line promise/prefer-await-to-then
-				void getDocs<DocumentData>(queryOrReference).then(snap => {
-					const data = snap.docs.map(doc => ({ ...doc.data(), _id: doc.id }));
-					handleData({ data });
-				});
+				void handleFetchError(
+					getDocs<DocumentData>(queryOrReference)
+						// eslint-disable-next-line promise/prefer-await-to-then
+						.then(snap => {
+							const data = snap.docs.map(doc => ({ ...doc.data(), _id: doc.id }));
+							handleData({ data });
+						}),
+					unsubscribe,
+					onErrorCallback
+				);
 				break;
 			case "document":
-				// eslint-disable-next-line promise/prefer-await-to-then
-				void getDoc(queryOrReference).then(snap => {
-					const data = snap.data() ?? null;
-					handleData({ data: { ...data, _id: snap.id } });
-				});
+				void handleFetchError(
+					getDoc(queryOrReference)
+						// eslint-disable-next-line promise/prefer-await-to-then
+						.then(snap => {
+							const data = snap.data() ?? null;
+							handleData({ data: { ...data, _id: snap.id } });
+						}),
+					unsubscribe,
+					onErrorCallback
+				);
 				break;
 			default:
 				throw new UnreachableCaseError(queryOrReference);
 		}
 
-		return () => {
-			console.debug(`[onSnapshot] Unsubscribing from channel '${channel}'`);
-			pubnub.unsubscribe({ channels: [channel] });
-			pubnub.removeListener(listener);
-		};
+		return unsubscribe;
 	}
 
 	const uid = db.currentUser.uid;
@@ -480,4 +492,21 @@ export function onSnapshot<T>(
 	return (): void => {
 		send("stop", "STOP");
 	};
+}
+
+async function handleFetchError(
+	p: Promise<unknown>,
+	unsubscribe: Unsubscribe,
+	onErrorCallback: (err: Error) => void
+): Promise<void> {
+	try {
+		await p;
+	} catch (error) {
+		unsubscribe();
+		if (error instanceof Error) {
+			onErrorCallback(error);
+		} else {
+			onErrorCallback(new Error(JSON.stringify(error)));
+		}
+	}
 }
