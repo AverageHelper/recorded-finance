@@ -117,7 +117,6 @@ async function informWatchersForDocument(
 	);
 	const collectionListeners = Array.from(collectionWatchers.values()) //
 		.filter(w => w.id === ref.parent.id);
-	if (docListeners.length + collectionListeners.length === 0) return;
 
 	console.debug(
 		`Informing ${
@@ -139,7 +138,6 @@ async function informWatchersForCollection(
 ): Promise<void> {
 	const listeners = Array.from(collectionWatchers.values()) //
 		.filter(w => w.id === ref.id);
-	if (listeners.length === 0) return;
 
 	console.debug(
 		`Informing ${listeners.length} listener(s) about changes to collection ${ref.path}`

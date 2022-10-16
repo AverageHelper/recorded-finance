@@ -388,7 +388,7 @@ export function onSnapshot<T>(
 		switch (queryOrReference.type) {
 			case "collection":
 				void handleFetchError(
-					getDocs<DocumentData>(queryOrReference)
+					getDocs(queryOrReference)
 						// eslint-disable-next-line promise/prefer-await-to-then
 						.then(snap => {
 							const data = snap.docs.map(doc => ({ ...doc.data(), _id: doc.id }));
