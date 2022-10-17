@@ -391,6 +391,7 @@ export function onSnapshot<T>(
 					getDocs(queryOrReference)
 						// eslint-disable-next-line promise/prefer-await-to-then
 						.then(snap => {
+							console.debug(`Received snapshot from channel '${channel}'`);
 							const data = snap.docs.map(doc => ({ ...doc.data(), _id: doc.id }));
 							handleData({ data });
 						}),
@@ -403,6 +404,7 @@ export function onSnapshot<T>(
 					getDoc(queryOrReference)
 						// eslint-disable-next-line promise/prefer-await-to-then
 						.then(snap => {
+							console.debug(`Received snapshot from channel '${channel}'`);
 							const data = snap.data() ?? null;
 							handleData({ data: { ...data, _id: snap.id } });
 						}),
