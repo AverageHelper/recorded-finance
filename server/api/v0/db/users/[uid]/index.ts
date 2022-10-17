@@ -2,7 +2,6 @@ import type { DocUpdate } from "../../../../../database/writes";
 import { apiHandler, dispatchRequests } from "../../../../../helpers/apiHandler";
 import { assertCallerIsOwner } from "../../../../../auth/assertCallerIsOwner";
 import { BadRequestError } from "../../../../../errors/BadRequestError";
-import { pathSegments } from "../../../../../helpers/pathSegments";
 import { statsForUser } from "../../../../../database/reads";
 import { requireAuth } from "../../../../../auth/requireAuth";
 import { respondSuccess } from "../../../../../responses";
@@ -18,8 +17,8 @@ import {
 
 export const POST = apiHandler("POST", async (req, res) => {
 	await requireAuth(req, res);
-	await assertCallerIsOwner(req, res);
-	const { uid } = pathSegments(req, "uid");
+	const user = await assertCallerIsOwner(req, res);
+	const uid = user.uid;
 
 	// ** Batched writes
 	const providedData = req.body as unknown;
@@ -38,7 +37,7 @@ export const POST = apiHandler("POST", async (req, res) => {
 	const setOperations: Array<DocUpdate> = [];
 	const deleteOperations: Array<DocumentReference> = [];
 	for (const write of providedData) {
-		const collection = new CollectionReference(uid, write.ref.collectionId);
+		const collection = new CollectionReference(user, write.ref.collectionId);
 		const ref = new DocumentReference(collection, write.ref.documentId);
 
 		switch (write.type) {

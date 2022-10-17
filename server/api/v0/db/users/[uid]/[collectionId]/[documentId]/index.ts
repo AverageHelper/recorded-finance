@@ -1,3 +1,4 @@
+import type { User } from "../../../../../../../database/schemas";
 import { apiHandler, dispatchRequests } from "../../../../../../../helpers/apiHandler";
 import { assertCallerIsOwner } from "../../../../../../../auth/assertCallerIsOwner";
 import { BadRequestError } from "../../../../../../../errors/BadRequestError";
@@ -17,16 +18,16 @@ import {
 	setDocument,
 } from "../../../../../../../database";
 
-function collectionRef(req: APIRequest): CollectionReference | null {
-	const { uid, collectionId } = pathSegments(req, "uid", "collectionId");
+function collectionRef(user: User, req: APIRequest): CollectionReference | null {
+	const { collectionId } = pathSegments(req, "collectionId");
 	if (!isCollectionId(collectionId)) return null;
 
-	return new CollectionReference(uid, collectionId);
+	return new CollectionReference(user, collectionId);
 }
 
-function documentRef(req: APIRequest): DocumentReference | null {
+function documentRef(user: User, req: APIRequest): DocumentReference | null {
 	const { documentId } = pathSegments(req, "documentId");
-	const collection = collectionRef(req);
+	const collection = collectionRef(user, req);
 	if (!collection) return null;
 
 	return new DocumentReference(collection, documentId);
@@ -40,9 +41,9 @@ export const GET = apiHandler("GET", async (req, res) => {
 	}
 
 	await requireAuth(req, res);
-	await assertCallerIsOwner(req, res);
+	const user = await assertCallerIsOwner(req, res);
 
-	const ref = documentRef(req);
+	const ref = documentRef(user, req);
 	// console.debug(`Handling GET for document at ${ref?.path ?? "null"}`);
 	if (!ref) throw new NotFoundError();
 
@@ -53,13 +54,13 @@ export const GET = apiHandler("GET", async (req, res) => {
 
 export const POST = apiHandler("POST", async (req, res) => {
 	await requireAuth(req, res);
-	await assertCallerIsOwner(req, res);
-	const { uid } = pathSegments(req, "uid");
+	const user = await assertCallerIsOwner(req, res);
+	const uid = user.uid;
 
 	const providedData = req.body as unknown;
 	if (!isDataItem(providedData) && !isUserKeys(providedData)) throw new BadRequestError();
 
-	const ref = documentRef(req);
+	const ref = documentRef(user, req);
 	if (!ref) throw new NotFoundError();
 
 	await setDocument(ref, providedData);
@@ -69,10 +70,10 @@ export const POST = apiHandler("POST", async (req, res) => {
 
 export const DELETE = apiHandler("DELETE", async (req, res) => {
 	await requireAuth(req, res);
-	await assertCallerIsOwner(req, res);
-	const { uid } = pathSegments(req, "uid");
+	const user = await assertCallerIsOwner(req, res);
+	const uid = user.uid;
 
-	const ref = documentRef(req);
+	const ref = documentRef(user, req);
 	if (!ref) throw new NotFoundError();
 
 	// Delete the referenced database entry

@@ -1,4 +1,4 @@
-import type { CollectionReference, DocumentReference, IdentifiedDataItem } from "../database";
+import type { CollectionReference, DocumentReference, IdentifiedDataItem, User } from "../database";
 import { requireEnv } from "../environment";
 import { userWithUid } from "../database/reads";
 import PubNub from "pubnub";
@@ -34,7 +34,7 @@ export async function publishWriteForRef(
 	const channel = pubNubChannelNameForRef(ref);
 	console.debug(`Posting write for channel '${channel}'...`);
 	try {
-		await pubnubForUser(ref.uid, pubnub =>
+		await pubnubForUser(ref.user, pubnub =>
 			pubnub.publish({
 				channel,
 				message: newData,
@@ -65,8 +65,9 @@ function pubNubChannelNameForRef(ref: CollectionReference | DocumentReference): 
  * last as long as the session does, and should be revoked when the
  * session ends.
  */
-export async function newPubNubTokenForUser(uid: string): Promise<string> {
-	return await pubnubForUser(uid, pubnub =>
+export async function newPubNubTokenForUser(user: User): Promise<string> {
+	const uid = user.uid;
+	return await pubnubForUser(user, pubnub =>
 		// Grant permission to the UID to use PubNub for this document
 		pubnub.grantToken({
 			ttl: 60, // 1 hour
@@ -109,14 +110,22 @@ export async function revokePubNubToken(token: string, uid: string): Promise<voi
  * Creates a {@link PubNub} client instance for the given user. The client
  * is destroyed immediately after the callback resolves or rejects.
  *
- * @param uid The ID of the user whose personal cipher key to use in transmitting messages.
- * @param cb A callback that receives a {@link PubNub} instance for communicating events.
+ * @param userOrUid The user or the ID of the user whose personal cipher
+ * key to use in transmitting messages.
+ * @param cb A callback that receives a {@link PubNub} instance for
+ * communicating events.
  *
  * @returns The value returned by the callback.
  */
-async function pubnubForUser<T>(uid: string, cb: (pubnub: PubNub) => T | Promise<T>): Promise<T> {
-	const user = await userWithUid(uid);
-	if (!user) throw new TypeError(`No user exists with uid '${uid}'`);
+async function pubnubForUser<T>(
+	userOrUid: string | User,
+	cb: (pubnub: PubNub) => T | Promise<T>
+): Promise<T> {
+	const user = typeof userOrUid === "string" ? await userWithUid(userOrUid) : userOrUid;
+	if (!user)
+		throw new TypeError(
+			`No user exists with uid '${typeof userOrUid === "string" ? userOrUid : "<unknown>"}'`
+		);
 	const cipherKey = user.pubnubCipherKey;
 
 	// This should be the only PubNub instance for the calling user

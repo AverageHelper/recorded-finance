@@ -65,7 +65,7 @@ export async function newAccessTokens(
 ): Promise<AccessTokens> {
 	const options: jwt.SignOptions = { expiresIn: "1h" };
 	const payload: JwtPayload = {
-		pubnubToken: await newPubNubTokenForUser(user.uid),
+		pubnubToken: await newPubNubTokenForUser(user),
 		uid: user.uid,
 		validatedWithMfa,
 	};

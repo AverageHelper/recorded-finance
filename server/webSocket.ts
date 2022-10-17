@@ -1,5 +1,5 @@
 import type { Infer } from "superstruct";
-import type { Unsubscribe } from "./database";
+import type { Unsubscribe, User } from "./database";
 import type { WebsocketRequestHandler } from "express-ws";
 import { array, enums, nullable, object, optional, union } from "superstruct";
 import { assertCallerIsOwner } from "./auth/assertCallerIsOwner";
@@ -46,7 +46,7 @@ export const webSocket: WebsocketRequestHandler = ws(
 	// start
 	async (context, params) => {
 		const { req, onClose, onMessage, send, close } = context;
-		const { uid, collectionId, documentId = null } = params;
+		const { collectionId, documentId = null } = params;
 
 		// FIXME: Wish I could get request cookies here without corresponding response.
 		// This leans a lot on implementation detail which may change later.
@@ -67,9 +67,11 @@ export const webSocket: WebsocketRequestHandler = ws(
 			close(WebSocketCode.VIOLATED_CONTRACT, "You must be logged in to access user data");
 			return;
 		}
+
+		let user: User;
 		try {
 			console.debug("[WebSocket] Checking that caller is owner...");
-			await assertCallerIsOwner(req, fakeRes);
+			user = await assertCallerIsOwner(req, fakeRes);
 			console.debug("[WebSocket] Success! User is requesting their own data.");
 		} catch {
 			console.debug("[WebSocket] Fail! User is requesting someone else's data.");
@@ -77,7 +79,7 @@ export const webSocket: WebsocketRequestHandler = ws(
 			return;
 		}
 
-		const collection = new CollectionReference(uid, collectionId);
+		const collection = new CollectionReference(user, collectionId);
 		let unsubscribe: Unsubscribe;
 		if (documentId !== null) {
 			const ref = new DocumentReference(collection, documentId);

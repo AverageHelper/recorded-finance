@@ -1,3 +1,4 @@
+import type { User } from "../database/schemas";
 import { pathSegments } from "../helpers/pathSegments";
 import { metadataFromRequest, requireAuth } from "./requireAuth";
 import { UnauthorizedError } from "../errors/UnauthorizedError";
@@ -10,7 +11,7 @@ import safeCompare from "tsscmp";
  * Make sure the `requireAuth` handler has been called first, or
  * this handler will always throw an `UnauthorizedError`.
  */
-export async function assertCallerIsOwner(req: APIRequest, res: APIResponse): Promise<void> {
+export async function assertCallerIsOwner(req: APIRequest, res: APIResponse): Promise<User> {
 	await requireAuth(req, res);
 	const auth = (await metadataFromRequest(req, res).catch(() => null))?.user;
 	const { uid } = pathSegments(req, "uid");
@@ -18,4 +19,5 @@ export async function assertCallerIsOwner(req: APIRequest, res: APIResponse): Pr
 	if (!auth || !uid || !safeCompare(uid, auth.uid)) {
 		throw new UnauthorizedError("not-owner");
 	}
+	return auth;
 }

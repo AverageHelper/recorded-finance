@@ -1,3 +1,4 @@
+import type { User } from "../../../../../../database/schemas";
 import { apiHandler, dispatchRequests } from "../../../../../../helpers/apiHandler";
 import { assertCallerIsOwner } from "../../../../../../auth/assertCallerIsOwner";
 import { NotFoundError } from "../../../../../../errors/NotFoundError";
@@ -12,11 +13,11 @@ import {
 	isCollectionId,
 } from "../../../../../../database";
 
-function collectionRef(req: APIRequest): CollectionReference | null {
-	const { uid, collectionId } = pathSegments(req, "uid", "collectionId");
+function collectionRef(user: User, req: APIRequest): CollectionReference | null {
+	const { collectionId } = pathSegments(req, "collectionId");
 	if (!isCollectionId(collectionId)) return null;
 
-	return new CollectionReference(uid, collectionId);
+	return new CollectionReference(user, collectionId);
 }
 
 export const GET = apiHandler("GET", async (req, res) => {
@@ -27,8 +28,8 @@ export const GET = apiHandler("GET", async (req, res) => {
 	}
 
 	await requireAuth(req, res);
-	await assertCallerIsOwner(req, res);
-	const ref = collectionRef(req);
+	const user = await assertCallerIsOwner(req, res);
+	const ref = collectionRef(user, req);
 	if (!ref) throw new NotFoundError();
 
 	const items = await getCollection(ref);
@@ -37,10 +38,10 @@ export const GET = apiHandler("GET", async (req, res) => {
 
 export const DELETE = apiHandler("DELETE", async (req, res) => {
 	await requireAuth(req, res);
-	await assertCallerIsOwner(req, res);
-	const { uid } = pathSegments(req, "uid");
+	const user = await assertCallerIsOwner(req, res);
+	const uid = user.uid;
 
-	const ref = collectionRef(req);
+	const ref = collectionRef(user, req);
 	if (!ref) throw new NotFoundError();
 
 	// Delete the referenced database entries
