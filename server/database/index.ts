@@ -117,11 +117,11 @@ async function informWatchersForDocument(
 		} listener(s) about changes to document ${ref.path}`
 	);
 	await Promise.all(docListeners.map(l => l.onChange(newItem)));
-	publishWriteForRef(ref, newItem);
+	await publishWriteForRef(ref, newItem);
 	if (collectionListeners.length > 0) {
 		const newCollection = await fetchDbCollection(ref.parent);
 		await Promise.all(collectionListeners.map(l => l.onChange(newCollection)));
-		publishWriteForRef(ref.parent, newCollection);
+		await publishWriteForRef(ref.parent, newCollection);
 	}
 }
 
@@ -136,7 +136,7 @@ async function informWatchersForCollection(
 		`Informing ${listeners.length} listener(s) about changes to collection ${ref.path}`
 	);
 	await Promise.all(listeners.map(l => l.onChange(newItems)));
-	publishWriteForRef(ref, newItems);
+	await publishWriteForRef(ref, newItems);
 }
 
 export async function deleteDocuments(refs: NonEmptyArray<DocumentReference>): Promise<void> {

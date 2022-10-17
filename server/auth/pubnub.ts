@@ -9,10 +9,10 @@ import PubNub from "pubnub";
  * @param ref The collection that was written to.
  * @param newData The new data in the collection.
  */
-export function publishWriteForRef(
+export async function publishWriteForRef(
 	ref: CollectionReference,
 	newData: Array<IdentifiedDataItem>
-): void;
+): Promise<void>;
 
 /**
  * Publishes a write event for the given document to PubNub.
@@ -20,34 +20,30 @@ export function publishWriteForRef(
  * @param ref The document that was written to.
  * @param newData The new data in the document, or `null` if the document was deleted.
  */
-export function publishWriteForRef(
+export async function publishWriteForRef(
 	ref: DocumentReference,
 	newData: IdentifiedDataItem | null
-): void;
+): Promise<void>;
 
-export function publishWriteForRef(
+export async function publishWriteForRef(
 	ref: CollectionReference | DocumentReference,
 	newData: Array<IdentifiedDataItem> | IdentifiedDataItem | null
-): void {
+): Promise<void> {
 	// TODO: This should be a no-op when we're in Express
 
 	const channel = pubNubChannelNameForRef(ref);
 	console.debug(`Posting write for channel '${channel}'...`);
-	/* eslint-disable promise/prefer-await-to-then */
-	// We don't want I/O to wait for us here
-	void pubnubForUser(ref.uid, pubnub =>
-		pubnub.publish({
-			channel,
-			message: newData,
-		})
-	)
-		.then(() => {
-			console.debug(`Posted write for channel '${channel}'`);
-		})
-		.catch(error => {
-			console.error("Failed to post write for channel '%s' due to error", channel, error);
-		});
-	/* eslint-enable promise/prefer-await-to-then */
+	try {
+		await pubnubForUser(ref.uid, pubnub =>
+			pubnub.publish({
+				channel,
+				message: newData,
+			})
+		);
+		console.debug(`Posted write for channel '${channel}'`);
+	} catch (error) {
+		console.error("Failed to post write for channel '%s' due to error", channel, error);
+	}
 }
 
 /**
