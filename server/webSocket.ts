@@ -2,7 +2,6 @@ import type { Infer } from "superstruct";
 import type { Unsubscribe, User } from "./database";
 import type { WebsocketRequestHandler } from "express-ws";
 import { array, enums, nullable, object, optional, union } from "superstruct";
-import { assertCallerIsOwner } from "./auth/assertCallerIsOwner";
 import { requireAuth } from "./auth/requireAuth";
 import { WebSocketCode } from "./networking/WebSocketCode";
 import { ws } from "./networking/websockets";
@@ -48,6 +47,8 @@ export const webSocket: WebsocketRequestHandler = ws(
 		const { req, onClose, onMessage, send, close } = context;
 		const { collectionId, documentId = null } = params;
 
+		let user: User;
+
 		// FIXME: Wish I could get request cookies here without corresponding response.
 		// This leans a lot on implementation detail which may change later.
 		// Options:
@@ -60,22 +61,11 @@ export const webSocket: WebsocketRequestHandler = ws(
 		} as unknown as APIResponse;
 		try {
 			console.debug("[WebSocket] Checking auth state...");
-			await requireAuth(req, fakeRes);
+			user = await requireAuth(req, fakeRes, true);
 			console.debug("[WebSocket] Success! User is logged in.");
 		} catch {
 			console.debug("[WebSocket] Fail! User is not logged in.");
 			close(WebSocketCode.VIOLATED_CONTRACT, "You must be logged in to access user data");
-			return;
-		}
-
-		let user: User;
-		try {
-			console.debug("[WebSocket] Checking that caller is owner...");
-			user = await assertCallerIsOwner(req, fakeRes);
-			console.debug("[WebSocket] Success! User is requesting their own data.");
-		} catch {
-			console.debug("[WebSocket] Fail! User is requesting someone else's data.");
-			close(WebSocketCode.VIOLATED_CONTRACT, "You cannot access data that isn't yours");
 			return;
 		}
 

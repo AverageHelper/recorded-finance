@@ -1,6 +1,5 @@
 import type { DocUpdate } from "../../../../../database/writes";
 import { apiHandler, dispatchRequests } from "../../../../../helpers/apiHandler";
-import { assertCallerIsOwner } from "../../../../../auth/assertCallerIsOwner";
 import { BadRequestError } from "../../../../../errors/BadRequestError";
 import { statsForUser } from "../../../../../database/reads";
 import { requireAuth } from "../../../../../auth/requireAuth";
@@ -16,8 +15,7 @@ import {
 } from "../../../../../database";
 
 export const POST = apiHandler("POST", async (req, res) => {
-	await requireAuth(req, res);
-	const user = await assertCallerIsOwner(req, res);
+	const user = await requireAuth(req, res, true);
 	const uid = user.uid;
 
 	// ** Batched writes

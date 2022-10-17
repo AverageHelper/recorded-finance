@@ -13,7 +13,7 @@ export function db(): Router {
 		Router()
 			.ws("/users/:uid/:collectionId", webSocket)
 			.ws("/users/:uid/:collectionId/:documentId", webSocket)
-			// Each of these should call `requireAuth` and `assertCallerIsOwner` from here on in
+			// Each of these should call `requireAuth` from here on in
 			.post("/users/:uid", asyncWrapper(dataBatch.POST))
 			.get("/users/:uid/attachments/:documentId/blob/:fileName", asyncWrapper(fileBlob.GET))
 			.post("/users/:uid/attachments/:documentId/blob/:fileName", asyncWrapper(fileBlob.POST))

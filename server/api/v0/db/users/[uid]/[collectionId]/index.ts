@@ -1,6 +1,5 @@
 import type { User } from "../../../../../../database/schemas";
 import { apiHandler, dispatchRequests } from "../../../../../../helpers/apiHandler";
-import { assertCallerIsOwner } from "../../../../../../auth/assertCallerIsOwner";
 import { NotFoundError } from "../../../../../../errors/NotFoundError";
 import { pathSegments } from "../../../../../../helpers/pathSegments";
 import { requireAuth } from "../../../../../../auth/requireAuth";
@@ -27,8 +26,7 @@ export const GET = apiHandler("GET", async (req, res) => {
 		return; // we were never meant to be here
 	}
 
-	await requireAuth(req, res);
-	const user = await assertCallerIsOwner(req, res);
+	const user = await requireAuth(req, res, true);
 	const ref = collectionRef(user, req);
 	if (!ref) throw new NotFoundError();
 
@@ -37,8 +35,7 @@ export const GET = apiHandler("GET", async (req, res) => {
 });
 
 export const DELETE = apiHandler("DELETE", async (req, res) => {
-	await requireAuth(req, res);
-	const user = await assertCallerIsOwner(req, res);
+	const user = await requireAuth(req, res, true);
 	const uid = user.uid;
 
 	const ref = collectionRef(user, req);

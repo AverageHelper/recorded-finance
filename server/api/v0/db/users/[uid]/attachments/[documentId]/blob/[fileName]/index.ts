@@ -6,7 +6,6 @@ import type {
 	Response as ExpressResponse,
 } from "express";
 import { apiHandler, dispatchRequests } from "../../../../../../../../../helpers/apiHandler";
-import { assertCallerIsOwner } from "../../../../../../../../../auth/assertCallerIsOwner";
 import { BadRequestError } from "../../../../../../../../../errors/BadRequestError";
 import { destroyFileData, upsertFileData } from "../../../../../../../../../database/writes";
 import { fetchFileData, statsForUser } from "../../../../../../../../../database/reads";
@@ -53,8 +52,7 @@ function requireFilePathParameters(req: APIRequest): Required<Params> {
 }
 
 export const DELETE = apiHandler("DELETE", async (req, res) => {
-	await requireAuth(req, res);
-	await assertCallerIsOwner(req, res);
+	await requireAuth(req, res, true);
 	const params = pathSegments(req, "uid", "documentId", "fileName");
 
 	const userId = params.uid;
@@ -78,8 +76,7 @@ interface FileData {
 }
 
 export const GET = apiHandler("GET", async (req, res) => {
-	await requireAuth(req, res);
-	await assertCallerIsOwner(req, res);
+	await requireAuth(req, res, true);
 	const { uid: userId, fileName } = requireFilePathParameters(req);
 
 	const file = await fetchFileData(userId, fileName);
@@ -94,8 +91,7 @@ export const GET = apiHandler("GET", async (req, res) => {
 });
 
 export const POST = apiHandler("POST", async (req, res) => {
-	await requireAuth(req, res);
-	await assertCallerIsOwner(req, res);
+	await requireAuth(req, res, true);
 
 	// Mimic Multer's middleware environment (see https://stackoverflow.com/a/68882562)
 	const upload = multer({

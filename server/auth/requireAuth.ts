@@ -4,9 +4,11 @@ import { assertSchema, jwtPayload } from "../database/schemas";
 import { BadRequestError } from "../errors/BadRequestError";
 import { blacklistHasJwt, jwtFromRequest, verifyJwt } from "./jwt";
 import { NotFoundError } from "../errors/NotFoundError";
+import { pathSegments } from "../helpers/pathSegments";
 import { StructError } from "superstruct";
 import { UnauthorizedError } from "../errors/UnauthorizedError";
 import { userWithUid } from "../database/reads";
+import safeCompare from "tsscmp";
 
 interface Metadata {
 	/** The user's auth data. */
@@ -59,7 +61,11 @@ export async function metadataFromRequest(req: APIRequest, res: APIResponse): Pr
 }
 
 /** Asserts that the calling user is authorized to access the requested resource. */
-export async function requireAuth(req: APIRequest, res: APIResponse): Promise<void> {
+export async function requireAuth(
+	req: APIRequest,
+	res: APIResponse,
+	assertCallerIsOwner: boolean
+): Promise<User> {
 	const { user, validatedWithMfa } = await metadataFromRequest(req, res);
 
 	if (
@@ -68,4 +74,13 @@ export async function requireAuth(req: APIRequest, res: APIResponse): Promise<vo
 	) {
 		throw new UnauthorizedError("missing-token");
 	}
+
+	if (assertCallerIsOwner) {
+		const { uid } = pathSegments(req, "uid");
+		if (!uid || !safeCompare(uid, user.uid)) {
+			throw new UnauthorizedError("not-owner");
+		}
+	}
+
+	return user;
 }
