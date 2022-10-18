@@ -382,20 +382,17 @@ export function onSnapshot<T>(
 				try {
 					assert(event.message, watcherData);
 					console.debug(`[onSnapshot] Received snapshot from channel '${channel}'`);
-					handleData(event.message);
 				} catch (error) {
-					let message: string;
+					let message: unknown;
 					if (error instanceof StructError) {
 						message = error.message;
-					} else if (error instanceof Error) {
-						message = error.message;
-					} else if (typeof error === "string") {
-						message = error;
 					} else {
-						message = JSON.stringify(error);
+						message = error;
 					}
-					console.debug(`[onSnapshot] Skipping message for channel '${channel}'; ${message}`);
+					console.error(`[onSnapshot] Skipping message for channel '%s';`, channel, message);
+					return;
 				}
+				handleData(event.message);
 			},
 			status(event) {
 				// See https://www.pubnub.com/docs/sdks/javascript/status-events
