@@ -111,18 +111,18 @@ async function informWatchersForDocument(
 	const collectionListeners = Array.from(collectionWatchers.values()) //
 		.filter(w => w.id === ref.parent.id);
 
-	console.debug(
-		`Informing ${
-			docListeners.length + collectionListeners.length
-		} listener(s) about changes to document ${ref.path}`
-	);
+	if (docListeners.length + collectionListeners.length > 0) {
+		console.debug(
+			`Informing ${
+				docListeners.length + collectionListeners.length
+			} listener(s) about changes to document ${ref.path}`
+		);
+	}
 	await Promise.all(docListeners.map(l => l.onChange(newItem)));
 	await publishWriteForRef(ref, newItem);
-	if (collectionListeners.length > 0) {
-		const newCollection = await fetchDbCollection(ref.parent);
-		await Promise.all(collectionListeners.map(l => l.onChange(newCollection)));
-		await publishWriteForRef(ref.parent, newCollection);
-	}
+	const newCollection = await fetchDbCollection(ref.parent);
+	await Promise.all(collectionListeners.map(l => l.onChange(newCollection)));
+	await publishWriteForRef(ref.parent, newCollection);
 }
 
 async function informWatchersForCollection(
@@ -132,9 +132,11 @@ async function informWatchersForCollection(
 	const listeners = Array.from(collectionWatchers.values()) //
 		.filter(w => w.id === ref.id);
 
-	console.debug(
-		`Informing ${listeners.length} listener(s) about changes to collection ${ref.path}`
-	);
+	if (listeners.length > 0) {
+		console.debug(
+			`Informing ${listeners.length} listener(s) about changes to collection ${ref.path}`
+		);
+	}
 	await Promise.all(listeners.map(l => l.onChange(newItems)));
 	await publishWriteForRef(ref, newItems);
 }
