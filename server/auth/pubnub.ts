@@ -37,7 +37,11 @@ export async function publishWriteForRef(
 		await pubnubForUser(ref.user, pubnub =>
 			pubnub.publish({
 				channel,
-				message: newData,
+				message: {
+					message: "Here's your data",
+					dataType: "parent" in ref ? "single" : "multiple",
+					data: newData,
+				},
 			})
 		);
 		console.debug(`Posted write for channel '${channel}'`);
