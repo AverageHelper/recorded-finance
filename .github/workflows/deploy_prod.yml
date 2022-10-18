@@ -86,7 +86,7 @@ jobs:
 
   deploy:
     name: Deploy to Production
-    needs: test
+    needs: [build_client, build_server]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
