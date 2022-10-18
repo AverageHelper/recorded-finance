@@ -405,14 +405,28 @@ export function onSnapshot<T>(
 				);
 			},
 		};
-		pubnub.addListener(listener);
-		pubnub.subscribe({ channels: [channel] });
 
 		const unsubscribe = (): void => {
 			console.debug(`[onSnapshot] Unsubscribing from channel '${channel}'`);
 			pubnub.unsubscribe({ channels: [channel] });
 			pubnub.removeListener(listener);
 		};
+
+		try {
+			pubnub.addListener(listener);
+			pubnub.subscribe({ channels: [channel] });
+		} catch (error) {
+			console.error(
+				`[onSnapshot] Failed to subscribe to channel '${channel}' due to error:`,
+				error
+			);
+			if (error instanceof Error) {
+				onErrorCallback(error);
+			} else {
+				onErrorCallback(new Error(JSON.stringify(error)));
+			}
+			return unsubscribe;
+		}
 
 		// Run an initial fetch, just like Express used to, since the Vercel back-end doesn't do that for us
 		switch (queryOrReference.type) {
