@@ -67,7 +67,6 @@ export class AccountableDB {
 			this.#pubnub = new PubNub({
 				subscribeKey,
 				publishKey,
-				cipherKey: user.pubnubCipherKey,
 				uuid: user.uid,
 				ssl: true,
 				restore: false, // cache subscribed channels, and re-subscribe in the event of network failure

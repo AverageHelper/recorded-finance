@@ -385,8 +385,21 @@ export function onSnapshot<T>(
 					);
 					return;
 				}
+
+				const cipherKey = db.currentUser?.pubnubCipherKey ?? null;
+				if (cipherKey === null) throw new TypeError(t("error.cryption.missing-pek"));
+
+				let data: unknown;
 				try {
-					assert(event.message, watcherData);
+					const rawData: unknown = pubnub.decrypt(event.message as string | object, cipherKey);
+					if (typeof rawData !== "string") throw new TypeError("Raw data was not a string.");
+					data = JSON.parse(rawData) as unknown;
+				} catch (error) {
+					console.error(`[onSnapshot] Failed to decrypt message:`, error);
+					return;
+				}
+				try {
+					assert(data, watcherData);
 					console.debug(`[onSnapshot] Received snapshot from channel '${channel}'`);
 				} catch (error) {
 					let message: unknown;
@@ -398,7 +411,7 @@ export function onSnapshot<T>(
 					console.error(`[onSnapshot] Skipping message for channel '%s';`, channel, message);
 					return;
 				}
-				handleData(event.message);
+				handleData(data);
 			},
 			status(event) {
 				// See https://www.pubnub.com/docs/sdks/javascript/status-events

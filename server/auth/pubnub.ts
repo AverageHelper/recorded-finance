@@ -34,16 +34,20 @@ export async function publishWriteForRef(
 	const channel = pubNubChannelNameForRef(ref);
 	console.debug(`Posting write for channel '${channel}'...`);
 	try {
-		await pubnubForUser(ref.user, pubnub =>
-			pubnub.publish({
-				channel,
-				message: {
+		await pubnubForUser(ref.user, (pubnub, cipherKey) => {
+			const message = pubnub.encrypt(
+				JSON.stringify({
 					message: "Here's your data",
 					dataType: "parent" in ref ? "single" : "multiple",
 					data: newData,
-				},
-			})
-		);
+				}),
+				cipherKey
+			);
+			return pubnub.publish({
+				channel,
+				message,
+			});
+		});
 		console.debug(`Posted write for channel '${channel}'`);
 	} catch (error) {
 		console.error("Failed to post write for channel '%s' due to error", channel, error);
@@ -123,7 +127,7 @@ export async function revokePubNubToken(token: string, uid: string): Promise<voi
  */
 async function pubnubForUser<T>(
 	userOrUid: string | User,
-	cb: (pubnub: PubNub) => T | Promise<T>
+	cb: (pubnub: PubNub, cipherKey: string) => T | Promise<T>
 ): Promise<T> {
 	const user = typeof userOrUid === "string" ? await userWithUid(userOrUid) : userOrUid;
 	if (!user)
@@ -137,13 +141,12 @@ async function pubnubForUser<T>(
 		secretKey: requireEnv("PUBNUB_SECRET_KEY"), // only used on the server
 		publishKey: requireEnv("PUBNUB_PUBLISH_KEY"), // shared by client and server
 		subscribeKey: requireEnv("PUBNUB_SUBSCRIBE_KEY"), // shared by client and server
-		cipherKey, // shared by client and server, only for this user
 		uuid: "server", // clients shouldn't use this UUID
 		ssl: true,
 	});
 
 	try {
-		return await cb(pubnub);
+		return await cb(pubnub, cipherKey);
 	} finally {
 		pubnub.stop();
 	}
