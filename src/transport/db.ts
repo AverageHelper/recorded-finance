@@ -71,6 +71,7 @@ export class AccountableDB {
 				uuid: user.uid,
 				ssl: true,
 				restore: false, // cache subscribed channels, and re-subscribe in the event of network failure
+				logVerbosity: true,
 			});
 			this.#pubnub.setToken(pubnubToken);
 		}

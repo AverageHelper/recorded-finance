@@ -398,11 +398,51 @@ export function onSnapshot<T>(
 				}
 			},
 			status(event) {
-				console.debug(
-					`[onSnapshot] Received status category '${
-						event.category
-					}' that affects channel(s) ${JSON.stringify(event.affectedChannels)}`
-				);
+				// See https://www.pubnub.com/docs/sdks/javascript/status-events
+				switch (event.category) {
+					case "PNNetworkUpCategory":
+						console.debug(`[onSnapshot] PubNub says the network is up.`);
+						break;
+					case "PNNetworkDownCategory":
+						console.debug(`[onSnapshot] PubNub says the network is down.`);
+						break;
+					case "PNNetworkIssuesCategory":
+						console.debug(`[onSnapshot] PubNub failed to subscribe due to network issues.`);
+						break;
+					case "PNReconnectedCategory":
+						console.debug(`[onSnapshot] PubNub reconnected.`);
+						break;
+					case "PNConnectedCategory":
+						console.debug(
+							`[onSnapshot] PubNub connected with new channels: ${JSON.stringify(
+								event.subscribedChannels
+							)}`
+						);
+						break;
+					case "PNAccessDeniedCategory":
+						console.debug(
+							`[onSnapshot] PubNub did not permit connecting to channel. Check Access Manager configuration for user tokens.`
+						);
+						break;
+					case "PNMalformedResponseCategory":
+						console.debug(`[onSnapshot] PubNub crashed trying to parse JSON.`);
+						break;
+					case "PNBadRequestCategory":
+						console.debug(`[onSnapshot] PubNub request was malformed.`);
+						break;
+					case "PNDecryptionErrorCategory":
+						console.debug(`[onSnapshot] PubNub message decryption failed.`);
+						break;
+					case "PNTimeoutCategory":
+						console.debug(`[onSnapshot] Timed out trying to connect to PubNub.`);
+						break;
+					default:
+						console.debug(
+							`[onSnapshot] Received a non-200 response code from PubNub for operation '${
+								event.operation
+							}' that affects channel(s) ${JSON.stringify(event.affectedChannels)}`
+						);
+				}
 			},
 		};
 
@@ -412,21 +452,8 @@ export function onSnapshot<T>(
 			pubnub.unsubscribe({ channels: [channel] });
 		};
 
-		try {
-			pubnub.subscribe({ channels: [channel] });
-			pubnub.addListener(listener);
-		} catch (error) {
-			console.error(
-				`[onSnapshot] Failed to subscribe to channel '${channel}' due to error:`,
-				error
-			);
-			if (error instanceof Error) {
-				onErrorCallback(error);
-			} else {
-				onErrorCallback(new Error(JSON.stringify(error)));
-			}
-			return unsubscribe;
-		}
+		pubnub.subscribe({ channels: [channel] });
+		pubnub.addListener(listener);
 
 		// Run an initial fetch, just like Express used to, since the Vercel back-end doesn't do that for us
 		switch (queryOrReference.type) {
