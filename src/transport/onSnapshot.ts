@@ -381,6 +381,7 @@ export function onSnapshot<T>(
 				}
 				try {
 					assert(event.message, watcherData);
+					console.debug(`[onSnapshot] Received snapshot from channel '${channel}'`);
 					handleData(event.message);
 				} catch (error) {
 					let message: string;
@@ -398,9 +399,9 @@ export function onSnapshot<T>(
 			},
 			status(event) {
 				console.debug(
-					`Received status category '${event.category}' that affects channel(s) '${JSON.stringify(
-						event.affectedChannels
-					)}'`
+					`[onSnapshot] Received status category '${
+						event.category
+					}' that affects channel(s) '${JSON.stringify(event.affectedChannels)}'`
 				);
 			},
 		};
@@ -420,7 +421,7 @@ export function onSnapshot<T>(
 					getDocs(queryOrReference)
 						// eslint-disable-next-line promise/prefer-await-to-then
 						.then(snap => {
-							console.debug(`Received snapshot from channel '${channel}'`);
+							console.debug(`[onSnapshot] Received initial snapshot from channel '${channel}'`);
 							const data = snap.docs.map(doc => ({ ...doc.data(), _id: doc.id }));
 							handleData({ data });
 						}),
@@ -433,7 +434,7 @@ export function onSnapshot<T>(
 					getDoc(queryOrReference)
 						// eslint-disable-next-line promise/prefer-await-to-then
 						.then(snap => {
-							console.debug(`Received snapshot from channel '${channel}'`);
+							console.debug(`[onSnapshot] Received initial snapshot from channel '${channel}'`);
 							const data = snap.data() ?? null;
 							handleData({ data: { ...data, _id: snap.id } });
 						}),
