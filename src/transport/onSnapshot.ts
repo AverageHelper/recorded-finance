@@ -401,20 +401,20 @@ export function onSnapshot<T>(
 				console.debug(
 					`[onSnapshot] Received status category '${
 						event.category
-					}' that affects channel(s) '${JSON.stringify(event.affectedChannels)}'`
+					}' that affects channel(s) ${JSON.stringify(event.affectedChannels)}`
 				);
 			},
 		};
 
 		const unsubscribe = (): void => {
 			console.debug(`[onSnapshot] Unsubscribing from channel '${channel}'`);
-			pubnub.unsubscribe({ channels: [channel] });
 			pubnub.removeListener(listener);
+			pubnub.unsubscribe({ channels: [channel] });
 		};
 
 		try {
-			pubnub.addListener(listener);
 			pubnub.subscribe({ channels: [channel] });
+			pubnub.addListener(listener);
 		} catch (error) {
 			console.error(
 				`[onSnapshot] Failed to subscribe to channel '${channel}' due to error:`,
