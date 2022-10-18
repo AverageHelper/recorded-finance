@@ -399,7 +399,6 @@ export function onSnapshot<T>(
 				let data: unknown;
 				try {
 					const rawData: unknown = pubnub.decrypt(event.message as string | object, cipherKey);
-					if (typeof rawData !== "string") throw new TypeError("Raw data was not a string.");
 					if (typeof rawData === "string") {
 						data = JSON.parse(rawData) as unknown;
 					} else {
