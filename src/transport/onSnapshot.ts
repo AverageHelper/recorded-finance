@@ -4,7 +4,6 @@ import type { Infer } from "superstruct";
 import type { ListenerParameters } from "pubnub";
 import { documentData } from "./schemas.js";
 import { AccountableError, UnexpectedResponseError, UnreachableCaseError } from "./errors/index.js";
-import { array, enums, is, nonempty, nullable, string, type as object, union } from "superstruct";
 import { collection, doc as docRef, getDoc, getDocs } from "./db.js";
 import { databaseCollection, databaseDocument } from "./api-types/index.js";
 import { isArray } from "../helpers/isArray.js";
@@ -12,6 +11,18 @@ import { isString } from "../helpers/isString.js";
 import { t } from "../i18n.js";
 import { WebSocketCode } from "./websockets/WebSocketCode.js";
 import { wsFactory } from "./websockets/websockets.js";
+import {
+	array,
+	assert,
+	enums,
+	is,
+	nonempty,
+	nullable,
+	string,
+	StructError,
+	type as object,
+	union,
+} from "superstruct";
 
 export class DocumentSnapshot<T = DocumentData> {
 	#data: T | null;
@@ -362,16 +373,34 @@ export function onSnapshot<T>(
 		console.debug(`[onSnapshot] Subscribing to channel '${channel}'`);
 		const listener: ListenerParameters = {
 			message(event) {
-				if (event.channel !== channel) return;
-				if (is(event.message, watcherData)) {
+				if (event.channel !== channel) {
+					console.debug(
+						`[onSnapshot] Skipping message from channel '${event.channel}'; it doesn't match expected channel '${channel}'`
+					);
+					return;
+				}
+				try {
+					assert(event.message, watcherData);
 					handleData(event.message);
+				} catch (error) {
+					let message: string;
+					if (error instanceof StructError) {
+						message = error.message;
+					} else if (error instanceof Error) {
+						message = error.message;
+					} else if (typeof error === "string") {
+						message = error;
+					} else {
+						message = JSON.stringify(error);
+					}
+					console.debug(`[onSnapshot] Skipping message for channel '${channel}'; ${message}`);
 				}
 			},
 			status(event) {
-				// FIXME: The types disagree about `affectedChannels`, but a 403 makes it `undefined`
-				if (event.affectedChannels?.includes(channel) !== true) return;
 				console.debug(
-					`Received status category '${event.category}' for watcher at channel '${channel}'`
+					`Received status category '${event.category}' that affects channel(s) '${JSON.stringify(
+						event.affectedChannels
+					)}'`
 				);
 			},
 		};
