@@ -57,7 +57,6 @@ export class AccountableDB {
 		this.#currentUser = user;
 
 		const subscribeKey = import.meta.env.VITE_PUBNUB_SUBSCRIBE_KEY;
-		const publishKey = import.meta.env.VITE_PUBNUB_PUBLISH_KEY;
 		if (subscribeKey !== undefined && subscribeKey) {
 			if (user.pubnubCipherKey === null) throw new TypeError(t("error.cryption.missing-pek"));
 
@@ -66,7 +65,6 @@ export class AccountableDB {
 			// This should be the only PubNub instance for this database
 			this.#pubnub = new PubNub({
 				subscribeKey,
-				publishKey,
 				userId: user.uid,
 				ssl: true,
 				restore: false, // cache subscribed channels, and re-subscribe in the event of network failure

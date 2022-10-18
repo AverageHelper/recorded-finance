@@ -15,7 +15,6 @@ export default defineConfig({
 		env(
 			{
 				VITE_ACCOUNTABLE_SERVER_URL: null, // optional
-				VITE_PUBNUB_PUBLISH_KEY: null, // optional
 				VITE_PUBNUB_SUBSCRIBE_KEY: null, // optional
 				VITE_ENABLE_LOGIN: "true",
 				VITE_ENABLE_SIGNUP: "false",

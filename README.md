@@ -61,9 +61,6 @@ VITE_ENABLE_LOGIN=true
 VITE_ENABLE_SIGNUP=false
 
 # Optional if the back-end runs on Express, required with Vercel
-VITE_PUBNUB_PUBLISH_KEY={your publish key from PubNub}
-
-# Optional if the back-end runs on Express, required with Vercel
 VITE_PUBNUB_SUBSCRIBE_KEY={your subscribe key from PubNub}
 ```
 
