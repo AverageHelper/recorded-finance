@@ -1,6 +1,6 @@
 import type { CorsOptions } from "cors";
-import { env } from "./environment";
 import { OriginError } from "./errors/OriginError";
+import { requireEnv } from "./environment";
 import { URL } from "node:url";
 import _cors from "cors";
 
@@ -12,14 +12,12 @@ allowedOriginHostnames.add("127.0.0.1");
 allowedOriginHostnames.add("::1");
 
 // Add configured host to list of allowed origins
-const configuredHostUrl = env("HOST") ?? null;
-if (configuredHostUrl !== null) {
-	try {
-		const { hostname } = new URL(configuredHostUrl);
-		allowedOriginHostnames.add(hostname);
-	} catch {
-		process.stderr.write(`Value for env key HOST is not a valid URL: '${configuredHostUrl}'/n`);
-	}
+const configuredHostUrl = requireEnv("HOST");
+try {
+	const { hostname } = new URL(configuredHostUrl);
+	allowedOriginHostnames.add(hostname);
+} catch {
+	process.stderr.write(`Value for env key HOST is not a valid URL: '${configuredHostUrl}'/n`);
 }
 
 process.stdout.write(

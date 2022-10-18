@@ -1,8 +1,8 @@
 import { assertMethod } from "./assertMethod";
 import { BadMethodError } from "../errors/BadMethodError";
-import { env } from "../environment";
 import { handleErrors } from "../handleErrors";
 import { OriginError } from "../errors/OriginError";
+import { requireEnv } from "../environment";
 import { respondError, respondOk } from "../responses";
 import { URL } from "node:url";
 
@@ -82,19 +82,15 @@ allowedOriginHostnames.add("127.0.0.1");
 allowedOriginHostnames.add("::1");
 
 // Add configured host to list of allowed origins
-let configuredHostUrl = env("VERCEL_URL") ?? env("HOST") ?? null;
-if (configuredHostUrl !== null) {
-	if (!configuredHostUrl.startsWith("http")) {
-		configuredHostUrl = `https://${configuredHostUrl}`;
-	}
-	try {
-		const { hostname } = new URL(configuredHostUrl);
-		allowedOriginHostnames.add(hostname);
-	} catch {
-		console.error(
-			`Value for env key HOST or VERCEL_URL is not a valid URL: '${configuredHostUrl}'`
-		);
-	}
+let configuredHostUrl = requireEnv("HOST");
+if (!configuredHostUrl.startsWith("http")) {
+	configuredHostUrl = `https://${configuredHostUrl}`;
+}
+try {
+	const { hostname } = new URL(configuredHostUrl);
+	allowedOriginHostnames.add(hostname);
+} catch {
+	console.error(`Value for env key HOST is not a valid URL: '${configuredHostUrl}'`);
 }
 
 console.debug(`allowedOriginHostnames: ${JSON.stringify(Array.from(allowedOriginHostnames))}`);

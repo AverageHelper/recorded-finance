@@ -7,8 +7,7 @@ export type EnvKey =
 	| "MAX_USERS"
 	| "PUBNUB_PUBLISH_KEY"
 	| "PUBNUB_SUBSCRIBE_KEY"
-	| "PUBNUB_SECRET_KEY"
-	| "VERCEL_URL";
+	| "PUBNUB_SECRET_KEY";
 
 /**
  * Retrieves an environment value for the given key, or `undefined` if none was set.
