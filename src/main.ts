@@ -1,3 +1,4 @@
+import "./polyfills";
 import App from "./App.svelte";
 
 // Remove the fallback element. This won't happen if JS is disabled.
