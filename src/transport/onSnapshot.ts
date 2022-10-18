@@ -440,7 +440,11 @@ export function onSnapshot<T>(
 						console.debug(
 							`[onSnapshot] Received a non-200 response code from PubNub for operation '${
 								event.operation
-							}' that affects channel(s) ${JSON.stringify(event.affectedChannels)}`
+							}' that affects channel(s) ${JSON.stringify(
+								event.affectedChannels
+							)} and groups ${JSON.stringify(
+								event.affectedChannelGroups
+							)}. Subbed channels: ${JSON.stringify(event.subscribedChannels)}`
 						);
 				}
 			},
