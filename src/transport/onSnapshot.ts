@@ -385,6 +385,13 @@ export function onSnapshot<T>(
 					);
 					return;
 				}
+				const serverPublisher = "server";
+				if (event.publisher !== serverPublisher) {
+					console.debug(
+						`[onSnapshot] Skipping message from publisher '${event.publisher}'; it doesn't match expected publisher '${serverPublisher}'`
+					);
+					return;
+				}
 
 				const cipherKey = db.currentUser?.pubnubCipherKey ?? null;
 				if (cipherKey === null) throw new TypeError(t("error.cryption.missing-pek"));
