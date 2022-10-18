@@ -363,6 +363,12 @@ export function onSnapshot<T>(
 		}
 	}
 
+	const watcherData = object({
+		message: nonempty(string()),
+		dataType: enums(["single", "multiple"] as const),
+		data: nullable(union([array(documentData), documentData])),
+	});
+
 	const pubnub = db.pubnub;
 	if (pubnub) {
 		// Vercel doesn't support direct WebSockets. Use PubNub instead
@@ -506,12 +512,6 @@ export function onSnapshot<T>(
 			);
 			break;
 	}
-
-	const watcherData = object({
-		message: nonempty(string()),
-		dataType: enums(["single", "multiple"] as const),
-		data: nullable(union([array(documentData), documentData])),
-	});
 
 	type WatcherData = Infer<typeof watcherData>;
 
