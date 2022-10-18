@@ -81,7 +81,10 @@ export async function newAccessTokens(
  */
 export function setSession(req: APIRequest, res: APIResponse, value: string | null): void {
 	const cookies = new Cookies(req, res, { keys, secure: true });
-	let domain = env("VERCEL_URL") ?? requireEnv("HOST");
+	let domain = env("HOST") ?? env("VERCEL_URL") ?? "";
+	if (!domain) {
+		throw new TypeError("Missing value for environment keys HOST and VERCEL_URL");
+	}
 
 	// Strip protocol
 	if (domain.startsWith("https://")) {

@@ -42,7 +42,7 @@ DATABASE_URL={your MySQL connection string}
 # required, example: "mysql://....connect.psdb.cloud/..."
 
 HOST={your frontend hostname, with protocol}
-# required on Express, ignored on Vercel, example: HOST=https://example.com
+# required, example: HOST=https://example.com
 
 MAX_USERS={the limit to the number of users allowed to register new accounts}
 # optional, defaults to 5
