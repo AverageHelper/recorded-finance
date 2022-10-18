@@ -12,7 +12,7 @@ allowedOriginHostnames.add("127.0.0.1");
 allowedOriginHostnames.add("::1");
 
 // Add configured host to list of allowed origins
-const configuredHostUrl = env("HOST") ?? null;
+const configuredHostUrl = env("HOST") ?? env("VERCEL_URL") ?? null;
 if (configuredHostUrl !== null) {
 	try {
 		const { hostname } = new URL(configuredHostUrl);

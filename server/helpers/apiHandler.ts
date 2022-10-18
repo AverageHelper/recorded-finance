@@ -82,7 +82,7 @@ allowedOriginHostnames.add("127.0.0.1");
 allowedOriginHostnames.add("::1");
 
 // Add configured host to list of allowed origins
-let configuredHostUrl = env("HOST") ?? null;
+let configuredHostUrl = env("HOST") ?? env("VERCEL_URL") ?? null;
 if (configuredHostUrl !== null) {
 	if (!configuredHostUrl.startsWith("http")) {
 		configuredHostUrl = `https://${configuredHostUrl}`;

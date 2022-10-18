@@ -1,11 +1,11 @@
 import type { JwtPayload, MFAOption, User } from "../database/schemas";
 import { addJwtToDatabase } from "../database/writes";
 import { assertJwtPayload } from "../database/schemas";
+import { env, requireEnv } from "../environment";
 import { generateSecureToken } from "./generators";
 import { jwtExistsInDatabase } from "../database/reads";
 import { newPubNubTokenForUser, revokePubNubToken } from "./pubnub";
 import { ONE_HOUR } from "../constants/time";
-import { requireEnv } from "../environment";
 import Cookies from "cookies";
 import jwt from "jsonwebtoken";
 import Keygrip from "keygrip";
@@ -81,7 +81,10 @@ export async function newAccessTokens(
  */
 export function setSession(req: APIRequest, res: APIResponse, value: string | null): void {
 	const cookies = new Cookies(req, res, { keys, secure: true });
-	let domain = requireEnv("HOST");
+	let domain = env("HOST") ?? env("VERCEL_URL") ?? "";
+	if (!domain) {
+		throw new TypeError("Missing value for environment keys HOST and VERCEL_URL");
+	}
 
 	// Strip protocol
 	if (domain.startsWith("https://")) {
