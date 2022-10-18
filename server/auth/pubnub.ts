@@ -40,6 +40,7 @@ export async function publishWriteForRef(
 					message: "Here's your data",
 					dataType: "parent" in ref ? "single" : "multiple",
 					data: newData,
+					timestamp: Date.now(), // so the ciphertext is different each time
 				}),
 				cipherKey
 			);
