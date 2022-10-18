@@ -141,7 +141,7 @@ async function pubnubForUser<T>(
 		secretKey: requireEnv("PUBNUB_SECRET_KEY"), // only used on the server
 		publishKey: requireEnv("PUBNUB_PUBLISH_KEY"), // shared by client and server
 		subscribeKey: requireEnv("PUBNUB_SUBSCRIBE_KEY"), // shared by client and server
-		uuid: "server", // clients shouldn't use this UUID
+		userId: "server", // clients shouldn't use this UUID
 		ssl: true,
 	});
 
