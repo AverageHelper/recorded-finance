@@ -1,9 +1,10 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type { Infer, Struct, StructError } from "superstruct";
 import type { Prisma } from "@prisma/client";
-import { UnreachableCaseError } from "../errors/UnreachableCaseError.js";
+import { UnreachableCaseError } from "../errors/UnreachableCaseError";
 import {
 	array,
+	assert,
 	enums,
 	intersection,
 	is,
@@ -80,12 +81,15 @@ export const jwtPayload = type({
 	 * has 2FA auth enabled.
 	 */
 	validatedWithMfa: array(enums(mfaOptions)),
+
+	/** The token used to authenticate PubNub subscriptions. */
+	pubnubToken: nonemptyLargeString,
 });
 
 export type JwtPayload = Infer<typeof jwtPayload>;
 
-export function isJwtPayload(tbd: unknown): tbd is JwtPayload {
-	return isValidForSchema(tbd, jwtPayload);
+export function assertJwtPayload(tbd: unknown): asserts tbd is JwtPayload {
+	return assert(tbd, jwtPayload);
 }
 
 export const user = object({
@@ -136,6 +140,11 @@ export const user = object({
 	 * their additional auth.
 	 */
 	totpSeed: optional(nullable(nonemptyString)),
+
+	/**
+	 * The AES-256 cipher key used by PubNub for message-level encryption.
+	 */
+	pubnubCipherKey: nonemptyString,
 });
 export type User = Infer<typeof user>;
 

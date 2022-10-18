@@ -1,4 +1,4 @@
-import { InternalError } from "./InternalError.js";
+import { InternalError } from "./InternalError";
 
 export class NotImplementedError extends InternalError {
 	constructor(nameOfFeature: string = "That feature") {

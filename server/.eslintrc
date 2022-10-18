@@ -11,17 +11,20 @@
 		"plugin:jest/recommended",
 		"plugin:@typescript-eslint/recommended",
 		"plugin:@typescript-eslint/recommended-requiring-type-checking",
+		"plugin:import/recommended",
 		"plugin:prettier/recommended"
 	],
-	"plugins": ["prettier", "unicorn", "promise", "deprecation", "@typescript-eslint"],
+	"plugins": ["prettier", "unicorn", "promise", "deprecation", "@typescript-eslint", "import"],
 	"parser": "@typescript-eslint/parser",
 	"parserOptions": {
 		"project": "./tsconfig.json",
 		"tsconfigRootDir": "."
 	},
 	"rules": {
-		"deprecation/deprecation": "warn",
 		"prettier/prettier": "warn",
+		"deprecation/deprecation": "warn",
+		"import/extensions": ["error", "never"], // Vercel won't resolve extensions correctly in TS
+		"import/no-unresolved": "off", // TS handles this
 		"no-constant-condition": "warn",
 		"no-console": ["warn", { "allow": ["error", "warn", "debug"] }],
 		"no-dupe-else-if": "warn",

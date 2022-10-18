@@ -3,6 +3,7 @@
 
 generator client {
   provider        = "prisma-client-js"
+  binaryTargets   = ["native", "rhel-openssl-1.0.x"]
   previewFeatures = ["referentialIntegrity"]
 }
 
@@ -24,6 +25,7 @@ model User {
   requiredAddtlAuth Json /// Array of MFAValidation strings
   mfaRecoverySeed   String?
   totpSeed          String?
+  pubnubCipherKey   String? /// Only null if not been set yet. Upsert with a new value if empty
   keys              UserKeys?
   data              DataItem[]
   fileData          FileData[]

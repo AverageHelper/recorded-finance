@@ -1,1 +1,1 @@
-export * from "./simplifiedByteCount.js";
+export * from "./simplifiedByteCount";

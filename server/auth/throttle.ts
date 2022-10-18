@@ -1,7 +1,7 @@
 import type { RequestHandler } from "express";
-import { asyncWrapper } from "../asyncWrapper.js";
+import { asyncWrapper } from "../asyncWrapper";
 import { RateLimiterMemory, RateLimiterRes } from "rate-limiter-flexible";
-import { ThrottledError } from "../errors/index.js";
+import { ThrottledError } from "../errors/ThrottledError";
 
 /**
  * // TODO: Better throttling
@@ -21,11 +21,7 @@ const rateLimiter = new RateLimiterMemory({ points, duration, blockDuration });
  * Returns middleware that prevents an IP address from sending more than
  * 10 requests in 10 minutes.
  */
-export function throttle<
-	P = ParamsDictionary,
-	ResBody = unknown,
-	ReqBody = unknown
->(): RequestHandler<P, ResBody, ReqBody> {
+export function throttle(): RequestHandler {
 	return asyncWrapper(async (req, res, next) => {
 		const remoteIp = req.ip;
 		try {

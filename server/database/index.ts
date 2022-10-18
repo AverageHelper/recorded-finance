@@ -1,19 +1,13 @@
-import type { AnyData, IdentifiedDataItem } from "./schemas.js";
-import type { CollectionReference, DocumentReference } from "./references.js";
-import type { DocUpdate } from "./io.js";
-import {
-	deleteDbCollection,
-	deleteDbDoc,
-	deleteDbDocs,
-	fetchDbCollection,
-	fetchDbDoc,
-	fetchDbDocs,
-	upsertDbDocs,
-} from "./io.js";
+import type { AnyData, IdentifiedDataItem } from "./schemas";
+import type { CollectionReference, DocumentReference } from "./references";
+import type { DocUpdate } from "./writes";
+import { deleteDbCollection, deleteDbDoc, deleteDbDocs, upsertDbDocs } from "./writes";
+import { fetchDbCollection, fetchDbDoc, fetchDbDocs } from "./reads";
+import { publishWriteForRef } from "../auth/pubnub";
 
 // Since all data is encrypted on the client, we only
 // need to bother about persistent I/O. We leave path-
-// level access-guarding to the Express frontend.
+// level access guards to the API endpoints.
 
 export type Unsubscribe = () => void;
 
@@ -62,12 +56,16 @@ export function watchUpdatesToDocument(
 			}
 		})
 		.catch((error: unknown) => {
-			console.error(error);
+			console.error(`Error on initial data load from document watcher at path ${ref.path}:`, error);
+			console.debug(
+				`Removing listener '${handle.id}' for document ${ref.path} due to error on initial load`
+			);
+			documentWatchers.delete(handle.id);
 		});
 	/* eslint-enable promise/prefer-await-to-then */
 
 	return (): void => {
-		console.debug(`Removing listener ${handle.id} for document ${ref.path}`);
+		console.debug(`Removing listener '${handle.id}' for document ${ref.path}`);
 		documentWatchers.delete(handle.id);
 	};
 }
@@ -86,12 +84,19 @@ export function watchUpdatesToCollection(
 			await informWatchersForCollection(ref, data);
 		})
 		.catch((error: unknown) => {
-			console.error(error);
+			console.error(
+				`Error on initial data load from collection watcher at path ${ref.path}:`,
+				error
+			);
+			console.debug(
+				`Removing listener '${handle.id}' for collection ${ref.path} due to error on initial load`
+			);
+			collectionWatchers.delete(handle.id);
 		});
 	/* eslint-enable promise/prefer-await-to-then */
 
 	return (): void => {
-		console.debug(`Removing listener ${handle.id} for collection ${ref.path}`);
+		console.debug(`Removing listener '${handle.id}' for collection ${ref.path}`);
 		collectionWatchers.delete(handle.id);
 	};
 }
@@ -105,18 +110,19 @@ async function informWatchersForDocument(
 	);
 	const collectionListeners = Array.from(collectionWatchers.values()) //
 		.filter(w => w.id === ref.parent.id);
-	if (docListeners.length + collectionListeners.length === 0) return;
 
-	console.debug(
-		`Informing ${
-			docListeners.length + collectionListeners.length
-		} listener(s) about changes to document ${ref.path}`
-	);
-	await Promise.all(docListeners.map(l => l.onChange(newItem)));
-	if (collectionListeners.length > 0) {
-		const newCollection = await fetchDbCollection(ref.parent);
-		await Promise.all(collectionListeners.map(l => l.onChange(newCollection)));
+	if (docListeners.length + collectionListeners.length > 0) {
+		console.debug(
+			`Informing ${
+				docListeners.length + collectionListeners.length
+			} listener(s) about changes to document ${ref.path}`
+		);
 	}
+	await Promise.all(docListeners.map(l => l.onChange(newItem)));
+	await publishWriteForRef(ref, newItem);
+	const newCollection = await fetchDbCollection(ref.parent);
+	await Promise.all(collectionListeners.map(l => l.onChange(newCollection)));
+	await publishWriteForRef(ref.parent, newCollection);
 }
 
 async function informWatchersForCollection(
@@ -125,17 +131,17 @@ async function informWatchersForCollection(
 ): Promise<void> {
 	const listeners = Array.from(collectionWatchers.values()) //
 		.filter(w => w.id === ref.id);
-	if (listeners.length === 0) return;
 
-	console.debug(
-		`Informing ${listeners.length} listener(s) about changes to collection ${ref.path}`
-	);
+	if (listeners.length > 0) {
+		console.debug(
+			`Informing ${listeners.length} listener(s) about changes to collection ${ref.path}`
+		);
+	}
 	await Promise.all(listeners.map(l => l.onChange(newItems)));
+	await publishWriteForRef(ref, newItems);
 }
 
 export async function deleteDocuments(refs: NonEmptyArray<DocumentReference>): Promise<void> {
-	// TODO: Assert no more than 500 docs (so we aren't loading up EVERYTHING in one go)
-
 	// Fetch the data
 	const before = await fetchDbDocs(refs);
 
@@ -172,8 +178,6 @@ export async function deleteCollection(ref: CollectionReference): Promise<void> 
 }
 
 export async function setDocuments(updates: NonEmptyArray<DocUpdate>): Promise<void> {
-	// TODO: Assert no more than 500 docs (so we aren't loading up EVERYTHING in one go)
-
 	await upsertDbDocs(updates);
 
 	// Tell listeners what happened
@@ -193,8 +197,8 @@ export async function setDocument(ref: DocumentReference, data: AnyData): Promis
 	await setDocuments([{ ref, data }]);
 }
 
-export * from "./references.js";
-export * from "./schemas.js";
+export * from "./references";
+export * from "./schemas";
 
 export { fetchDbDoc as getDocument };
 export { fetchDbCollection as getCollection };

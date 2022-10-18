@@ -1,13 +1,14 @@
 import type { JsonWebTokenError } from "jsonwebtoken";
-import type { MFAOption, User } from "../database/schemas.js";
-import type { Request, RequestHandler } from "express";
-import { assertSchema, jwtPayload } from "../database/schemas.js";
-import { asyncWrapper } from "../asyncWrapper.js";
-import { BadRequestError, NotFoundError, UnauthorizedError } from "../errors/index.js";
-import { blacklistHasJwt, jwtTokenFromRequest, verifyJwt } from "./jwt.js";
-import { Context } from "./Context.js";
+import type { MFAOption, User } from "../database/schemas";
+import { assertSchema, jwtPayload } from "../database/schemas";
+import { BadRequestError } from "../errors/BadRequestError";
+import { blacklistHasJwt, jwtFromRequest, verifyJwt } from "./jwt";
+import { NotFoundError } from "../errors/NotFoundError";
+import { pathSegments } from "../helpers/pathSegments";
 import { StructError } from "superstruct";
-import { userWithUid } from "../database/io.js";
+import { UnauthorizedError } from "../errors/UnauthorizedError";
+import { userWithUid } from "../database/reads";
+import safeCompare from "tsscmp";
 
 interface Metadata {
 	/** The user's auth data. */
@@ -20,10 +21,8 @@ interface Metadata {
 /**
  * Retrieves user metadata from the request headers and session cookies in the request.
  */
-export async function metadataFromRequest(
-	req: Pick<Request, "session" | "headers">
-): Promise<Metadata> {
-	const token = jwtTokenFromRequest(req);
+export async function metadataFromRequest(req: APIRequest, res: APIResponse): Promise<Metadata> {
+	const token = jwtFromRequest(req, res);
 	if (token === null) {
 		console.debug("Request has no JWT");
 		throw new UnauthorizedError("missing-token");
@@ -61,18 +60,27 @@ export async function metadataFromRequest(
 	return { user, validatedWithMfa };
 }
 
-/** A handler that makes sure the calling user is authorized to access the requested resource. */
-export const requireAuth: RequestHandler = asyncWrapper(async (req, res, next) => {
-	const metadata = await metadataFromRequest(req);
-	const uid = metadata.user.uid;
+/** Asserts that the calling user is authorized to access the requested resource. */
+export async function requireAuth(
+	req: APIRequest,
+	res: APIResponse,
+	assertCallerIsOwner: boolean
+): Promise<User> {
+	const { user, validatedWithMfa } = await metadataFromRequest(req, res);
 
 	if (
-		metadata.user.requiredAddtlAuth?.includes("totp") === true && // req totp
-		!metadata.validatedWithMfa.includes("totp") // didn't use totp this session
+		user.requiredAddtlAuth?.includes("totp") === true && // req totp
+		!validatedWithMfa.includes("totp") // didn't use totp this session
 	) {
 		throw new UnauthorizedError("missing-token");
 	}
 
-	Context.bind(req, { uid }); // This reference drops when the request is done
-	next();
-});
+	if (assertCallerIsOwner) {
+		const { uid } = pathSegments(req, "uid");
+		if (!uid || !safeCompare(uid, user.uid)) {
+			throw new UnauthorizedError("not-owner");
+		}
+	}
+
+	return user;
+}

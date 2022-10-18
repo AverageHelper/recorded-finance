@@ -4,6 +4,7 @@ import { isArray } from "../helpers/isArray";
 import { isObject } from "../helpers/isObject";
 import {
 	array,
+	assert as assertSchema,
 	boolean,
 	define,
 	enums,
@@ -11,7 +12,6 @@ import {
 	nonempty,
 	nullable,
 	number,
-	object,
 	optional,
 	string,
 	type,
@@ -23,6 +23,10 @@ export type Primitive = Infer<typeof primitive>;
 
 export function isPrimitive(tbd: unknown): tbd is Primitive {
 	return is(tbd, primitive);
+}
+
+function isPrimitiveOrArray(tbd: unknown): tbd is Primitive | Array<Primitive> {
+	return is(tbd, union([primitive, array(primitive)]));
 }
 
 export type DocumentData = Record<string, Primitive>;
@@ -59,7 +63,7 @@ export function isRecord(tbd: unknown): tbd is Record<string, unknown> {
 
 export const documentData = define<DocumentData>(
 	"documentData",
-	value => isRecord(value) && Object.values(value).every(isPrimitive)
+	value => isRecord(value) && Object.values(value).every(isPrimitiveOrArray)
 );
 
 export const mfaValidation = enums(["totp"] as const);
@@ -72,7 +76,8 @@ const rawServerResponse = type({
 	version: optional(string()),
 	totalSpace: optional(number()),
 	usedSpace: optional(number()),
-	access_token: optional(nonempty(string())),
+	pubnub_token: optional(nonempty(string())),
+	pubnub_cipher_key: optional(nonempty(string())),
 	recovery_token: optional(nonempty(string())),
 	secret: optional(nonempty(string())),
 	account: optional(string()),
@@ -83,13 +88,13 @@ const rawServerResponse = type({
 	requiredAddtlAuth: optional(array(string())), // expects ["totp"] or empty, but don't crash if we get something else
 });
 
-export function isRawServerResponse(tbd: unknown): tbd is RawServerResponse {
-	return is(tbd, rawServerResponse);
+export function assertRawServerResponse(tbd: unknown): asserts tbd is RawServerResponse {
+	assertSchema(tbd, rawServerResponse);
 }
 
 export type RawServerResponse = Infer<typeof rawServerResponse>;
 
-const fileData = object({
+const fileData = type({
 	contents: string(),
 	_id: string(),
 });

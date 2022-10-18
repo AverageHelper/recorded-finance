@@ -1,5 +1,6 @@
 import { compare, genSalt, hash } from "bcryptjs";
 import { generateSecureToken as _generateSecureToken } from "n-digit-token";
+import { randomBytes } from "node:crypto";
 
 export { compare };
 
@@ -20,4 +21,11 @@ export async function generateSalt(): Promise<string> {
  */
 export async function generateHash(data: string, salt: string): Promise<string> {
 	return await hash(data, salt);
+}
+
+/**
+ * Generates a new 32-character key for PubNub's AES 256 message-level encryption.
+ */
+export async function generateAESCipherKey(): Promise<string> {
+	return await Promise.resolve(randomBytes(16).toString("hex"));
 }

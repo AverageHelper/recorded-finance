@@ -52,8 +52,9 @@
 
 	<ErrorNotice error={$accountsLoadError} />
 	{#if $accountsLoadError}
-		<ActionButton on:click={load}>
+		<ActionButton kind="bordered" on:click={load}>
 			<ReloadIcon />
+			Retry
 		</ActionButton>
 	{:else}
 		<List>

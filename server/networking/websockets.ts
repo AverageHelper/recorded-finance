@@ -1,12 +1,12 @@
-import type { Request } from "express";
+import type { Request as ExpressRequest } from "express";
 import type { Struct } from "superstruct";
-import type { ValueIteratorTypeGuard } from "../database/index.js";
+import type { ValueIteratorTypeGuard } from "../database";
 import type { WebsocketRequestHandler } from "express-ws";
 import type { WebSocket } from "ws";
-import { assertSchema, isObject } from "../database/schemas.js";
-import { isWebSocketCode, WebSocketCode } from "./WebSocketCode.js";
+import { assertSchema, isObject } from "../database/schemas";
+import { isWebSocketCode, WebSocketCode } from "./WebSocketCode";
 import { StructError } from "superstruct";
-import { WebSocketError } from "../errors/WebSocketError.js";
+import { WebSocketError } from "../errors/WebSocketError";
 
 /** The type that a type guard is checking. */
 type TypeFromGuard<G> = G extends ValueIteratorTypeGuard<unknown, infer T> ? T : never;
@@ -14,6 +14,9 @@ type TypeFromGuard<G> = G extends ValueIteratorTypeGuard<unknown, infer T> ? T :
 type WebSocketMessages = Record<string, ValueIteratorTypeGuard<unknown, unknown>>;
 
 interface WebSocketUtils<T extends WebSocketMessages> {
+	/** The request that started the connection. */
+	req: ExpressRequest;
+
 	/**
 	 * Registers a function to be called when the connection closes.
 	 * Use this as an opportunity to clean up session-dependent resources.
@@ -39,12 +42,14 @@ interface WebSocketUtils<T extends WebSocketMessages> {
 /**
  * Constructs a type-safe websocket interface.
  *
+ * @param req The request that started the connection.
  * @param ws The {@link WebSocket} instance by which to send and receive messages.
  * @param interactions The types of interactions expected to be sent over the connection.
  *
  * @returns An object with utility functions to use to interact with the client.
  */
 export function wsFactory<T extends WebSocketMessages>(
+	req: ExpressRequest,
 	ws: WebSocket,
 	interactions: T
 ): WebSocketUtils<T> {
@@ -114,15 +119,25 @@ export function wsFactory<T extends WebSocketMessages>(
 
 	// Application-layer communications
 	return {
+		req,
+
 		onClose(cb): void {
 			ws.on("close", (code, reason) => {
 				if (isWebSocketCode(code)) {
 					cb(code, reason.toString("utf-8"));
 				} else {
-					cb(
-						WebSocketCode.UNEXPECTED_CONDITION,
-						`Closed with reason "${reason.toString("utf-8")}" and unknown code ${code}`
-					);
+					const msg = reason.toString("utf-8");
+					if (msg) {
+						cb(
+							WebSocketCode.UNEXPECTED_CONDITION,
+							`Client closed the connection with reason "${msg}" and unknown code ${code}`
+						);
+					} else {
+						cb(
+							WebSocketCode.UNEXPECTED_CONDITION,
+							`Client closed the connection with unknown code ${code}`
+						);
+					}
 				}
 			});
 		},
@@ -139,7 +154,7 @@ export function wsFactory<T extends WebSocketMessages>(
 					if (error instanceof WebSocketError) {
 						close(ws, error.code, error.reason);
 					} else {
-						console.error(error);
+						console.error("Unknown WebSocket message error:", error);
 						close(ws, WebSocketCode.UNEXPECTED_CONDITION, "Internal error");
 					}
 				}
@@ -163,10 +178,10 @@ export function wsFactory<T extends WebSocketMessages>(
 export function ws<P, T extends WebSocketMessages>(
 	interactions: T,
 	params: Struct<P>,
-	start: (context: WebSocketUtils<T>, params: P) => void
+	start: (context: WebSocketUtils<T>, params: P) => void | Promise<void>
 ): WebsocketRequestHandler {
-	return function webSocket(ws: WebSocket, req: Request<Record<string, string>>): void {
-		const context = wsFactory(ws, interactions);
+	return function webSocket(ws, req, next): void {
+		const context = wsFactory(req, ws, interactions);
 
 		// Ensure valid input
 		try {
@@ -175,10 +190,11 @@ export function ws<P, T extends WebSocketMessages>(
 			if (error instanceof StructError) {
 				return context.close(WebSocketCode.VIOLATED_CONTRACT, error.message);
 			}
-			console.error(error);
+			console.error("Unknown error trying to validate WebSocket inputs:", error);
 			return context.close(WebSocketCode.UNEXPECTED_CONDITION, "Internal error");
 		}
 
-		start(context, req.params);
+		// eslint-disable-next-line promise/prefer-await-to-then, promise/no-callback-in-promise
+		Promise.resolve(start(context, req.params)).then(next).catch(next);
 	};
 }

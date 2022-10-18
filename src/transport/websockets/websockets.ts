@@ -99,10 +99,17 @@ export function wsFactory<T extends WebSocketMessages>(
 				if (isWebSocketCode(code)) {
 					cb(code, reason);
 				} else {
-					cb(
-						WebSocketCode.UNEXPECTED_CONDITION,
-						`Closed with reason "${reason}" and unknown code ${code}`
-					);
+					if (reason) {
+						cb(
+							WebSocketCode.UNEXPECTED_CONDITION,
+							`Server closed the connection with reason "${reason}" and unknown code ${code}`
+						);
+					} else {
+						cb(
+							WebSocketCode.UNEXPECTED_CONDITION,
+							`Server closed the connection with unknown code ${code}`
+						);
+					}
 				}
 			});
 		},

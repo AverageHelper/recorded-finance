@@ -58,9 +58,10 @@ export default defineConfig({
 		// "readable-stream" insist they're using them correctly.
 		// See https://github.com/nodejs/readable-stream/issues/280
 		// and https://github.com/nodejs/readable-stream/issues/348
+		const circularWhitelist = ["readable-stream"];
 		if (
 			warning.code === "CIRCULAR_DEPENDENCY" &&
-			warning.importer?.includes("readable-stream") === true // Required for "multer"
+			circularWhitelist.some(p => warning.importer?.includes(p) === true) // Required for "multer"
 		)
 			return;
 
@@ -73,6 +74,7 @@ export default defineConfig({
 		defaultHandler(warning);
 	},
 	// external: ["@prisma/client"], // FIXME: Prisma relies on __dirname, which only works in CJS. Mark as external to run ESM
+	external: ["pubnub"],
 	input: "./main.ts",
 	output: {
 		file: "dist/server.js",

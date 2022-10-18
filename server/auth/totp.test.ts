@@ -4,14 +4,14 @@ import { URL } from "node:url";
 import totpGenerator from "totp-generator";
 
 /* eslint-disable jest/no-mocks-import */
-import * as mockJwt from "./__mocks__/jwt.js";
+import * as mockJwt from "./__mocks__/jwt";
 /* eslint-enable jest/no-mocks-import */
 
 // See https://github.com/facebook/jest/issues/10025 on why `jest.mock` doesn't work under ESM
-jest.unstable_mockModule("./jwt.js", () => mockJwt);
+jest.unstable_mockModule("./jwt", () => mockJwt);
 
 const { base32Encode, generateSecret, generateTOTP, generateTOTPSecretURI, verifyTOTP } =
-	await import("./totp.js");
+	await import("./totp");
 
 function urlWithNewProtocol(old: URL, newProtocol: string): URL {
 	const afterProtocol = old.href.split(":")[1] as string;

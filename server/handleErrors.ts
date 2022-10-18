@@ -1,19 +1,33 @@
-import type { ErrorRequestHandler } from "express";
-import { InternalError } from "./errors/index.js";
-import { respondError, respondInternalError } from "./responses.js";
+import { InternalError } from "./errors/InternalError";
+import { respondError, respondInternalError } from "./responses";
 
-export const handleErrors: ErrorRequestHandler = (err: unknown, req, res, next) => {
-	if (res.headersSent) {
-		return next(err);
-	}
-	if (err instanceof InternalError) {
-		if (err.harmless) {
-			console.debug(`Sending response [${err.status} (${err.code}): ${err.message}]`);
-		} else {
-			console.error(err);
+export async function handleErrors(
+	req: APIRequest,
+	res: APIResponse,
+	cb: APIRequestHandler
+): Promise<void> {
+	try {
+		await cb(req, res);
+	} catch (error) {
+		if (res.headersSent) {
+			console.error("Handled error when headers were already sent:", error);
+			return; // Something was already sent, assume some other function sent the error and don't try anything
 		}
-		return respondError(res, err);
+		if (error instanceof InternalError) {
+			console.debug(`Sending response [${error.status} (${error.code}): ${error.message}]`);
+			if (!error.harmless) {
+				console.error("Non-harmless internal error:", error);
+			}
+			return respondError(res, error);
+		}
+
+		// These extra details may save us when the call stack is too deep for us to figure where this error came from:
+		console.error(
+			`Unknown internal error for %s request at %s:`,
+			req.method ?? "unknown",
+			req.url ?? "unknown URL",
+			error
+		);
+		return respondInternalError(res);
 	}
-	console.error(err);
-	return respondInternalError(res);
-};
+}

@@ -1,16 +1,28 @@
 import type { CollectionReference, DocumentReference, Query } from "./db.js";
 import type { DocumentData } from "./schemas.js";
 import type { Infer } from "superstruct";
+import type { ListenerParameters } from "pubnub";
 import { documentData } from "./schemas.js";
 import { AccountableError, UnexpectedResponseError, UnreachableCaseError } from "./errors/index.js";
-import { array, enums, is, nonempty, nullable, object, string, union } from "superstruct";
-import { collection, doc as docRef } from "./db.js";
+import { collection, doc as docRef, getDoc, getDocs } from "./db.js";
 import { databaseCollection, databaseDocument } from "./api-types/index.js";
 import { isArray } from "../helpers/isArray.js";
 import { isString } from "../helpers/isString.js";
 import { t } from "../i18n.js";
 import { WebSocketCode } from "./websockets/WebSocketCode.js";
 import { wsFactory } from "./websockets/websockets.js";
+import {
+	array,
+	assert,
+	enums,
+	is,
+	nonempty,
+	nullable,
+	string,
+	StructError,
+	type as object,
+	union,
+} from "superstruct";
 
 export class DocumentSnapshot<T = DocumentData> {
 	#data: T | null;
@@ -315,6 +327,199 @@ export function onSnapshot<T>(
 
 	if (!db.currentUser) throw new AccountableError("database/unauthenticated");
 
+	let previousSnap: QuerySnapshot<T> | null = null;
+	function handleData({ data }: Pick<WatcherData, "data">): void {
+		switch (type) {
+			case "collection": {
+				if (!data || !isArray(data))
+					throw new UnexpectedResponseError(t("error.ws.data-not-array"));
+				const collectionRef = collection(db, queryOrReference.id);
+				const snaps: Array<QueryDocumentSnapshot<T>> = data.map(doc => {
+					const id = doc["_id"];
+					if (!isString(id)) {
+						const err = new TypeError(t("error.server.id-not-string"));
+						onErrorCallback(err);
+						throw err;
+					}
+					const ref = docRef(collectionRef.db, collectionRef.id, id);
+					return new QueryDocumentSnapshot<T>(ref, doc as T);
+				});
+				previousSnap = new QuerySnapshot<T>(previousSnap ?? collectionRef, snaps);
+				(onNextCallback as QuerySnapshotCallback<T>)(previousSnap);
+				return;
+			}
+
+			case "document": {
+				if (isArray(data)) throw new UnexpectedResponseError(t("error.ws.data-is-array"));
+				const collectionRef = collection(db, queryOrReference.parent.id);
+				const ref = docRef(collectionRef.db, collectionRef.id, queryOrReference.id);
+				const snap = new QueryDocumentSnapshot<T>(ref, data as T | null);
+				(onNextCallback as DocumentSnapshotCallback<T>)(snap);
+				return;
+			}
+
+			default:
+				throw new UnreachableCaseError(type);
+		}
+	}
+
+	const watcherData = object({
+		message: nonempty(string()),
+		dataType: enums(["single", "multiple"] as const),
+		data: nullable(union([array(documentData), documentData])),
+	});
+
+	const pubnub = db.pubnub;
+	if (pubnub) {
+		// Vercel doesn't support direct WebSockets. Use PubNub instead
+		const channel =
+			type === "collection"
+				? `${db.currentUser.uid}/${queryOrReference.id}`
+				: `${db.currentUser.uid}/${queryOrReference.parent.id}/${queryOrReference.id}`;
+		console.debug(`[onSnapshot] Subscribing to channel '${channel}'`);
+		const listener: ListenerParameters = {
+			message(event) {
+				if (event.channel !== channel) {
+					console.debug(
+						`[onSnapshot] Skipping message from channel '${event.channel}'; it doesn't match expected channel '${channel}'`
+					);
+					return;
+				}
+				const serverPublisher = "server";
+				if (event.publisher !== serverPublisher) {
+					console.debug(
+						`[onSnapshot] Skipping message from publisher '${event.publisher}'; it doesn't match expected publisher '${serverPublisher}'`
+					);
+					return;
+				}
+
+				const cipherKey = db.currentUser?.pubnubCipherKey ?? null;
+				if (cipherKey === null) throw new TypeError(t("error.cryption.missing-pek"));
+
+				let data: unknown;
+				try {
+					const rawData: unknown = pubnub.decrypt(event.message as string | object, cipherKey);
+					if (typeof rawData === "string") {
+						data = JSON.parse(rawData) as unknown;
+					} else {
+						data = rawData;
+					}
+				} catch (error) {
+					console.error(`[onSnapshot] Failed to decrypt message:`, error);
+					return;
+				}
+				try {
+					assert(data, watcherData);
+					console.debug(`[onSnapshot] Received snapshot from channel '${channel}'`);
+				} catch (error) {
+					let message: unknown;
+					if (error instanceof StructError) {
+						message = error.message;
+					} else {
+						message = error;
+					}
+					console.error(`[onSnapshot] Skipping message for channel '%s';`, channel, message);
+					return;
+				}
+				handleData(data);
+			},
+			status(event) {
+				// See https://www.pubnub.com/docs/sdks/javascript/status-events
+				switch (event.category) {
+					case "PNNetworkUpCategory":
+						console.debug(`[onSnapshot] PubNub says the network is up.`);
+						break;
+					case "PNNetworkDownCategory":
+						console.debug(`[onSnapshot] PubNub says the network is down.`);
+						break;
+					case "PNNetworkIssuesCategory":
+						console.debug(`[onSnapshot] PubNub failed to subscribe due to network issues.`);
+						break;
+					case "PNReconnectedCategory":
+						console.debug(`[onSnapshot] PubNub reconnected.`);
+						break;
+					case "PNConnectedCategory":
+						console.debug(
+							`[onSnapshot] PubNub connected with new channels: ${JSON.stringify(
+								event.subscribedChannels
+							)}`
+						);
+						break;
+					case "PNAccessDeniedCategory":
+						console.debug(
+							`[onSnapshot] PubNub did not permit connecting to channel. Check Access Manager configuration for user tokens.`
+						);
+						break;
+					case "PNMalformedResponseCategory":
+						console.debug(`[onSnapshot] PubNub crashed trying to parse JSON.`);
+						break;
+					case "PNBadRequestCategory":
+						console.debug(`[onSnapshot] PubNub request was malformed.`);
+						break;
+					case "PNDecryptionErrorCategory":
+						console.debug(`[onSnapshot] PubNub message decryption failed.`);
+						break;
+					case "PNTimeoutCategory":
+						console.debug(`[onSnapshot] Timed out trying to connect to PubNub.`);
+						break;
+					default:
+						console.debug(
+							`[onSnapshot] Received a non-200 response code from PubNub for operation '${
+								event.operation
+							}' that affects channel(s) ${JSON.stringify(
+								event.affectedChannels
+							)} and groups ${JSON.stringify(
+								event.affectedChannelGroups
+							)}. Subbed channels: ${JSON.stringify(event.subscribedChannels)}`
+						);
+				}
+			},
+		};
+
+		const unsubscribe = (): void => {
+			console.debug(`[onSnapshot] Unsubscribing from channel '${channel}'`);
+			pubnub.removeListener(listener);
+			pubnub.unsubscribe({ channels: [channel] });
+		};
+
+		pubnub.subscribe({ channels: [channel] });
+		pubnub.addListener(listener);
+
+		// Run an initial fetch, just like Express used to, since the Vercel back-end doesn't do that for us
+		switch (queryOrReference.type) {
+			case "collection":
+				void handleFetchError(
+					getDocs(queryOrReference)
+						// eslint-disable-next-line promise/prefer-await-to-then
+						.then(snap => {
+							console.debug(`[onSnapshot] Received initial snapshot from channel '${channel}'`);
+							const data = snap.docs.map(doc => ({ ...doc.data(), _id: doc.id }));
+							handleData({ data });
+						}),
+					unsubscribe,
+					onErrorCallback
+				);
+				break;
+			case "document":
+				void handleFetchError(
+					getDoc(queryOrReference)
+						// eslint-disable-next-line promise/prefer-await-to-then
+						.then(snap => {
+							console.debug(`[onSnapshot] Received initial snapshot from channel '${channel}'`);
+							const data = snap.data() ?? null;
+							handleData({ data: { ...data, _id: snap.id } });
+						}),
+					unsubscribe,
+					onErrorCallback
+				);
+				break;
+			default:
+				throw new UnreachableCaseError(queryOrReference);
+		}
+
+		return unsubscribe;
+	}
+
 	const uid = db.currentUser.uid;
 	const baseUrl = new URL(`ws://${db.url.hostname}:${db.url.port}`);
 	let url: URL;
@@ -331,12 +536,6 @@ export function onSnapshot<T>(
 			break;
 	}
 
-	const watcherData = object({
-		message: nonempty(string()),
-		dataType: enums(["single", "multiple"] as const),
-		data: nullable(union([array(documentData), documentData])),
-	});
-
 	type WatcherData = Infer<typeof watcherData>;
 
 	const { onClose, onMessage, send } = wsFactory(url, {
@@ -348,40 +547,7 @@ export function onSnapshot<T>(
 		},
 	});
 
-	let previousSnap: QuerySnapshot<T> | null = null;
-	onMessage("data", message => {
-		const data = message.data;
-		if (data === undefined) throw new UnexpectedResponseError(t("error.ws.message-data-undefined"));
-
-		// console.debug(`Got ${type} message from ${url}`);
-		if (type === "collection") {
-			if (!data || !isArray(data)) throw new UnexpectedResponseError(t("error.ws.data-not-array"));
-			const collectionRef = collection(db, queryOrReference.id);
-			const snaps: Array<QueryDocumentSnapshot<T>> = data.map(doc => {
-				const id = doc["_id"];
-				if (!isString(id)) {
-					const err = new TypeError(t("error.server.id-not-string"));
-					onErrorCallback(err);
-					throw err;
-				}
-				const ref = docRef(collectionRef.db, collectionRef.id, id);
-				return new QueryDocumentSnapshot<T>(ref, doc as unknown as T);
-			});
-			previousSnap = new QuerySnapshot<T>(previousSnap ?? collectionRef, snaps);
-			(onNextCallback as QuerySnapshotCallback<T>)(previousSnap);
-
-			return;
-		} else if (type === "document") {
-			if (isArray(data)) throw new UnexpectedResponseError(t("error.ws.data-is-array"));
-			const collectionRef = collection(db, queryOrReference.parent.id);
-			const ref = docRef(collectionRef.db, collectionRef.id, queryOrReference.id);
-			const snap = new QueryDocumentSnapshot<T>(ref, data as T | null);
-			(onNextCallback as DocumentSnapshotCallback<T>)(snap);
-			return;
-		}
-
-		throw new UnreachableCaseError(type);
-	});
+	onMessage("data", handleData);
 
 	onClose((code, _reason) => {
 		console.debug(
@@ -423,4 +589,21 @@ export function onSnapshot<T>(
 	return (): void => {
 		send("stop", "STOP");
 	};
+}
+
+async function handleFetchError(
+	p: Promise<unknown>,
+	unsubscribe: Unsubscribe,
+	onErrorCallback: (err: Error) => void
+): Promise<void> {
+	try {
+		await p;
+	} catch (error) {
+		unsubscribe();
+		if (error instanceof Error) {
+			onErrorCallback(error);
+		} else {
+			onErrorCallback(new Error(JSON.stringify(error)));
+		}
+	}
 }

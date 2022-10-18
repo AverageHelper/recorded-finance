@@ -1,14 +1,18 @@
-import type { CollectionID } from "./schemas.js";
-import { isCollectionId } from "./schemas.js";
+import type { CollectionID, User } from "./schemas";
+import { isCollectionId } from "./schemas";
 
 export class CollectionReference {
-	public readonly uid: string;
+	public readonly user: Readonly<User>;
 	public readonly id: CollectionID;
 
-	constructor(uid: string, id: CollectionID) {
+	constructor(user: User, id: CollectionID) {
 		if (!isCollectionId(id)) throw new TypeError(`${JSON.stringify(id)} is not a collection ID`);
-		this.uid = uid;
+		this.user = user;
 		this.id = id;
+	}
+
+	get uid(): string {
+		return this.user.uid;
 	}
 
 	get path(): string {
@@ -18,6 +22,7 @@ export class CollectionReference {
 	toString(): string {
 		return JSON.stringify({
 			id: this.id,
+			uid: this.uid,
 		});
 	}
 }
@@ -29,6 +34,10 @@ export class DocumentReference {
 	constructor(parent: CollectionReference, id: string) {
 		this.parent = parent;
 		this.id = id;
+	}
+
+	get user(): User {
+		return this.parent.user;
 	}
 
 	get uid(): string {
@@ -43,6 +52,7 @@ export class DocumentReference {
 		return JSON.stringify({
 			id: this.id,
 			parent: this.parent.id,
+			uid: this.uid,
 		});
 	}
 }

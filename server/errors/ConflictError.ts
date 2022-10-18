@@ -1,5 +1,5 @@
-import type { ErrorCode } from "./InternalError.js";
-import { InternalError } from "./InternalError.js";
+import type { ErrorCode } from "./InternalError";
+import { InternalError } from "./InternalError";
 
 export class ConflictError extends InternalError {
 	constructor(code: ErrorCode, message: string) {

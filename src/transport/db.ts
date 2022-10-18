@@ -11,6 +11,7 @@ import { isPrimitive } from "./schemas.js";
 import { isString } from "../helpers/isString";
 import { t } from "../i18n";
 import { v4 as uuid } from "uuid";
+import PubNub from "pubnub";
 import {
 	databaseBatchWrite,
 	databaseCollection,
@@ -18,6 +19,7 @@ import {
 	deleteAt,
 	getFrom,
 	postTo,
+	urlForApi,
 } from "./api-types/index.js";
 import {
 	DocumentSnapshot,
@@ -29,11 +31,13 @@ import {
 export class AccountableDB {
 	#currentUser: User | null;
 	#lastKnownUserStats: UserStats | null;
+	#pubnub: PubNub | null;
 	public readonly url: Readonly<URL>;
 
 	constructor(url: string) {
 		this.#currentUser = null;
 		this.#lastKnownUserStats = null;
+		this.#pubnub = null;
 		this.url = new URL(url);
 	}
 
@@ -43,6 +47,31 @@ export class AccountableDB {
 
 	get lastKnownUserStats(): UserStats | null {
 		return this.#lastKnownUserStats;
+	}
+
+	get pubnub(): PubNub | null {
+		return this.#pubnub;
+	}
+
+	setUser(user: User, pubnubToken: string): void {
+		this.#currentUser = user;
+
+		const subscribeKey = import.meta.env.VITE_PUBNUB_SUBSCRIBE_KEY;
+		if (subscribeKey !== undefined && subscribeKey) {
+			if (user.pubnubCipherKey === null) throw new TypeError(t("error.cryption.missing-pek"));
+
+			this.#pubnub?.unsubscribeAll();
+			this.#pubnub?.stop();
+			// This should be the only PubNub instance for this database
+			this.#pubnub = new PubNub({
+				subscribeKey,
+				userId: user.uid,
+				ssl: true,
+				restore: false, // cache subscribed channels, and re-subscribe in the event of network failure
+				logVerbosity: true,
+			});
+			this.#pubnub.setToken(pubnubToken);
+		}
 	}
 
 	setUserStats(stats: UserStats | null): void {
@@ -56,12 +85,12 @@ export class AccountableDB {
 		}
 	}
 
-	setUser(user: User): void {
-		this.#currentUser = user;
-	}
-
 	clearUser(): void {
+		this.#pubnub?.unsubscribeAll();
+		this.#pubnub?.stop();
+		this.#pubnub = null; // listeners go away too
 		this.#currentUser = null;
+		this.setUserStats(null);
 	}
 
 	toString(): string {
@@ -249,7 +278,7 @@ export class WriteBatch {
 		if (!currentUser) throw new AccountableError("database/unauthenticated");
 
 		const uid = currentUser.uid;
-		const batch = new URL(databaseBatchWrite(uid), this.#db.url);
+		const batch = urlForApi(this.#db, databaseBatchWrite(uid));
 
 		const data: Array<DocumentWriteBatch> = [];
 
@@ -300,12 +329,10 @@ export function bootstrap(url?: string): AccountableDB {
 	}
 
 	// VITE_ env variables get type definitions in env.d.ts
-	const serverUrl = url ?? import.meta.env.VITE_ACCOUNTABLE_SERVER_URL;
+	let serverUrl = url ?? import.meta.env.VITE_ACCOUNTABLE_SERVER_URL;
 
 	if (serverUrl === undefined || !serverUrl) {
-		throw new TypeError(
-			t("error.sanity.missing-env-var", { values: { key: "VITE_ACCOUNTABLE_SERVER_URL" } })
-		);
+		serverUrl = `https://${window.location.hostname}/api/`;
 	}
 
 	db = new AccountableDB(serverUrl);
@@ -342,7 +369,7 @@ export async function getDoc<D, T extends PrimitiveRecord<D>>(
 	const collection = reference.parent.id;
 	const doc = reference.id;
 
-	const docPath = new URL(databaseDocument(uid, collection, doc), reference.db.url);
+	const docPath = urlForApi(reference.db, databaseDocument(uid, collection, doc));
 	const { data } = await getFrom(docPath);
 
 	if (data === undefined) throw new TypeError(t("error.server.no-data"));
@@ -370,7 +397,7 @@ export async function setDoc<D, T extends PrimitiveRecord<D>>(
 	const uid = currentUser.uid;
 	const collection = reference.parent.id;
 	const doc = reference.id;
-	const docPath = new URL(databaseDocument(uid, collection, doc), reference.db.url);
+	const docPath = urlForApi(reference.db, databaseDocument(uid, collection, doc));
 
 	const { usedSpace, totalSpace } = await postTo(docPath, data);
 	if (usedSpace !== undefined && totalSpace !== undefined) {
@@ -392,7 +419,7 @@ export async function deleteDoc(reference: DocumentReference): Promise<void> {
 	const uid = currentUser.uid;
 	const collection = reference.parent.id;
 	const doc = reference.id;
-	const docPath = new URL(databaseDocument(uid, collection, doc), reference.db.url);
+	const docPath = urlForApi(reference.db, databaseDocument(uid, collection, doc));
 
 	const { usedSpace, totalSpace } = await deleteAt(docPath);
 	if (usedSpace !== undefined && totalSpace !== undefined) {
@@ -411,7 +438,7 @@ export async function getDocs<T>(query: CollectionReference<T>): Promise<QuerySn
 
 	const uid = currentUser.uid;
 	const collection = query.id;
-	const collPath = new URL(databaseCollection(uid, collection), query.db.url);
+	const collPath = urlForApi(query.db, databaseCollection(uid, collection));
 
 	const { data } = await getFrom(collPath);
 	if (data === undefined) throw new TypeError(t("error.server.no-data"));
@@ -424,7 +451,7 @@ export async function getDocs<T>(query: CollectionReference<T>): Promise<QuerySn
 			delete data["_id"];
 			if (!isString(id)) throw new TypeError(t("error.server.id-not-string"));
 
-			return new QueryDocumentSnapshot(doc(query.db, query.id, id), data as unknown as T);
+			return new QueryDocumentSnapshot(doc(query.db, query.id, id), data as T);
 		})
 	);
 }
