@@ -445,8 +445,10 @@ export function onSnapshot<T extends DocumentData>(
 				try {
 					const rawData: unknown = pubnub.decrypt(event.message as string | object, cipherKey);
 					if (typeof rawData === "string") {
+						console.debug("[onSnapshot] Parsing data from message string");
 						data = JSON.parse(rawData) as unknown;
 					} else {
+						console.debug("[onSnapshot] Taking message as data");
 						data = rawData;
 					}
 				} catch (error) {
