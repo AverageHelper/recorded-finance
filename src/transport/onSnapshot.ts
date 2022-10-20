@@ -4,8 +4,8 @@ import type { Infer } from "superstruct";
 import type { ListenerParameters } from "pubnub";
 import { documentData } from "./schemas.js";
 import { AccountableError, UnexpectedResponseError, UnreachableCaseError } from "./errors/index.js";
-import { collection, doc as docRef, getDoc, getDocs } from "./db.js";
 import { databaseCollection, databaseDocument } from "./api-types/index.js";
+import { doc as docRef, getDoc, getDocs } from "./db.js";
 import { isArray } from "../helpers/isArray.js";
 import { isString } from "../helpers/isString.js";
 import { t } from "../i18n.js";
@@ -14,10 +14,12 @@ import { wsFactory } from "./websockets/websockets.js";
 import {
 	array,
 	assert,
+	boolean,
 	enums,
 	is,
 	nonempty,
 	nullable,
+	optional,
 	string,
 	StructError,
 	type as object,
@@ -302,7 +304,7 @@ export function onSnapshot<T>(
 	onError?: (error: Error) => void
 ): Unsubscribe;
 
-export function onSnapshot<T>(
+export function onSnapshot<T extends DocumentData>(
 	queryOrReference: CollectionReference<T> | DocumentReference<T>,
 	onNextOrObserver:
 		| QuerySnapshotCallback<T>
@@ -328,12 +330,33 @@ export function onSnapshot<T>(
 	if (!db.currentUser) throw new AccountableError("database/unauthenticated");
 
 	let previousSnap: QuerySnapshot<T> | null = null;
-	function handleData({ data }: Pick<WatcherData, "data">): void {
+	async function handleData({ data, shouldFetch = false }: WatcherData): Promise<void> {
 		switch (type) {
 			case "collection": {
+				const collectionRef = queryOrReference;
+				if (shouldFetch) {
+					// We may need to fetch the data directly. PubNub has message size limits
+					try {
+						const allData = await getDocs(queryOrReference);
+						const snaps = allData.docs.map<QueryDocumentSnapshot<T>>(snap => {
+							return new QueryDocumentSnapshot<T>(snap.ref, snap.data());
+						});
+						previousSnap = new QuerySnapshot<T>(previousSnap ?? collectionRef, snaps);
+						(onNextCallback as QuerySnapshotCallback<T>)(previousSnap);
+						return;
+					} catch (error) {
+						if (error instanceof Error) {
+							onErrorCallback(error);
+						} else {
+							onErrorCallback(new Error(JSON.stringify(error)));
+						}
+						throw error;
+					}
+				}
+
+				// No need to fetch, the message has all we need:
 				if (!data || !isArray(data))
 					throw new UnexpectedResponseError(t("error.ws.data-not-array"));
-				const collectionRef = collection(db, queryOrReference.id);
 				const snaps: Array<QueryDocumentSnapshot<T>> = data.map(doc => {
 					const id = doc["_id"];
 					if (!isString(id)) {
@@ -350,9 +373,26 @@ export function onSnapshot<T>(
 			}
 
 			case "document": {
+				const ref = queryOrReference;
+				if (shouldFetch) {
+					// We may need to fetch the data directly. PubNub has message size limits
+					try {
+						const allData = await getDoc(queryOrReference);
+						const snap = new QueryDocumentSnapshot<T>(ref, allData.data() ?? null);
+						(onNextCallback as DocumentSnapshotCallback<T>)(snap);
+						return;
+					} catch (error) {
+						if (error instanceof Error) {
+							onErrorCallback(error);
+						} else {
+							onErrorCallback(new Error(JSON.stringify(error)));
+						}
+						throw error;
+					}
+				}
+
+				// No need to fetch, the message has all we need:
 				if (isArray(data)) throw new UnexpectedResponseError(t("error.ws.data-is-array"));
-				const collectionRef = collection(db, queryOrReference.parent.id);
-				const ref = docRef(collectionRef.db, collectionRef.id, queryOrReference.id);
 				const snap = new QueryDocumentSnapshot<T>(ref, data as T | null);
 				(onNextCallback as DocumentSnapshotCallback<T>)(snap);
 				return;
@@ -367,6 +407,7 @@ export function onSnapshot<T>(
 		message: nonempty(string()),
 		dataType: enums(["single", "multiple"] as const),
 		data: nullable(union([array(documentData), documentData])),
+		shouldFetch: optional(boolean()),
 	});
 
 	const pubnub = db.pubnub;
@@ -379,12 +420,15 @@ export function onSnapshot<T>(
 		console.debug(`[onSnapshot] Subscribing to channel '${channel}'`);
 		const listener: ListenerParameters = {
 			message(event) {
+				// Only bother with messages for this channel
 				if (event.channel !== channel) {
 					console.debug(
 						`[onSnapshot] Skipping message from channel '${event.channel}'; it doesn't match expected channel '${channel}'`
 					);
 					return;
 				}
+
+				// Make sure the publisher claims to be Accountable's server. (Only holds back kid hackers with our keys)
 				const serverPublisher = "server";
 				if (event.publisher !== serverPublisher) {
 					console.debug(
@@ -396,6 +440,7 @@ export function onSnapshot<T>(
 				const cipherKey = db.currentUser?.pubnubCipherKey ?? null;
 				if (cipherKey === null) throw new TypeError(t("error.cryption.missing-pek"));
 
+				// Decrypt the message
 				let data: unknown;
 				try {
 					const rawData: unknown = pubnub.decrypt(event.message as string | object, cipherKey);
@@ -408,6 +453,8 @@ export function onSnapshot<T>(
 					console.error(`[onSnapshot] Failed to decrypt message:`, error);
 					return;
 				}
+
+				// Ensure the data fits our expectations
 				try {
 					assert(data, watcherData);
 					console.debug(`[onSnapshot] Received snapshot from channel '${channel}'`);
@@ -421,7 +468,9 @@ export function onSnapshot<T>(
 					console.error(`[onSnapshot] Skipping message for channel '%s';`, channel, message);
 					return;
 				}
-				handleData(data);
+
+				// Process the message data
+				void handleData(data);
 			},
 			status(event) {
 				// See https://www.pubnub.com/docs/sdks/javascript/status-events
@@ -494,7 +543,11 @@ export function onSnapshot<T>(
 						.then(snap => {
 							console.debug(`[onSnapshot] Received initial snapshot from channel '${channel}'`);
 							const data = snap.docs.map(doc => ({ ...doc.data(), _id: doc.id }));
-							handleData({ data });
+							void handleData({
+								data,
+								dataType: "multiple",
+								message: "Here's your data",
+							});
 						}),
 					unsubscribe,
 					onErrorCallback
@@ -507,7 +560,11 @@ export function onSnapshot<T>(
 						.then(snap => {
 							console.debug(`[onSnapshot] Received initial snapshot from channel '${channel}'`);
 							const data = snap.data() ?? null;
-							handleData({ data: { ...data, _id: snap.id } });
+							void handleData({
+								data: { ...data, _id: snap.id },
+								dataType: "single",
+								message: "Here's your data",
+							});
 						}),
 					unsubscribe,
 					onErrorCallback
@@ -547,7 +604,7 @@ export function onSnapshot<T>(
 		},
 	});
 
-	onMessage("data", handleData);
+	onMessage("data", data => void handleData(data));
 
 	onClose((code, _reason) => {
 		console.debug(
