@@ -39,7 +39,8 @@ export async function publishWriteForRef(
 				JSON.stringify({
 					message: "Here's your data",
 					dataType: "parent" in ref ? "single" : "multiple",
-					data: newData,
+					shouldFetch: !("parent" in ref), // collections are too large to send via PubNub
+					data: "parent" in ref ? newData : [],
 					timestamp: Date.now(), // so the ciphertext is different each time
 				}),
 				cipherKey
@@ -47,6 +48,7 @@ export async function publishWriteForRef(
 			return pubnub.publish({
 				channel,
 				message,
+				sendByPost: true,
 			});
 		});
 		console.debug(`Posted write for channel '${channel}'`);
