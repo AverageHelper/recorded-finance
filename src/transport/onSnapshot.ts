@@ -461,7 +461,7 @@ export function onSnapshot<T extends DocumentData>(
 				} catch (error) {
 					let message: unknown;
 					if (error instanceof StructError) {
-						message = error.message;
+						message = `${error.message} at path '${error.path.join(".")}'`;
 					} else {
 						message = error;
 					}
