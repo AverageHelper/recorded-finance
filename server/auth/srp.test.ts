@@ -302,7 +302,7 @@ FD5138FE 8376435B 9FC61D2F C0EB06E3`);
 			["test", bigintFromHex("a94a8fe5ccb19ba61c4c0873d391e987982fbbd3")],
 			["calculator", bigintFromHex("46237b3d702aad617eae653792a6269e836aa44d")],
 		])("SHA1('%s') = %i", (data, result) => {
-			expect(HASH("sha1", data, "utf8")).toBe(result);
+			expect(HASH("sha1", data)).toBe(result);
 		});
 
 		test.each([
@@ -313,7 +313,7 @@ FD5138FE 8376435B 9FC61D2F C0EB06E3`);
 				bigintFromHex("25777f7298db3b9b6200b0284d71b9755a5956839b7bc45aa27e1076a1f12012"),
 			],
 		])("BLAKE2b-256('%s') = %i", (data, result) => {
-			expect(HASH("blake2b-256", data, "utf8")).toBe(result);
+			expect(HASH("blake2b-256", data)).toBe(result);
 		});
 	});
 

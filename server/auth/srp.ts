@@ -39,6 +39,10 @@ import blake2b from "blake2b";
 // exponentiation ("^" in spec, use `**`)
 // "integer remainder"... modulo? ("%" in spec, use `%`)
 
+export function bigintFromHex(hex: string): bigint {
+	return BigInt(`0x${hex}`);
+}
+
 export function PAD(x: bigint, N: bigint): string {
 	const nLength = N.toString(16).length;
 	return x.toString(16).padStart(nLength, "0");
@@ -76,7 +80,7 @@ export function onClientKeyExchange(A: string): void {
 // **
 
 export function computeX(s: bigint, I: string, P: string, algorithm: HashAlgorithm): bigint {
-	return HASH(algorithm, s.toString(16) + HASH(algorithm, `${I}:${P}`, "utf8").toString(16), "hex");
+	return HASH(algorithm, bigintFromHex(s.toString(16) + HASH(algorithm, `${I}:${P}`).toString(16)));
 }
 
 /**
@@ -137,7 +141,7 @@ function safeCompare(x: bigint, y: bigint): boolean {
 }
 
 export function computeK(N: bigint, g: bigint, algorithm: HashAlgorithm): bigint {
-	return HASH(algorithm, N.toString(16) + PAD(g, N), "hex");
+	return HASH(algorithm, bigintFromHex(N.toString(16) + PAD(g, N)));
 }
 
 /**
@@ -191,7 +195,7 @@ class BadRecordMacError extends Error {
 }
 
 export function computeU(A: bigint, B: bigint, N: bigint, algorithm: HashAlgorithm): bigint {
-	return HASH(algorithm, PAD(A, N) + PAD(B, N), "hex");
+	return HASH(algorithm, bigintFromHex(PAD(A, N) + PAD(B, N)));
 }
 
 /**
@@ -241,7 +245,7 @@ export function serverPremasterSecret(
 ): bigint {
 	const { A } = ckm;
 	const B = serverPublicValue(b, v, N, g, algorithm);
-	const u = HASH(algorithm, PAD(A, N) + PAD(B, N), "hex");
+	const u = HASH(algorithm, bigintFromHex(PAD(A, N) + PAD(B, N)));
 	if (safeCompare(A % N, 0n)) throw new IllegalParameterError(); // CRUCIAL for security
 
 	// S = (A * v^u) ^ b % N
@@ -358,17 +362,28 @@ export function assertHashAlgorithm(tbd: string): asserts tbd is HashAlgorithm {
 		throw new TypeError(`Value '${tbd}' does not match any of ${hashAlgorithms.join(", ")}`);
 }
 
-export function HASH(algorithm: HashAlgorithm, data: string, inputEncoding: Encoding): bigint {
+/**
+ * Computes and returns a hash of the given data using the given algorithm.
+ *
+ * @param algorithm The hashing algorithm to use to generate the hash
+ * @param textOrBytes The data to hash. String values are taken as UTF-8 encoded.
+ * BigInt values are taken as hex-encoded bytes.
+ */
+export function HASH(algorithm: HashAlgorithm, textOrBytes: string | bigint): bigint {
+	const data: string = typeof textOrBytes === "string" ? textOrBytes : textOrBytes.toString(16);
+	const inputEncoding: Encoding = typeof textOrBytes === "string" ? "utf8" : "hex";
+
 	if (algorithm === "blake2s-256") {
 		const hash = new BLAKE2s();
 		hash.update(Buffer.from(data, inputEncoding));
-		return BigInt(`0x${hash.hexDigest()}`);
+		return bigintFromHex(hash.hexDigest());
 	}
 
 	if (algorithm === "blake2b-256") {
+		// FIXME: This doesn't match our test vectors:
 		const hash = blake2b(256 / 8);
 		hash.update(Buffer.from(data, inputEncoding));
-		return BigInt(`0x${hash.digest("hex")}`);
+		return bigintFromHex(hash.digest("hex"));
 	}
 
 	if (algorithm === "blake2b-224" || algorithm === "blake2b-384" || algorithm === "blake2b-512") {
@@ -386,18 +401,18 @@ export function HASH(algorithm: HashAlgorithm, data: string, inputEncoding: Enco
 		}
 		const hash = blake2b(outLength);
 		hash.update(Buffer.from(data, inputEncoding));
-		return BigInt(`0x${hash.digest("hex")}`);
+		return bigintFromHex(hash.digest("hex"));
 	}
 
 	const hash = createHash(algorithm);
 	hash.update(data, inputEncoding);
-	return BigInt(`0x${hash.digest("hex")}`);
+	return bigintFromHex(hash.digest("hex"));
 }
 
 function HMAC_SHA1(key: string, data: string): bigint {
 	const hmac = createHmac("sha1", key);
 	hmac.update(data);
-	return BigInt(`0x${hmac.digest("hex")}`);
+	return bigintFromHex(hmac.digest("hex"));
 }
 
 export function randomBits(bitCount: number): bigint {
@@ -405,7 +420,7 @@ export function randomBits(bitCount: number): bigint {
 		throw new TypeError(`Given bit count '${bitCount}' must be a multiple of 8`);
 	const numBytes = bitCount / 8;
 	const bytes = randomBytes(numBytes);
-	return BigInt(`0x${bytes.toString("hex")}`);
+	return bigintFromHex(bytes.toString("hex"));
 }
 
 function isEven(x: bigint): boolean {
