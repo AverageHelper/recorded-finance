@@ -16,6 +16,9 @@ import {
 } from "./srp";
 
 describe("SRP", () => {
+	/**
+	 * Converts the given hex-encoded string into a `bigint` value.
+	 */
 	function bigintFromHex(hex: string): bigint {
 		return BigInt(
 			`0x${hex}` //
@@ -23,28 +26,6 @@ describe("SRP", () => {
 				.replace(/\n/gu, "")
 				.replace(/\t/gu, "")
 		);
-	}
-
-	type Numberified<T extends object, E extends Array<keyof T>> = {
-		[K in keyof T]: T[K] extends string ? (Array<K> extends E ? T[K] : bigint) : T[K];
-	};
-
-	function keysToBigInt<T extends object, E extends Array<keyof T>>(
-		obj: T,
-		exceptKeys: E
-	): Numberified<T, E> {
-		const result = { ...obj };
-		for (const key of Object.keys(result)) {
-			// Ignore exempted keys
-			if (exceptKeys.includes(key as keyof T)) continue;
-
-			// Transform string values into bigint
-			const og = result[key as keyof T];
-			if (typeof og === "string") {
-				result[key as keyof T] = bigintFromHex(og) as T[keyof T];
-			}
-		}
-		return result as Numberified<T, E>;
 	}
 
 	describe("matches Appendix B vectors", () => {
@@ -129,12 +110,41 @@ C346D7E4 74B29EDE 8A469FFE CA686E5A`);
 	describe.each(vectors.testVectors)(
 		"matches srptools test vectors (hash: $H, prime: $size bits)",
 		params => {
-			const { H, size, N, g, I, P, s, k, x, v, a, b, A, B, u, S, K, M1, M2 } = keysToBigInt(
-				params,
-				["H", "I", "P"]
-			);
+			/**
+			 * An object whose `string` properties are transformed into `bigint` values.
+			 * Ignores properties named in `E`.
+			 */
+			type Numberified<T extends object, E extends Array<keyof T>> = {
+				[K in keyof T]: T[K] extends string ? (Array<K> extends E ? T[K] : bigint) : T[K];
+			};
 
-			// Make sure we only test an algorithm we know
+			/**
+			 * Replaces the `string` properties of the given object into `bigint` values.
+			 * Ignores the properties named in `exceptKeys`.
+			 * Ignores properties whose values are not `string` values.
+			 */
+			function keysToBigInt<T extends object, E extends Array<keyof T>>(
+				obj: T,
+				exceptKeys: E
+			): Numberified<T, E> {
+				const result = { ...obj };
+				for (const key of Object.keys(result)) {
+					// Ignore exempted keys
+					if (exceptKeys.includes(key as keyof T)) continue;
+
+					// Transform string values into bigint
+					const og = result[key as keyof T];
+					if (typeof og === "string") {
+						result[key as keyof T] = bigintFromHex(og) as T[keyof T];
+					}
+				}
+				return result as Numberified<T, E>;
+			}
+
+			const { H, size, N, g, I, P, s, k, x, v, a, b, A, B, u, S /* TODO: K, M1, M2 */ } =
+				keysToBigInt(params, ["H", "I", "P"]);
+
+			// Throw if one of the test algorithms is unknown to us
 			assertHashAlgorithm(H);
 
 			// Sanity check that N is the given size
