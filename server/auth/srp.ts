@@ -6,6 +6,7 @@
  * - https://github.com/secure-remote-password/stanford-srp
  * - https://github.com/YOU54F/cognito-srp
  * - https://github.com/1Password/srp
+ * - https://github.com/ProtonMail/WebClients/blob/eb50e04ac7cecaff1a6feb9db072fd792d828efc/packages/shared/lib/srp.ts
  * - https://github.com/simbo1905/thinbus-srp-npm
  *
  * Test vectors:
@@ -15,9 +16,9 @@
 import type { Encoding } from "node:crypto";
 import { createHash, createHmac, randomBytes } from "node:crypto";
 import { requireEnv } from "../environment";
-import _safeCompare from "safe-compare";
 import BLAKE2s from "blake2s-js";
 import blake2b from "blake2b";
+import safeCompareStrings from "safe-compare";
 
 /*
  * Notation (§2.1)
@@ -137,7 +138,7 @@ type ServerKeyMessage = ServerSRPParams;
 function safeCompare(x: bigint, y: bigint): boolean {
 	const a = x.toString(16);
 	const b = y.toString(16);
-	return _safeCompare(a, b);
+	return safeCompareStrings(a, b);
 }
 
 export function computeK(N: bigint, g: bigint, algorithm: HashAlgorithm): bigint {
@@ -184,7 +185,7 @@ export function clientPublicValue(a: bigint, N: bigint, g: bigint): bigint {
 // ** Premaster Secret (§2.6) **
 // **
 
-class BadRecordMacError extends Error {
+export class BadRecordMacError extends Error {
 	readonly code: "bad_record_mac"; // the client should tell the user that the username/password are wrong
 
 	constructor() {
@@ -251,10 +252,6 @@ export function serverPremasterSecret(
 	// S = (A * v^u) ^ b % N
 	const S = modExp(A * modExp(v, u, N), b, N);
 	return S;
-}
-
-function assertSecretsMatch(M1: bigint, M2: bigint): void {
-	if (!safeCompare(M1, M2)) throw new BadRecordMacError();
 }
 
 // **
@@ -350,7 +347,7 @@ const hashAlgorithms = [
 	// Handled specially
 	"blake2s-256",
 	"blake2b-224",
-	"blake2b-256",
+	// "blake2b-256", // broken, according to our test vectors
 	"blake2b-384",
 	"blake2b-512",
 ] as const;
@@ -379,12 +376,12 @@ export function HASH(algorithm: HashAlgorithm, textOrBytes: string | bigint): bi
 		return bigintFromHex(hash.hexDigest());
 	}
 
-	if (algorithm === "blake2b-256") {
-		// FIXME: This doesn't match our test vectors:
-		const hash = blake2b(256 / 8);
-		hash.update(Buffer.from(data, inputEncoding));
-		return bigintFromHex(hash.digest("hex"));
-	}
+	// if (algorithm === "blake2b-256") {
+	// 	// FIXME: This doesn't match our test vectors:
+	// 	const hash = blake2b(256 / 8);
+	// 	hash.update(Buffer.from(data, inputEncoding));
+	// 	return bigintFromHex(hash.digest("hex"));
+	// }
 
 	if (algorithm === "blake2b-224" || algorithm === "blake2b-384" || algorithm === "blake2b-512") {
 		let outLength: number;
