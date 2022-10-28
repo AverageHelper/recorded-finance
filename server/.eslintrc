@@ -20,10 +20,13 @@
 		"project": "./tsconfig.json",
 		"tsconfigRootDir": "."
 	},
+	"settings": {
+		"import/extensions": ["js", "json"]
+	},
 	"rules": {
 		"prettier/prettier": "warn",
 		"deprecation/deprecation": "warn",
-		"import/extensions": ["error", "never"], // Vercel won't resolve extensions correctly in TS
+		"import/extensions": ["error", "never", { "json": "always" }], // Vercel won't resolve .js extensions correctly in TS
 		"import/no-unresolved": "off", // TS handles this
 		"no-constant-condition": "warn",
 		"no-console": ["warn", { "allow": ["error", "warn", "debug"] }],
