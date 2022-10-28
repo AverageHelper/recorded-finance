@@ -1,5 +1,15 @@
 /*
- * Implementation based on https://www.rfc-editor.org/rfc/rfc5054
+ * Implementation of RFC 5054: https://www.rfc-editor.org/rfc/rfc5054
+ *
+ * Some example implementations, in no particular order:
+ * - https://github.com/symeapp/srp-client
+ * - https://github.com/secure-remote-password/stanford-srp
+ * - https://github.com/YOU54F/cognito-srp
+ * - https://github.com/1Password/srp
+ * - https://github.com/simbo1905/thinbus-srp-npm
+ *
+ * Test vectors:
+ * - https://github.com/secure-remote-password/test-vectors
  */
 
 import type { Encoding } from "node:crypto";
@@ -316,20 +326,22 @@ class IllegalParameterError extends Error {
 // **
 
 const hashAlgorithms = [
-	// From OpenSSL on macOS
-	"gost-mac",
-	"md4",
-	"md5",
-	"md_gost94",
-	"ripemd160",
+	// Common (probably) on OpenSSL
 	"sha1",
-	"sha224",
 	"sha256",
 	"sha384",
 	"sha512",
-	"streebog256",
-	"streebog512",
-	"whirlpool",
+
+	// Not tested
+	// "sha224",
+	// "gost-mac",
+	// "md4",
+	// "md5",
+	// "md_gost94",
+	// "ripemd160",
+	// "streebog256",
+	// "streebog512",
+	// "whirlpool",
 
 	// Handled specially
 	"blake2s-256",

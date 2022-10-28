@@ -107,7 +107,8 @@ C346D7E4 74B29EDE 8A469FFE CA686E5A`);
 		});
 	});
 
-	describe.each(vectors.testVectors)(
+	const testVectors = vectors.testVectors; // .filter(v => v.H !== "blake2b-256");
+	describe.each(testVectors)(
 		"matches srptools test vectors (hash: $H, prime: $size bits)",
 		params => {
 			/**
