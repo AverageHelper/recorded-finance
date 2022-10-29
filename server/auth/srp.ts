@@ -8,10 +8,15 @@
  * - https://github.com/1Password/srp
  * - https://github.com/ProtonMail/WebClients/blob/eb50e04ac7cecaff1a6feb9db072fd792d828efc/packages/shared/lib/srp.ts
  * - https://github.com/simbo1905/thinbus-srp-npm
+ * - https://github.com/mozilla/node-srp
+ * - https://github.com/LinusU/secure-remote-password
+ * - https://github.com/hthetiot/srp-demo
  *
  * Test vectors:
  * - https://github.com/secure-remote-password/test-vectors
  */
+
+// TODO: Test compatibility with these implementations: https://github.com/secure-remote-password/implementations
 
 import type { Encoding } from "node:crypto";
 import { createHash, createHmac, randomBytes } from "node:crypto";
