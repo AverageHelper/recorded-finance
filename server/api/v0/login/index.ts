@@ -18,8 +18,6 @@ export const POST = apiHandler("POST", async (req, res) => {
 		throw new BadRequestError("Improper parameter types");
 	}
 
-	// ** Create a JWT for the caller to use later
-
 	const givenAccountId = req.body.account;
 	const givenPassword = req.body.password;
 
@@ -44,7 +42,7 @@ export const POST = apiHandler("POST", async (req, res) => {
 			? "totp"
 			: "none";
 
-	// ** Generate an auth token and send it along
+	// ** Create a JWT for the caller to use later
 	const uid = user.uid;
 	const pubnub_cipher_key = user.pubnubCipherKey;
 	const { access_token, pubnub_token } = await newAccessTokens(user, []);

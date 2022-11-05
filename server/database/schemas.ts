@@ -106,12 +106,12 @@ export const user = object({
 	currentAccountId: nonemptyString,
 
 	/**
-	 * The hash of the user's password.
+	 * The hash of the user's password, or the user's verifier for SRP authentication.
 	 */
 	passwordHash: nonemptyString,
 
 	/**
-	 * The salt with which the user's password was hashed.
+	 * The salt with which the user's password was hashed, or the user's salt for SRP authentication.
 	 */
 	passwordSalt: nonemptyString,
 

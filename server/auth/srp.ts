@@ -36,60 +36,73 @@ import safeCompareStrings from "safe-compare";
 // let b: bigint; // server's private value, "a random number that SHOULD be at least 256 bits in length"
 // let A: bigint; // client's public value
 // let a: bigint; // client's private value, "a random number that SHOULD be at least 256 bits in length"
-// let I: string; // username
-// let P: string; // password
+// let I: string; // username, encoded in utf-8 unicode (See §2.3)
+// let P: string; // password, encoded in utf-8 unicode (See §2.3)
 // let v: bigint; // verifier
 // let k: bigint; // SRP-6 multiplier
 
 // string concatenation ("|" in spec, use template strings, the `+` operator, or `.concat`)
-// exponentiation ("^" in spec, use `**`)
+// exponentiation ("^" in spec, use `modExp`)
 // "integer remainder"... modulo? ("%" in spec, use `%`)
 
+// Be sure to communicate these values over TLS, to handle the "certificate" parts of the SRP spec
+
+/**
+ * Creates a new `bigint` value from a string of hexadecimal characters.
+ *
+ * @param hex A string of characters that represent hexadecimal digits
+ */
 export function bigintFromHex(hex: string): bigint {
 	return BigInt(`0x${hex}`);
 }
 
-export function PAD(x: bigint, N: bigint): string {
-	const nLength = N.toString(16).length;
-	return x.toString(16).padStart(nLength, "0");
+export function toHexString(value: bigint): string {
+	return value.toString(16);
 }
 
-// username and password strings must be utf-8 unicode (§2.3)
-
-// Be sure to do this over TLS, to handle the "certificate" parts of the SRP spec
+/**
+ * Returns the given `bigint` value, encoded in hexadecimal, and
+ * left-padded with enough zeros to match the size of `N`. No padding
+ * is used if `N` is a shorter number than `x`.
+ */
+export function PAD(x: bigint, N: bigint): string {
+	const nLength = toHexString(N).length;
+	return toHexString(x).padStart(nLength, "0");
+}
 
 // **
 // ** Handshake Protocol (§2.2) **
 // **
 
-export function onClientHello(I: string, v: bigint, N: bigint, g: bigint): void {
-	const s = undefined as unknown as bigint; // the user's salt from the username, or send a fake one if username is unknown
-	const b = randomBits(256);
-	const B = serverPublicValue(b, v, N, g, "sha1");
-	sendServerHello(N, g, s, B);
-}
+// On Client Hello (I):
+//   const s = undefined as unknown as bigint; // the user's salt from the username, or send a fake one if username is unknown
+//   const b = randomBits(256);
+//   const B = serverPublicValue(b, v, N, g, "sha1");
+//   Send Server Hello:
+//     Server Hello
+//     Server Key Exchange (N, g, s, B)
+//     Server Hello Done
 
-function sendServerHello(N: bigint, g: bigint, s: bigint, B: bigint): void {
-	// Server Hello
-	// Server Key Exchange (N, g, s, B)
-	// Server Hello Done
-}
-
-export function onClientKeyExchange(A: string): void {
-	// [Change cipher spec]
-	// Finished
-	// ... give the user their JWT i guess
-}
+// On client key exchange (A):
+//   [Change cipher spec]
+//   Finished
+//   ... give the user their JWT i guess
 
 // **
 // ** Verifier Creation (§2.4) **
 // **
 
+/**
+ * Constructs part of a verifier for a username and password combination.
+ * Should not be used on its own except in testing.
+ */
 export function computeX(s: bigint, I: string, P: string, algorithm: HashAlgorithm): bigint {
-	return HASH(algorithm, bigintFromHex(s.toString(16) + HASH(algorithm, `${I}:${P}`).toString(16)));
+	return HASH(algorithm, bigintFromHex(toHexString(s) + toHexString(HASH(algorithm, `${I}:${P}`))));
 }
 
 /**
+ * Constructs a cryptographic verifier for a username and password combination.
+ *
  * @param s The user's salt
  * @param I The user's given username
  * @param P The user's password
@@ -113,41 +126,59 @@ export function verifier(
 // ** Client Hello (§2.5.1) **
 // **
 
-// Note on session resumption (§2.5.1.1):
-// Client needs to include the "SRP extension" in the hello message; do full handshake in case server can't or won't resume the session (expiration?).
-// If server doesn't want to resume the session, ignore the SRP extension "except for its inclusion in the finished message hashes".
-
-// Note on unknown SRP info from client (§2.5.1.3):
-// If there's no known verifier for the given username, respond with a "bad_record_mac" alert (see §2.9), to indicate that the password was wrong. (Matches legacy password-auth behavior.) Be sure to send a consistent salt (s) and group (N,g) values for the same username, to simulate the existence of an entry for the given username. For B, return a random value between 1 and N-1 inclusive, while simulating computation delays.
-// - Generate a fake verifier using process.env.AUTH_SECRET for B
-
-function fakeSaltForUnknownUsername(I: string): bigint {
+/**
+ * Should generate a stable fake verifier (v) for the given username. This
+ * generates a consistent salt (s) value for given group (N,g) values for the
+ * same username, to simulate the existence of a verifier entry for the username.
+ * This value always results in a "bad_record_mac" error from the SRP protocol.
+ * (Matches legacy password-auth behavior.) Send this value in response to a
+ * request for a salt for an unknown username.
+ *
+ * See RFC 5054 §2.5.1.3
+ */
+export function fakeSaltForUnknownUsername(I: string): bigint {
+	// FIXME: This exposes the auth secret!
 	return HMAC_SHA1(requireEnv("AUTH_SECRET"), `salt${I}`);
+}
+
+/**
+ * Returns a random value between 1 and N-1 inclusive, while simulating computation
+ * delays. Send this value for an unknown username.
+ *
+ * See RFC 5054 §2.5.1.3
+ */
+export function fakeServerPublicValue(N: bigint, g: bigint, algorithm: HashAlgorithm): bigint {
+	// Just to simualte processing delays:
+	const k = computeK(N, g, algorithm);
+	const B = modAdd(k, modExp(g, k, N), N);
+	safeCompare(B % N, 0n);
+
+	const Nstr = toHexString(N);
+	const byteCount = Nstr.length / 2;
+	return randomBits(byteCount); // TODO: Check that this is between 1 and N-1 inclusive
 }
 
 // **
 // ** Server Key Exchange (§2.5.3) **
 // **
 
-type ServerKeyMessage = ServerSRPParams;
-
 // function getStoredVerifierForUsername(I: string): bigint {
 // 	// read the database, get stored v
 // }
 
 /**
- * Do a constant time integer comparison. Always compare the complete numbers
+ * Compares two integers in constant time. Always compares the complete numbers
  * against each other to get a constant time. This method does not short-cut
  * if the two number's length differs.
  */
 function safeCompare(x: bigint, y: bigint): boolean {
-	const a = x.toString(16);
-	const b = y.toString(16);
+	const a = toHexString(x);
+	const b = toHexString(y);
 	return safeCompareStrings(a, b);
 }
 
 export function computeK(N: bigint, g: bigint, algorithm: HashAlgorithm): bigint {
-	return HASH(algorithm, bigintFromHex(N.toString(16) + PAD(g, N)));
+	return HASH(algorithm, bigintFromHex(toHexString(N) + PAD(g, N)));
 }
 
 /**
@@ -215,7 +246,7 @@ export function clientPremasterSecret(
 	a: bigint,
 	I: string,
 	P: string,
-	skm: ServerKeyMessage,
+	skm: ServerSRPParams,
 	algorithm: HashAlgorithm
 ): bigint {
 	const { N, g, s, B } = skm;
@@ -331,7 +362,7 @@ class IllegalParameterError extends Error {
 // ** Operations not defined in the spec **
 // **
 
-const hashAlgorithms = [
+export const hashAlgorithms = [
 	// Common (probably) on OpenSSL
 	"sha1",
 	"sha256",
@@ -357,7 +388,7 @@ const hashAlgorithms = [
 	"blake2b-512",
 ] as const;
 
-type HashAlgorithm = typeof hashAlgorithms[number];
+export type HashAlgorithm = typeof hashAlgorithms[number];
 
 export function assertHashAlgorithm(tbd: string): asserts tbd is HashAlgorithm {
 	if (!hashAlgorithms.includes(tbd as HashAlgorithm))
@@ -372,7 +403,7 @@ export function assertHashAlgorithm(tbd: string): asserts tbd is HashAlgorithm {
  * BigInt values are taken as hex-encoded bytes.
  */
 export function HASH(algorithm: HashAlgorithm, textOrBytes: string | bigint): bigint {
-	const data: string = typeof textOrBytes === "string" ? textOrBytes : textOrBytes.toString(16);
+	const data: string = typeof textOrBytes === "string" ? textOrBytes : toHexString(textOrBytes);
 	const inputEncoding: Encoding = typeof textOrBytes === "string" ? "utf8" : "hex";
 
 	if (algorithm === "blake2s-256") {
@@ -460,3 +491,15 @@ export function modExp(x: bigint, y: bigint, N: bigint): bigint {
 	}
 	return (x * z ** 2n) % N;
 }
+
+/**
+ * N and g values from RFC 5054. These are probably safe to use for SRP auth.
+ */
+export const RFC5054 = {
+	group2048: {
+		N: bigintFromHex(
+			"AC6BDB41324A9A9BF166DE5E1389582FAF72B6651987EE07FC3192943DB56050A37329CBB4A099ED8193E0757767A13DD52312AB4B03310DCD7F48A9DA04FD50E8083969EDB767B0CF6095179A163AB3661A05FBD5FAAAE82918A9962F0B93B855F97993EC975EEAA80D740ADBF4FF747359D041D5C33EA71D281E446B14773BCA97B43A23FB801676BD207A436C6481F1D2B9078717461A5B9D32E688F87748544523B524B0D57D5EA77A2775D2ECFA032CFBDBF52FB3786160279004E57AE6AF874E7303CE53299CCC041C7BC308D82A5698F3A8D0C38271AE35F8E9DBFBB694B5C803D89F7AE435DE236D525F54759B65E372FCD68EF20FA7111F9E4AFF73"
+		),
+		g: 2n,
+	},
+};

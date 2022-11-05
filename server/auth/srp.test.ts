@@ -151,9 +151,9 @@ C346D7E4 74B29EDE 8A469FFE CA686E5A`);
 
 			// Sanity check that N is the given size
 			const Nstr = N.toString(16);
-			const byteCount = (Nstr.length / 2) * 8;
-			if (byteCount !== size)
-				throw new TypeError(`Expected N to be ${size} bytes, but actually is ${byteCount} bytes`);
+			const bitCount = (Nstr.length / 2) * 8;
+			if (bitCount !== size)
+				throw new TypeError(`Expected N to be ${size} bytes, but actually is ${bitCount} bytes`);
 
 			// Check that our implementation returns the correct values
 			test("matches u", () => {

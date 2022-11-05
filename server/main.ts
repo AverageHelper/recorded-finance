@@ -14,6 +14,8 @@ import helmet from "helmet";
 import * as lol from "./api/v0";
 import * as ping from "./api/v0/ping";
 import * as serverVersion from "./api/v0/version";
+import * as srpVerifier from "./api/v0/srp/verifier/[account]";
+import * as srpVerify from "./api/v0/srp/verify/[account]";
 
 const PORT = 40850;
 
@@ -31,6 +33,8 @@ app
 	.use(express.json({ limit: "5mb" }))
 	.use(express.urlencoded({ limit: "5mb", extended: true }))
 	.use("/v0/", auth()) // Auth endpoints
+	.get("/v0/srp/verifier/:account", asyncWrapper(srpVerifier.GET))
+	.post("/v0/srp/verify/:account", asyncWrapper(srpVerify.POST))
 	.use("/v0/db", db()) // Database endpoints (checks auth)
 	.use((req, res) => {
 		// Custom 404

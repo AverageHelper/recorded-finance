@@ -177,7 +177,7 @@ paths:
                 account:
                   type: string
                   maxLength: 191
-                  description: An identifier (or username) chosen for the user's account.
+                  description: An identifier (or username) for the user's account.
                 password:
                   type: string
                   description: A passphrase to access the user's account.
@@ -493,6 +493,53 @@ paths:
                       - "expired-token"
                       - "missing-token"
                       - "not-owner"
+  "/v0/srp/verifier/{account}":
+    get:
+      tags:
+        - auth
+      summary: Get SRP validator value for a user
+      operationId: srp-verifier
+      security:
+        - jwt: []
+      responses:
+        200:
+          description: Successfully found a validator value.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    enum:
+                      - "Success!"
+                  N:
+                    type: string
+                    description: A safe prime value to use for generating ciphertext.
+                  g:
+                    type: string
+                    description: The SRP generator value.
+                  s:
+                    type: string
+                    description: The user's salt.
+                  B:
+                    type: string
+                    description: The server's public value.
+                  alg:
+                    type: string
+                    enum:
+                      - "sha1"
+                      - "sha256"
+                      - "sha384"
+                      - "sha512"
+                    description: The hashing algorithm to use to generate intermediate authentication ciphertext.
+    parameters:
+      - name: account
+        in: path
+        description: An identifier (or username) for the user's account.
+        required: true
+        schema:
+          type: string
   "/v0/logout":
     post:
       tags:
