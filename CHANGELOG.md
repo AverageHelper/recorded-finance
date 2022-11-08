@@ -5,11 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.15.0] - 2022-11-08
 ### Added
 - All API endpoints now support being run as Vercel serverless functions.
 - When running under Vercel, the server cannot handle WebSocket requests directly. Clients must use the `PubNub` client to subscribe to event channels.
 - Server administrators who wish to host on Vercel should set up a PubNub account, as described in the server's [README](/server/README.md#prerequesites).
+
+### Changed
+- We now generate client-side API interfaces from the server's [OpenAPI spec](/server/openapi.yaml). This means better static assurances that we're doing stuff correctly on the front-end. (Still gotta keep the spec up with the back-end logic tho).
+- Clearer OpenAPI spec with regard to batch writes.
 
 ## [0.14.0] - 2022-10-02
 ### Changed
@@ -314,7 +318,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial commit
 
-[Unreleased]: https://github.com/AverageHelper/accountable-svelte/compare/v0.14.0...HEAD
+[0.15.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.13.2...v0.14.0
 [0.13.2]: https://github.com/AverageHelper/accountable-svelte/compare/v0.13.1...v0.13.2
 [0.13.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.13.0...v0.13.1
