@@ -412,6 +412,8 @@ export function onSnapshot<T>(
 
 	const pubnub = db.pubnub;
 	if (pubnub) {
+		// ** Long polling (PubNub)
+
 		// Vercel doesn't support direct WebSockets. Use PubNub instead
 		const channel =
 			type === "collection"
@@ -579,6 +581,7 @@ export function onSnapshot<T>(
 		return unsubscribe;
 	}
 
+	// ** WebSockets (Express)
 	const uid = db.currentUser.uid;
 	const baseUrl = new URL(`ws://${db.url.hostname}:${db.url.port}`);
 	let url: URL;
