@@ -732,28 +732,48 @@ paths:
             schema:
               type: array
               items:
-                type: object
-                required:
-                  - type
-                  - ref
-                properties:
-                  type:
-                    type: string
-                    enum:
-                      - set
-                      - delete
-                  ref:
-                    type: object
+                oneOf:
+                  - type: object
                     required:
-                      - collectionId
-                      - documentId
+                      - type
+                      - ref
+                      - data
                     properties:
-                      collectionId:
-                        $ref: "#/components/schemas/CollectionID"
-                      documentId:
+                      type:
                         type: string
-                  data:
-                    $ref: "#/components/schemas/DataItem"
+                        enum:
+                          - set
+                      ref:
+                        type: object
+                        required:
+                          - collectionId
+                          - documentId
+                        properties:
+                          collectionId:
+                            $ref: "#/components/schemas/CollectionID"
+                          documentId:
+                            type: string
+                      data:
+                        $ref: "#/components/schemas/DataItem"
+                  - type: object
+                    required:
+                      - type
+                      - ref
+                    properties:
+                      type:
+                        type: string
+                        enum:
+                          - delete
+                      ref:
+                        type: object
+                        required:
+                          - collectionId
+                          - documentId
+                        properties:
+                          collectionId:
+                            $ref: "#/components/schemas/CollectionID"
+                          documentId:
+                            type: string
       responses:
         200:
           description: All operations successful
@@ -1200,6 +1220,7 @@ paths:
               properties:
                 file:
                   type: string
+                  format: binary
       responses:
         200:
           description: Operation successful

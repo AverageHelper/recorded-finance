@@ -4,7 +4,7 @@ import type { Infer } from "superstruct";
 import type { ListenerParameters } from "pubnub";
 import { documentData } from "./schemas.js";
 import { AccountableError, UnexpectedResponseError, UnreachableCaseError } from "./errors/index.js";
-import { databaseCollection, databaseDocument } from "./api-types/index.js";
+import { databaseCollection, databaseDocument } from "./apiStruts";
 import { doc as docRef, getDoc, getDocs } from "./db.js";
 import { isArray } from "../helpers/isArray.js";
 import { isString } from "../helpers/isString.js";
@@ -304,7 +304,7 @@ export function onSnapshot<T>(
 	onError?: (error: Error) => void
 ): Unsubscribe;
 
-export function onSnapshot<T extends DocumentData>(
+export function onSnapshot<T>(
 	queryOrReference: CollectionReference<T> | DocumentReference<T>,
 	onNextOrObserver:
 		| QuerySnapshotCallback<T>
