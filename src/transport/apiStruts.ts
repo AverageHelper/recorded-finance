@@ -40,22 +40,17 @@ export async function run<A extends Array<unknown>>(
 }
 
 /**
- * Route for:
- * - GET    `/v0/db/users/{user.id}/{collection.id}`
- * - DELETE `/v0/db/users/{user.id}/{collection.id}`
+ * Route for websockets at `/v0/db/users/{uid}/{collectionId}`
  */
-export function databaseCollection<UID extends string>(
+export function databaseCollection<UID extends string, Col extends CollectionId>(
 	uid: UID,
-	collectionId: CollectionId
+	collectionId: Col
 ): `/v0/db/users/${typeof uid}/${typeof collectionId}` {
 	return `/v0/db/users/${uid}/${collectionId}`;
 }
 
 /**
- * Route for:
- * - GET    `/v0/db/users/{user.id}/{collection.id}/{document.id}`
- * - POST   `/v0/db/users/{user.id}/{collection.id}/{document.id}`
- * - DELETE `/v0/db/users/{user.id}/{collection.id}/{document.id}`
+ * Route for websockets at `/v0/db/users/{uid}/{collectionId}/{documentId}`
  */
 export function databaseDocument<UID extends string, Col extends CollectionId, Doc extends string>(
 	uid: UID,
