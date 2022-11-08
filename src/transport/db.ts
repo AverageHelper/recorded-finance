@@ -369,6 +369,7 @@ export async function getDoc<T>(reference: DocumentReference<T>): Promise<Docume
 	// FIXME: `null` was a really bad idea to use as a top-level option. Makes our wrapper go screwy. Fix that in v1 so we can put our wrapper back in
 	const { data, status } = await getV0DbUsersByUidAndCollDoc(uid, collection, doc, {
 		baseUrl: reference.db.url.href,
+		credentials: "include",
 	});
 	switch (status) {
 		case 403: // No permission

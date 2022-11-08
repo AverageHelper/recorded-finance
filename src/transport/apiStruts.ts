@@ -10,7 +10,7 @@ import { NetworkError } from "./errors/index.js";
  * of calling REST endpoints.
  */
 type APIRequest<A extends Array<unknown>> = (
-	...args: [...paramsAndBody: A, opts: RequestOpts | undefined]
+	...args: [...paramsAndBody: A, opts?: RequestOpts]
 ) => Promise<APIResponse>;
 
 /**
@@ -34,7 +34,8 @@ export async function run<A extends Array<unknown>>(
 	db: AccountableDB,
 	...args: A
 ): Promise<RawServerResponse> {
-	const result = await r(...args, { baseUrl: db.url.href });
+	const opts: RequestOpts = { baseUrl: db.url.href, credentials: "include" };
+	const result = await r(...args, opts);
 	switch (result.status) {
 		case HttpStatusCode.OK:
 			return result.data;
