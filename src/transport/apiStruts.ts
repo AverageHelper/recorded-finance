@@ -5,8 +5,12 @@ import type { RequestOpts } from "oazapfts/lib/runtime";
 import { HttpStatusCode } from "helpers/HttpStatusCode.js";
 import { NetworkError } from "./errors/index.js";
 
+/**
+ * A function generated from our back-end's OpenAPI spec for the purpose
+ * of calling REST endpoints.
+ */
 type APIRequest<A extends Array<unknown>> = (
-	...args: [...A, RequestOpts | undefined]
+	...args: [...paramsAndBody: A, opts: RequestOpts | undefined]
 ) => Promise<APIResponse>;
 
 /**
