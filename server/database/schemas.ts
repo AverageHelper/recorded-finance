@@ -231,7 +231,13 @@ export function isCollectionId(tbd: string): tbd is CollectionID {
 }
 
 /** A subset of {@link CollectionID} that's used as a discriminator for DataItem collections. */
-export type DataItemKey = "accounts" | "attachments" | "locations" | "tags" | "transactions";
+export type DataItemKey =
+	| "accounts"
+	| "attachments"
+	| "locations"
+	| "tags"
+	| "transactions"
+	| "users";
 
 export function isDataItemKey(id: CollectionID): id is DataItemKey {
 	switch (id) {
@@ -240,10 +246,10 @@ export function isDataItemKey(id: CollectionID): id is DataItemKey {
 		case "locations":
 		case "tags":
 		case "transactions":
+		case "users":
 			return true;
 
 		case "keys":
-		case "users":
 			return false;
 		default:
 			throw new UnreachableCaseError(id);
