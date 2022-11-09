@@ -1,4 +1,4 @@
-import type { Identified, User } from "../../../../../../../database/schemas";
+import type { User } from "../../../../../../../database/schemas";
 import { apiHandler, dispatchRequests } from "../../../../../../../helpers/apiHandler";
 import { BadRequestError } from "../../../../../../../errors/BadRequestError";
 import { NotFoundError } from "../../../../../../../errors/NotFoundError";
@@ -46,17 +46,8 @@ export const GET = apiHandler("GET", async (req, res) => {
 	if (!ref) throw new NotFoundError();
 
 	const doc = await getDocument(ref);
-	let data = doc.data;
+	const data = doc.data;
 	// console.debug(`Found item: ${JSON.stringify(data, undefined, "  ")}`);
-
-	if (data !== null && ref.parent.id === "users") {
-		// Don't send the entire user entry!!!!
-		data = {
-			_id: data._id,
-			uid: (data as User).uid,
-		} as Identified<User>; // FIXME: This is spoopy
-	}
-
 	respondData(res, data);
 });
 

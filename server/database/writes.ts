@@ -224,7 +224,6 @@ export async function deleteDbDocs(refs: NonEmptyArray<DocumentReference>): Prom
 	// Group refs by collection
 	const dataItemRefs: Array<DocumentReference> = [];
 	const keyRefs: Array<DocumentReference> = [];
-	const userRefs: Array<DocumentReference> = [];
 
 	for (const ref of refs) {
 		switch (ref.parent.id) {
@@ -233,13 +232,11 @@ export async function deleteDbDocs(refs: NonEmptyArray<DocumentReference>): Prom
 			case "locations":
 			case "tags":
 			case "transactions":
+			case "users":
 				dataItemRefs.push(ref);
 				continue;
 			case "keys":
 				keyRefs.push(ref);
-				continue;
-			case "users":
-				userRefs.push(ref);
 				continue;
 			default:
 				throw new UnreachableCaseError(ref.parent.id);
@@ -267,7 +264,6 @@ export async function deleteDbDocs(refs: NonEmptyArray<DocumentReference>): Prom
 			});
 		}),
 		dataSource.userKeys.deleteMany({ where: { userId: { in: keyRefs.map(r => r.id) } } }),
-		dataSource.user.deleteMany({ where: { uid: { in: userRefs.map(r => r.id) } } }),
 	]);
 }
 
@@ -284,16 +280,11 @@ export async function deleteDbCollection(ref: CollectionReference): Promise<void
 		case "locations":
 		case "tags":
 		case "transactions":
-			await dataSource.dataItem.deleteMany({ where: { userId: uid } });
+		case "users":
+			await dataSource.dataItem.deleteMany({ where: { userId: uid, collectionId: ref.id } });
 			return;
 		case "keys":
 			await dataSource.userKeys.deleteMany({ where: { userId: uid } });
-			return;
-		case "users":
-			// Special handling: delete all users, and burn everything
-			await dataSource.dataItem.deleteMany();
-			await dataSource.userKeys.deleteMany();
-			await dataSource.user.deleteMany();
 			return;
 		default:
 			throw new UnreachableCaseError(ref.id);
