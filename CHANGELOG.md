@@ -5,11 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.14.1] - 2022-11-09
 ### Added
 - All API endpoints now support being run as Vercel serverless functions.
 - When running under Vercel, the server cannot handle WebSocket requests directly. Clients must use the `PubNub` client to subscribe to event channels.
 - Server administrators who wish to host on Vercel should set up a PubNub account, as described in the server's [README](/server/README.md#prerequesites).
+
+### Security
+- No longer send the user's stored password hash, password salt, MFA recovery seed, TOTP seed, etc. in response to an authenticated request for the user document. Only send the UID. (This was bad to do, not sure why this slipped past my attention in the first place.)
 
 ## [0.14.0] - 2022-10-02
 ### Changed
@@ -314,7 +317,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial commit
 
-[Unreleased]: https://github.com/AverageHelper/accountable-svelte/compare/v0.14.0...HEAD
+[0.14.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.14.0...v0.14.1
 [0.14.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.13.2...v0.14.0
 [0.13.2]: https://github.com/AverageHelper/accountable-svelte/compare/v0.13.1...v0.13.2
 [0.13.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.13.0...v0.13.1

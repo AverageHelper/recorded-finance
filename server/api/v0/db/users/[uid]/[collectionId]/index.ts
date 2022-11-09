@@ -5,6 +5,7 @@ import { pathSegments } from "../../../../../../helpers/pathSegments";
 import { requireAuth } from "../../../../../../auth/requireAuth";
 import { respondData, respondSuccess } from "../../../../../../responses";
 import { statsForUser } from "../../../../../../database/reads";
+import { UnauthorizedError } from "../../../../../../errors/UnauthorizedError";
 import {
 	CollectionReference,
 	deleteCollection,
@@ -29,6 +30,11 @@ export const GET = apiHandler("GET", async (req, res) => {
 	const user = await requireAuth(req, res, true);
 	const ref = collectionRef(user, req);
 	if (!ref) throw new NotFoundError();
+
+	if (ref.id === "users") {
+		// No user may request every other user document.
+		throw new UnauthorizedError("not-owner");
+	}
 
 	const items = await getCollection(ref);
 	respondData(res, items);

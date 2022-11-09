@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: Accountable Server
-  version: 0.8.0
+  version: 0.8.1
   description: This is the Accountable Server. All the server does is store data given to it by the client. The server controls access to the data with basic password-based auth with optional time-based multi-factor auth. The Accountable client does most of the hard work of encrypting the user's data. You can read Accountable's source code on [GitHub](https://github.com/AverageHelper/accountable-svelte).
   license:
     name: GNU General Public License v3.0
@@ -945,8 +945,51 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                nullable: true
+                oneOf:
+                  - type: object
+                    nullable: true
+                    required:
+                      - _id
+                      - dekMaterial
+                      - passSalt
+                    properties:
+                      _id:
+                        type: string
+                        description: The document ID.
+                      dekMaterial:
+                        type: string
+                      passSalt:
+                        type: string
+                      oldDekMaterial:
+                        type: string
+                      oldPassSalt:
+                        type: string
+                  - type: object
+                    nullable: true
+                    required:
+                      - _id
+                      - uid
+                    properties:
+                      _id:
+                        type: string
+                      uid:
+                        type: string
+                  - type: object
+                    nullable: true
+                    required:
+                      - _id
+                      - ciphertext
+                      - objectType
+                      - cryption
+                    properties:
+                      _id:
+                        type: string
+                      ciphertext:
+                        type: string
+                      objectType:
+                        type: string
+                      cryption:
+                        type: string
         403:
           description: The caller does not have permission to access the resource
           content:
