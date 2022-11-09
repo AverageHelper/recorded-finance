@@ -148,7 +148,7 @@ export const user = object({
 });
 export type User = Infer<typeof user>;
 
-export function sortStrings(a: string, b: string): number {
+function sortStrings(a: string, b: string): number {
 	if (a > b) return 1;
 	if (b > a) return -1;
 	return 0;
@@ -256,7 +256,7 @@ export function isDataItemKey(id: CollectionID): id is DataItemKey {
 	}
 }
 
-export type AnyData = DataItem | UserKeys | User;
+export type AnyData = DataItem | UserKeys;
 
 const documentRef = object({
 	collectionId: enums(allCollectionIds),

@@ -1,13 +1,7 @@
 import type { AnyData, DataItem, DataItemKey, User, UserKeys } from "./schemas";
 import type { CollectionReference, DocumentReference } from "./references";
 import type { FileData, PrismaPromise, User as DBUser } from "@prisma/client";
-import {
-	assertSchema,
-	isDataItemKey,
-	isNonEmptyArray,
-	sortStrings,
-	user as userSchema,
-} from "./schemas";
+import { assertSchema, isDataItemKey, isNonEmptyArray, user as userSchema } from "./schemas";
 import { dataSource } from "./io";
 import { ONE_HOUR } from "../constants/time";
 import { UnreachableCaseError } from "../errors/UnreachableCaseError";
@@ -135,21 +129,6 @@ export async function upsertDbDocs(updates: Array<DocUpdate>): Promise<void> {
 			// Keys
 			const data: UserKeys = update.data;
 			dekMaterialUpserts.push(data);
-			return;
-		} else if ("uid" in update.data) {
-			// User
-			const data: User = update.data;
-			const upsert = {
-				uid: data.uid,
-				currentAccountId: data.currentAccountId,
-				passwordHash: data.passwordHash,
-				passwordSalt: data.passwordSalt,
-				pubnubCipherKey: data.pubnubCipherKey,
-				mfaRecoverySeed: data.mfaRecoverySeed ?? null,
-				totpSeed: data.totpSeed ?? null,
-				requiredAddtlAuth: Array.from(new Set(data.requiredAddtlAuth?.sort(sortStrings) ?? [])),
-			};
-			userUpserts.push(upsert);
 			return;
 		}
 
