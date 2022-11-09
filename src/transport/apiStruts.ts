@@ -2,7 +2,7 @@ import type { AccountableDB } from "./db";
 import type { CollectionId } from "./api";
 import type { RawServerResponse } from "./schemas.js";
 import type { RequestOpts } from "oazapfts/lib/runtime";
-import { HttpStatusCode } from "helpers/HttpStatusCode.js";
+import { HttpStatusCode } from "../helpers/HttpStatusCode.js";
 import { NetworkError } from "./errors/index.js";
 
 /**
