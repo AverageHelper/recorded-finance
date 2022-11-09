@@ -11,8 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - When running under Vercel, the server cannot handle WebSocket requests directly. Clients must use the `PubNub` client to subscribe to event channels.
 - Server administrators who wish to host on Vercel should set up a PubNub account, as described in the server's [README](/server/README.md#prerequesites).
 
+### Fixed
+- Fixed an issue where requesting deletion of the user's personal preference documents would inadvertently erase every user's data.
+
 ### Security
-- No longer send the user's stored password hash, password salt, MFA recovery seed, TOTP seed, etc. in response to an authenticated request for the user document. Only send the UID. (This was bad to do, not sure why this slipped past my attention in the first place.)
+- Fixed an issue where requesting the user's personal preferences would instead send the user's access control hashes (password hash, password salt, MFA seeds, etc.) This information is largely useless to the end user, including the MFA seeds which require information only the server knows, but still spoopy to send to clients.
 
 ## [0.14.0] - 2022-10-02
 ### Changed

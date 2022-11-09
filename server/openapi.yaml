@@ -968,16 +968,6 @@ paths:
                     nullable: true
                     required:
                       - _id
-                      - uid
-                    properties:
-                      _id:
-                        type: string
-                      uid:
-                        type: string
-                  - type: object
-                    nullable: true
-                    required:
-                      - _id
                       - ciphertext
                       - objectType
                       - cryption
