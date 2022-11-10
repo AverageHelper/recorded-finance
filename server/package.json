@@ -2,7 +2,7 @@
 	"name": "accountable-server",
 	"version": "0.8.1",
 	"scripts": {
-		"start": "./node_modules/.bin/vercel pull && ./node_modules/.bin/concurrently -s first -kn VERCEL,APP \"npm run vercel:dev\" \"sleep 3 && npm run dev:client\"",
+		"start": "./node_modules/.bin/vercel pull && ./node_modules/.bin/concurrently -s first -kn VERCEL,APP \"npm run vercel:dev\" \"sleep 20 && npm run dev:client\"",
 		"build:client": "cd .. && npm run build:client",
 		"dev:client": "cd .. && npm run dev:client",
 		"vercel:dev": "./node_modules/.bin/vercel dev",
