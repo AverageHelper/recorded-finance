@@ -130,10 +130,6 @@ jobs:
           cd server
           npm run export-version
           ./node_modules/.bin/vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VITE_ENABLE_LOGIN: true
-          VITE_ENABLE_SIGNUP: true
-          VITE_PUBNUB_SUBSCRIBE_KEY: ${{ secrets.VITE_PUBNUB_SUBSCRIBE_KEY }}
 
       - name: Deploy to Production
         run: |
