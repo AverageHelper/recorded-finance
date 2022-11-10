@@ -3,6 +3,7 @@ import type { DataItem } from "./api";
 import type { Infer } from "superstruct";
 import { isArray } from "../helpers/isArray";
 import { isObject } from "../helpers/isObject";
+import { UnexpectedResponseError } from "./errors";
 import {
 	array,
 	assert as assertSchema,
@@ -15,6 +16,7 @@ import {
 	number,
 	optional,
 	string,
+	StructError,
 	type,
 	union,
 } from "superstruct";
@@ -89,7 +91,17 @@ const rawServerResponse = type({
 });
 
 export function assertRawServerResponse(tbd: unknown): asserts tbd is RawServerResponse {
-	assertSchema(tbd, rawServerResponse);
+	try {
+		assertSchema(tbd, rawServerResponse);
+	} catch (error) {
+		let message: string;
+		if (error instanceof StructError) {
+			message = error.message;
+		} else {
+			message = JSON.stringify(error, undefined, "  ");
+		}
+		throw new UnexpectedResponseError(`Invalid server response: ${message}`); // TODO: I18N
+	}
 }
 
 export function isRawServerResponse(tbd: unknown): tbd is RawServerResponse {

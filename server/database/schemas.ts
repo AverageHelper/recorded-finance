@@ -291,6 +291,6 @@ function _identified<T>(struct: Struct<T>): Struct<T & Infer<typeof identified>>
 
 export type Identified<T> = Infer<ReturnType<typeof _identified<T>>>;
 
-export const identifiedDataItem = union([_identified(dataItem), _identified(userKeys), user]);
+export const identifiedDataItem = union([_identified(dataItem), _identified(userKeys)]);
 
 export type IdentifiedDataItem = Infer<typeof identifiedDataItem>;

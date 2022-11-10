@@ -854,7 +854,41 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                type: array
+                items:
+                  oneOf:
+                    - type: object
+                      required:
+                        - _id
+                        - dekMaterial
+                        - passSalt
+                      properties:
+                        _id:
+                          type: string
+                          description: The document ID.
+                        dekMaterial:
+                          type: string
+                        passSalt:
+                          type: string
+                        oldDekMaterial:
+                          type: string
+                        oldPassSalt:
+                          type: string
+                    - type: object
+                      required:
+                        - _id
+                        - ciphertext
+                        - objectType
+                        - cryption
+                      properties:
+                        _id:
+                          type: string
+                        ciphertext:
+                          type: string
+                        objectType:
+                          type: string
+                        cryption:
+                          type: string
         403:
           description: The caller does not have permission to access the resource
           content:

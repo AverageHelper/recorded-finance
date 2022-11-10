@@ -455,7 +455,16 @@ export async function getDocs<T>(query: CollectionReference<T>): Promise<QuerySn
 	const uid = currentUser.uid;
 	const collection = query.id;
 
-	const { data } = await run(getV0DbUsersByUidAndColl, query.db, uid, collection);
+	// FIXME: `Array` was a really bad idea to use as a top-level option. Makes our wrapper go screwy. Fix that in v1 so we can put our wrapper back in
+	const { data, status } = await getV0DbUsersByUidAndColl(uid, collection, {
+		baseUrl: query.db.url.href,
+		credentials: "include",
+	});
+	switch (status) {
+		case 403: // No permission
+		case 404: // Unknown collection
+			throw new NetworkError(status, data);
+	}
 	if (data === undefined) throw new TypeError(t("error.server.no-data"));
 	if (data === null || !isArray(data)) throw new TypeError(t("error.server.too-few-documents"));
 
@@ -463,7 +472,6 @@ export async function getDocs<T>(query: CollectionReference<T>): Promise<QuerySn
 		query,
 		data.map(data => {
 			const id = data["_id"];
-			delete data["_id"];
 			if (!isString(id)) throw new TypeError(t("error.server.id-not-string"));
 
 			return new QueryDocumentSnapshot(doc(query.db, query.id, id), data as T);

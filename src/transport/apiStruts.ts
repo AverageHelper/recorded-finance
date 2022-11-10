@@ -2,6 +2,7 @@ import type { AccountableDB } from "./db";
 import type { CollectionId } from "./api";
 import type { RawServerResponse } from "./schemas.js";
 import type { RequestOpts } from "oazapfts/lib/runtime";
+import { assertRawServerResponse } from "./schemas.js";
 import { HttpStatusCode } from "../helpers/HttpStatusCode.js";
 import { NetworkError } from "./errors/index.js";
 
@@ -36,6 +37,7 @@ export async function run<A extends Array<unknown>>(
 ): Promise<RawServerResponse> {
 	const opts: RequestOpts = { baseUrl: db.url.href, credentials: "include" };
 	const result = await r(...args, opts);
+	assertRawServerResponse(result.data);
 	switch (result.status) {
 		case HttpStatusCode.OK:
 			return result.data;
