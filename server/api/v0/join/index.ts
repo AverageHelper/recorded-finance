@@ -7,9 +7,9 @@ import { is, nonempty, string, type } from "superstruct";
 import { MAX_USERS } from "../../../auth/limits";
 import { newAccessTokens, setSession } from "../../../auth/jwt";
 import { NotEnoughRoomError } from "../../../errors/NotEnoughRoomError";
-import { numberOfUsers, statsForUser, userWithAccountId } from "../../../database/reads";
+import { numberOfUsers, statsForUser, userWithAccountId } from "../../../database/read";
 import { respondSuccess } from "../../../responses";
-import { upsertUser } from "../../../database/writes";
+import { upsertUser } from "../../../database/write";
 import { v4 as uuid } from "uuid";
 
 /**

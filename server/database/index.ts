@@ -1,8 +1,8 @@
 import type { AnyData, IdentifiedDataItem } from "./schemas";
 import type { CollectionReference, DocumentReference } from "./references";
-import type { DocUpdate } from "./writes";
-import { deleteDbCollection, deleteDbDoc, deleteDbDocs, upsertDbDocs } from "./writes";
-import { fetchDbCollection, fetchDbDoc, fetchDbDocs } from "./reads";
+import type { DocUpdate } from "./write";
+import { deleteDbCollection, deleteDbDoc, deleteDbDocs, upsertDbDocs } from "./write";
+import { fetchDbCollection, fetchDbDoc, fetchDbDocs } from "./read";
 import { publishWriteForRef } from "../auth/pubnub";
 
 // Since all data is encrypted on the client, we only

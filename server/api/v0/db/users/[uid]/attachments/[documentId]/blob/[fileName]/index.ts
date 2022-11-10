@@ -7,8 +7,8 @@ import type {
 } from "express";
 import { apiHandler, dispatchRequests } from "../../../../../../../../../helpers/apiHandler";
 import { BadRequestError } from "../../../../../../../../../errors/BadRequestError";
-import { destroyFileData, upsertFileData } from "../../../../../../../../../database/writes";
-import { fetchFileData, statsForUser } from "../../../../../../../../../database/reads";
+import { destroyFileData, upsertFileData } from "../../../../../../../../../database/write";
+import { fetchFileData, statsForUser } from "../../../../../../../../../database/read";
 import { maxSpacePerUser, MAX_FILE_BYTES } from "../../../../../../../../../auth/limits";
 import { NotEnoughRoomError } from "../../../../../../../../../errors/NotEnoughRoomError";
 import { NotFoundError } from "../../../../../../../../../errors/NotFoundError";

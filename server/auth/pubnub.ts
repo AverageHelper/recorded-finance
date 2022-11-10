@@ -1,6 +1,6 @@
 import type { CollectionReference, DocumentReference, IdentifiedDataItem, User } from "../database";
 import { requireEnv } from "../environment";
-import { userWithUid } from "../database/reads";
+import { userWithUid } from "../database/read";
 import PubNub from "pubnub";
 
 /**

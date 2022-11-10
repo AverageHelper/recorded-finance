@@ -1,7 +1,7 @@
-import type { DocUpdate } from "../../../../../database/writes";
+import type { DocUpdate } from "../../../../../database/write";
 import { apiHandler, dispatchRequests } from "../../../../../helpers/apiHandler";
 import { BadRequestError } from "../../../../../errors/BadRequestError";
-import { statsForUser } from "../../../../../database/reads";
+import { statsForUser } from "../../../../../database/read";
 import { requireAuth } from "../../../../../auth/requireAuth";
 import { respondSuccess } from "../../../../../responses";
 import {

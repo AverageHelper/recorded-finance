@@ -7,7 +7,7 @@ import { NotFoundError } from "../errors/NotFoundError";
 import { pathSegments } from "../helpers/pathSegments";
 import { StructError } from "superstruct";
 import { UnauthorizedError } from "../errors/UnauthorizedError";
-import { userWithUid } from "../database/reads";
+import { userWithUid } from "../database/read";
 import safeCompare from "tsscmp";
 
 interface Metadata {
