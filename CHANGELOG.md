@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - We now generate client-side API interfaces from the server's [OpenAPI spec](/server/openapi.yaml). This means better static assurances that we're doing stuff correctly on the front-end. (Still gotta keep the spec up with the back-end logic tho).
 - Clearer OpenAPI spec with regard to batch writes.
 
+### Security
+- The client now attempts to establish WebSocket connections over SSL. TIL that isn't the default for the `ws` protocol.
+
 ## [0.14.1] - 2022-11-09
 ### Added
 - All API endpoints now support being run as Vercel serverless functions.

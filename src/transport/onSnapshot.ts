@@ -583,7 +583,7 @@ export function onSnapshot<T>(
 
 	// ** WebSockets (Express)
 	const uid = db.currentUser.uid;
-	const baseUrl = new URL(`ws://${db.url.hostname}:${db.url.port}`);
+	const baseUrl = new URL(`wss://${db.url.hostname}:${db.url.port}`);
 	let url: URL;
 
 	switch (type) {
