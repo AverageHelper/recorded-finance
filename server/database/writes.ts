@@ -1,13 +1,7 @@
 import type { AnyData, DataItem, DataItemKey, User, UserKeys } from "./schemas";
 import type { CollectionReference, DocumentReference } from "./references";
 import type { FileData, PrismaPromise, User as DBUser } from "@prisma/client";
-import {
-	assertSchema,
-	isDataItemKey,
-	isNonEmptyArray,
-	sortStrings,
-	user as userSchema,
-} from "./schemas";
+import { assertSchema, isDataItemKey, isNonEmptyArray, user as userSchema } from "./schemas";
 import { dataSource } from "./io";
 import { ONE_HOUR } from "../constants/time";
 import { UnreachableCaseError } from "../errors/UnreachableCaseError";
@@ -136,21 +130,6 @@ export async function upsertDbDocs(updates: Array<DocUpdate>): Promise<void> {
 			const data: UserKeys = update.data;
 			dekMaterialUpserts.push(data);
 			return;
-		} else if ("uid" in update.data) {
-			// User
-			const data: User = update.data;
-			const upsert = {
-				uid: data.uid,
-				currentAccountId: data.currentAccountId,
-				passwordHash: data.passwordHash,
-				passwordSalt: data.passwordSalt,
-				pubnubCipherKey: data.pubnubCipherKey,
-				mfaRecoverySeed: data.mfaRecoverySeed ?? null,
-				totpSeed: data.totpSeed ?? null,
-				requiredAddtlAuth: Array.from(new Set(data.requiredAddtlAuth?.sort(sortStrings) ?? [])),
-			};
-			userUpserts.push(upsert);
-			return;
 		}
 
 		throw new UnreachableCaseError(update.data);
@@ -224,7 +203,6 @@ export async function deleteDbDocs(refs: NonEmptyArray<DocumentReference>): Prom
 	// Group refs by collection
 	const dataItemRefs: Array<DocumentReference> = [];
 	const keyRefs: Array<DocumentReference> = [];
-	const userRefs: Array<DocumentReference> = [];
 
 	for (const ref of refs) {
 		switch (ref.parent.id) {
@@ -233,13 +211,11 @@ export async function deleteDbDocs(refs: NonEmptyArray<DocumentReference>): Prom
 			case "locations":
 			case "tags":
 			case "transactions":
+			case "users":
 				dataItemRefs.push(ref);
 				continue;
 			case "keys":
 				keyRefs.push(ref);
-				continue;
-			case "users":
-				userRefs.push(ref);
 				continue;
 			default:
 				throw new UnreachableCaseError(ref.parent.id);
@@ -267,7 +243,6 @@ export async function deleteDbDocs(refs: NonEmptyArray<DocumentReference>): Prom
 			});
 		}),
 		dataSource.userKeys.deleteMany({ where: { userId: { in: keyRefs.map(r => r.id) } } }),
-		dataSource.user.deleteMany({ where: { uid: { in: userRefs.map(r => r.id) } } }),
 	]);
 }
 
@@ -284,16 +259,11 @@ export async function deleteDbCollection(ref: CollectionReference): Promise<void
 		case "locations":
 		case "tags":
 		case "transactions":
-			await dataSource.dataItem.deleteMany({ where: { userId: uid } });
+		case "users":
+			await dataSource.dataItem.deleteMany({ where: { userId: uid, collectionId: ref.id } });
 			return;
 		case "keys":
 			await dataSource.userKeys.deleteMany({ where: { userId: uid } });
-			return;
-		case "users":
-			// Special handling: delete all users, and burn everything
-			await dataSource.dataItem.deleteMany();
-			await dataSource.userKeys.deleteMany();
-			await dataSource.user.deleteMany();
 			return;
 		default:
 			throw new UnreachableCaseError(ref.id);
