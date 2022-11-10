@@ -79,6 +79,7 @@ export async function fetchDbCollection(
 		case "locations":
 		case "tags":
 		case "transactions":
+		case "users":
 			return (
 				await dataSource.dataItem.findMany({
 					where: { userId: uid, collectionId: ref.id },
@@ -108,24 +109,6 @@ export async function fetchDbCollection(
 				oldDekMaterial: k.oldDekMaterial ?? undefined,
 				oldPassSalt: k.oldPassSalt ?? undefined,
 			}));
-		case "users": {
-			// Special handling: fetch all users
-			const rawUsers = (await dataSource.user.findMany()).map(computeRequiredAddtlAuth);
-			return await Promise.all(
-				rawUsers.map(async user => {
-					// Upsert the cipher key if it doesn't exist
-					let pubnubCipherKey = user.pubnubCipherKey;
-					if (pubnubCipherKey === null) {
-						pubnubCipherKey = await generateAESCipherKey();
-						await dataSource.user.update({
-							where: { uid: user.uid },
-							data: { pubnubCipherKey },
-						});
-					}
-					return { ...user, pubnubCipherKey };
-				})
-			);
-		}
 		default:
 			throw new UnreachableCaseError(ref.id);
 	}
@@ -191,7 +174,8 @@ export async function fetchDbDoc(ref: DocumentReference): Promise<Snapshot> {
 		case "attachments":
 		case "locations":
 		case "tags":
-		case "transactions": {
+		case "transactions":
+		case "users": {
 			const result = await dataSource.dataItem.findFirst({
 				where: { docId, collectionId },
 			});
@@ -224,40 +208,6 @@ export async function fetchDbDoc(ref: DocumentReference): Promise<Snapshot> {
 				passSalt: result.passSalt,
 			};
 			console.debug(`Got document at ${ref.path}`);
-			return { ref, data };
-		}
-		case "users": {
-			const rawResult = await dataSource.user.findUnique({
-				where: { uid: docId },
-			});
-			if (rawResult === null) {
-				console.debug(`Got nothing at ${ref.path}`);
-				return { ref, data: null };
-			}
-
-			// Upsert the cipher key if it doesn't exist
-			let pubnubCipherKey = rawResult.pubnubCipherKey;
-			if (pubnubCipherKey === null) {
-				pubnubCipherKey = await generateAESCipherKey();
-				await dataSource.user.update({
-					where: { uid: rawResult.uid },
-					data: { pubnubCipherKey },
-				});
-			}
-
-			const result = computeRequiredAddtlAuth(rawResult);
-			const data: Identified<User> = {
-				_id: result.uid,
-				uid: result.uid,
-				currentAccountId: result.currentAccountId,
-				mfaRecoverySeed: result.mfaRecoverySeed,
-				passwordHash: result.passwordHash,
-				passwordSalt: result.passwordSalt,
-				pubnubCipherKey,
-				requiredAddtlAuth: result.requiredAddtlAuth,
-				totpSeed: result.totpSeed,
-			};
-			console.debug(`Got nothing at ${ref.path}`);
 			return { ref, data };
 		}
 		default:

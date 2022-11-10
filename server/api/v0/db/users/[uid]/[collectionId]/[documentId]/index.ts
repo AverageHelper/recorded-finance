@@ -45,7 +45,8 @@ export const GET = apiHandler("GET", async (req, res) => {
 	// console.debug(`Handling GET for document at ${ref?.path ?? "null"}`);
 	if (!ref) throw new NotFoundError();
 
-	const { data } = await getDocument(ref);
+	const doc = await getDocument(ref);
+	const data = doc.data;
 	// console.debug(`Found item: ${JSON.stringify(data, undefined, "  ")}`);
 	respondData(res, data);
 });
