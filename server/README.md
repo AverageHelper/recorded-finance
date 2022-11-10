@@ -69,6 +69,8 @@ $ npm run build              # Compile the server
 $ node .                     # Start the server in development mode
 ```
 
+Alternatively, if you want to try a local Vercel environment, run `npm start` instead of `node .`.
+
 I recommend using something like [PM2](https://pm2.keymetrics.io) to run the server properly. (Instructions coming soon™)
 
 ## Contributing
