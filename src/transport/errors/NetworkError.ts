@@ -1,5 +1,5 @@
 import type { HttpStatusCode } from "helpers/HttpStatusCode.js";
-import type { ServerResponse } from "../api-types/index.js";
+import type { RawServerResponse } from "../schemas";
 import { t } from "../../i18n";
 
 const errorCodes = [
@@ -36,13 +36,14 @@ export class NetworkError extends Error {
 	readonly status: Readonly<HttpStatusCode>;
 	readonly code: Readonly<ErrorCode>;
 
-	constructor(response: ServerResponse) {
-		const message = isKnownErrorCode(response.code)
-			? messageFromCode(response.code)
-			: `[${response.code ?? "undefined"}] ${response.message}`;
+	constructor(status: HttpStatusCode, response: RawServerResponse | null) {
+		const code = response?.code;
+		const message = isKnownErrorCode(code)
+			? messageFromCode(code)
+			: `[${code ?? "undefined"}] ${response?.message ?? "undefined"}`;
 		super(message);
 		this.name = "NetworkError";
-		this.status = response.status;
-		this.code = isKnownErrorCode(response.code) ? response.code : "unknown";
+		this.status = status;
+		this.code = isKnownErrorCode(code) ? code : "unknown";
 	}
 }

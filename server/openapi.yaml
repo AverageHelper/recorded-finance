@@ -732,28 +732,48 @@ paths:
             schema:
               type: array
               items:
-                type: object
-                required:
-                  - type
-                  - ref
-                properties:
-                  type:
-                    type: string
-                    enum:
-                      - set
-                      - delete
-                  ref:
-                    type: object
+                oneOf:
+                  - type: object
                     required:
-                      - collectionId
-                      - documentId
+                      - type
+                      - ref
+                      - data
                     properties:
-                      collectionId:
-                        $ref: "#/components/schemas/CollectionID"
-                      documentId:
+                      type:
                         type: string
-                  data:
-                    $ref: "#/components/schemas/DataItem"
+                        enum:
+                          - set
+                      ref:
+                        type: object
+                        required:
+                          - collectionId
+                          - documentId
+                        properties:
+                          collectionId:
+                            $ref: "#/components/schemas/CollectionID"
+                          documentId:
+                            type: string
+                      data:
+                        $ref: "#/components/schemas/DataItem"
+                  - type: object
+                    required:
+                      - type
+                      - ref
+                    properties:
+                      type:
+                        type: string
+                        enum:
+                          - delete
+                      ref:
+                        type: object
+                        required:
+                          - collectionId
+                          - documentId
+                        properties:
+                          collectionId:
+                            $ref: "#/components/schemas/CollectionID"
+                          documentId:
+                            type: string
       responses:
         200:
           description: All operations successful
@@ -835,6 +855,46 @@ paths:
             application/json:
               schema:
                 type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      oneOf:
+                        # TODO: Instead link to Keys and DataItem
+                        - type: object
+                          required:
+                            - _id
+                            - dekMaterial
+                            - passSalt
+                          properties:
+                            _id:
+                              type: string
+                              description: The document ID.
+                            dekMaterial:
+                              type: string
+                            passSalt:
+                              type: string
+                            oldDekMaterial:
+                              type: string
+                            oldPassSalt:
+                              type: string
+                        - type: object
+                          required:
+                            - _id
+                            - ciphertext
+                            - objectType
+                            - cryption
+                          properties:
+                            _id:
+                              type: string
+                            ciphertext:
+                              type: string
+                            objectType:
+                              type: string
+                            cryption:
+                              type: string
         403:
           description: The caller does not have permission to access the resource
           content:
@@ -945,41 +1005,47 @@ paths:
           content:
             application/json:
               schema:
-                oneOf:
-                  - type: object
-                    nullable: true
-                    required:
-                      - _id
-                      - dekMaterial
-                      - passSalt
-                    properties:
-                      _id:
-                        type: string
-                        description: The document ID.
-                      dekMaterial:
-                        type: string
-                      passSalt:
-                        type: string
-                      oldDekMaterial:
-                        type: string
-                      oldPassSalt:
-                        type: string
-                  - type: object
-                    nullable: true
-                    required:
-                      - _id
-                      - ciphertext
-                      - objectType
-                      - cryption
-                    properties:
-                      _id:
-                        type: string
-                      ciphertext:
-                        type: string
-                      objectType:
-                        type: string
-                      cryption:
-                        type: string
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    oneOf:
+                      # TODO: Instead link to Keys and DataItem
+                      - type: object
+                        nullable: true
+                        required:
+                          - _id
+                          - dekMaterial
+                          - passSalt
+                        properties:
+                          _id:
+                            type: string
+                            description: The document ID.
+                          dekMaterial:
+                            type: string
+                          passSalt:
+                            type: string
+                          oldDekMaterial:
+                            type: string
+                          oldPassSalt:
+                            type: string
+                      - type: object
+                        nullable: true
+                        required:
+                          - _id
+                          - ciphertext
+                          - objectType
+                          - cryption
+                        properties:
+                          _id:
+                            type: string
+                          ciphertext:
+                            type: string
+                          objectType:
+                            type: string
+                          cryption:
+                            type: string
         403:
           description: The caller does not have permission to access the resource
           content:
@@ -1233,6 +1299,7 @@ paths:
               properties:
                 file:
                   type: string
+                  format: binary
       responses:
         200:
           description: Operation successful

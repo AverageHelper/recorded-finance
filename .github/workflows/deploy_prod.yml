@@ -92,6 +92,14 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Load Client Dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.npm
+            node_modules
+          key: ${{ runner.os }}-node-client-${{ github.sha }}
+
       - name: Load Server Dependencies
         uses: actions/cache@v3
         with:

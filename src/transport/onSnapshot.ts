@@ -4,7 +4,7 @@ import type { Infer } from "superstruct";
 import type { ListenerParameters } from "pubnub";
 import { documentData } from "./schemas.js";
 import { AccountableError, UnexpectedResponseError, UnreachableCaseError } from "./errors/index.js";
-import { databaseCollection, databaseDocument } from "./api-types/index.js";
+import { databaseCollection, databaseDocument } from "./apiStruts";
 import { doc as docRef, getDoc, getDocs } from "./db.js";
 import { isArray } from "../helpers/isArray.js";
 import { isString } from "../helpers/isString.js";
@@ -304,7 +304,7 @@ export function onSnapshot<T>(
 	onError?: (error: Error) => void
 ): Unsubscribe;
 
-export function onSnapshot<T extends DocumentData>(
+export function onSnapshot<T>(
 	queryOrReference: CollectionReference<T> | DocumentReference<T>,
 	onNextOrObserver:
 		| QuerySnapshotCallback<T>
@@ -412,6 +412,8 @@ export function onSnapshot<T extends DocumentData>(
 
 	const pubnub = db.pubnub;
 	if (pubnub) {
+		// ** Long polling (PubNub)
+
 		// Vercel doesn't support direct WebSockets. Use PubNub instead
 		const channel =
 			type === "collection"
@@ -579,8 +581,9 @@ export function onSnapshot<T extends DocumentData>(
 		return unsubscribe;
 	}
 
+	// ** WebSockets (Express)
 	const uid = db.currentUser.uid;
-	const baseUrl = new URL(`ws://${db.url.hostname}:${db.url.port}`);
+	const baseUrl = new URL(`wss://${db.url.hostname}:${db.url.port}`);
 	let url: URL;
 
 	switch (type) {

@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.2] - 2022-11-09
+### Changed
+- We now generate client-side API interfaces from the server's [OpenAPI spec](/server/openapi.yaml). This means better static assurances that we're doing stuff correctly on the front-end. (Still gotta keep the spec up with the back-end logic tho).
+- Clearer OpenAPI spec with regard to batch writes.
+
+### Security
+- The client now attempts to establish WebSocket connections over SSL. TIL that isn't the default for the `ws` protocol.
+
 ## [0.14.1] - 2022-11-09
 ### Added
 - All API endpoints now support being run as Vercel serverless functions.
@@ -320,6 +328,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial commit
 
+[0.14.2]: https://github.com/AverageHelper/accountable-svelte/compare/v0.14.1...v0.14.2
 [0.14.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.14.0...v0.14.1
 [0.14.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.13.2...v0.14.0
 [0.13.2]: https://github.com/AverageHelper/accountable-svelte/compare/v0.13.1...v0.13.2

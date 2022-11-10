@@ -1,7 +1,13 @@
 import type { AccountableDB, DocumentReference } from "./db";
 import type { AttachmentRecordPackage } from "./attachments";
-import { AccountableError } from "./errors/index.js";
-import { deleteAt, downloadFrom, storageFile, uploadTo, urlForApi } from "./api-types/index.js";
+import { AccountableError, UnexpectedResponseError } from "./errors/index.js";
+import { isFileData } from "./schemas";
+import { run } from "./apiStruts";
+import {
+	deleteV0DbUsersByUidAttachmentsAndDocBlobKey,
+	getV0DbUsersByUidAttachmentsAndDocBlobKey,
+	postV0DbUsersByUidAttachmentsAndDocBlobKey,
+} from "./api";
 
 /**
  * Represents a reference to an Accountable Storage object. Developers can
@@ -60,9 +66,15 @@ export async function downloadString(ref: StorageReference): Promise<string> {
 	if (ref.docRef.parent.id !== "attachments")
 		throw new AccountableError("storage/invalid-argument");
 
-	const itemPath = storageFile(uid, ref.docRef.id, `${ref.name}.json`);
-	const url = urlForApi(ref.db, itemPath);
-	return await downloadFrom(url);
+	const data = await run(
+		getV0DbUsersByUidAttachmentsAndDocBlobKey,
+		ref.db,
+		uid,
+		ref.docRef.id,
+		`${ref.name}.json`
+	);
+	if (!isFileData(data)) throw new UnexpectedResponseError("Invalid file data"); // TODO: i18n
+	return data.contents;
 }
 
 /**
@@ -75,9 +87,23 @@ export async function uploadString(ref: StorageReference, value: string): Promis
 	const uid = ref.db.currentUser?.uid;
 	if (uid === undefined || !uid) throw new AccountableError("storage/unauthenticated");
 
-	const itemPath = storageFile(uid, ref.docRef.id, `${ref.name}.json`);
-	const url = urlForApi(ref.db, itemPath);
-	const { usedSpace, totalSpace } = await uploadTo(url, value);
+	const file = new File([value], "file.json", { type: "application/json" });
+
+	const { usedSpace, totalSpace } = await run(
+		postV0DbUsersByUidAttachmentsAndDocBlobKey,
+		ref.db,
+		uid,
+		ref.docRef.id,
+		`${ref.name}.json`,
+		// oazapfts internally constructs a `FormData` from this object:
+		{
+			file,
+
+			// TODO: Also send along the expected file size and MIME type. API v1 maybe?
+			// size: file.size,
+			// type, file.type,
+		}
+	);
 	if (usedSpace !== undefined && totalSpace !== undefined) {
 		ref.db.setUserStats({ usedSpace, totalSpace });
 	} else {
@@ -95,9 +121,13 @@ export async function deleteObject(ref: StorageReference): Promise<void> {
 	const uid = ref.db.currentUser?.uid;
 	if (uid === undefined || !uid) throw new AccountableError("storage/unauthenticated");
 
-	const itemPath = storageFile(uid, ref.docRef.id, `${ref.name}.json`);
-	const url = urlForApi(ref.db, itemPath);
-	const { usedSpace, totalSpace } = await deleteAt(url);
+	const { usedSpace, totalSpace } = await run(
+		deleteV0DbUsersByUidAttachmentsAndDocBlobKey,
+		ref.db,
+		uid,
+		ref.docRef.id,
+		`${ref.name}.json`
+	);
 	if (usedSpace !== undefined && totalSpace !== undefined) {
 		ref.db.setUserStats({ usedSpace, totalSpace });
 	} else {

@@ -3,7 +3,7 @@
 	import { accountsPath, loginPath, signupPath } from "../../router";
 	import { onMount } from "svelte";
 	import { repoReadmeHeading } from "../../platformMeta";
-	import { AccountableError, NetworkError, UnreachableCaseError } from "../../transport/errors";
+	import { AccountableError, UnreachableCaseError } from "../../transport/errors";
 	import { useLocation, useNavigate } from "svelte-navigator";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
 	import ErrorNotice from "../../components/ErrorNotice.svelte";

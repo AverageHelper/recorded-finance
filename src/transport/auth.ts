@@ -3,22 +3,20 @@ import type { KeyMaterial } from "./cryption";
 import type { MFAValidation } from "./schemas";
 import { AccountableError } from "./errors";
 import { doc, db, getDoc, setDoc, deleteDoc } from "./db";
+import { run } from "./apiStruts";
 import { t } from "../i18n";
 import {
-	authJoin,
-	authLeave,
-	authLogIn,
-	authLogOut,
-	authRefreshSession,
-	authUpdateAccountId,
-	authUpdatePassword,
-	deleteAt,
-	getFrom,
-	postTo,
-	totpSecret,
-	totpValidate,
-	urlForApi,
-} from "./api-types/index.js";
+	deleteV0TotpSecret,
+	getV0Session,
+	getV0TotpSecret,
+	postV0Join,
+	postV0Leave,
+	postV0Login,
+	postV0Logout,
+	postV0TotpValidate,
+	postV0Updateaccountid,
+	postV0Updatepassword,
+} from "./api";
 
 function authRef(uid: string): DocumentReference<KeyMaterial> {
 	return doc<KeyMaterial>(db, "keys", uid);
@@ -82,14 +80,13 @@ export async function createUserWithAccountIdAndPassword(
 	if (!password)
 		throw new TypeError(t("error.sanity.empty-param", { values: { name: "password" } }));
 
-	const join = urlForApi(db, authJoin());
 	const {
 		pubnub_token, //
 		pubnub_cipher_key,
 		uid,
 		usedSpace,
 		totalSpace,
-	} = await postTo(join, { account, password });
+	} = await run(postV0Join, db, { account, password });
 	if (pubnub_token === undefined || pubnub_cipher_key === undefined || uid === undefined)
 		throw new TypeError(t("error.server.missing-access-token"));
 
@@ -111,8 +108,7 @@ export async function createUserWithAccountIdAndPassword(
  * @throws a `NetworkError` if something goes wrong with the request.
  */
 export async function signOut(db: AccountableDB): Promise<void> {
-	const logout = urlForApi(db, authLogOut());
-	await postTo(logout, {});
+	await run(postV0Logout, db);
 	db.clearUser();
 }
 
@@ -142,7 +138,6 @@ export async function signInWithAccountIdAndPassword(
 	if (!password)
 		throw new TypeError(t("error.sanity.empty-param", { values: { name: "password" } }));
 
-	const login = urlForApi(db, authLogIn());
 	const {
 		pubnub_token, //
 		pubnub_cipher_key,
@@ -150,7 +145,7 @@ export async function signInWithAccountIdAndPassword(
 		usedSpace,
 		totalSpace,
 		validate,
-	} = await postTo(login, { account, password });
+	} = await run(postV0Login, db, { account, password });
 	if (pubnub_token === undefined || pubnub_cipher_key === undefined || uid === undefined)
 		throw new TypeError(t("error.server.missing-access-token"));
 
@@ -180,8 +175,7 @@ export async function signInWithAccountIdAndPassword(
 export async function enrollTotp(db: AccountableDB): Promise<string> {
 	if (!db.currentUser) throw new AccountableError("auth/unauthenticated");
 
-	const enroll = urlForApi(db, totpSecret());
-	const { secret } = await getFrom(enroll);
+	const { secret } = await run(getV0TotpSecret, db);
 
 	if (secret === undefined) throw new TypeError("Expected secret from server, but got nothing"); // TODO: I18N
 
@@ -200,8 +194,7 @@ export async function unenrollTotp(
 		throw new TypeError(t("error.sanity.empty-param", { values: { name: "password" } }));
 	if (!token) throw new TypeError(t("error.sanity.empty-param", { values: { name: "token" } }));
 
-	const unenroll = urlForApi(db, totpSecret());
-	await deleteAt(unenroll, { password, token });
+	await run(deleteV0TotpSecret, db, { password, token });
 }
 
 /**
@@ -223,7 +216,6 @@ export async function verifySessionWithTOTP(
 	if (!token) throw new TypeError(t("error.sanity.empty-param", { values: { name: "token" } }));
 	if (!db.currentUser) throw new AccountableError("auth/unauthenticated");
 
-	const validate = urlForApi(db, totpValidate());
 	const {
 		pubnub_token, //
 		pubnub_cipher_key,
@@ -231,7 +223,7 @@ export async function verifySessionWithTOTP(
 		uid,
 		usedSpace,
 		totalSpace,
-	} = await postTo(validate, { token });
+	} = await run(postV0TotpValidate, db, { token });
 	if (pubnub_token === undefined || pubnub_cipher_key === undefined || uid === undefined)
 		throw new TypeError(t("error.server.missing-access-token"));
 
@@ -256,7 +248,6 @@ export async function verifySessionWithTOTP(
  * @throws a `NetworkError` if something goes wrong with the request.
  */
 export async function refreshSession(db: AccountableDB): Promise<UserCredential> {
-	const session = urlForApi(db, authRefreshSession());
 	const {
 		account,
 		pubnub_token,
@@ -265,7 +256,7 @@ export async function refreshSession(db: AccountableDB): Promise<UserCredential>
 		usedSpace,
 		totalSpace,
 		requiredAddtlAuth,
-	} = await getFrom(session);
+	} = await run(getV0Session, db);
 	if (
 		account === undefined ||
 		pubnub_token === undefined ||
@@ -302,11 +293,10 @@ export async function deleteUser(db: AccountableDB, user: User, password: string
 	if (!password)
 		throw new TypeError(t("error.sanity.empty-param", { values: { name: "password" } }));
 
-	const leave = urlForApi(db, authLeave());
 	if (db.currentUser?.uid === user.uid) {
 		db.clearUser();
 	}
-	await postTo(leave, {
+	await run(postV0Leave, db, {
 		account: user.accountId,
 		password,
 	});
@@ -331,8 +321,7 @@ export async function updateAccountId(
 	if (!password)
 		throw new TypeError(t("error.sanity.empty-param", { values: { name: "password" } }));
 
-	const updateaccountid = urlForApi(db, authUpdateAccountId());
-	await postTo(updateaccountid, {
+	await run(postV0Updateaccountid, db, {
 		account: user.accountId,
 		newaccount: newAccountId,
 		password,
@@ -360,8 +349,7 @@ export async function updatePassword(
 	if (!newPassword)
 		throw new TypeError(t("error.sanity.empty-param", { values: { name: "newPassword" } }));
 
-	const updatepassword = urlForApi(db, authUpdatePassword());
-	await postTo(updatepassword, {
+	await run(postV0Updatepassword, db, {
 		account: user.accountId,
 		password: oldPassword,
 		newpassword: newPassword,

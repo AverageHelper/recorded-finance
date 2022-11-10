@@ -1,7 +1,9 @@
 import type { CollectionID } from "./db";
+import type { DataItem } from "./api";
 import type { Infer } from "superstruct";
 import { isArray } from "../helpers/isArray";
 import { isObject } from "../helpers/isObject";
+import { UnexpectedResponseError } from "./errors";
 import {
 	array,
 	assert as assertSchema,
@@ -14,6 +16,7 @@ import {
 	number,
 	optional,
 	string,
+	StructError,
 	type,
 	union,
 } from "superstruct";
@@ -30,9 +33,6 @@ function isPrimitiveOrArray(tbd: unknown): tbd is Primitive | Array<Primitive> {
 }
 
 export type DocumentData = Record<string, Primitive>;
-export type PrimitiveRecord<T> = {
-	[K in keyof T]: Primitive;
-};
 
 interface DocumentRef {
 	collectionId: CollectionID;
@@ -42,7 +42,7 @@ interface DocumentRef {
 interface SetBatch {
 	type: "set";
 	ref: DocumentRef;
-	data: DocumentData;
+	data: DataItem;
 }
 
 interface DeleteBatch {
@@ -71,6 +71,8 @@ export const mfaValidation = enums(["totp"] as const);
 export type MFAValidation = Infer<typeof mfaValidation>;
 
 const rawServerResponse = type({
+	contents: optional(string()),
+	_id: optional(string()),
 	message: optional(string()),
 	code: optional(string()),
 	version: optional(string()),
@@ -89,7 +91,21 @@ const rawServerResponse = type({
 });
 
 export function assertRawServerResponse(tbd: unknown): asserts tbd is RawServerResponse {
-	assertSchema(tbd, rawServerResponse);
+	try {
+		assertSchema(tbd, rawServerResponse);
+	} catch (error) {
+		let message: string;
+		if (error instanceof StructError) {
+			message = error.message;
+		} else {
+			message = JSON.stringify(error, undefined, "  ");
+		}
+		throw new UnexpectedResponseError(`Invalid server response: ${message}`); // TODO: I18N
+	}
+}
+
+export function isRawServerResponse(tbd: unknown): tbd is RawServerResponse {
+	return is(tbd, rawServerResponse);
 }
 
 export type RawServerResponse = Infer<typeof rawServerResponse>;

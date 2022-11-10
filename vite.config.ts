@@ -3,11 +3,18 @@ import { svelte } from "@sveltejs/vite-plugin-svelte";
 import { visualizer } from "rollup-plugin-visualizer";
 import analyze from "rollup-plugin-analyzer";
 import autoprefixer from "autoprefixer";
+import dns from "node:dns";
 import env from "vite-plugin-environment";
 import path from "node:path";
 import sveltePreprocess from "svelte-preprocess";
 import tsconfigPaths from "vite-tsconfig-paths";
 import typescript from "@rollup/plugin-typescript";
+
+// Open localhost instead of 127.0.0.1. Vite dev server
+// runs on localhost, so we want to open client on
+// localhost too so that first-party cookies work properly.
+// See https://vitejs.dev/config/server-options.html#server-host
+dns.setDefaultResultOrder("verbatim");
 
 export default defineConfig({
 	plugins: [

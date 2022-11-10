@@ -1,6 +1,14 @@
 {
 	"root": true,
-	"ignorePatterns": ["dist", "node_modules", "src/version.ts", "server", ".gitignore", "coverage"],
+	"ignorePatterns": [
+		"dist",
+		"node_modules",
+		"src/version.ts",
+		"server",
+		".gitignore",
+		"coverage",
+		"src/transport/api.ts"
+	],
 
 	"extends": [
 		"strictest/eslint",
