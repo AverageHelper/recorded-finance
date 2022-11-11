@@ -141,3 +141,14 @@ Google Analytics is spoopy as heck, and even [illegal in the EU](https://noyb.eu
 - [Matomo](https://matomo.org)
 - [Plausible](https://plausible.io)
 - [Piwik](https://piwik.org)
+
+### Roadmap?
+
+I have a long wishlist for this project. In no particular order:
+
+- API v1.
+- Detailed documentation webpage (protocols, API, etc.)
+- Standard API evolution protocol (deprecation and obsoleting of old API versions).
+- SDK for third-party tools to participate in Accountable's E2EE data access without needing to re-implement the protocols themselves against our API.
+- Figure out if we can use the name "Accountable" or whether we must change that.
+- Logo.
