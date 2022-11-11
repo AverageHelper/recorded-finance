@@ -17,14 +17,10 @@ interface Logger extends BaseLogger {}
  */
 export const logger: Logger = {
 	// TODO: Do better
-	debug: (message?: unknown, ...optionalParams: Array<unknown>): void =>
-		debugLogger.debug(message, ...optionalParams),
-	info: (message?: unknown, ...optionalParams: Array<unknown>): void =>
-		debugLogger.info(message, ...optionalParams),
-	warn: (message?: unknown, ...optionalParams: Array<unknown>): void =>
-		debugLogger.warn(message, ...optionalParams),
-	error: (message?: unknown, ...optionalParams: Array<unknown>): void =>
-		debugLogger.error(message, ...optionalParams),
+	debug: (message, ...optionalParams) => debugLogger.debug(message, ...optionalParams),
+	info: (message, ...optionalParams) => debugLogger.info(message, ...optionalParams),
+	warn: (message, ...optionalParams) => debugLogger.warn(message, ...optionalParams),
+	error: (message, ...optionalParams) => debugLogger.error(message, ...optionalParams),
 };
 
 // TODO: Audit logger messages for personal data, and fix that
@@ -36,13 +32,9 @@ export const logger: Logger = {
  */
 export const debugLogger: Logger = {
 	/* eslint-disable no-console */
-	debug: (message?: unknown, ...optionalParams: Array<unknown>): void =>
-		console.debug(message, ...optionalParams),
-	info: (message?: unknown, ...optionalParams: Array<unknown>): void =>
-		console.info(message, ...optionalParams),
-	warn: (message?: unknown, ...optionalParams: Array<unknown>): void =>
-		console.warn(message, ...optionalParams),
-	error: (message?: unknown, ...optionalParams: Array<unknown>): void =>
-		console.error(message, ...optionalParams),
+	debug: (message, ...optionalParams) => console.debug(message, ...optionalParams),
+	info: (message, ...optionalParams) => console.info(message, ...optionalParams),
+	warn: (message, ...optionalParams) => console.warn(message, ...optionalParams),
+	error: (message, ...optionalParams) => console.error(message, ...optionalParams),
 	/* eslint-enable no-console */
 };
