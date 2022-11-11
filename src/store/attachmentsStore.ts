@@ -6,6 +6,7 @@ import { attachment, recordFromAttachment } from "../model/Attachment";
 import { BlobWriter } from "@zip.js/zip.js";
 import { derived, get, writable } from "svelte/store";
 import { getDekMaterial, pKey, uid } from "./authStore";
+import { logger } from "../logger";
 import { t } from "../i18n";
 import { updateUserStats } from "./uiStore";
 import chunk from "lodash-es/chunk";
@@ -44,7 +45,7 @@ export function clearAttachmentsCache(): void {
 	files.set({});
 	attachments.set({});
 	attachmentsLoadError.set(null);
-	console.debug("attachmentsStore: cache cleared");
+	logger.debug("attachmentsStore: cache cleared");
 }
 
 export async function watchAttachments(force: boolean = false): Promise<void> {
@@ -93,7 +94,7 @@ export async function watchAttachments(force: boolean = false): Promise<void> {
 				const watcher = get(attachmentsWatcher);
 				if (watcher) watcher();
 				attachmentsWatcher.set(null);
-				console.error(error);
+				logger.error(error);
 			}
 		)
 	);
@@ -234,7 +235,7 @@ export async function importAttachment(
 	}`;
 	const fileRef = zip?.find(f => f.filename === path) ?? null;
 	if (!fileRef?.getData) {
-		console.warn(`No file found in zip with path ${path}`);
+		logger.warn(`No file found in zip with path ${path}`);
 		return; // no blob? leave the reference broken.
 	}
 

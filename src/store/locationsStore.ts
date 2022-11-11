@@ -4,6 +4,7 @@ import type { LocationSchema } from "../model/DatabaseSchema";
 import { derived, get, writable } from "svelte/store";
 import { getDekMaterial, pKey, uid } from "./authStore";
 import { location, recordFromLocation } from "../model/Location";
+import { logger } from "../logger";
 import { t } from "../i18n";
 import { transaction } from "../model/Transaction";
 import { updateUserStats } from "./uiStore";
@@ -36,7 +37,7 @@ export function clearLocationsCache(): void {
 	}
 	locations.set({});
 	locationsLoadError.set(null);
-	console.debug("locationsStore: cache cleared");
+	logger.debug("locationsStore: cache cleared");
 }
 
 export async function watchLocations(force: boolean = false): Promise<void> {
@@ -85,7 +86,7 @@ export async function watchLocations(force: boolean = false): Promise<void> {
 				const watcher = get(locationsWatcher);
 				if (watcher) watcher();
 				locationsWatcher.set(null);
-				console.error(error);
+				logger.error(error);
 			}
 		)
 	);

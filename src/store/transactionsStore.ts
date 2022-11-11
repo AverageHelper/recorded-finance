@@ -12,6 +12,7 @@ import { derived, get, writable } from "svelte/store";
 import { getDekMaterial, pKey } from "./authStore";
 import { getDocs } from "../transport/index.js";
 import { handleError, updateUserStats } from "./uiStore";
+import { logger } from "../logger";
 import { t } from "../i18n";
 import { zeroDinero } from "../helpers/dineroHelpers";
 import chunk from "lodash-es/chunk";
@@ -98,7 +99,7 @@ export function clearTransactionsCache(): void {
 	transactionsForAccount.set({});
 	transactionsForAccountByMonth.set({});
 	months.set({});
-	console.debug("transactionsStore: cache cleared");
+	logger.debug("transactionsStore: cache cleared");
 }
 
 export async function watchTransactions(account: Account, force: boolean = false): Promise<void> {
@@ -231,7 +232,7 @@ export async function watchTransactions(account: Account, force: boolean = false
 				});
 			},
 			error => {
-				console.error(error);
+				logger.error(error);
 				const watcher = get(transactionsWatchers)[account.id];
 				if (watcher) watcher();
 				transactionsWatchers.update(transactionsWatchers => {

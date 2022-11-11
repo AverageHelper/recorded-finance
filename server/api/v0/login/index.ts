@@ -3,6 +3,7 @@ import { apiHandler, dispatchRequests } from "../../../helpers/apiHandler";
 import { BadRequestError } from "../../../errors/BadRequestError";
 import { compare } from "../../../auth/generators";
 import { is, nonempty, string, type } from "superstruct";
+import { logger } from "../../../logger";
 import { newAccessTokens, setSession } from "../../../auth/jwt";
 import { respondSuccess } from "../../../responses";
 import { statsForUser, userWithAccountId } from "../../../database/read";
@@ -26,14 +27,14 @@ export const POST = apiHandler("POST", async (req, res) => {
 	// ** Get credentials
 	const user = await userWithAccountId(givenAccountId);
 	if (!user) {
-		console.debug(`Found no user under account ${JSON.stringify(givenAccountId)}`);
+		logger.debug(`Found no user under account ${JSON.stringify(givenAccountId)}`);
 		throw new UnauthorizedError("wrong-credentials");
 	}
 
 	// ** Verify credentials
 	const isPasswordGood = await compare(givenPassword, user.passwordHash);
 	if (!isPasswordGood) {
-		console.debug(`The given password doesn't match what's stored`);
+		logger.debug(`The given password doesn't match what's stored`);
 		throw new UnauthorizedError("wrong-credentials");
 	}
 

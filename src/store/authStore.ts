@@ -7,6 +7,7 @@ import { attachment as newAttachment } from "../model/Attachment.js";
 import { BlobReader, Data64URIWriter, TextReader, ZipWriter } from "@zip.js/zip.js";
 import { bootstrap, updateUserStats } from "./uiStore.js";
 import { derived, get, writable } from "svelte/store";
+import { logger } from "../logger.js";
 import { t } from "../i18n.js";
 import { v4 as uuid } from "uuid";
 import {
@@ -68,7 +69,7 @@ export function clearAuthCache(): void {
 	currentUser.set(null);
 	isNewLogin.set(false);
 	preferences.set(defaultPrefs());
-	console.debug("authStore: cache cleared");
+	logger.debug("authStore: cache cleared");
 }
 
 export function lockVault(): void {
@@ -76,7 +77,7 @@ export function lockVault(): void {
 	pKey.set(null);
 	isNewLogin.set(false);
 	loginProcessState.set(null);
-	console.debug("authStore: keys forgotten, vault locked");
+	logger.debug("authStore: keys forgotten, vault locked");
 }
 
 export function onSignedIn(user: User): void {
@@ -132,7 +133,7 @@ export async function fetchSession(): Promise<void> {
 	} catch (error) {
 		// ignore "missing-token" errors, those are normal when we don't have a session yet
 		if (!(error instanceof NetworkError) || error.code !== "missing-token") {
-			console.error(error);
+			logger.error(error);
 		}
 	} finally {
 		// In any event, error or not:
@@ -409,29 +410,29 @@ export async function getAllUserDataAsJson(): Promise<DatabaseSchema> {
 export async function compressUserData(shouldMinify: boolean): Promise<string> {
 	// TODO: Investigate replacing zip.js with https://www.npmjs.com/package/jszip
 
-	console.debug("Preparing zip writer");
+	logger.debug("Preparing zip writer");
 	const writer = new ZipWriter(new Data64URIWriter("application/zip"));
-	console.debug("Prepared zip writer");
+	logger.debug("Prepared zip writer");
 
 	try {
 		const rootName = "accountable";
-		console.debug("Writing root folder");
-		console.debug("Wrote root folder");
+		logger.debug("Writing root folder");
+		logger.debug("Wrote root folder");
 
 		// ** Prepare database
-		console.debug("Getting user data");
+		logger.debug("Getting user data");
 		const rawData = await getAllUserDataAsJson();
-		console.debug("Got user data");
-		console.debug("Encoding user data");
+		logger.debug("Got user data");
+		logger.debug("Encoding user data");
 		const data = JSON.stringify(rawData, undefined, shouldMinify ? undefined : "\t");
 		const encodedData = data;
-		console.debug("Encoded user data");
-		console.debug("Writing user data");
+		logger.debug("Encoded user data");
+		logger.debug("Writing user data");
 		await writer.add(
 			`${rootName}/database${shouldMinify ? "-raw" : ""}.json`,
 			new TextReader(encodedData)
 		);
-		console.debug("Wrote user data");
+		logger.debug("Wrote user data");
 
 		// ** Prepare attachments
 
@@ -443,7 +444,7 @@ export async function compressUserData(shouldMinify: boolean): Promise<string> {
 
 		const filesToGet: Array<AttachmentSchema> = rawData.attachments ?? [];
 		// FIXME: We may run out of memory here. Test with many files totaling more than 1 GB. Maybe operate on the attachments a few at a time?
-		console.debug("Downloading attachments");
+		logger.debug("Downloading attachments");
 		const filesGotten: Array<[Attachment, string]> = await asyncMap(filesToGet, async a => {
 			const file = newAttachment({
 				createdAt: a.createdAt,
@@ -456,7 +457,7 @@ export async function compressUserData(shouldMinify: boolean): Promise<string> {
 			const data = await imageDataFromFile(file, false);
 			return [file, data];
 		});
-		console.debug("Downloaded attachments");
+		logger.debug("Downloaded attachments");
 		for (const [f, d] of filesGotten) {
 			// Get storage file name without extension, so that explorers don't try to treat the folder as JSON
 			const mystifiedName = f.storagePath
@@ -464,15 +465,15 @@ export async function compressUserData(shouldMinify: boolean): Promise<string> {
 				.split(".")[0] as string;
 			const imagePath = `${userFilesPath}/${mystifiedName}/${f.title}`;
 			const image = dataUriToBlob(d);
-			console.debug(`Adding attachment ${f.title} to zip`);
+			logger.debug(`Adding attachment ${f.title} to zip`);
 			await writer.add(imagePath, new BlobReader(image));
-			console.debug(`Added attachment ${f.title} to zip`);
+			logger.debug(`Added attachment ${f.title} to zip`);
 		}
 
 		// ** Zip them up
-		console.debug("Grabbing zip blob");
+		logger.debug("Grabbing zip blob");
 		const dataUri = await writer.close();
-		console.debug(`Got ${dataUri.length}-byte zip blob`);
+		logger.debug(`Got ${dataUri.length}-byte zip blob`);
 
 		return dataUri;
 	} catch (error) {

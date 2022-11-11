@@ -5,6 +5,7 @@ import type { WebsocketRequestHandler } from "express-ws";
 import type { WebSocket } from "ws";
 import { assertSchema, isObject } from "../database/schemas";
 import { isWebSocketCode, WebSocketCode } from "./WebSocketCode";
+import { logger } from "../logger";
 import { StructError } from "superstruct";
 import { WebSocketError } from "../errors/WebSocketError";
 
@@ -98,7 +99,7 @@ export function wsFactory<T extends WebSocketMessages>(
 				return;
 			}
 			ws.ping();
-			console.debug("sent ping to client");
+			logger.debug("sent ping to client");
 			timesNotThere += 1; // this goes away if the client responds
 		}, 10000); // 10 second interval
 
@@ -108,12 +109,12 @@ export function wsFactory<T extends WebSocketMessages>(
 	});
 
 	ws.on("pong", () => {
-		console.debug("received pong from client");
+		logger.debug("received pong from client");
 		timesNotThere = 0;
 	});
 
 	ws.on("ping", data => {
-		console.debug("ping", data);
+		logger.debug("ping", data);
 		ws.pong(data); // answer the ping with the data
 	});
 
@@ -154,14 +155,14 @@ export function wsFactory<T extends WebSocketMessages>(
 					if (error instanceof WebSocketError) {
 						close(ws, error.code, error.reason);
 					} else {
-						console.error("Unknown WebSocket message error:", error);
+						logger.error("Unknown WebSocket message error:", error);
 						close(ws, WebSocketCode.UNEXPECTED_CONDITION, "Internal error");
 					}
 				}
 			});
 
 			ws.on("error", error => {
-				console.error("Websocket error:", error);
+				logger.error("Websocket error:", error);
 			});
 		},
 
@@ -190,7 +191,7 @@ export function ws<P, T extends WebSocketMessages>(
 			if (error instanceof StructError) {
 				return context.close(WebSocketCode.VIOLATED_CONTRACT, error.message);
 			}
-			console.error("Unknown error trying to validate WebSocket inputs:", error);
+			logger.error("Unknown error trying to validate WebSocket inputs:", error);
 			return context.close(WebSocketCode.UNEXPECTED_CONDITION, "Internal error");
 		}
 

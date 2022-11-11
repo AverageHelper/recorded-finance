@@ -2,6 +2,7 @@ import type { Model } from "./utility/Model";
 import { isDate } from "../helpers/isDate";
 import { isNumber } from "../helpers/isNumber";
 import { isString } from "../helpers/isString";
+import { logger } from "../logger";
 
 function isStringOrNull(tbd: unknown): tbd is string | null {
 	return tbd === null || isString(tbd);
@@ -50,7 +51,7 @@ export function location(params: Omit<Location, "objectType">): Location {
 		subtitle: (params.subtitle?.trim() ?? "") || null,
 		title: params.title.trim() || "Untitled",
 	};
-	if (!result.id) console.warn("Location has null ID:", result);
+	if (!result.id) logger.warn("Location has null ID:", result);
 	return result;
 }
 

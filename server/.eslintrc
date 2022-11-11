@@ -26,7 +26,7 @@
 		"import/extensions": ["error", "never"], // Vercel won't resolve extensions correctly in TS
 		"import/no-unresolved": "off", // TS handles this
 		"no-constant-condition": "warn",
-		"no-console": ["warn", { "allow": ["error", "warn", "debug"] }],
+		"no-console": "error",
 		"no-dupe-else-if": "warn",
 		"consistent-return": "off", // TS handles this
 		"no-duplicate-imports": "off", // typescript-eslint handles this
