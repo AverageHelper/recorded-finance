@@ -31,7 +31,7 @@ interface Logger extends BaseLogger {}
  * debug modes.
  */
 export const logger: Logger = {
-	// TODO: Do better
+	// TODO: Try Pino + Logflare
 	debug: (message, ...optionalParams) => debugLogger.debug(message, ...optionalParams),
 	info: (message, ...optionalParams) => debugLogger.info(message, ...optionalParams),
 	warn: (message, ...optionalParams) => debugLogger.warn(message, ...optionalParams),
@@ -39,7 +39,6 @@ export const logger: Logger = {
 };
 
 // TODO: Audit logger messages for personal data, and fix that
-// TODO: Transmit logger messages somewhere I can use them for debugging
 
 /**
  * A simple logging interface that only sends its messages to
@@ -47,6 +46,7 @@ export const logger: Logger = {
  */
 export const debugLogger: Logger = {
 	/* eslint-disable no-console */
+	// TODO: Try Pino
 	debug: (message, ...optionalParams) => console.debug(message, ...optionalParams),
 	info: (message, ...optionalParams) => console.info(message, ...optionalParams),
 	warn: (message, ...optionalParams) => console.warn(message, ...optionalParams),

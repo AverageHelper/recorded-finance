@@ -3,7 +3,7 @@
 import "../helpers/assertTsNode";
 import type { CollectionID } from "../database";
 import { allCollectionIds, CollectionReference } from "../database";
-import { debugLogger as logger } from "../logger";
+import { logger } from "../logger";
 import {
 	countFileBlobsForUser,
 	countRecordsInCollection,

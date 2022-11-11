@@ -1,6 +1,8 @@
+#!/usr/bin/env ts-node
+
 import { assert, literal, string, type } from "superstruct";
 import { parser as changelogParser } from "keep-a-changelog";
-import { debugLogger as logger } from "../src/logger";
+import { debugLogger as logger } from "../src/logger.js";
 import { readFileSync, writeFileSync } from "node:fs";
 import { URL } from "node:url";
 import semver from "semver";

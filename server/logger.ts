@@ -1,3 +1,5 @@
+import bunyan from "bunyan";
+
 /**
  * The basic interface used by the Console API.
  */
@@ -25,30 +27,48 @@ interface BaseLogger {
 
 interface Logger extends BaseLogger {}
 
-/**
- * A simple logging interface that may send its messages to
- * an aggregation utility. STDOUT and STDERR are only used in
- * debug modes.
- */
-export const logger: Logger = {
-	// TODO: Do better
-	debug: (message, ...optionalParams) => debugLogger.debug(message, ...optionalParams),
-	info: (message, ...optionalParams) => debugLogger.info(message, ...optionalParams),
-	warn: (message, ...optionalParams) => debugLogger.warn(message, ...optionalParams),
-	error: (message, ...optionalParams) => debugLogger.error(message, ...optionalParams),
-};
-
-// TODO: Transmit logger messages somewhere I can use them for debugging
+const name = "Accountable";
+const baseLogger = bunyan.createLogger({ name, level: "debug" });
 
 /**
  * A simple logging interface that only sends its messages to
  * STDOUT and STDERR.
  */
-export const debugLogger: Logger = {
-	/* eslint-disable no-console */
-	debug: (message, ...optionalParams) => console.debug(message, ...optionalParams),
-	info: (message, ...optionalParams) => console.info(message, ...optionalParams),
-	warn: (message, ...optionalParams) => console.warn(message, ...optionalParams),
-	error: (message, ...optionalParams) => console.error(message, ...optionalParams),
-	/* eslint-enable no-console */
+export const logger: Logger = {
+	debug: (message, ...optionalParams) => {
+		if (message instanceof Error) {
+			baseLogger.debug(message, optionalParams);
+		} else if (typeof message === "string") {
+			baseLogger.debug(message, optionalParams);
+		} else {
+			baseLogger.debug(JSON.stringify(message), optionalParams);
+		}
+	},
+	info: (message, ...optionalParams) => {
+		if (message instanceof Error) {
+			baseLogger.info(message, optionalParams);
+		} else if (typeof message === "string") {
+			baseLogger.info(message, optionalParams);
+		} else {
+			baseLogger.info(JSON.stringify(message), optionalParams);
+		}
+	},
+	warn: (message, ...optionalParams) => {
+		if (message instanceof Error) {
+			baseLogger.warn(message, optionalParams);
+		} else if (typeof message === "string") {
+			baseLogger.warn(message, optionalParams);
+		} else {
+			baseLogger.warn(JSON.stringify(message), optionalParams);
+		}
+	},
+	error: (message, ...optionalParams) => {
+		if (message instanceof Error) {
+			baseLogger.error(message, optionalParams);
+		} else if (typeof message === "string") {
+			baseLogger.error(message, optionalParams);
+		} else {
+			baseLogger.error(JSON.stringify(message), optionalParams);
+		}
+	},
 };
