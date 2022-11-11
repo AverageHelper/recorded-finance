@@ -93,7 +93,7 @@ export function wsFactory<T extends WebSocketMessages>(
 	ws.on("open", () => {
 		const pingInterval = setInterval(() => {
 			if (timesNotThere > 5) {
-				process.stdout.write("Client didn't respond after 5 tries. Closing\n");
+				logger.info("Client didn't respond after 5 tries. Closing");
 				close(ws, WebSocketCode.WENT_AWAY, "Client did not respond to pings, probably dead");
 				clearInterval(pingInterval);
 				return;
