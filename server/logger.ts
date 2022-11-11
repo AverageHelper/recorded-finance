@@ -2,9 +2,24 @@
  * The basic interface used by the Console API.
  */
 interface BaseLogger {
+	/**
+	 * Logs a debug message.
+	 */
 	debug: (message?: unknown, ...optionalParams: Array<unknown>) => void;
+
+	/**
+	 * Logs an informational message.
+	 */
 	info: (message?: unknown, ...optionalParams: Array<unknown>) => void;
+
+	/**
+	 * Logs a warning.
+	 */
 	warn: (message?: unknown, ...optionalParams: Array<unknown>) => void;
+
+	/**
+	 * Logs an error.
+	 */
 	error: (message?: unknown, ...optionalParams: Array<unknown>) => void;
 }
 
