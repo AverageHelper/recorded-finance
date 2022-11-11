@@ -32,5 +32,11 @@
 		"./tsconfig.json",
 		"coverage",
 		"tsconfig.*"
-	]
+	],
+	"ts-node": {
+		"transpileOnly": true,
+		"compilerOptions": {
+			"module": "CommonJS"
+		}
+	}
 }

@@ -2,7 +2,7 @@ import { apiHandler, dispatchRequests } from "../../../helpers/apiHandler";
 import { metadataFromRequest } from "../../../auth/requireAuth";
 import { newAccessTokens, setSession } from "../../../auth/jwt";
 import { respondSuccess } from "../../../responses";
-import { statsForUser } from "../../../database/reads";
+import { statsForUser } from "../../../database/read";
 
 export const GET = apiHandler("GET", async (req, res) => {
 	// ** If the user has the cookie set, respond with a JWT for the user

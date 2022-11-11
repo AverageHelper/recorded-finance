@@ -24,6 +24,11 @@ export async function numberOfUsers(): Promise<number> {
 	return await dataSource.user.count();
 }
 
+export async function listAllUserIds(): Promise<Array<string>> {
+	const users = await dataSource.user.findMany({ select: { uid: true } });
+	return users.map(({ uid }) => uid);
+}
+
 // MARK: - Pseudo Large-file Storage
 
 export async function fetchFileData(userId: string, fileName: string): Promise<FileData | null> {
@@ -55,6 +60,13 @@ export async function totalSizeOfFilesForUser(userId: string): Promise<number> {
 	return files.reduce((prev, { size }) => prev + size, 0);
 }
 
+/**
+ * Returns the number of files stored for the user.
+ */
+export async function countFileBlobsForUser(userId: string): Promise<number> {
+	return await dataSource.fileData.count({ where: { userId } });
+}
+
 // MARK: - Database
 
 /**
@@ -66,6 +78,31 @@ export async function jwtExistsInDatabase(token: string): Promise<boolean> {
 		select: { token: true },
 	});
 	return result !== null;
+}
+
+export async function numberOfExpiredJwts(): Promise<number> {
+	return await dataSource.expiredJwt.count();
+}
+
+export async function countRecordsInCollection(ref: CollectionReference): Promise<number> {
+	switch (ref.id) {
+		case "accounts":
+		case "attachments":
+		case "locations":
+		case "tags":
+		case "transactions":
+		case "users":
+			return await dataSource.dataItem.count({
+				where: {
+					userId: ref.uid,
+					collectionId: ref.id,
+				},
+			});
+		case "keys":
+			return await dataSource.userKeys.count({
+				where: { userId: ref.uid },
+			});
+	}
 }
 
 export async function fetchDbCollection(

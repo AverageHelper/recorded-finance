@@ -1,9 +1,9 @@
 import type { JwtPayload, MFAOption, User } from "../database/schemas";
-import { addJwtToDatabase } from "../database/writes";
+import { addJwtToDatabase } from "../database/write";
 import { assertJwtPayload } from "../database/schemas";
 import { env, requireEnv } from "../environment";
 import { generateSecureToken } from "./generators";
-import { jwtExistsInDatabase } from "../database/reads";
+import { jwtExistsInDatabase } from "../database/read";
 import { newPubNubTokenForUser, revokePubNubToken } from "./pubnub";
 import { ONE_HOUR } from "../constants/time";
 import Cookies from "cookies";

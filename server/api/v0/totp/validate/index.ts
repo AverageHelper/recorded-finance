@@ -7,9 +7,9 @@ import { is, nonempty, string, type } from "superstruct";
 import { metadataFromRequest } from "../../../../auth/requireAuth";
 import { newAccessTokens, setSession } from "../../../../auth/jwt";
 import { respondSuccess } from "../../../../responses";
-import { statsForUser } from "../../../../database/reads";
+import { statsForUser } from "../../../../database/read";
 import { UnauthorizedError } from "../../../../errors/UnauthorizedError";
-import { upsertUser } from "../../../../database/writes";
+import { upsertUser } from "../../../../database/write";
 import safeCompare from "safe-compare";
 
 export const POST = apiHandler("POST", async (req, res) => {
