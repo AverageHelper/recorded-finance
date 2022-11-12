@@ -9,6 +9,7 @@ import { apiHandler, dispatchRequests } from "../../../../../../../../../helpers
 import { BadRequestError } from "../../../../../../../../../errors/BadRequestError";
 import { destroyFileData, upsertFileData } from "../../../../../../../../../database/write";
 import { fetchFileData, statsForUser } from "../../../../../../../../../database/read";
+import { logger } from "../../../../../../../../../logger";
 import { maxSpacePerUser, MAX_FILE_BYTES } from "../../../../../../../../../auth/limits";
 import { NotEnoughRoomError } from "../../../../../../../../../errors/NotEnoughRoomError";
 import { NotFoundError } from "../../../../../../../../../errors/NotFoundError";
@@ -64,7 +65,7 @@ export const DELETE = apiHandler("DELETE", async (req, res) => {
 	const { totalSpace, usedSpace } = await statsForUser(userId);
 	const userSizeDesc = simplifiedByteCount(usedSpace);
 	const maxSpacDesc = simplifiedByteCount(maxSpacePerUser);
-	console.debug(`User ${userId} has used ${userSizeDesc} of ${maxSpacDesc}`);
+	logger.debug(`User ${userId} has used ${userSizeDesc} of ${maxSpacDesc}`);
 
 	// When done, get back to the caller with new stats
 	respondSuccess(res, { totalSpace, usedSpace });
@@ -114,7 +115,7 @@ export const POST = apiHandler("POST", async (req, res) => {
 	const { totalSpace, usedSpace } = await statsForUser(userId);
 	const userSizeDesc = simplifiedByteCount(usedSpace);
 	const maxSpacDesc = simplifiedByteCount(maxSpacePerUser);
-	console.debug(`User ${userId} has used ${userSizeDesc} of ${maxSpacDesc}`);
+	logger.debug(`User ${userId} has used ${userSizeDesc} of ${maxSpacDesc}`);
 
 	const remainingSpace = totalSpace - usedSpace;
 	if (remainingSpace <= 0) throw new NotEnoughRoomError();

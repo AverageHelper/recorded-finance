@@ -1,6 +1,7 @@
 import { AccountableError, NetworkError } from "../transport/errors/index.js";
 import { getServerVersion } from "../transport/server.js";
 import { derived, get, writable } from "svelte/store";
+import { logger } from "../logger.js";
 import { StructError } from "superstruct";
 import { t } from "../i18n.js";
 import { toast } from "@zerodevx/svelte-toast";
@@ -40,7 +41,7 @@ export function watchColorScheme(): void {
 	if (isDarkMode) activateDarkMode();
 	if (isLightMode) activateLightMode();
 	if (isNotSpecified || hasNoSupport) {
-		console.warn("System color scheme not supported. Defaulting to light.");
+		logger.warn("System color scheme not supported. Defaulting to light.");
 		activateLightMode();
 	}
 }
@@ -83,7 +84,7 @@ export async function loadServerVersion(): Promise<void> {
 		serverVersion.set("loading");
 		serverVersion.set(await getServerVersion(db));
 	} catch (error) {
-		console.error(error);
+		logger.error(error);
 		if (error instanceof Error) {
 			serverVersion.set(error);
 		} else {
@@ -115,5 +116,5 @@ export function handleError(error: unknown): void {
 	} else {
 		toast.push(message, { classes: ["toast-error"] });
 	}
-	console.error(error);
+	logger.error(error);
 }

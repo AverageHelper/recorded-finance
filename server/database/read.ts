@@ -4,6 +4,7 @@ import type { FileData } from "@prisma/client";
 import { computeRequiredAddtlAuth } from "./schemas";
 import { dataSource } from "./io";
 import { generateAESCipherKey } from "../auth/generators";
+import { logger } from "../logger";
 import { maxSpacePerUser } from "../auth/limits";
 import { NotFoundError } from "../errors/NotFoundError";
 import { UnreachableCaseError } from "../errors/UnreachableCaseError";
@@ -203,7 +204,7 @@ interface Snapshot {
  * @returns a view of database data.
  */
 export async function fetchDbDoc(ref: DocumentReference): Promise<Snapshot> {
-	console.debug(`Retrieving document at ${ref.path}...`);
+	logger.debug(`Retrieving document at ${ref.path}...`);
 	const collectionId = ref.parent.id;
 	const docId = ref.id;
 	switch (collectionId) {
@@ -217,7 +218,7 @@ export async function fetchDbDoc(ref: DocumentReference): Promise<Snapshot> {
 				where: { docId, collectionId },
 			});
 			if (result === null) {
-				console.debug(`Got nothing at ${ref.path}`);
+				logger.debug(`Got nothing at ${ref.path}`);
 				return { ref, data: null };
 			}
 
@@ -227,13 +228,13 @@ export async function fetchDbDoc(ref: DocumentReference): Promise<Snapshot> {
 				ciphertext: result.ciphertext,
 				cryption: result.cryption ?? "v0",
 			};
-			console.debug(`Got document at ${ref.path}`);
+			logger.debug(`Got document at ${ref.path}`);
 			return { ref, data };
 		}
 		case "keys": {
 			const result = await dataSource.userKeys.findUnique({ where: { userId: docId } });
 			if (result === null) {
-				console.debug(`Got nothing at ${ref.path}`);
+				logger.debug(`Got nothing at ${ref.path}`);
 				return { ref, data: null };
 			}
 
@@ -244,7 +245,7 @@ export async function fetchDbDoc(ref: DocumentReference): Promise<Snapshot> {
 				oldPassSalt: result.oldPassSalt ?? undefined,
 				passSalt: result.passSalt,
 			};
-			console.debug(`Got document at ${ref.path}`);
+			logger.debug(`Got document at ${ref.path}`);
 			return { ref, data };
 		}
 		default:

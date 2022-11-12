@@ -3,6 +3,7 @@ import { _, addMessages, getLocaleFromNavigator, init, locale as _locale } from 
 import { derived, get } from "svelte/store";
 import { isRecord } from "./transport/schemas";
 import { isString } from "./helpers/isString";
+import { logger } from "./logger";
 
 // ** Language files **
 import enUS from "./locales/en-US.json";
@@ -102,7 +103,7 @@ export const locale = derived<typeof _locale, LocaleDescriptor>(_locale, $locale
 /** Set the current locale. */
 export async function setLocale(code: LocaleCode): Promise<void> {
 	await _locale.set(code);
-	console.debug(`User manually selected locale ${code}`);
+	logger.debug(`User manually selected locale ${code}`);
 }
 
 /** The list of supported locales. */
@@ -121,16 +122,16 @@ export const locales: ReadonlyArray<LocaleDescriptor> = Object.entries(messages)
 const fallbackLocale: LocaleCode = "en-US";
 
 const initialLocale = getLocaleFromNavigator();
-console.debug(`Navigator locale: ${initialLocale ?? "null"}`);
+logger.debug(`Navigator locale: ${initialLocale ?? "null"}`);
 
 Object.entries(messages).forEach(([locale, partials]) => {
 	addMessages(locale, partials);
 });
 
 // Initialize Svelte I18N
-console.debug("Loading I18N module...");
+logger.debug("Loading I18N module...");
 void init({
 	fallbackLocale,
 	initialLocale,
 });
-console.debug("I18N module loaded");
+logger.debug("I18N module loaded");

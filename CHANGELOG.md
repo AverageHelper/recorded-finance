@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.3] - 2022-11-11
+### Changed
+- Improved our back-end logging to make transport and formatting middleware easy to install and change.
+
 ## [0.14.2] - 2022-11-09
 ### Changed
 - We now generate client-side API interfaces from the server's [OpenAPI spec](/server/openapi.yaml). This means better static assurances that we're doing stuff correctly on the front-end. (Still gotta keep the spec up with the back-end logic tho).
@@ -328,6 +332,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial commit
 
+[0.14.3]: https://github.com/AverageHelper/accountable-svelte/compare/v0.14.2...v0.14.3
 [0.14.2]: https://github.com/AverageHelper/accountable-svelte/compare/v0.14.1...v0.14.2
 [0.14.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.14.0...v0.14.1
 [0.14.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.13.2...v0.14.0

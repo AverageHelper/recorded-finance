@@ -3,6 +3,7 @@ import { asyncWrapper } from "./asyncWrapper";
 import { auth } from "./auth";
 import { cors } from "./cors";
 import { db } from "./db";
+import { logger } from "./logger";
 import { NotFoundError } from "./errors/NotFoundError";
 import { respondError } from "./responses";
 import { version as appVersion } from "./version";
@@ -38,5 +39,5 @@ app
 	});
 
 app.listen(PORT, () => {
-	process.stdout.write(`Accountable storage server v${appVersion} listening on port ${PORT}\n`);
+	logger.info(`Accountable storage server v${appVersion} listening on port ${PORT}`);
 });

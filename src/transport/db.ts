@@ -10,6 +10,7 @@ import { forgetJobQueue, useJobQueue } from "@averagehelper/job-queue";
 import { isArray } from "../helpers/isArray";
 import { isPrimitive } from "./schemas.js";
 import { isString } from "../helpers/isString";
+import { logger } from "../logger";
 import { run } from "./apiStruts";
 import { t } from "../i18n";
 import { v4 as uuid } from "uuid";
@@ -502,7 +503,7 @@ export function recordFromSnapshot<G, T extends string>(
 	const pkg = doc.data();
 	const record = decrypt(pkg, dek);
 	if (!typeGuard(record)) {
-		console.debug(
+		logger.debug(
 			t("error.db.record-does-not-match-guard", { values: { guard: typeGuard.name } }),
 			record
 		);

@@ -1,10 +1,9 @@
 #!/usr/bin/env ts-node
 
-/* eslint-disable no-console */
-
 import "../helpers/assertTsNode";
 import type { CollectionID } from "../database";
 import { allCollectionIds, CollectionReference } from "../database";
+import { logger } from "../logger";
 import {
 	countFileBlobsForUser,
 	countRecordsInCollection,
@@ -24,7 +23,7 @@ async function main(): Promise<void> {
 	const jwtCount = await numberOfExpiredJwts();
 
 	const uids = await listAllUserIds();
-	console.info(`We have ${userCount} user(s):`, uids);
+	logger.info(`We have ${userCount} user(s):`, uids);
 
 	// Compile the results...
 	const users = (await Promise.all(uids.map(userWithUid))).filter(isNotNull);
@@ -48,17 +47,17 @@ async function main(): Promise<void> {
 
 	// Print the results...
 	for (const [uid, counts] of Object.entries(recordCountsByUser)) {
-		console.info(`Stats for user ${uid}:`);
+		logger.info(`Stats for user ${uid}:`);
 
 		const fileCount = fileCountsByUser[uid] ?? 0;
-		console.info(`\tFiles:  ${fileCount} record(s)`);
+		logger.info(`\tFiles:  ${fileCount} record(s)`);
 
 		for (const [collectionId, count] of Object.entries(counts)) {
-			console.info(`\t${collectionId}:  ${count} record(s)`);
+			logger.info(`\t${collectionId}:  ${count} record(s)`);
 		}
 	}
 
-	console.info(`Total expired JWTs:  ${jwtCount}`);
+	logger.info(`Total expired JWTs:  ${jwtCount}`);
 }
 
 void main();

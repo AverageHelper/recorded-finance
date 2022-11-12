@@ -1,5 +1,6 @@
 import type { CorsOptions } from "cors";
 import { env } from "./environment";
+import { logger } from "./logger";
 import { OriginError } from "./errors/OriginError";
 import { URL } from "node:url";
 import _cors from "cors";
@@ -18,20 +19,18 @@ if (configuredHostUrl !== null) {
 		const { hostname } = new URL(configuredHostUrl);
 		allowedOriginHostnames.add(hostname);
 	} catch {
-		process.stderr.write(`Value for env key HOST is not a valid URL: '${configuredHostUrl}'/n`);
+		logger.warn(`Value for env key HOST is not a valid URL: '${configuredHostUrl}'`);
 	}
 }
 
-process.stdout.write(
-	`allowedOriginHostnames: ${JSON.stringify(Array.from(allowedOriginHostnames))}\n`
-);
+logger.debug(`allowedOriginHostnames: ${JSON.stringify(Array.from(allowedOriginHostnames))}`);
 
 const corsOptions: CorsOptions = {
 	credentials: true,
 	origin: (origin, callback) => {
 		// Allow requests with no origin (mobile apps, curl, etc.)
 		if (origin === undefined || !origin) {
-			process.stdout.write(`Handling request that has no origin\n`);
+			logger.debug("Handling request that has no origin");
 			return callback(null, true);
 		}
 
@@ -40,20 +39,16 @@ const corsOptions: CorsOptions = {
 			const { hostname } = new URL(origin);
 
 			if (!allowedOriginHostnames.has(hostname)) {
-				process.stdout.write(
-					`Blocking request from origin: ${origin} (inferred hostname: ${hostname})\n`
-				);
+				logger.debug(`Blocking request from origin: ${origin} (inferred hostname: ${hostname})`);
 				return callback(new OriginError(), false);
 			}
 		} catch {
-			process.stdout.write(
-				`Blocking request from origin: ${origin} (inferred hostname: <invalid-url>)\n`
-			);
+			logger.debug(`Blocking request from origin: ${origin} (inferred hostname: <invalid-url>)`);
 			return callback(new OriginError(), false);
 		}
 
 		// Origin must be OK! Let 'em in
-		process.stdout.write(`Handling request from origin: ${origin}\n`);
+		logger.debug(`Handling request from origin: ${origin}`);
 		return callback(null, true);
 	},
 };

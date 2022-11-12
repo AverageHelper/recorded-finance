@@ -3,6 +3,7 @@ import type { CollectionReference, DocumentReference } from "./references";
 import type { FileData, PrismaPromise, User as DBUser } from "@prisma/client";
 import { assertSchema, isDataItemKey, isNonEmptyArray, user as userSchema } from "./schemas";
 import { dataSource } from "./io";
+import { logger } from "../logger";
 import { ONE_HOUR } from "../constants/time";
 import { UnreachableCaseError } from "../errors/UnreachableCaseError";
 
@@ -135,7 +136,7 @@ export async function upsertDbDocs(updates: Array<DocUpdate>): Promise<void> {
 		throw new UnreachableCaseError(update.data);
 	});
 
-	console.debug(
+	logger.debug(
 		`Upserting ${updates.length} records (${dataItemUpserts.length} DataItem, ${dekMaterialUpserts.length} UserKeys, ${userUpserts.length} User)...`
 	);
 

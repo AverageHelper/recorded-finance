@@ -5,6 +5,7 @@ import type { Dinero } from "dinero.js";
 import { account, recordFromAccount } from "../model/Account";
 import { derived, get, writable } from "svelte/store";
 import { getDekMaterial, pKey } from "./authStore";
+import { logger } from "../logger";
 import { t } from "../i18n";
 import { updateUserStats } from "./uiStore";
 import chunk from "lodash-es/chunk";
@@ -43,7 +44,7 @@ export function clearAccountsCache(): void {
 	accounts.set({});
 	currentBalance.set({});
 	accountsLoadError.set(null);
-	console.debug("accountsStore: cache cleared");
+	logger.debug("accountsStore: cache cleared");
 }
 
 export async function watchAccounts(force: boolean = false): Promise<void> {
@@ -92,7 +93,7 @@ export async function watchAccounts(force: boolean = false): Promise<void> {
 				const watcher = get(accountsWatcher);
 				if (watcher) watcher();
 				accountsWatcher.set(null);
-				console.error(error);
+				logger.error(error);
 			}
 		)
 	);
