@@ -51,7 +51,10 @@
 		event.stopPropagation();
 		event.preventDefault();
 		await tick();
-		submit();
+		if (token.length === 6 && /^\d+$/.test(token)) {
+			// Only if six digits
+			submit();
+		}
 	}
 
 	async function submit() {
