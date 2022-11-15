@@ -2,7 +2,7 @@
 	import { _ } from "../../i18n";
 	import { AccountableError, NetworkError } from "../../transport/errors";
 	import { accountsPath } from "../../router";
-	import { onMount } from "svelte";
+	import { onMount, tick } from "svelte";
 	import { useNavigate } from "svelte-navigator";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
 	import ErrorNotice from "../../components/ErrorNotice.svelte";
@@ -27,11 +27,17 @@
 	let isLoading = false;
 
 	let passwordField: TextField | undefined;
+	let totpField: TextField | undefined;
 
 	onMount(() => {
 		passwordField?.focus();
 		bootstrap();
 	});
+
+	$: if (needsTotp) {
+		// Focus the field when we enter TOTP mode
+		totpField?.focus();
+	}
 
 	function onPasswordInput(event: CustomEvent<string>) {
 		password = event.detail;
@@ -39,6 +45,16 @@
 
 	function onTotpInput(event: CustomEvent<string>) {
 		token = event.detail;
+	}
+
+	async function onTotpPaste(event: CustomEvent<ClipboardEvent>) {
+		event.stopPropagation();
+		event.preventDefault();
+		await tick();
+		if (token.length === 6 && /^\d+$/.test(token)) {
+			// Only if six digits
+			submit();
+		}
 	}
 
 	async function submit() {
@@ -83,8 +99,10 @@
 
 			{#if needsTotp}
 				<TextField
+					bind:this={totpField}
 					value={token}
 					on:input={onTotpInput}
+					on:paste={onTotpPaste}
 					disabled={isLoading}
 					label={$_("login.totp")}
 					placeholder={$_("example.totp-code")}

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { _ } from "../../i18n";
 	import { accountsPath, loginPath, signupPath } from "../../router";
-	import { onMount } from "svelte";
+	import { onMount, tick } from "svelte";
 	import { repoReadmeHeading } from "../../platformMeta";
 	import { AccountableError, UnreachableCaseError } from "../../transport/errors";
 	import { useLocation, useNavigate } from "svelte-navigator";
@@ -51,6 +51,7 @@
 
 	let accountIdField: TextField | undefined;
 	let passwordField: TextField | undefined;
+	let totpField: TextField | undefined;
 	let needsTotp = false;
 
 	onMount(() => {
@@ -80,6 +81,11 @@
 		}
 	}
 
+	$: if (isTotpMode) {
+		// Focus the field when we enter TOTP mode
+		totpField?.focus();
+	}
+
 	function enterSignupMode() {
 		accountId = "";
 		navigate(signupPath(), { replace: true });
@@ -106,6 +112,16 @@
 
 	function onUpdateTotp(event: CustomEvent<string>) {
 		token = event.detail;
+	}
+
+	async function onTotpPaste(event: CustomEvent<ClipboardEvent>) {
+		event.stopPropagation();
+		event.preventDefault();
+		await tick();
+		if (token.length === 6 && /^\d+$/.test(token)) {
+			// Only if six digits
+			submit();
+		}
 	}
 
 	function onUpdatePassphrase(event: CustomEvent<string>) {
@@ -197,8 +213,10 @@
 				/>
 			{:else if isTotpMode}
 				<TextField
+					bind:this={totpField}
 					value={token}
 					on:input={onUpdateTotp}
+					on:paste={onTotpPaste}
 					disabled={isLoading}
 					label={$_("login.totp")}
 					placeholder={$_("example.totp-code")}
