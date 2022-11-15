@@ -6,7 +6,7 @@ import type {
 	fetchDbDocs as _fetchDbDocs,
 	userWithUid as _userWithUid,
 	userWithAccountId as _userWithAccountId,
-} from "../reads";
+} from "../read";
 import { jest } from "@jest/globals";
 
 export const statsForUser = jest

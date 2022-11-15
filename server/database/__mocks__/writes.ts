@@ -5,7 +5,7 @@ import type {
 	deleteDbDocs as _deleteDbDocs,
 	deleteDbDoc as _deleteDbDoc,
 	deleteDbCollection as _deleteDbCollection,
-} from "../writes";
+} from "../write";
 import { jest } from "@jest/globals";
 
 export const upsertUser = jest.fn<typeof _upsertUser>().mockResolvedValue({ uid: "test_user_123" });
