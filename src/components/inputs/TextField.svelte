@@ -11,6 +11,7 @@
 		keydown: KeyboardEvent;
 		keyup: KeyboardEvent;
 		keypress: KeyboardEvent;
+		paste: ClipboardEvent;
 	}>();
 
 	type TextFieldType =
@@ -138,6 +139,10 @@
 		dispatch("keypress", event);
 	}
 
+	function onPaste(event: ClipboardEvent): void {
+		dispatch("paste", event);
+	}
+
 	export function focus(): void {
 		input?.focus();
 	}
@@ -200,6 +205,7 @@
 			on:keydown={onKeyDown}
 			on:keyup={onKeyUp}
 			on:keypress={onKeyPress}
+			on:paste={onPaste}
 		/>
 	{/if}
 
