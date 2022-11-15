@@ -895,6 +895,9 @@ paths:
                               type: string
                             cryption:
                               type: string
+                              enum:
+                                - v0
+                                - v1
         403:
           description: The caller does not have permission to access the resource
           content:
@@ -1046,6 +1049,9 @@ paths:
                             type: string
                           cryption:
                             type: string
+                            enum:
+                              - v0
+                              - v1
         403:
           description: The caller does not have permission to access the resource
           content:

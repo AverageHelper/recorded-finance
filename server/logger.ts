@@ -37,38 +37,38 @@ const baseLogger = bunyan.createLogger({ name, level: "debug" });
 export const logger: Logger = {
 	debug: (message, ...optionalParams) => {
 		if (message instanceof Error) {
-			baseLogger.debug(message, optionalParams);
+			baseLogger.debug(message, ...optionalParams);
 		} else if (typeof message === "string") {
-			baseLogger.debug(message, optionalParams);
+			baseLogger.debug(message, ...optionalParams);
 		} else {
-			baseLogger.debug(JSON.stringify(message), optionalParams);
+			baseLogger.debug(JSON.stringify(message), ...optionalParams);
 		}
 	},
 	info: (message, ...optionalParams) => {
 		if (message instanceof Error) {
-			baseLogger.info(message, optionalParams);
+			baseLogger.info(message, ...optionalParams);
 		} else if (typeof message === "string") {
-			baseLogger.info(message, optionalParams);
+			baseLogger.info(message, ...optionalParams);
 		} else {
-			baseLogger.info(JSON.stringify(message), optionalParams);
+			baseLogger.info(JSON.stringify(message), ...optionalParams);
 		}
 	},
 	warn: (message, ...optionalParams) => {
 		if (message instanceof Error) {
-			baseLogger.warn(message, optionalParams);
+			baseLogger.warn(message, ...optionalParams);
 		} else if (typeof message === "string") {
-			baseLogger.warn(message, optionalParams);
+			baseLogger.warn(message, ...optionalParams);
 		} else {
-			baseLogger.warn(JSON.stringify(message), optionalParams);
+			baseLogger.warn(JSON.stringify(message), ...optionalParams);
 		}
 	},
 	error: (message, ...optionalParams) => {
 		if (message instanceof Error) {
-			baseLogger.error(message, optionalParams);
+			baseLogger.error(message, ...optionalParams);
 		} else if (typeof message === "string") {
-			baseLogger.error(message, optionalParams);
+			baseLogger.error(message, ...optionalParams);
 		} else {
-			baseLogger.error(JSON.stringify(message), optionalParams);
+			baseLogger.error(JSON.stringify(message), ...optionalParams);
 		}
 	},
 };
