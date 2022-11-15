@@ -22,18 +22,18 @@ export async function statsForUser(uid: string): Promise<UserStats> {
 }
 
 export async function numberOfUsers(): Promise<number> {
-	return await dataSource.user.count();
+	return await dataSource().user.count();
 }
 
 export async function listAllUserIds(): Promise<Array<string>> {
-	const users = await dataSource.user.findMany({ select: { uid: true } });
+	const users = await dataSource().user.findMany({ select: { uid: true } });
 	return users.map(({ uid }) => uid);
 }
 
 // MARK: - Pseudo Large-file Storage
 
 export async function fetchFileData(userId: string, fileName: string): Promise<FileData | null> {
-	return await dataSource.fileData.findUnique({
+	return await dataSource().fileData.findUnique({
 		where: { userId_fileName: { userId, fileName } },
 	});
 }
@@ -42,7 +42,7 @@ export async function fetchFileData(userId: string, fileName: string): Promise<F
  * Returns the total number of bytes that comprise a given file.
  */
 export async function totalSizeOfFile(userId: string, fileName: string): Promise<number | null> {
-	const file = await dataSource.fileData.findUnique({
+	const file = await dataSource().fileData.findUnique({
 		where: { userId_fileName: { userId, fileName } },
 		select: { size: true },
 	});
@@ -54,7 +54,7 @@ export async function totalSizeOfFile(userId: string, fileName: string): Promise
  * Returns the number of bytes of the user's stored files.
  */
 export async function totalSizeOfFilesForUser(userId: string): Promise<number> {
-	const files = await dataSource.fileData.findMany({
+	const files = await dataSource().fileData.findMany({
 		where: { userId },
 		select: { size: true },
 	});
@@ -65,7 +65,7 @@ export async function totalSizeOfFilesForUser(userId: string): Promise<number> {
  * Returns the number of files stored for the user.
  */
 export async function countFileBlobsForUser(userId: string): Promise<number> {
-	return await dataSource.fileData.count({ where: { userId } });
+	return await dataSource().fileData.count({ where: { userId } });
 }
 
 // MARK: - Database
@@ -74,7 +74,7 @@ export async function countFileBlobsForUser(userId: string): Promise<number> {
  * Resolves to `true` if the given token exists in the database.
  */
 export async function jwtExistsInDatabase(token: string): Promise<boolean> {
-	const result = await dataSource.expiredJwt.findUnique({
+	const result = await dataSource().expiredJwt.findUnique({
 		where: { token },
 		select: { token: true },
 	});
@@ -82,7 +82,7 @@ export async function jwtExistsInDatabase(token: string): Promise<boolean> {
 }
 
 export async function numberOfExpiredJwts(): Promise<number> {
-	return await dataSource.expiredJwt.count();
+	return await dataSource().expiredJwt.count();
 }
 
 export async function countRecordsInCollection(ref: CollectionReference): Promise<number> {
@@ -93,14 +93,14 @@ export async function countRecordsInCollection(ref: CollectionReference): Promis
 		case "tags":
 		case "transactions":
 		case "users":
-			return await dataSource.dataItem.count({
+			return await dataSource().dataItem.count({
 				where: {
 					userId: ref.uid,
 					collectionId: ref.id,
 				},
 			});
 		case "keys":
-			return await dataSource.userKeys.count({
+			return await dataSource().userKeys.count({
 				where: { userId: ref.uid },
 			});
 	}
@@ -119,7 +119,7 @@ export async function fetchDbCollection(
 		case "transactions":
 		case "users":
 			return (
-				await dataSource.dataItem.findMany({
+				await dataSource().dataItem.findMany({
 					where: { userId: uid, collectionId: ref.id },
 					select: {
 						ciphertext: true,
@@ -131,7 +131,7 @@ export async function fetchDbCollection(
 			).map(v => ({ ...v, _id: v.docId }));
 		case "keys":
 			return (
-				await dataSource.userKeys.findMany({
+				await dataSource().userKeys.findMany({
 					where: { userId: uid },
 					select: {
 						dekMaterial: true,
@@ -156,7 +156,7 @@ async function findUserWithProperties(
 	query: Partial<Pick<User, "uid" | "currentAccountId">>
 ): Promise<User | null> {
 	if (Object.keys(query).length === 0) return null; // Fail gracefully for an empty query
-	const first = await dataSource.user.findFirst({
+	const first = await dataSource().user.findFirst({
 		where: {
 			uid: query.uid,
 			currentAccountId: query.currentAccountId,
@@ -168,7 +168,7 @@ async function findUserWithProperties(
 	let pubnubCipherKey = first.pubnubCipherKey;
 	if (pubnubCipherKey === null) {
 		pubnubCipherKey = await generateAESCipherKey();
-		await dataSource.user.update({
+		await dataSource().user.update({
 			where: { uid: first.uid },
 			data: { pubnubCipherKey },
 		});
@@ -214,7 +214,7 @@ export async function fetchDbDoc(ref: DocumentReference): Promise<Snapshot> {
 		case "tags":
 		case "transactions":
 		case "users": {
-			const result = await dataSource.dataItem.findFirst({
+			const result = await dataSource().dataItem.findFirst({
 				where: { docId, collectionId },
 			});
 			if (result === null) {
@@ -232,7 +232,7 @@ export async function fetchDbDoc(ref: DocumentReference): Promise<Snapshot> {
 			return { ref, data };
 		}
 		case "keys": {
-			const result = await dataSource.userKeys.findUnique({ where: { userId: docId } });
+			const result = await dataSource().userKeys.findUnique({ where: { userId: docId } });
 			if (result === null) {
 				logger.debug(`Got nothing at ${ref.path}`);
 				return { ref, data: null };
