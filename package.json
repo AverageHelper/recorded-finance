@@ -1,6 +1,6 @@
 {
 	"name": "accountable-svelte",
-	"version": "0.14.5",
+	"version": "0.14.6",
 	"license": "GPL-3.0",
 	"description": "A Svelte app for managing monetary assets.",
 	"scripts": {
