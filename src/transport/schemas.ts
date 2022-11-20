@@ -116,6 +116,16 @@ const fileData = type({
 });
 export type FileData = Infer<typeof fileData>;
 
-export function isFileData(tbd: unknown): tbd is FileData {
-	return is(tbd, fileData);
+export function assertFileData(tbd: unknown): asserts tbd is FileData {
+	try {
+		assertSchema(tbd, fileData);
+	} catch (error) {
+		let message: string;
+		if (error instanceof StructError) {
+			message = error.message;
+		} else {
+			message = JSON.stringify(error, undefined, "  ");
+		}
+		throw new UnexpectedResponseError(`Invalid server response: ${message}`); // TODO: i18n
+	}
 }

@@ -1,7 +1,7 @@
 import type { AccountableDB, DocumentReference } from "./db";
 import type { AttachmentRecordPackage } from "./attachments";
-import { AccountableError, UnexpectedResponseError } from "./errors/index.js";
-import { isFileData } from "./schemas";
+import { AccountableError } from "./errors/index.js";
+import { assertFileData } from "./schemas";
 import { run } from "./apiStruts";
 import {
 	deleteV0DbUsersByUidAttachmentsAndDocBlobKey,
@@ -66,14 +66,14 @@ export async function downloadString(ref: StorageReference): Promise<string> {
 	if (ref.docRef.parent.id !== "attachments")
 		throw new AccountableError("storage/invalid-argument");
 
-	const data = await run(
+	const { data } = await run(
 		getV0DbUsersByUidAttachmentsAndDocBlobKey,
 		ref.db,
 		uid,
 		ref.docRef.id,
 		`${ref.name}.json`
 	);
-	if (!isFileData(data)) throw new UnexpectedResponseError("Invalid file data"); // TODO: i18n
+	assertFileData(data);
 	return data.contents;
 }
 
