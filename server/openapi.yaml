@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: Accountable Server
-  version: 0.8.3
+  version: 0.8.4
   description: This is the Accountable Server. All the server does is store data given to it by the client. The server controls access to the data with basic password-based auth with optional time-based multi-factor auth. The Accountable client does most of the hard work of encrypting the user's data. You can read Accountable's source code on [GitHub](https://github.com/AverageHelper/accountable-svelte).
   license:
     name: GNU General Public License v3.0

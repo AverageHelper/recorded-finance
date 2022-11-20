@@ -79,8 +79,26 @@ export function dataSource(databaseUrl?: URL): PrismaClient {
 		logger.debug(`Target: ${event.target}`);
 		logger.debug(`Query: ${event.query}`);
 		logger.debug(`Timestamp: ${event.timestamp.toUTCString()}`);
-		logger.debug(`Params: ${event.params}`);
 		logger.debug(`Duration: ${event.duration}ms`);
+
+		try {
+			// Prisma logs query params in an array (usually)
+			const params = JSON.parse(event.params) as unknown;
+			if (!Array.isArray(params))
+				throw new TypeError(`Params were found not to be an array. Instead got ${typeof params}`);
+
+			// Describe each value vaguely
+			const cleanParams = params.map((value: unknown) => {
+				if (typeof value === "string") {
+					return `<${value.length}-len string>`;
+				}
+				return `<${typeof value}>`;
+			});
+			logger.debug(`Params: [${cleanParams.join(",")}]`);
+		} catch (error) {
+			// Don't force it if we cannot log the params. We'll fix it later.
+			logger.error("Could not parse params:", error);
+		}
 	});
 
 	// Remember this client for later
