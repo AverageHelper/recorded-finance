@@ -71,7 +71,6 @@ export const mfaValidation = enums(["totp"] as const);
 export type MFAValidation = Infer<typeof mfaValidation>;
 
 const rawServerResponse = type({
-	contents: optional(string()),
 	_id: optional(string()),
 	message: optional(string()),
 	code: optional(string()),
