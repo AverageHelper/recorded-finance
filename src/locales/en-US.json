@@ -429,7 +429,7 @@
 		"log-in": "Log in",
 		"create-account": "Create an account",
 		"cookie-disclaimer-header": "How our cookies work",
-		"cookie-disclaimer": "Logging in will set two cookies, which together contain information that declares your access to your data. These cookies let your browser securely remember that you are logged in. The alternative is for us to recall your login information with JavaScript, which is not a safe place to keep thing. {more}",
+		"cookie-disclaimer": "Logging in will set two cookies, which together contain information that declares your access to your data. These cookies let your browser securely remember that you are logged in. The alternative is for us to recall your login information with JavaScript, which is not a safe place to keep things. {more}",
 		"cookie-more": "More info.",
 		"process": {
 			"authenticating": "Authenticating...",
