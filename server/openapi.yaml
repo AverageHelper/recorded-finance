@@ -1244,10 +1244,17 @@ paths:
               schema:
                 type: object
                 properties:
-                  contents:
+                  message:
                     type: string
-                  _id:
-                    type: string
+                    enum:
+                      - "Success!"
+                  data:
+                    type: object
+                    properties:
+                      contents:
+                        type: string
+                      _id:
+                        type: string
         400:
           description: Bad ID or file name
           content:

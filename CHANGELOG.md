@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Fixed
+- Fixed incorrect OpenAPI spec for downloading attachment data.
+
 ## [0.14.6] - 2022-11-20
 ### Fixed
 - Attachments not loading, something about "Invalid file data"
@@ -345,6 +349,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial commit
 
+[Unreleased]: https://github.com/AverageHelper/accountable-svelte/compare/v0.14.6...HEAD
 [0.14.6]: https://github.com/AverageHelper/accountable-svelte/compare/v0.14.5...v0.14.6
 [0.14.5]: https://github.com/AverageHelper/accountable-svelte/compare/v0.14.4...v0.14.5
 [0.14.4]: https://github.com/AverageHelper/accountable-svelte/compare/v0.14.3...v0.14.4
