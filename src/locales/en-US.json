@@ -42,11 +42,11 @@
 	},
 	"error": {
 		"auth": {
-			"account-already-exists": "Someone already has an account with that ID.",
+			"account-already-exists": "Someone already has an account with that ID",
 			"internal": "Internal auth error",
 			"invalid-argument": "Invalid auth argument",
 			"invalid-credential": "Invalid account ID or passphrase",
-			"invalid-email": "That doesn't quite look like an email address.",
+			"invalid-email": "That doesn't quite look like an email address",
 			"create-account-first": "You must create an accout first",
 			"unauthenticated": "You must sign in first"
 		},
@@ -57,14 +57,14 @@
 			"missing-pek": "No decryption key"
 		},
 		"db": {
-			"account-has-transactions": "Cannot delete an account that has transactions.",
+			"account-has-transactions": "Cannot delete an account that has transactions",
 			"could-not-parse-document": "Failed to parse record from server document {id}",
 			"failed-precondition": "Failed precondition",
 			"internal": "Internal database error",
 			"invalid-argument": "Invalid database argument",
 			"record-does-not-match-guard": "Record does not match '{guard}' type guard",
 			"batch": {
-				"op-limit": "Cannot batch more than {limit} write operations.",
+				"op-limit": "Cannot batch more than {limit} write operations",
 				"one-db": "Must use exactly one database in a write batch"
 			}
 		},
@@ -75,11 +75,11 @@
 		"fs": {
 			"invalid-uri-no-byte-string": "Invalid Data URI: Could not get byte string",
 			"invalid-uri-no-mime-string": "Invalid Data URI: Could not get MIME string",
-			"expected-string": "Expected string output, got {type}"
+			"expected-string": "Expected string output, got '{type}'"
 		},
 		"network": {
 			"account-conflict": "An account with that ID already exists",
-			"bad-gateway": "The CORS policy for this site does not allow access from the specified Origin.",
+			"bad-gateway": "The CORS policy for this site does not allow access from the specified Origin",
 			"bad-method": "That method is not allowed here. What are you trying to do?",
 			"expired-token": "You must sign in again in order to proceed",
 			"missing-mfa-credentials": "You must provide a TOTP code",
@@ -95,13 +95,13 @@
 			"unknown": "Not sure what went wrong. Try again maybe?"
 		},
 		"sanity": {
-			"empty-param": "{name} parameter cannot be empty",
-			"missing-env-var": "No value found for environment variable {key}",
+			"empty-param": "'{name}' parameter cannot be empty",
+			"missing-env-var": "No value found for environment variable '{key}'",
 			"missing-constructor-property": "Missing property in constructor",
 			"unreachable-case": "Unreachable case: {value}"
 		},
 		"server": {
-			"id-not-string": "Expected ID to be string",
+			"id-not-string": "Expected ID to be of type 'string'",
 			"missing-access-token": "Expected access token from server, but got none",
 			"no-data": "Expected data from server, but got none",
 			"no-version": "No version string found",
@@ -111,15 +111,15 @@
 			"unexpected-response": "Server response was unexpected: {message}"
 		},
 		"settings": {
-			"missing-db-file": "{filename} not present at root of zip",
-			"invalid-location-preference": "{pref} is not a valid location preference."
+			"missing-db-file": "'{filename}' not present at root of zip",
+			"invalid-location-preference": "'{pref}' is not a valid location preference"
 		},
 		"storage": {
 			"internal": "Internal storage error",
 			"invalid-argument": "Invalid storage argument",
 			"invalid-checksum": "The uploaded file does not match the provided checksum. Please reupload",
 			"invalid-ref-path": "Invalid storage ref: {path}",
-			"malformed-payload": "Improperly formatted payload.",
+			"malformed-payload": "Improperly formatted payload",
 			"no-data-found": "No data found at the ref",
 			"server-file-wrong-size": "The uploaded file does not match the provided file size. Please reupload"
 		},
@@ -137,7 +137,7 @@
 		}
 	},
 	"debug": {
-		"something-is-wrong": "Something's wrong",
+		"something-is-wrong": "Something's wrong.",
 		"account-but-no-transaction": "We have an account, but no transaction.",
 		"transaction-id": "The transaction ID is {id}.",
 		"count-one-transaction": "There is 1 transaction in the cache.",
@@ -215,7 +215,7 @@
 		}
 	},
 	"months": {
-		"does-not-match-pattern": "{month} does not match a month identifier pattern"
+		"does-not-match-pattern": "'{month}' does not match a month identifier pattern"
 	},
 	"settings": {
 		"heading": "Settings",
@@ -480,7 +480,7 @@
 			"heading": "Self-host Server",
 			"p1": "Check out the {readme} for more on how to set Accountable up on your own computer.",
 			"planning": "We're planning a hosted solution right here soon.",
-			"p2": "I'm toying with the idea of (optionally) using Firebase as an Accountable server. This would be great for users who are okay with using a Google service and don't want to pay to host your own installation.",
+			"p2": "I'm toying with the idea of (optionally) using Firebase as an Accountable server. This would be great for users who are okay with using a Google service and don't want to pay to host their own installation.",
 			"readme": "README"
 		}
 	},
@@ -493,7 +493,7 @@
 		},
 		"alternatives": {
 			"heading": "Alternatives",
-			"p1": "There are a few {alts} out there, but none I've found that I like. Lots of proprietary ones, too. Feel free to use them if you'd like, I'm not sponsored by any of them. Their respective names are trademarks of their owners:",
+			"p1": "There are a few {alts} out there, but none I've found that I like. Lots of proprietary ones, too. Feel free to use them if you'd like, I'm not sponsored by any of them. Their names are trademarks of their respective owners:",
 			"alts": "open-source desktop balance keepers",
 
 			"alt1": "You may have heard of {ynab}.",
@@ -527,7 +527,7 @@
 		"where-keys": {
 			"question": "Who holds the encryption keys?",
 			"answer1": "You do.",
-			"answer2": "When you create an account, Accountable generates a data-encryption key {dek} to use to encrypt and decrypt your data. Accountable generates a separate key-encryption key {kek} from your given passphrase to use to encrypt your DEK. Accountable then encrypts the DEK and sends it to our servers to store. This encrypted blob is useless without the KEK to decrypt it, and your KEK is unknown without your passphrase.",
+			"answer2": "When you create an account, Accountable generates a data-encryption key {dek} to use to encrypt and decrypt your data. Accountable generates a separate key-encryption key {kek} from your given passphrase to use to encrypt your DEK. Accountable sends the encrypted DEK blob to our servers to store. This encrypted blob is useless without the KEK to decrypt it, and your KEK is unknown without your passphrase.",
 			"dek": "(DEK)",
 			"kek": "(KEK)",
 			"answer3": "We use {sha512} and {pbkdf2} with 10,000 rounds to generate these keys. See {source}.",
@@ -557,12 +557,12 @@
 		},
 		"lost-passphrase": {
 			"question": "What happens if I lose my passphrase?",
-			"answer1": "You lose your data. There is nothing I or anyone can do (unless your passphrase is easily-cracked. Give it a go!) Without your passphrase, nobody can generate the KEK that encrypts the DEK that encrypts your data. Without that passphrase, your data is lost.",
+			"answer1": "You lose your data. There is nothing I or anyone else can do to bring your data back. (That is, unless your passphrase is easily cracked. Give it a go!) Without your passphrase, nobody can generate the KEK that encrypted the DEK that encrypted your data. Without that passphrase, your data is lost.",
 			"answer2": "Don't lose your passphrase."
 		},
 		"database-breach": {
 			"question": "What happens if someone steals the database?",
-			"answer1": "If your passphrase is good, there's nothing anyone but you can do with Accountable's database. The server never sees your DEK, its corresponding KEK, or your passphrase, and cannot put those into the database."
+			"answer1": "If your passphrase is long and complicated, there's nothing that anyone can do with Accountable's database. The server never sees your DEK, your passphrase's KEK, or your passphrase. None of those are in the database."
 		}
 	}
 }
