@@ -126,22 +126,19 @@
 					required
 				/>
 			{/if}
-			<ActionButton type="submit" kind="bordered-primary" disabled={isLoading}
-				>{$_("locked.unlock")}</ActionButton
-			>
-
-			{#if $loginProcessState === "AUTHENTICATING"}
-				<span>{$_("login.process.reauthenticating")}</span>
-			{/if}
-			{#if $loginProcessState === "GENERATING_KEYS"}
-				<span>{$_("login.process.generating-keys")}</span>
-			{/if}
-			{#if $loginProcessState === "FETCHING_KEYS"}
-				<span>{$_("login.process.fetching-keys")}</span>
-			{/if}
-			{#if $loginProcessState === "DERIVING_PKEY"}
-				<span>{$_("login.process.deriving-pkey")}</span>
-			{/if}
+			<ActionButton type="submit" kind="bordered-primary" disabled={isLoading}>
+				{#if $loginProcessState === null}
+					<span>{$_("locked.unlock")}</span>
+				{:else if $loginProcessState === "AUTHENTICATING"}
+					<span>{$_("locked.unlock-ongoing")}: {$_("login.process.reauthenticating")}</span>
+				{:else if $loginProcessState === "GENERATING_KEYS"}
+					<span>{$_("locked.unlock-ongoing")}: {$_("login.process.generating-keys")}</span>
+				{:else if $loginProcessState === "FETCHING_KEYS"}
+					<span>{$_("locked.unlock-ongoing")}: {$_("login.process.fetching-keys")}</span>
+				{:else if $loginProcessState === "DERIVING_PKEY"}
+					<span>{$_("locked.unlock-ongoing")}: {$_("login.process.deriving-pkey")}</span>
+				{/if}
+			</ActionButton>
 		</Form>
 		<Footer />
 	</main>

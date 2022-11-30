@@ -427,6 +427,7 @@
 		"new-passphrase-imperative": "Create a strong passphrase",
 		"value-will-be-generated": "to be generated...",
 		"log-in": "Log in",
+		"log-in-ongoing": "Logging in",
 		"create-account": "Create an account",
 		"cookie-disclaimer-header": "How our cookies work",
 		"cookie-disclaimer": "Logging in will set two cookies, which together contain information that declares your access to your data. These cookies let your browser securely remember that you are logged in. The alternative is for us to recall your login information with JavaScript, which is not a safe place to keep things. {more}",
@@ -463,7 +464,8 @@
 	"locked": {
 		"heading": "You're logged in, but your ledger is locked. Enter your passphrase to unlock the ledger.",
 		"locking": "Locking...",
-		"unlock": "Unlock"
+		"unlock": "Unlock",
+		"unlock-ongoing": "Unlocking"
 	},
 	"404": {
 		"heading": "404",

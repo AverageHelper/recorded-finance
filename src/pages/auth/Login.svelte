@@ -249,21 +249,19 @@
 				type="submit"
 				kind={isSignupMode ? "bordered-primary-green" : "bordered-primary"}
 				disabled={isLoading}
-				>{isSignupMode ? $_("login.create-account") : $_("login.log-in")}</ActionButton
 			>
-
-			{#if $loginProcessState === "AUTHENTICATING"}
-				<span>{$_("login.process.authenticating")}</span>
-			{/if}
-			{#if $loginProcessState === "GENERATING_KEYS"}
-				<span>{$_("login.process.generating-keys")}</span>
-			{/if}
-			{#if $loginProcessState === "FETCHING_KEYS"}
-				<span>{$_("login.process.fetching-keys")}</span>
-			{/if}
-			{#if $loginProcessState === "DERIVING_PKEY"}
-				<span>{$_("login.process.deriving-pkey")}</span>
-			{/if}
+				{#if $loginProcessState === null}
+					<span>{isSignupMode ? $_("login.create-account") : $_("login.log-in")}</span>
+				{:else if $loginProcessState === "AUTHENTICATING"}
+					<span>{$_("login.log-in-ongoing")}: {$_("login.process.authenticating")}</span>
+				{:else if $loginProcessState === "GENERATING_KEYS"}
+					<span>{$_("login.log-in-ongoing")}: {$_("login.process.generating-keys")}</span>
+				{:else if $loginProcessState === "FETCHING_KEYS"}
+					<span>{$_("login.log-in-ongoing")}: {$_("login.process.fetching-keys")}</span>
+				{:else if $loginProcessState === "DERIVING_PKEY"}
+					<span>{$_("login.log-in-ongoing")}: {$_("login.process.deriving-pkey")}</span>
+				{/if}
+			</ActionButton>
 
 			{#if !isLoading}
 				<div>

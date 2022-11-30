@@ -427,6 +427,7 @@
 		"new-passphrase-imperative": "Crie uma senha forte",
 		"value-will-be-generated": "será gerado...",
 		"log-in": "Conecte-se",
+		"log-in-ongoing": "Logando",
 		"create-account": "Crie a sua conta aqui",
 		"cookie-disclaimer-header": "How our cookies work",
 		"cookie-disclaimer": "Logging in will set two cookies, which together contain information that declares your access to your data. These cookies let your browser securely remember that you are logged in. The alternative is for us to recall your login information with JavaScript, which is not a safe place to keep things. {more}",
@@ -463,7 +464,8 @@
 	"locked": {
 		"heading": "You're logged in, but your ledger is locked. Enter your passphrase to unlock the ledger.",
 		"locking": "Bloqueio...",
-		"unlock": "Desbloquear"
+		"unlock": "Desbloquear",
+		"unlock-ongoing": "Desbloqueio"
 	},
 	"404": {
 		"heading": "404",
