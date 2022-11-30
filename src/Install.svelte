@@ -4,7 +4,6 @@
 	import { Link } from "svelte-navigator";
 	import { loginPath } from "./router";
 	import { repoReadmeHeading } from "./platformMeta";
-	import Footer from "./Footer.svelte";
 	import I18N from "./components/I18N.svelte";
 	import OutLink from "./components/OutLink.svelte";
 
@@ -31,6 +30,4 @@
 		{#if !isLoginEnabled}&nbsp;{$_("install.self.planning")}{/if}
 	</p>
 	<p>{$_("install.self.p2")}</p>
-
-	<Footer />
 </main>

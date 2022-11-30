@@ -29,8 +29,12 @@
 		margin: 0;
 	}
 
-	main.content {
+	main {
 		margin: 0;
+		margin-bottom: 58pt;
+	}
+
+	main.content {
 		padding: 16pt 24pt;
 		overflow-y: scroll;
 		overflow-x: hidden;

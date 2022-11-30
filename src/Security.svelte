@@ -2,7 +2,6 @@
 	import { _ } from "./i18n";
 	import { repoFile } from "./platformMeta";
 	import I18N from "./components/I18N.svelte";
-	import Footer from "./Footer.svelte";
 	import OutLink from "./components/OutLink.svelte";
 </script>
 
@@ -111,6 +110,4 @@
 	<!-- Database loss -->
 	<h2>{$_("security-faq.database-breach.question")}</h2>
 	<p>{$_("security-faq.database-breach.answer1")}</p>
-
-	<Footer />
 </main>

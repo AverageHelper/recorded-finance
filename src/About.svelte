@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { _ } from "./i18n";
-	import Footer from "./Footer.svelte";
 	import I18N from "./components/I18N.svelte";
 	import OutLink from "./components/OutLink.svelte";
 </script>
@@ -83,8 +82,6 @@
 	</p>
 	<p>{$_("about.alternatives.summary")}</p>
 	<!-- TODO: Reorganize. Mention https://www.budgetwithbuckets.com/ -->
-
-	<Footer />
 </main>
 
 <style lang="scss">

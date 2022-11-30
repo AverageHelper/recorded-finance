@@ -7,7 +7,6 @@
 	import { useLocation, useNavigate } from "svelte-navigator";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
 	import ErrorNotice from "../../components/ErrorNotice.svelte";
-	import Footer from "../../Footer.svelte";
 	import Form from "../../components/Form.svelte";
 	import I18N from "../../components/I18N.svelte";
 	import InfoDrawer from "../../components/InfoDrawer.svelte";
@@ -182,7 +181,6 @@
 {#if $bootstrapError}
 	<main class="content">
 		<ErrorNotice error={$bootstrapError} />
-		<Footer />
 	</main>
 {:else}
 	<main class="content">
@@ -296,6 +294,5 @@
 				</InfoDrawer>
 			{/if}
 		</Form>
-		<Footer />
 	</main>
 {/if}

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { _ } from "./i18n";
-	import { repoFile, repoMain, repoNewIssue } from "./platformMeta";
+	import { repoFile, repoMain } from "./platformMeta";
 	import AppVersion from "./components/AppVersion.svelte";
 	import GitHubIcon from "./icons/GitHub.svelte";
 	import I18N from "./components/I18N.svelte";
@@ -8,23 +8,17 @@
 </script>
 
 <footer class="footer-0696aa0e">
-	<p><AppVersion /></p>
-	<p>
-		<I18N keypath="footer.license">
-			<!-- name -->
-			<OutLink to={repoFile("LICENSE")} title={$_("footer.view-license")}
-				>{$_("footer.license-name")}</OutLink
-			>
-		</I18N>
-	</p>
-	<p>
-		<I18N keypath="footer.pr">
-			<!-- issue -->
-			<OutLink to={repoNewIssue}>{$_("footer.issue")}</OutLink>
-			<!-- github -->
-			<OutLink to={repoMain}>{$_("footer.github")}</OutLink>
-		</I18N>
-	</p>
+	<div>
+		<p><AppVersion /></p>
+		<p>
+			<I18N keypath="footer.license">
+				<!-- name -->
+				<OutLink to={repoFile("LICENSE")} title={$_("footer.view-license")}
+					>{$_("footer.license-name")}</OutLink
+				>
+			</I18N>
+		</p>
+	</div>
 	<p>
 		<OutLink to={repoMain} title={$_("footer.view-source")}>
 			<GitHubIcon class="icon" alt={$_("footer.view-github")} title={$_("footer.view-github")} />
@@ -36,23 +30,25 @@
 	@use "styles/colors" as *;
 
 	.footer-0696aa0e {
+		position: fixed;
+		bottom: 0;
+		left: 0;
+		right: 0;
 		display: flex;
-		flex-direction: column;
+		flex-flow: row nowrap;
+		justify-content: space-between;
 		align-items: center;
-		margin: 16pt 0;
-		margin-top: 48pt;
+		margin: 0;
+		padding: 8pt 16pt;
+		background-color: color($cloud);
 
 		p {
 			color: color($secondary-label);
-			text-align: center;
-
-			a {
-				font-weight: bold;
-
-				.icon {
-					color: color($label);
-				}
-			}
+			margin: 0;
 		}
+	}
+
+	.icon {
+		color: color($label);
 	}
 </style>

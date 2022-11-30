@@ -3,13 +3,14 @@
 	import { aboutPath, signupPath } from "./router";
 	import { isSignupEnabled } from "./store";
 	import { Link } from "svelte-navigator";
+	import { repoMain, repoNewIssue } from "./platformMeta";
 	import ActionButton from "./components/buttons/ActionButton.svelte";
 	import EncryptionIcon from "./icons/Lock.svelte";
-	import Footer from "./Footer.svelte";
 	import I18N from "./components/I18N.svelte";
 	import LedgerIcon from "./icons/MoneyTower.svelte";
 	import NopLink from "./components/NopLink.svelte";
 	import OpenSourceIcon from "./icons/IdeaBox.svelte";
+	import OutLink from "./components/OutLink.svelte";
 
 	const aboutRoute = aboutPath();
 	const signupRoute = signupPath();
@@ -74,7 +75,16 @@
 		</p>
 	</section>
 
-	<Footer />
+	<section>
+		<p>
+			<I18N keypath="footer.pr">
+				<!-- issue -->
+				<OutLink to={repoNewIssue}>{$_("footer.issue")}</OutLink>
+				<!-- github -->
+				<OutLink to={repoMain}>{$_("footer.github")}</OutLink>
+			</I18N>
+		</p>
+	</section>
 </main>
 
 <style lang="scss" global>

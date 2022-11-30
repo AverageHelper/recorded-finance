@@ -284,6 +284,7 @@
 	.content.main-424352d2 {
 		max-width: 400pt;
 		margin: 0 auto;
+		margin-bottom: 58pt;
 
 		.heading h1 {
 			margin-left: 0;
