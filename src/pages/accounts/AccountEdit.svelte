@@ -4,6 +4,7 @@
 	import { account as newAccount } from "../../model/Account";
 	import { createEventDispatcher, onMount } from "svelte";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
+	import Form from "../../components/Form.svelte";
 	import TextAreaField from "../../components/inputs/TextAreaField.svelte";
 	import TextField from "../../components/inputs/TextField.svelte";
 	import {
@@ -93,7 +94,7 @@
 	}
 </script>
 
-<form class="form-d8a5e2ee" on:submit|preventDefault={submit}>
+<Form class="form-d8a5e2ee" on:submit={submit}>
 	{#if isCreatingAccount}
 		<h1>{$_("accounts.create")}</h1>
 	{:else}
@@ -132,7 +133,7 @@
 	{#if isLoading}
 		<p>{$_("common.saving-in-progress")}</p>
 	{/if}
-</form>
+</Form>
 
 <style lang="scss" global>
 	.form-d8a5e2ee {

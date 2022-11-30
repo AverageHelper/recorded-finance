@@ -9,8 +9,9 @@
 	import { schema } from "../../model/DatabaseSchema";
 	import { toast } from "@zerodevx/svelte-toast";
 	import { useNavigate } from "svelte-navigator";
-	import FileInput from "../attachments/FileInput.svelte";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
+	import FileInput from "../attachments/FileInput.svelte";
+	import Form from "../../components/Form.svelte";
 	import ImportProcessModal from "./ImportProcessModal.svelte";
 
 	const navigate = useNavigate();
@@ -81,7 +82,7 @@
 	}
 </script>
 
-<form on:submit|preventDefault>
+<Form>
 	<h3>{$_("settings.import.meta.heading")}</h3>
 	<p>{$_("settings.import.meta.description")}</p>
 	<div class="buttons-79507e92">
@@ -96,7 +97,7 @@
 			>
 		</FileInput>
 	</div>
-</form>
+</Form>
 
 <ImportProcessModal fileName={dbName} {db} zip={archive} on:finished={forgetFile} />
 

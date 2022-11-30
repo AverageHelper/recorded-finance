@@ -8,6 +8,7 @@
 	import { toast } from "@zerodevx/svelte-toast";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
 	import Checkmark from "../../icons/Checkmark.svelte";
+	import Form from "../../components/Form.svelte";
 	import I18N from "../../components/I18N.svelte";
 	import OutLink from "../../components/OutLink.svelte";
 
@@ -54,7 +55,7 @@
 	}
 </script>
 
-<form on:submit|preventDefault={submitNewLocationPref}>
+<Form on:submit={submitNewLocationPref}>
 	<h3>{$_("settings.location.heading")}</h3>
 	<p>{$_("settings.location.api-disclaimer")}</p>
 
@@ -113,7 +114,7 @@
 			>
 		{/if}
 	</div>
-</form>
+</Form>
 
 <style lang="scss" global>
 	@use "styles/colors" as *;

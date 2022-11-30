@@ -42,6 +42,12 @@
 
 	a {
 		color: color($link);
+
+		@media (hover: hover) {
+			&:hover {
+				color: color($link-hover);
+			}
+		}
 	}
 
 	// Toasts

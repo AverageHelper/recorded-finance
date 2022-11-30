@@ -4,6 +4,7 @@
 	import { handleError } from "../../store";
 	import { toast } from "@zerodevx/svelte-toast";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
+	import Form from "../../components/Form.svelte";
 	import NewLoginModal from "../../components/NewLoginModal.svelte";
 	import TextField from "../../components/inputs/TextField.svelte";
 
@@ -35,7 +36,7 @@
 	}
 </script>
 
-<form on:submit|preventDefault={regenerateAccountId}>
+<Form on:submit={regenerateAccountId}>
 	<h3>{$_("settings.auth.account-id-heading")}</h3>
 	<p>{$_("settings.auth.account-id-description")}</p>
 	<TextField
@@ -64,7 +65,7 @@
 			>
 		{/if}
 	</div>
-</form>
+</Form>
 
 <NewLoginModal />
 

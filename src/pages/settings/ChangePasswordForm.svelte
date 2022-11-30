@@ -4,6 +4,7 @@
 	import { toast } from "@zerodevx/svelte-toast";
 	import { updatePassword } from "../../store/authStore";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
+	import Form from "../../components/Form.svelte";
 	import TextField from "../../components/inputs/TextField.svelte";
 
 	let isLoading = false;
@@ -41,7 +42,7 @@
 	}
 </script>
 
-<form on:submit|preventDefault={submitNewPassword}>
+<Form on:submit={submitNewPassword}>
 	<h3>{$_("settings.auth.passphrase-heading")}</h3>
 	<TextField
 		value={currentPassword}
@@ -83,7 +84,7 @@
 			>
 		{/if}
 	</div>
-</form>
+</Form>
 
 <style lang="scss" global>
 	.buttons-47e1be0c {

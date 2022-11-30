@@ -112,7 +112,7 @@
 		margin-left: 16pt;
 		text-decoration: none;
 		border-radius: 4pt;
-		color: color($label);
+		color: color($label-dark);
 
 		@media (hover: hover) {
 			&:hover {

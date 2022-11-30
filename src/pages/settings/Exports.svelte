@@ -3,6 +3,7 @@
 	import { compressUserData, handleError } from "../../store";
 	import { downloadFileAtUrl } from "../../transport";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
+	import Form from "../../components/Form.svelte";
 	import I18N from "../../components/I18N.svelte";
 
 	let isLoading = false;
@@ -22,7 +23,7 @@
 	}
 </script>
 
-<form on:submit|preventDefault>
+<Form>
 	<h3>{$_("settings.export.meta.heading")}</h3>
 	<p>
 		<I18N keypath="settings.export.meta.description">
@@ -51,7 +52,7 @@
 			>
 		{/if}
 	</div>
-</form>
+</Form>
 
 <style lang="scss" global>
 	p {

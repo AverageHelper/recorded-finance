@@ -5,6 +5,7 @@
 	import { useNavigate } from "svelte-navigator";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
 	import ConfirmDeleteEverything from "./ConfirmDeleteEverything.svelte";
+	import Form from "../../components/Form.svelte";
 	import I18N from "../../components/I18N.svelte";
 	import TextField from "../../components/inputs/TextField.svelte";
 
@@ -45,7 +46,7 @@
 	}
 </script>
 
-<form on:submit|preventDefault={askToDeleteEverything}>
+<Form on:submit={askToDeleteEverything}>
 	<h3>{$_("settings.delete-all.heading")}</h3>
 	<p>
 		<I18N keypath="settings.delete-all.description">
@@ -85,7 +86,7 @@
 			>
 		{/if}
 	</div>
-</form>
+</Form>
 
 <ConfirmDeleteEverything
 	isOpen={isAskingToDelete}

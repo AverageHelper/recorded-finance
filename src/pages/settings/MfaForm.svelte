@@ -2,6 +2,7 @@
 	import { _ } from "../../i18n";
 	import { currentUser } from "../../store/authStore";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
+	import Form from "../../components/Form.svelte";
 	import MfaEnrollModal from "./MfaEnrollModal.svelte";
 	import MfaUnenrollModal from "./MfaUnenrollModal.svelte";
 
@@ -25,7 +26,7 @@
 </script>
 
 <!-- TODO: I18N -->
-<form on:submit|preventDefault>
+<Form>
 	<h3>Multi-factor Authentication</h3>
 	<p
 		>Your password is a single authentication factor ("what you know"). Adding a second factor
@@ -40,4 +41,4 @@
 
 	<MfaEnrollModal isOpen={isEnrollingMfa} on:finished={closeModals} />
 	<MfaUnenrollModal isOpen={isUnenrollingMfa} on:finished={closeModals} />
-</form>
+</Form>

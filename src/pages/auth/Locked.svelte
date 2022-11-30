@@ -7,6 +7,7 @@
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
 	import ErrorNotice from "../../components/ErrorNotice.svelte";
 	import Footer from "../../Footer.svelte";
+	import Form from "../../components/Form.svelte";
 	import TextField from "../../components/inputs/TextField.svelte";
 	import {
 		accountId as _accountId,
@@ -43,13 +44,8 @@
 		password = event.detail;
 	}
 
-	function onTotpInput(event: CustomEvent<string>) {
+	async function onTotpInput(event: CustomEvent<string>) {
 		token = event.detail;
-	}
-
-	async function onTotpPaste(event: CustomEvent<ClipboardEvent>) {
-		event.stopPropagation();
-		event.preventDefault();
 		await tick();
 		if (token.length === 6 && /^\d+$/.test(token)) {
 			// Only if six digits
@@ -94,7 +90,7 @@
 	</main>
 {:else}
 	<main class="content">
-		<form on:submit|preventDefault={submit}>
+		<Form on:submit={submit}>
 			<p>{$_("locked.heading")}</p>
 
 			{#if needsTotp}
@@ -102,7 +98,6 @@
 					bind:this={totpField}
 					value={token}
 					on:input={onTotpInput}
-					on:paste={onTotpPaste}
 					disabled={isLoading}
 					label={$_("login.totp")}
 					placeholder={$_("example.totp-code")}
@@ -147,7 +142,7 @@
 			{#if $loginProcessState === "DERIVING_PKEY"}
 				<span>{$_("login.process.deriving-pkey")}</span>
 			{/if}
-		</form>
+		</Form>
 		<Footer />
 	</main>
 {/if}

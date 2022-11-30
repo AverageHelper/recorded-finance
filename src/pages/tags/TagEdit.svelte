@@ -2,12 +2,13 @@
 	import type { ColorID } from "../../model/Color";
 	import type { Tag as TagObject, TagRecordParams } from "../../model/Tag";
 	import { _ } from "../../i18n";
-	import { createEventDispatcher } from "svelte";
 	import { allTags as _allTags, deleteTag, removeTagFromAllTransactions } from "../../store";
+	import { createEventDispatcher } from "svelte";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
 	import Checkmark from "../../icons/Checkmark.svelte";
 	import ColorPicker from "../../components/inputs/ColorPicker.svelte";
 	import ConfirmDestroyTag from "./ConfirmDestroyTag.svelte";
+	import Form from "../../components/Form.svelte";
 	import Fuse from "fuse.js";
 	import List from "../../components/List.svelte";
 	import Tag from "./Tag.svelte";
@@ -76,7 +77,7 @@
 </script>
 
 <h2>{$_("tags.choose-existing")}</h2>
-<form on:submit|preventDefault={save}>
+<Form on:submit={save}>
 	<div class="name-input-72aa686e">
 		<TextField
 			bind:this={nameField}
@@ -95,7 +96,7 @@
 	{#if name}
 		<ColorPicker value={colorId} on:change={onColorChange} />
 	{/if}
-</form>
+</Form>
 
 <List>
 	{#each filteredTags as tag (tag.id)}

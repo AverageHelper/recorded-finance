@@ -14,6 +14,7 @@
 	import ConfirmDestroyTransaction from "./ConfirmDestroyTransaction.svelte";
 	import CurrencyInput from "../../components/inputs/CurrencyInput.svelte";
 	import DateTimeInput from "../../components/inputs/DateTimeInput.svelte";
+	import Form from "../../components/Form.svelte";
 	import LocationField from "../locations/LocationField.svelte";
 	import TextAreaField from "../../components/inputs/TextAreaField.svelte";
 	import TextField from "../../components/inputs/TextField.svelte";
@@ -218,7 +219,7 @@
 	}
 </script>
 
-<form class="form-74f64236 {isExpense ? 'expense' : ''}" on:submit|preventDefault={submit}>
+<Form class="form-74f64236 {isExpense ? 'expense' : ''}" on:submit={submit}>
 	{#if isCreatingTransaction}
 		{#if isExpense}
 			<h1>{$_("transactions.create.expense")}</h1>
@@ -296,7 +297,7 @@
 			on:no={cancelDeleteTransaction}
 		/>
 	{/if}
-</form>
+</Form>
 
 <style lang="scss" global>
 	@use "styles/colors" as *;

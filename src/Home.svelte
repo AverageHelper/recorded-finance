@@ -79,6 +79,7 @@
 
 <style lang="scss" global>
 	@use "styles/setup" as *;
+	@use "styles/colors" as *;
 
 	.main-a0571b9a {
 		.tagline {
@@ -96,6 +97,7 @@
 				float: right;
 				margin-left: 24pt;
 				margin-bottom: 24pt;
+				color: color($label);
 			}
 
 			@include mq($until: mobile) {

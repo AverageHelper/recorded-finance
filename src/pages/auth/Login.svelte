@@ -8,6 +8,7 @@
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
 	import ErrorNotice from "../../components/ErrorNotice.svelte";
 	import Footer from "../../Footer.svelte";
+	import Form from "../../components/Form.svelte";
 	import I18N from "../../components/I18N.svelte";
 	import InfoDrawer from "../../components/InfoDrawer.svelte";
 	import NopLink from "../../components/NopLink.svelte";
@@ -110,13 +111,8 @@
 		}
 	}
 
-	function onUpdateTotp(event: CustomEvent<string>) {
+	async function onUpdateTotp(event: CustomEvent<string>) {
 		token = event.detail;
-	}
-
-	async function onTotpPaste(event: CustomEvent<ClipboardEvent>) {
-		event.stopPropagation();
-		event.preventDefault();
 		await tick();
 		if (token.length === 6 && /^\d+$/.test(token)) {
 			// Only if six digits
@@ -190,7 +186,7 @@
 	</main>
 {:else}
 	<main class="content">
-		<form on:submit|preventDefault={submit}>
+		<Form on:submit={submit}>
 			{#if isSignupMode && !isLoading}
 				<TextField
 					value={$_("login.value-will-be-generated")}
@@ -216,7 +212,6 @@
 					bind:this={totpField}
 					value={token}
 					on:input={onUpdateTotp}
-					on:paste={onTotpPaste}
 					disabled={isLoading}
 					label={$_("login.totp")}
 					placeholder={$_("example.totp-code")}
@@ -302,7 +297,7 @@
 					</p>
 				</InfoDrawer>
 			{/if}
-		</form>
+		</Form>
 		<Footer />
 	</main>
 {/if}

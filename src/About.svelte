@@ -31,14 +31,14 @@
 	</p>
 	<ul>
 		<li>
-			<I18N keypath="about.alternatives.alt1">
+			<I18N keypath="about.alternatives.alt1" tag="p">
 				<!-- ynab -->
 				<OutLink to="https://www.youneedabudget.com">{$_("about.alternatives.ynab")}</OutLink>
 			</I18N>
 		</li>
 
 		<li>
-			<I18N keypath="about.alternatives.alt2">
+			<I18N keypath="about.alternatives.alt2" tag="p">
 				<!-- intuit -->
 				<OutLink to="https://www.intuit.com">{$_("about.alternatives.intuit")}</OutLink>
 				<!-- mint -->
@@ -49,7 +49,7 @@
 		</li>
 
 		<li>
-			<I18N keypath="about.alternatives.alt3">
+			<I18N keypath="about.alternatives.alt3" tag="p">
 				<!-- ramsey -->
 				<OutLink to="https://www.ramseysolutions.com/">{$_("about.alternatives.ramsey")}</OutLink>
 				<!-- everydollar -->
@@ -60,7 +60,7 @@
 		</li>
 
 		<li>
-			<I18N keypath="about.alternatives.alt4">
+			<I18N keypath="about.alternatives.alt4" tag="p">
 				<!-- others -->
 				<OutLink to="https://www.nerdwallet.com/article/finance/best-budget-apps"
 					>{$_("about.alternatives.others")}</OutLink

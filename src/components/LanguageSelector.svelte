@@ -29,7 +29,8 @@
 		cursor: pointer;
 		padding: 0 4pt;
 		font-size: x-large;
-		max-width: 1.35em; // approximate width of a flag emoji
+		font-family: Helvetica;
+		max-width: 1.13em; // approximate width of a flag emoji
 		transition: opacity 0.3s;
 		transition-property: opacity, transform;
 
