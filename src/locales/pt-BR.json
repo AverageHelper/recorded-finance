@@ -43,6 +43,7 @@
 	"error": {
 		"auth": {
 			"account-already-exists": "Alguém já tem uma conta com esse ID",
+			"totp-already-verified": "Você já verificou sua inscrição no TOTP",
 			"internal": "Erro de autenticação interna",
 			"invalid-argument": "Argumento de autenticação inválido",
 			"invalid-credential": "ID de conta ou senha inválida",
@@ -82,6 +83,7 @@
 			"bad-gateway": "A política CORS para este site não permite acesso da Origem especificada",
 			"bad-method": "Esse método não é permitido aqui. O que você está tentando fazer?",
 			"expired-token": "Você deve fazer login novamente para continuar",
+			"invalid-response": "Resposta inválida do servidor: {response}",
 			"missing-mfa-credentials": "Você deve fornecer um código TOTP",
 			"missing-token": "Não autorizado",
 			"not-found": "Nenhum dado encontrado",
@@ -103,6 +105,7 @@
 		"server": {
 			"id-not-string": "ID esperado para ser do tipo 'string'",
 			"missing-access-token": "Token de acesso esperado do servidor, mas não obteve nenhum",
+			"missing-secret": "Esperava um valor secreto do servidor, mas não obteve nada",
 			"no-data": "Dados esperados do servidor, mas não obtive nenhum",
 			"no-version": "Nenhuma string de versão encontrada",
 			"throttled": "Você está sendo velocidade limitada",
@@ -129,7 +132,6 @@
 			"data-not-array": "Os dados não são uma matriz",
 			"data-is-array": "Os dados são uma matriz",
 			"endpoints-closing-down": "Pontos finais fechando por enquanto",
-			"invalid-response": "Resposta inválida do servidor: {response}",
 			"internet-gone": "Conexão com a internet perdida",
 			"no-reason-given": "Nenhuma razão dada",
 			"not-json": "A mensagem não pôde ser analisada como JSON: {message}",
@@ -282,6 +284,28 @@
 				"imprecise-description": "Obtenha, sob demanda, uma localidade com base no seu endereço IP.",
 				"precise": "Precisa",
 				"precise-description": "Obtenha as melhores informações de localização disponíveis."
+			}
+		},
+		"mfa": {
+			"general": {
+				"heading": "Autenticação multifator",
+				"explanation": "Sua senha é um único fator de autenticação (\"algo que você sabe\"). Adicionar um segundo fator (\"algo que você tem\" ou \"algo que você é\") aumenta muito a segurança da sua conta.",
+				"enroll-action": "Inscrever 2FA",
+				"unenroll-action": "Cancelar inscrição 2FA"
+			},
+			"enroll": {
+				"heading": "Inscreva-se no MFA",
+				"enter-password": "Digite sua senha para habilitar o 2FA:",
+				"continue-action": "Continuar",
+				"scan-secret": "Digitalize este código com seu aplicativo autenticador:",
+				"manual-secret-input": "Ou use este código:",
+				"check-code-action": "Verificar",
+				"recovery-code-explanation": "Aqui está seu token de recuperação. Mantenha-o seguro, em algum lugar onde você possa acessá-lo se perder seu dispositivo de autenticação 2FA:",
+				"acknowledge-action": "Eu entendo"
+			},
+			"unenroll": {
+				"heading": "Cancelar inscrição no MFA",
+				"disable-action": "Desativar 2FA"
 			}
 		}
 	},

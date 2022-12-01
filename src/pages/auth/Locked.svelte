@@ -118,7 +118,6 @@
 					on:input={onPasswordInput}
 					type="password"
 					label={$_("login.passphrase")}
-					placeholder="********"
 					autocomplete="current-password"
 					showsRequired={false}
 					required

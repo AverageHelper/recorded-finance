@@ -66,7 +66,6 @@
 		on:input={e => (password = e.detail)}
 		type="password"
 		label={$_("login.current-passphrase")}
-		placeholder="********"
 		autocomplete="current-password"
 		showsRequired={false}
 		required

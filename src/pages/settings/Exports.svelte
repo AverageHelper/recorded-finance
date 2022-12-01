@@ -31,14 +31,11 @@
 			<strong>{$_("settings.export.meta.unencrypted")}</strong>
 		</I18N>
 	</p>
-	{#if false}
-		<!-- TODO: I18N -->
-		<p
-			>This export might get big, and about 1/3 of it is spacing to make the JSON more
-			human-readable. If you don't care about that, then we can just export the raw JSON data as
-			small as we can make it.</p
-		>
-	{/if}
+	<!-- <p
+		>This export might get big, and about 1/3 of it is spacing to make the JSON more
+		human-readable. If you don't care about that, then we can just export the raw JSON data as
+		small as we can make it.</p
+	> -->
 	<div class="buttons-6933f502">
 		<ActionButton kind="bordered" disabled={isLoading} on:click={e => downloadStuff(e, false)}
 			>{$_("settings.export.actions.export-all")}</ActionButton

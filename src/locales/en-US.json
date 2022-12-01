@@ -43,6 +43,7 @@
 	"error": {
 		"auth": {
 			"account-already-exists": "Someone already has an account with that ID",
+			"totp-already-verified": "You've already verified your TOTP enrollment",
 			"internal": "Internal auth error",
 			"invalid-argument": "Invalid auth argument",
 			"invalid-credential": "Invalid account ID or passphrase",
@@ -82,6 +83,7 @@
 			"bad-gateway": "The CORS policy for this site does not allow access from the specified Origin",
 			"bad-method": "That method is not allowed here. What are you trying to do?",
 			"expired-token": "You must sign in again in order to proceed",
+			"invalid-response": "Invalid server response: {response}",
 			"missing-mfa-credentials": "You must provide a TOTP code",
 			"missing-token": "Unauthorized",
 			"not-found": "No data found",
@@ -103,6 +105,7 @@
 		"server": {
 			"id-not-string": "Expected ID to be of type 'string'",
 			"missing-access-token": "Expected access token from server, but got none",
+			"missing-secret": "Expected secret from server, but got nothing",
 			"no-data": "Expected data from server, but got none",
 			"no-version": "No version string found",
 			"throttled": "You are being throttled",
@@ -129,7 +132,6 @@
 			"data-not-array": "Data is not an array",
 			"data-is-array": "Data is an array",
 			"endpoints-closing-down": "Endpoint(s) closing down for now",
-			"invalid-response": "Invalid server response: {response}",
 			"internet-gone": "Internet connection lost",
 			"no-reason-given": "No reason given",
 			"not-json": "The message could not be parsed as JSON: {message}",
@@ -282,6 +284,28 @@
 				"imprecise-description": "Get, on-demand, a locale based on your IP address.",
 				"precise": "Precise",
 				"precise-description": "Get the best-available location information."
+			}
+		},
+		"mfa": {
+			"general": {
+				"heading": "Multi-factor Authentication",
+				"explanation": "Your passphrase is a single authentication factor (\"something you know\"). Adding a second factor (\"something you have\" or \"something you are\") increases your account's security by, like, a lot.",
+				"enroll-action": "Enroll 2FA",
+				"unenroll-action": "Unenroll 2FA"
+			},
+			"enroll": {
+				"heading": "Enroll in MFA",
+				"enter-password": "Enter your passphrase to enable 2FA:",
+				"continue-action": "Continue",
+				"scan-secret": "Scan this code with your authenticator app:",
+				"manual-secret-input": "Or use this code:",
+				"check-code-action": "Check",
+				"recovery-code-explanation": "Here is your recovery token. Keep it safe, somewhere you can get to it if you lose your 2FA auth device:",
+				"acknowledge-action": "I understand"
+			},
+			"unenroll": {
+				"heading": "Unenroll from MFA",
+				"disable-action": "Disable 2FA"
 			}
 		}
 	},

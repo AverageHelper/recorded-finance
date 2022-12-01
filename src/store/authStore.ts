@@ -217,7 +217,7 @@ export async function beginTotpEnrollment(): Promise<URL> {
  */
 export async function confirmTotpEnrollment(token: string): Promise<string> {
 	const [recoveryToken] = await verifySessionWithTOTP(auth, token);
-	if (recoveryToken === null) throw new Error("You've already verified your enrollment"); // TODO: i18n
+	if (recoveryToken === null) throw new Error(t("error.auth.totp-already-verified"));
 	await fetchSession();
 
 	return recoveryToken;

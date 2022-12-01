@@ -49,7 +49,6 @@
 		on:input={e => (currentPassword = e.detail)}
 		type="password"
 		label={$_("login.current-passphrase")}
-		placeholder="********"
 		autocomplete="current-password"
 		showsRequired={false}
 		required
@@ -59,7 +58,6 @@
 		on:input={e => (newPassword = e.detail)}
 		type="password"
 		label={$_("login.new-passphrase")}
-		placeholder="************"
 		autocomplete="new-password"
 		showsRequired={false}
 		required
@@ -69,7 +67,6 @@
 		on:input={e => (newPasswordRepeat = e.detail)}
 		type="password"
 		label={$_("login.new-passphrase-repeat")}
-		placeholder="************"
 		autocomplete="new-password"
 		showsRequired={false}
 		required

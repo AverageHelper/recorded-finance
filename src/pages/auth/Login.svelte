@@ -225,7 +225,6 @@
 					on:input={onUpdatePassphrase}
 					type="password"
 					label={isSignupMode ? $_("login.new-passphrase-imperative") : $_("login.passphrase")}
-					placeholder="********"
 					autocomplete={isSignupMode ? "new-password" : "current-password"}
 					showsRequired={false}
 					required
@@ -237,7 +236,6 @@
 					on:input={onUpdateRepeatPassphrase}
 					type="password"
 					label={$_("login.repeat-passphrase")}
-					placeholder="********"
 					autocomplete="new-password"
 					showsRequired={false}
 					required={isSignupMode}
