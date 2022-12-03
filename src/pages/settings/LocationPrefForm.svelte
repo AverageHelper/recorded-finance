@@ -63,7 +63,7 @@
 		{#each sensitivityOptions as option}
 			<ActionButton
 				class="option"
-				kind="bordered"
+				kind="info"
 				on:click={e => {
 					e.preventDefault();
 					selectedSensitivity = option;
@@ -105,11 +105,11 @@
 	</p>
 
 	<div class="buttons">
-		<ActionButton type="submit" kind="bordered-primary" disabled={!hasChanges || isLoading}
+		<ActionButton type="submit" disabled={!hasChanges || isLoading}
 			>{$_("settings.location.actions.confirm")}</ActionButton
 		>
 		{#if hasChanges}
-			<ActionButton kind="bordered" disabled={isLoading} on:click={reset}
+			<ActionButton kind="info" disabled={isLoading} on:click={reset}
 				>{$_("common.reset")}</ActionButton
 			>
 		{/if}
@@ -162,7 +162,7 @@
 				width: 22pt;
 				height: 22pt;
 				border-radius: 50%;
-				border: 2pt solid color($gray);
+				border: 2pt solid color($separator);
 			}
 
 			span {

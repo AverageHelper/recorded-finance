@@ -120,11 +120,9 @@
 		on:input={e => (notes = e.detail)}
 	/>
 
-	<ActionButton type="submit" kind="bordered-primary" disabled={isLoading}
-		>{$_("common.save-imperative")}</ActionButton
-	>
+	<ActionButton type="submit" disabled={isLoading}>{$_("common.save-imperative")}</ActionButton>
 	{#if !isCreatingAccount && numberOfTransactions === 0}
-		<ActionButton kind="bordered-destructive" disabled={isLoading} on:click={deleteAccount}
+		<ActionButton kind="destructive" disabled={isLoading} on:click={deleteAccount}
 			>{$_("accounts.delete-titled", {
 				values: { title: account?.title ?? $_("accounts.noun") },
 			})}</ActionButton

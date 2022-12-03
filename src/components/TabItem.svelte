@@ -33,7 +33,7 @@
 
 		@media (hover: hover) {
 			&:hover {
-				background: color($gray4);
+				background: color($secondary-overlay);
 				text-decoration: none;
 			}
 		}

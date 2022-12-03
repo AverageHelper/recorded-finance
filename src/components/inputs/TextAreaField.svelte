@@ -68,7 +68,7 @@
 
 	.text-area-b9986ff2 {
 		border: 0;
-		border-bottom: 2px solid color($gray5);
+		border-bottom: 2px solid color($separator);
 		background-color: color($input-background);
 		color: color($label);
 		padding: 0.5em;

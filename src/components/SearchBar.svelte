@@ -57,12 +57,12 @@
 		on:keyup={onKeyup}
 	/>
 	{#if needsCommitSearch}
-		<ActionButton kind="bordered-primary" on:click={commit}>
+		<ActionButton on:click={commit}>
 			<SearchIcon />
 		</ActionButton>
 	{/if}
 	{#if initialSearchQuery}
-		<ActionButton kind="bordered-destructive" on:click={clear}>
+		<ActionButton kind="destructive" on:click={clear}>
 			<XIcon />
 		</ActionButton>
 	{/if}

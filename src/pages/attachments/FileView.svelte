@@ -114,11 +114,11 @@
 	{/if}
 
 	{#if file}
-		<ActionButton class="delete" kind="bordered-destructive" on:click={askToDelete}>
+		<ActionButton class="delete" kind="destructive" on:click={askToDelete}>
 			<TrashIcon /> {$_("common.delete-imperative")}</ActionButton
 		>
 	{:else}
-		<ActionButton class="delete" kind="bordered" on:click={askToDelete}>
+		<ActionButton class="delete" kind="info" on:click={askToDelete}>
 			<TrashIcon /> {$_("files.delete.remove-dead-ref")}</ActionButton
 		>
 	{/if}

@@ -96,7 +96,7 @@
 	<div class="heading">
 		<div class="account-title-1dfc4112">
 			<h1>{account?.title || $_("accounts.noun")}</h1>
-			<ActionButton class="edit" on:click={startEditingAccount}>
+			<ActionButton class="edit" kind="plain" on:click={startEditingAccount}>
 				<EditIcon />
 			</ActionButton>
 		</div>

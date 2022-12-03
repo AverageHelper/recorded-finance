@@ -82,14 +82,13 @@
 	}
 </script>
 
-{#if $bootstrapError}
-	<main class="content">
+<main class="content">
+	{#if $bootstrapError}
 		<ErrorNotice error={$bootstrapError} />
-	</main>
-{:else}
-	<main class="content">
+	{:else}
 		<Form on:submit={submit}>
-			<p>{$_("locked.heading")}</p>
+			<h1>{$_("locked.heading")}</h1>
+			<p>{$_("locked.explanation")}</p>
 
 			{#if needsTotp}
 				<TextField
@@ -123,7 +122,7 @@
 					required
 				/>
 			{/if}
-			<ActionButton type="submit" kind="bordered-primary" disabled={isLoading}>
+			<ActionButton type="submit" disabled={isLoading}>
 				{#if $loginProcessState === null}
 					<span>{$_("locked.unlock")}</span>
 				{:else if $loginProcessState === "AUTHENTICATING"}
@@ -137,5 +136,5 @@
 				{/if}
 			</ActionButton>
 		</Form>
-	</main>
-{/if}
+	{/if}
+</main>

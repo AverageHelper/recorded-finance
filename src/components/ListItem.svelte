@@ -69,7 +69,7 @@
 
 		@media (hover: hover) {
 			&:hover {
-				background-color: color($gray4);
+				background-color: color($secondary-overlay);
 				text-decoration: none;
 			}
 		}
@@ -111,7 +111,7 @@
 				align-items: flex-end;
 
 				> .count {
-					background-color: color($gray);
+					background-color: color($secondary-label);
 					color: color($inverse-label);
 					border-radius: 1em;
 					padding: 0 0.5em;

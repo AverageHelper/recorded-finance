@@ -37,14 +37,14 @@
 		small as we can make it.</p
 	> -->
 	<div class="buttons-6933f502">
-		<ActionButton kind="bordered" disabled={isLoading} on:click={e => downloadStuff(e, false)}
+		<ActionButton kind="info" disabled={isLoading} on:click={e => downloadStuff(e, false)}
 			>{$_("settings.export.actions.export-all")}</ActionButton
 		>
 		{#if false}
-			<ActionButton kind="bordered" disabled={isLoading} on:click={e => downloadStuff(e, true)}
+			<ActionButton kind="info" disabled={isLoading} on:click={e => downloadStuff(e, true)}
 				>{$_("settings.export.actions.export-all")}</ActionButton
 			>
-			<ActionButton kind="bordered" disabled={isLoading} on:click={e => downloadStuff(e, false)}
+			<ActionButton kind="info" disabled={isLoading} on:click={e => downloadStuff(e, false)}
 				>{$_("settings.export.actions.export-all-nicely")}</ActionButton
 			>
 		{/if}

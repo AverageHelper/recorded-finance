@@ -30,11 +30,11 @@
 	<p>{$_("settings.mfa.general.explanation")}</p>
 
 	{#if isEnrolled}
-		<ActionButton kind="bordered" on:click={unenroll}
+		<ActionButton kind="info" on:click={unenroll}
 			>{$_("settings.mfa.general.unenroll-action")}</ActionButton
 		>
 	{:else}
-		<ActionButton kind="bordered" on:click={enroll}
+		<ActionButton kind="info" on:click={enroll}
 			>{$_("settings.mfa.general.enroll-action")}</ActionButton
 		>
 	{/if}

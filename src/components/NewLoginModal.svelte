@@ -45,7 +45,7 @@
 	</p>
 	<p>{$_("login.new-account.no-recovery")}</p>
 
-	<ActionButton kind="bordered-primary" on:click={askToClearNewLoginStatus}
+	<ActionButton on:click={askToClearNewLoginStatus}
 		>{$_("login.new-account.acknowledge")}</ActionButton
 	>
 </Modal>

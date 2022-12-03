@@ -88,7 +88,7 @@
 	<div class="buttons-79507e92">
 		<FileInput accept="application/zip" disabled={isLoading} on:input={onFileReceived} let:click>
 			<ActionButton
-				kind="bordered"
+				kind="info"
 				disabled={isLoading}
 				on:click={e => {
 					e.preventDefault();

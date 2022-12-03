@@ -72,11 +72,11 @@
 		required
 	/>
 	<div class="buttons-47e1be0c">
-		<ActionButton type="submit" kind="bordered-primary" disabled={!hasChanges || isLoading}
+		<ActionButton type="submit" kind="plain" disabled={!hasChanges || isLoading}
 			>{$_("settings.auth.update-passphrase")}</ActionButton
 		>
 		{#if hasChanges}
-			<ActionButton kind="bordered" disabled={isLoading} on:click={reset}
+			<ActionButton kind="info" disabled={isLoading} on:click={reset}
 				>{$_("common.reset")}</ActionButton
 			>
 		{/if}

@@ -178,13 +178,34 @@
 
 <!-- TODO: Break this component into three: Login, Signup, TOTP -->
 
-{#if $bootstrapError}
-	<main class="content">
+<main class="content">
+	{#if $bootstrapError}
 		<ErrorNotice error={$bootstrapError} />
-	</main>
-{:else}
-	<main class="content">
+	{:else}
 		<Form on:submit={submit}>
+			<h1>{$_("login.log-in")}</h1>
+			{#if !isLoading}
+				<div>
+					{#if !isSignupEnabled}
+						<p>{$_("login.new-account-prompt.open-soon")}.</p>
+					{:else if isLoginMode}
+						<p
+							>{$_("login.new-account-prompt.create.question")}
+							<NopLink on:click={enterSignupMode}
+								>{$_("login.new-account-prompt.create.action")}</NopLink
+							>
+						</p>
+					{:else if isSignupMode}
+						<p
+							>{$_("login.new-account-prompt.already-have.question")}
+							<NopLink on:click={enterLoginMode}
+								>{$_("login.new-account-prompt.already-have.action")}</NopLink
+							>
+						</p>
+					{/if}
+				</div>
+			{/if}
+
 			{#if isSignupMode && !isLoading}
 				<TextField
 					value={$_("login.value-will-be-generated")}
@@ -243,7 +264,7 @@
 			{/if}
 			<ActionButton
 				type="submit"
-				kind={isSignupMode ? "bordered-primary-green" : "bordered-primary"}
+				kind={isSignupMode ? "secondary" : "primary"}
 				disabled={isLoading}
 			>
 				{#if $loginProcessState === null}
@@ -259,38 +280,14 @@
 				{/if}
 			</ActionButton>
 
-			{#if !isLoading}
-				<div>
-					{#if !isSignupEnabled}
-						<p>{$_("login.new-account-prompt.open-soon")}.</p>
-					{:else if isLoginMode}
-						<p
-							>{$_("login.new-account-prompt.create.question")}
-							<NopLink on:click={enterSignupMode}
-								>{$_("login.new-account-prompt.create.action")}</NopLink
-							>
-						</p>
-					{:else if isSignupMode}
-						<p
-							>{$_("login.new-account-prompt.already-have.question")}
-							<NopLink on:click={enterLoginMode}
-								>{$_("login.new-account-prompt.already-have.action")}</NopLink
-							>
-						</p>
-					{/if}
-				</div>
-			{/if}
-
-			{#if !$loginProcessState}
-				<InfoDrawer title={$_("login.cookie-disclaimer-header")}>
-					<p>
-						<I18N keypath="login.cookie-disclaimer">
-							<!-- more -->
-							<OutLink to={repoReadmeHeading("why-use-cookies")}>{$_("login.cookie-more")}</OutLink>
-						</I18N>
-					</p>
-				</InfoDrawer>
-			{/if}
+			<InfoDrawer title={$_("login.cookie-disclaimer-header")}>
+				<p>
+					<I18N keypath="login.cookie-disclaimer">
+						<!-- more -->
+						<OutLink to={repoReadmeHeading("why-use-cookies")}>{$_("login.cookie-more")}</OutLink>
+					</I18N>
+				</p>
+			</InfoDrawer>
 		</Form>
-	</main>
-{/if}
+	{/if}
+</main>

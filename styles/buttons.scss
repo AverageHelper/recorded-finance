@@ -1,0 +1,161 @@
+@use "bootstrap/scss/functions" as *;
+
+// Customizing Bootstrap
+
+@mixin color-scheme($name) {
+	@media only screen and (prefers-color-scheme: #{$name}) {
+		@content;
+	}
+}
+
+// Link button colors to the standard colors defined in root.scss
+// See https://getbootstrap.com/docs/5.2/components/buttons/#variables
+// Get hard-coded color variants from https://wikimass.com/sass/mix?filename=example:
+// Run `mix(black, #{color hex value}, 10%)` for each variant of light/dark and 10/20%
+
+.btn {
+	&-primary {
+		// --bs-primary (#13a463 light, #0aa567 dark)
+		--bs-btn-color: var(--bs-body-color);
+		--bs-btn-bg: var(--bs-primary);
+		--bs-btn-border-color: var(--bs-primary);
+		--bs-btn-hover-color: var(--bs-body-color);
+		--bs-btn-hover-border-color: var(--bs-btn-hover-bg);
+		--bs-btn-focus-shadow-rgb: var(--bs-primary-rgb);
+		--bs-btn-active-color: var(--bs-btn-hover-color);
+		--bs-btn-active-border-color: var(--bs-btn-active-bg);
+		--bs-btn-hover-bg: #119459; // 10%
+		--bs-btn-active-bg: #0f834f; // 20%
+
+		@include color-scheme(dark) {
+			--bs-btn-hover-bg: #09955d; // 10%
+			--bs-btn-active-bg: #088452; // 20%
+		}
+	}
+	&-secondary {
+		// --bs-secondary (#eeeeee light, #2b2b2c dark)
+		--bs-btn-color: var(--bs-body-color);
+		--bs-btn-bg: var(--bs-secondary);
+		--bs-btn-border-color: var(--bs-secondary);
+		--bs-btn-hover-color: var(--bs-body-color);
+		--bs-btn-hover-border-color: var(--bs-btn-hover-bg);
+		--bs-btn-focus-shadow-rgb: var(--bs-secondary-rgb);
+		--bs-btn-active-color: var(--bs-btn-hover-color);
+		--bs-btn-active-border-color: var(--bs-btn-active-bg);
+		--bs-btn-hover-bg: #d6d6d6; // 10%
+		--bs-btn-active-bg: #bebebe; // 20%
+
+		@include color-scheme(dark) {
+			--bs-btn-hover-bg: #272728; // 10%
+			--bs-btn-active-bg: #222223; // 20%
+		}
+	}
+	&-success {
+		// --bs-success (#0caf6e light, #0aa567 dark)
+		--bs-btn-color: var(--bs-body-color);
+		--bs-btn-bg: var(--bs-success);
+		--bs-btn-border-color: var(--bs-success);
+		--bs-btn-hover-color: var(--bs-body-color);
+		--bs-btn-hover-border-color: var(--bs-btn-hover-bg);
+		--bs-btn-focus-shadow-rgb: var(--bs-success-rgb);
+		--bs-btn-active-color: var(--bs-btn-hover-color);
+		--bs-btn-active-border-color: var(--bs-btn-active-bg);
+		--bs-btn-hover-bg: #0b9e63; // 10%
+		--bs-btn-active-bg: #0a8c58; // 20%
+
+		@include color-scheme(dark) {
+			--bs-btn-hover-bg: #09955d; // 10%
+			--bs-btn-active-bg: #088452; // 20%
+		}
+	}
+	&-danger {
+		// --bs-danger (#ff6562 light, #fc4741 dark)
+		--bs-btn-color: var(--bs-body-color);
+		--bs-btn-bg: var(--bs-danger);
+		--bs-btn-border-color: var(--bs-danger);
+		--bs-btn-hover-color: var(--bs-body-color);
+		--bs-btn-hover-border-color: var(--bs-btn-hover-bg);
+		--bs-btn-focus-shadow-rgb: var(--bs-danger-rgb);
+		--bs-btn-active-color: var(--bs-btn-hover-color);
+		--bs-btn-active-border-color: var(--bs-btn-active-bg);
+		--bs-btn-hover-bg: #e65b58; // 10%
+		--bs-btn-active-bg: #cc514e; // 20%
+
+		@include color-scheme(dark) {
+			--bs-btn-hover-bg: #e3403b; // 10%
+			--bs-btn-active-bg: #ca3934; // 20%
+		}
+	}
+	&-warning {
+		// --bs-warning (#ff8e24 light, #fd9e2b dark)
+		--bs-btn-color: var(--bs-body-color);
+		--bs-btn-bg: var(--bs-warning);
+		--bs-btn-border-color: var(--bs-warning);
+		--bs-btn-hover-color: var(--bs-body-color);
+		--bs-btn-hover-border-color: var(--bs-btn-hover-bg);
+		--bs-btn-focus-shadow-rgb: var(--bs-warning-rgb);
+		--bs-btn-active-color: var(--bs-btn-hover-color);
+		--bs-btn-active-border-color: var(--bs-btn-active-bg);
+		--bs-btn-hover-bg: #e68020; // 10%
+		--bs-btn-active-bg: #cc721d; // 20%
+
+		@include color-scheme(dark) {
+			--bs-btn-hover-bg: #e48e27; // 10%
+			--bs-btn-active-bg: #ca7e22; // 20%
+		}
+	}
+	&-info {
+		// --bs-info (#eeeeee light, #2b2b2c dark)
+		--bs-btn-color: var(--bs-body-color);
+		--bs-btn-bg: var(--bs-info);
+		--bs-btn-border-color: var(--bs-info);
+		--bs-btn-hover-color: var(--bs-body-color);
+		--bs-btn-hover-border-color: var(--bs-btn-hover-bg);
+		--bs-btn-focus-shadow-rgb: var(--bs-info-rgb);
+		--bs-btn-active-color: var(--bs-btn-hover-color);
+		--bs-btn-active-border-color: var(--bs-btn-active-bg);
+		--bs-btn-hover-bg: #d6d6d6; // 10%
+		--bs-btn-active-bg: #bebebe; // 20%
+
+		@include color-scheme(dark) {
+			--bs-btn-hover-bg: #272728; // 10%
+			--bs-btn-active-bg: #222223; // 20%
+		}
+	}
+	&-light {
+		// --bs-light (#f8f8f8 light, #f8f8f8 dark)
+		--bs-btn-color: var(--bs-body-color);
+		--bs-btn-bg: var(--bs-light);
+		--bs-btn-border-color: var(--bs-light);
+		--bs-btn-hover-color: var(--bs-body-color);
+		--bs-btn-hover-border-color: var(--bs-btn-hover-bg);
+		--bs-btn-focus-shadow-rgb: var(--bs-light-rgb);
+		--bs-btn-active-color: var(--bs-btn-hover-color);
+		--bs-btn-active-border-color: var(--bs-btn-active-bg);
+		--bs-btn-hover-bg: #dfdfdf; // 10%
+		--bs-btn-active-bg: #c6c6c6; // 20%
+
+		@include color-scheme(dark) {
+			--bs-btn-hover-bg: #dfdfdf; // 10%
+			--bs-btn-active-bg: #c6c6c6; // 20%
+		}
+	}
+	&-dark {
+		// --bs-dark (#333 light, #333 dark)
+		--bs-btn-color: var(--bs-body-color);
+		--bs-btn-bg: var(--bs-dark);
+		--bs-btn-border-color: var(--bs-dark);
+		--bs-btn-hover-color: var(--bs-body-color);
+		--bs-btn-hover-border-color: var(--bs-btn-hover-bg);
+		--bs-btn-focus-shadow-rgb: var(--bs-dark-rgb);
+		--bs-btn-active-color: var(--bs-btn-hover-color);
+		--bs-btn-active-border-color: var(--bs-btn-active-bg);
+		--bs-btn-hover-bg: #2e2e2e; // 10%
+		--bs-btn-active-bg: #292929; // 20%
+
+		@include color-scheme(dark) {
+			--bs-btn-hover-bg: #2e2e2e; // 10%
+			--bs-btn-active-bg: #292929; // 20%
+		}
+	}
+}

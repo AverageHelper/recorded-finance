@@ -231,7 +231,6 @@
 	<div class="buttons">
 		<ActionButton
 			class="continue"
-			kind="bordered-primary"
 			disabled={isImporting || accountIdsToImport.size === 0}
 			on:click={beginImport}
 		>

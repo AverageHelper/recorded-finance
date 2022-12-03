@@ -40,7 +40,7 @@
 		align-items: center;
 		margin: 0;
 		padding: 8pt 16pt;
-		background-color: color($cloud);
+		background-color: color($secondary-background);
 
 		p {
 			color: color($secondary-label);

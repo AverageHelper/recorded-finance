@@ -124,7 +124,7 @@
 </script>
 
 {#if hasItems}
-	<ActionButton on:click={toggle}>
+	<ActionButton kind="plain" on:click={toggle}>
 		<MenuIcon />
 	</ActionButton>
 {/if}

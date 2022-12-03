@@ -8,7 +8,6 @@
 	import EncryptionIcon from "./icons/Lock.svelte";
 	import I18N from "./components/I18N.svelte";
 	import LedgerIcon from "./icons/MoneyTower.svelte";
-	import NopLink from "./components/NopLink.svelte";
 	import OpenSourceIcon from "./icons/IdeaBox.svelte";
 	import OutLink from "./components/OutLink.svelte";
 
@@ -22,16 +21,18 @@
 	<!-- Get started now -->
 	<section id="get-started">
 		<Link to={aboutRoute}>
-			<ActionButton kind="bordered-secondary">{$_("common.learn-more")}</ActionButton>
+			<ActionButton kind={isSignupEnabled ? "secondary" : "primary"}
+				>{$_("common.learn-more")}</ActionButton
+			>
 		</Link>
 		{#if isSignupEnabled}
 			<Link to={signupRoute}>
-				<ActionButton kind="bordered-primary-green">{$_("home.sign-up-now")}</ActionButton>
+				<ActionButton>{$_("home.sign-up-now")}</ActionButton>
 			</Link>
 		{:else}
-			<NopLink>
-				<ActionButton kind="bordered-primary-green">{$_("home.coming-soon")}</ActionButton>
-			</NopLink>
+			<Link to={aboutRoute}>
+				<ActionButton kind="secondary">{$_("home.coming-soon")}</ActionButton>
+			</Link>
 		{/if}
 	</section>
 

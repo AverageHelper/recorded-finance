@@ -24,7 +24,7 @@
 	{#if isLoggedIn}
 		<aside class="leading-actions actions-container">
 			{#if !isRoute}
-				<ActionButton on:click={goBack}>
+				<ActionButton kind="plain" on:click={goBack}>
 					<!-- TODO: Use a proper icon for this -->
 					<span>&lt;</span>
 				</ActionButton>

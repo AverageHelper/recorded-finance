@@ -87,7 +87,7 @@
 			accentColor={name ? colorId : ""}
 		/>
 		{#if name}
-			<ActionButton type="submit" kind="bordered-primary" disabled={!canSave}>
+			<ActionButton type="submit" disabled={!canSave}>
 				<Checkmark />
 			</ActionButton>
 		{/if}

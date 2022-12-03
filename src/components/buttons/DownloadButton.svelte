@@ -21,7 +21,6 @@
 
 <ActionButton
 	class="download-button-03d9029e {$$props['class']}"
-	kind="bordered-primary"
 	{disabled}
 	on:click={startDownload}
 >

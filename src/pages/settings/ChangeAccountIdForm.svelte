@@ -55,11 +55,11 @@
 		required
 	/>
 	<div class="buttons-2cbb2942">
-		<ActionButton type="submit" kind="bordered-primary" disabled={!hasChanges || isLoading}
+		<ActionButton type="submit" disabled={!hasChanges || isLoading}
 			>{$_("settings.auth.get-new-account-id")}</ActionButton
 		>
 		{#if hasChanges}
-			<ActionButton kind="bordered" disabled={isLoading} on:click={reset}
+			<ActionButton kind="info" disabled={isLoading} on:click={reset}
 				>{$_("common.reset")}</ActionButton
 			>
 		{/if}

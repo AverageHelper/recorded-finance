@@ -72,7 +72,7 @@
 	/>
 
 	<div class="buttons-5655e1fc">
-		<ActionButton type="submit" kind="bordered-destructive" disabled={!hasChanges || isDeleting}>
+		<ActionButton type="submit" kind="destructive" disabled={!hasChanges || isDeleting}>
 			{#if isDeleting}
 				<span>{$_("settings.delete-all.in-progress")}</span>
 			{:else}
@@ -80,7 +80,7 @@
 			{/if}
 		</ActionButton>
 		{#if hasChanges}
-			<ActionButton kind="bordered" disabled={isDeleting} on:click={reset}
+			<ActionButton kind="info" disabled={isDeleting} on:click={reset}
 				>{$_("common.reset")}</ActionButton
 			>
 		{/if}

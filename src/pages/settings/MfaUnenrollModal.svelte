@@ -71,7 +71,7 @@
 	/>
 
 	<!-- Then close -->
-	<ActionButton kind="bordered-destructive" disabled={isLoading} on:click={disable2fa}
+	<ActionButton kind="destructive" disabled={isLoading} on:click={disable2fa}
 		>{$_("settings.mfa.unenroll.disable-action")}</ActionButton
 	>
 </Modal>

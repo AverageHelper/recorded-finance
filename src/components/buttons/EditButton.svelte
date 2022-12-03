@@ -16,7 +16,7 @@
 	}
 </script>
 
-<ActionButton class="edit-button-13639ef4" {disabled} on:click={toggle}>
+<ActionButton class="edit-button-13639ef4" kind="plain" {disabled} on:click={toggle}>
 	<slot name="icon">
 		<EditIcon class="icon" />
 	</slot>

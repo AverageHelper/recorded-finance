@@ -269,15 +269,11 @@
 	/>
 
 	<div class="buttons">
-		<ActionButton type="submit" kind="bordered-primary" disabled={!hasChanges || isLoading}>
+		<ActionButton type="submit" disabled={!hasChanges || isLoading}>
 			<CheckmarkIcon /> {$_("common.save-imperative")}</ActionButton
 		>
 		{#if !isCreatingTransaction && !hasAttachments}
-			<ActionButton
-				kind="bordered-destructive"
-				disabled={isLoading}
-				on:click={askToDeleteTransaction}
-			>
+			<ActionButton kind="destructive" disabled={isLoading} on:click={askToDeleteTransaction}>
 				<TrashIcon /> {$_("common.delete-imperative")}</ActionButton
 			>
 		{/if}

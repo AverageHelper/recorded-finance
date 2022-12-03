@@ -199,7 +199,7 @@
 		{#if !!selectedLocationId || !!title || !!subtitle || !!coordinate}
 			<ActionButton
 				class="clear"
-				kind="bordered-destructive"
+				kind="destructive"
 				title={$_("actions.location.clear")}
 				on:click={clear}
 			>
@@ -209,7 +209,7 @@
 		{#if mayGetLocation && !selectedLocationId && !title}
 			<ActionButton
 				class="current-location"
-				kind="bordered"
+				kind="info"
 				title={$_("actions.location.get-current")}
 				on:click={getLocation}
 			>

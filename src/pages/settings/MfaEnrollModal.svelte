@@ -118,7 +118,7 @@
 			label={$_("login.passphrase")}
 			on:input={onPasswordInput}
 		/>
-		<ActionButton kind="bordered-primary" disabled={isLoading} on:click={getTotpSecret}
+		<ActionButton disabled={isLoading} on:click={getTotpSecret}
 			>{$_("settings.mfa.enroll.continue-action")}</ActionButton
 		>
 	{:else if totpSecrets.recoveryToken === null}
@@ -133,7 +133,7 @@
 			placeholder={$_("example.totp-code")}
 			on:input={onTokenInput}
 		/>
-		<ActionButton kind="bordered-primary" disabled={isLoading} on:click={getRecoveryToken}
+		<ActionButton disabled={isLoading} on:click={getRecoveryToken}
 			>{$_("settings.mfa.enroll.check-code-action")}</ActionButton
 		>
 	{:else}
@@ -141,8 +141,6 @@
 		<p>{$_("settings.mfa.enroll.recovery-code-explanation")}</p>
 		<p><code>{totpSecrets.recoveryToken}</code></p>
 		<!-- Then close -->
-		<ActionButton kind="bordered-primary" on:click={close}
-			>{$_("settings.mfa.enroll.acknowledge-action")}</ActionButton
-		>
+		<ActionButton on:click={close}>{$_("settings.mfa.enroll.acknowledge-action")}</ActionButton>
 	{/if}
 </Modal>

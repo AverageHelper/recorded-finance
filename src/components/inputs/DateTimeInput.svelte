@@ -43,7 +43,7 @@
 			on:input={onDateUpdated}
 		/>
 	</label>
-	<ActionButton kind="bordered" on:click={reset}>{$_("date-time.now")}</ActionButton>
+	<ActionButton kind="info" on:click={reset}>{$_("date-time.now")}</ActionButton>
 </div>
 
 <style lang="scss" global>
@@ -64,7 +64,7 @@
 		.text-input {
 			display: block;
 			border: 0;
-			border-bottom: 2px solid color($gray5);
+			border-bottom: 2px solid color($separator);
 			background-color: color($input-background);
 			padding: 0.5em;
 			width: 100%;

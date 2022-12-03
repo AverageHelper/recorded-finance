@@ -53,7 +53,7 @@
 		placeholder={zeroValue}
 		on:input={onInput}
 	/>
-	<ActionButton class="negate" on:click={onClick}
+	<ActionButton class="negate" kind="plain" on:click={onClick}
 		>{$_("currency.positive-or-negative")}</ActionButton
 	>
 </label>
@@ -77,7 +77,7 @@
 
 				@media (hover: hover) {
 					&:hover {
-						background: color($gray4);
+						background: color($secondary-overlay);
 					}
 
 					&:hover:disabled {

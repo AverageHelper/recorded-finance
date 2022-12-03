@@ -62,7 +62,7 @@
 			&.disabled {
 				cursor: default;
 				color: color($secondary-label);
-				background: color($gray4);
+				background: color($secondary-fill);
 			}
 
 			&:after {
@@ -104,13 +104,13 @@
 			}
 
 			&:checked:disabled {
-				background: color($gray4);
-				border-color: color($gray4);
+				background: color($secondary-fill);
+				border-color: color($secondary-fill);
 			}
 
 			&:disabled + label {
-				background: color($gray4);
-				border-color: color($gray4);
+				background: color($secondary-fill);
+				border-color: color($secondary-fill);
 			}
 		}
 	}

@@ -12,7 +12,7 @@
 <!-- svelte-ignore a11y-invalid-attribute -->
 <a
 	href="#"
-	class="{bold ? 'bold' : ''} {white ? 'white' : ''}"
+	class="{bold ? 'bold' : ''} {white ? 'white' : ''} {$$props['class'] ?? ''}"
 	aria-label={ariaLabel || null}
 	on:click|preventDefault
 >
