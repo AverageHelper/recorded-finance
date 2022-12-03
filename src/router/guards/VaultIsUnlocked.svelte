@@ -4,6 +4,7 @@
 	import { lockPath } from "router/routes";
 	import { onMount } from "svelte";
 	import { useFocus, useNavigate } from "svelte-navigator";
+	import Spinner from "../../components/Spinner.svelte";
 
 	const registerFocus = useFocus();
 	const navigate = useNavigate();
@@ -27,5 +28,8 @@
 {#if !isChecking && isVaultUnlocked}
 	<slot {registerFocus} />
 {:else}
-	<p>{$_("login.checking-lock-state")}</p>
+	<main class="content">
+		<p>{$_("login.checking-lock-state")}</p>
+		<Spinner />
+	</main>
 {/if}

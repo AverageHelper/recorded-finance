@@ -441,6 +441,7 @@
 		"account-id": "account ID",
 		"totp": "token",
 		"checking-lock-state": "Checking lock state...",
+		"checking-login-state": "Checking login state...",
 		"current-account-id": "current account ID",
 		"current-passphrase": "current passphrase",
 		"logging-out": "Logging out...",
@@ -486,7 +487,8 @@
 		}
 	},
 	"locked": {
-		"heading": "You're logged in, but your ledger is locked. Enter your passphrase to unlock the ledger.",
+		"heading": "Vault locked",
+		"explanation": "You're logged in, but your ledger is locked. Enter your passphrase to unlock the ledger.",
 		"locking": "Locking...",
 		"unlock": "Unlock",
 		"unlock-ongoing": "Unlocking"

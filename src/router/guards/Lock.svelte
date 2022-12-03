@@ -4,6 +4,7 @@
 	import { loginPath } from "router/routes";
 	import { navigate } from "svelte-navigator";
 	import { onMount } from "svelte";
+	import Spinner from "../../components/Spinner.svelte";
 
 	let isChecking = true;
 	$: isVaultLocked = $uid !== null && !$pKey; // we have a uid but no pKey
@@ -24,6 +25,7 @@
 
 {#if isChecking}
 	<p>{$_("locked.locking")}</p>
+	<Spinner />
 {:else}
 	<slot />
 {/if}

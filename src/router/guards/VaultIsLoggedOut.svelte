@@ -1,8 +1,10 @@
 <script lang="ts">
+	import { _ } from "../../i18n";
 	import { accountsPath } from "router/routes";
 	import { fetchSession, uid } from "../../store";
 	import { onMount } from "svelte";
 	import { useFocus, useNavigate } from "svelte-navigator";
+	import Spinner from "../../components/Spinner.svelte";
 
 	const registerFocus = useFocus();
 	const navigate = useNavigate();
@@ -24,4 +26,9 @@
 
 {#if !isChecking && !isVaultLoggedIn}
 	<slot {registerFocus} />
+{:else}
+	<main class="content">
+		<p>{$_("login.checking-login-state")}</p>
+		<p><Spinner /></p>
+	</main>
 {/if}

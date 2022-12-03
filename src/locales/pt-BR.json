@@ -441,6 +441,7 @@
 		"account-id": "ID da conta",
 		"totp": "código",
 		"checking-lock-state": "Verificando o estado de bloqueio...",
+		"checking-login-state": "Verificando o estado de login...",
 		"current-account-id": "ID da conta atual",
 		"current-passphrase": "senha atual",
 		"logging-out": "Saindo...",
@@ -486,7 +487,8 @@
 		}
 	},
 	"locked": {
-		"heading": "Você está conectado, mas seu livro-razão está bloqueado. Digite sua senha para desbloquear o livro-razão.",
+		"heading": "Cofre bloqueado",
+		"explanation": "Você está conectado, mas seu livro-razão está bloqueado. Digite sua senha para desbloquear o livro-razão.",
 		"locking": "Bloqueio...",
 		"unlock": "Desbloquear",
 		"unlock-ongoing": "Desbloqueio"
