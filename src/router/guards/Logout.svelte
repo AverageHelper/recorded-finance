@@ -23,7 +23,7 @@
 	});
 </script>
 
-<main class="content">
+<main class="loading">
 	<p>{$_("login.logging-out")}</p>
 	<Spinner />
 </main>

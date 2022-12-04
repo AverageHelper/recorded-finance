@@ -95,6 +95,14 @@ p {
 	text-align: justify;
 }
 
+main.loading {
+	padding-top: 24pt;
+
+	p {
+		text-align: center;
+	}
+}
+
 section {
 	margin: 0 auto;
 	max-width: 600pt;

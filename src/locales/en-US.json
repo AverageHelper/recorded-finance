@@ -465,7 +465,7 @@
 			"deriving-pkey": "Deriving key from passphrase..."
 		},
 		"new-account-prompt": {
-			"open-soon": "Don't have an account? We'll be open for new accounts soon™",
+			"open-soon": "Don't have an account? We'll be open for new accounts soon!",
 			"create": {
 				"question": "Need to create an account?",
 				"action": "Create one!"

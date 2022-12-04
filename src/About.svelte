@@ -82,9 +82,17 @@
 	</p>
 	<p>{$_("about.alternatives.summary")}</p>
 	<!-- TODO: Reorganize. Mention https://www.budgetwithbuckets.com/ -->
+
+	<!-- TODO: About the "team" -->
 </main>
 
 <style lang="scss">
+	ul {
+		max-width: 38em;
+		padding-left: 16pt;
+		list-style: circle;
+	}
+
 	ul li {
 		margin-bottom: 16pt;
 	}

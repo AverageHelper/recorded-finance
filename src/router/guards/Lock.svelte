@@ -24,8 +24,10 @@
 </script>
 
 {#if isChecking}
-	<p>{$_("locked.locking")}</p>
-	<Spinner />
+	<main class="loading">
+		<p>{$_("locked.locking")}</p>
+		<Spinner />
+	</main>
 {:else}
 	<slot />
 {/if}

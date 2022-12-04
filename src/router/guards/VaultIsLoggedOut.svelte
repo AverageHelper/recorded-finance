@@ -27,7 +27,7 @@
 {#if !isChecking && !isVaultLoggedIn}
 	<slot {registerFocus} />
 {:else}
-	<main class="content">
+	<main class="loading">
 		<p>{$_("login.checking-login-state")}</p>
 		<p><Spinner /></p>
 	</main>
