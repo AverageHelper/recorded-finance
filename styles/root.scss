@@ -4,7 +4,7 @@
 	--background: #fff;
 	--secondary-background: #f2f2f2;
 	--secondary-overlay: rgba(255, 255, 255, 0.8);
-	--navbar-background: #212122;
+	--navbar-background: var(--background); // #212122;
 	--sidenav-background: #505050;
 	--unread-count: #ff6562;
 	--alert-info: rgba(37, 169, 224, 0.8);
@@ -191,7 +191,7 @@
 		--background: #181818;
 		--secondary-background: #2b2b2c;
 		--secondary-overlay: rgba(33, 33, 34, 0.8);
-		--navbar-background: #212122;
+		// --navbar-background: #212122;
 		--sidenav-background: #444444;
 		--unread-count: #fc3e3b;
 		--alert-success: rgba(10, 165, 103, 0.8);

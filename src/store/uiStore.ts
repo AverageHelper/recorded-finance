@@ -51,9 +51,7 @@ export function activateDarkMode(): void {
 }
 
 export function activateLightMode(): void {
-	// TODO: Reenable light mode
-	// preferredColorScheme.set("light");
-	preferredColorScheme.set("dark");
+	preferredColorScheme.set("light");
 }
 
 export async function updateUserStats(): Promise<void> {

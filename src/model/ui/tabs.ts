@@ -1,5 +1,6 @@
 import type { ComponentType } from "svelte";
 import { accountsPath, attachmentsPath, locationsPath, tagsPath } from "router";
+import { UnreachableCaseError } from "../../transport/errors";
 import AccountIcon from "../../icons/IdCard.svelte";
 import FileIcon from "../../icons/File.svelte";
 import LocationIcon from "../../icons/Location.svelte";
@@ -34,7 +35,7 @@ export function routeForTab(tab: Tab): `/${typeof tab}` | "#" {
 	}
 }
 
-export function iconForTab(tab: Tab): ComponentType | null {
+export function iconForTab(tab: Tab): ComponentType {
 	switch (tab) {
 		case "accounts":
 			return AccountIcon;
@@ -45,6 +46,6 @@ export function iconForTab(tab: Tab): ComponentType | null {
 		case "tags":
 			return TagIcon;
 		default:
-			return null;
+			throw new UnreachableCaseError(tab);
 	}
 }
