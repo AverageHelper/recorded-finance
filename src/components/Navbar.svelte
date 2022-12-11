@@ -102,6 +102,7 @@
 	}
 
 	$: $currentLocale && (isSelectingLanguage = false); // stop selecting when locale changes
+	$: isLoggedIn && close(); // close when we log in
 </script>
 
 <Navbar expand={isLoggedIn ? false : "md"}>
