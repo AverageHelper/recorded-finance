@@ -2,43 +2,69 @@
 	import type { LocaleCode } from "../i18n";
 	import {
 		Collapse,
-		Navbar,
-		NavbarToggler,
-		// NavbarBrand,
-		Nav,
-		NavItem,
 		Dropdown,
 		DropdownToggle,
 		DropdownMenu,
 		DropdownItem,
+		Navbar,
+		NavbarToggler,
+		Nav,
+		NavItem,
 	} from "sveltestrap";
+	import {
+		aboutPath,
+		homePath,
+		installPath,
+		lockPath,
+		loginPath,
+		logoutPath,
+		securityPath,
+		settingsPath,
+	} from "../router";
 	import { _, locale as currentLocale, locales, setLocale } from "../i18n";
 	import { APP_ROOTS } from "../router";
+	import { isLoginEnabled, pKey, uid } from "../store";
 	import { Link } from "svelte-navigator";
-	import { lockPath, logoutPath, settingsPath } from "../router";
-	import { pKey, uid } from "../store";
+	import { link, useLocation, useNavigate } from "svelte-navigator";
 	import { tick } from "svelte";
-	import { useLocation, useNavigate } from "svelte-navigator";
 	import ActionButton from "./buttons/ActionButton.svelte";
 	import BackIcon from "../icons/Back.svelte";
-	import BootstrapMenu from "./BootstrapMenu.svelte";
 	import DiskUsage from "./DiskUsage.svelte";
 	import Gear from "../icons/Gear.svelte";
+	import LanguageSelector from "./LanguageSelector.svelte";
 	import Lock from "../icons/Lock.svelte";
 	import LogOut from "../icons/LogOut.svelte";
 	import MenuIcon from "../icons/Menu.svelte";
 	import TabBar from "./TabBar.svelte";
 
+	interface Page {
+		path: string;
+		titleKey: `home.nav.${"home" | "about" | "security" | "install" | "log-in"}`;
+	}
+
 	const location = useLocation();
 	const navigate = useNavigate();
+	const homeRoute = homePath();
 
-	$: isRoute = APP_ROOTS.includes($location.pathname);
+	$: currentPath = $location.pathname;
+	$: isRoute = APP_ROOTS.includes(currentPath);
 	$: isLoggedIn = $uid !== null;
 	$: isUnlocked = $pKey !== null;
 
 	let isMenuOpen = false;
 	let isSelectingLanguage = false;
-	$: $currentLocale && (isSelectingLanguage = false); // stop selecting when locale changes
+
+	function isNotNull<T>(tbd: T | null): tbd is T {
+		return tbd !== null;
+	}
+
+	const pages: Array<Page> = [
+		{ path: homePath(), titleKey: "home.nav.home" } as const,
+		{ path: aboutPath(), titleKey: "home.nav.about" } as const,
+		{ path: securityPath(), titleKey: "home.nav.security" } as const,
+		{ path: installPath(), titleKey: "home.nav.install" } as const,
+		isLoginEnabled ? ({ path: loginPath(), titleKey: "home.nav.log-in" } as const) : null,
+	].filter(isNotNull);
 
 	function goBack() {
 		navigate(-1);
@@ -74,33 +100,70 @@
 			open();
 		}
 	}
+
+	$: $currentLocale && (isSelectingLanguage = false); // stop selecting when locale changes
 </script>
 
-<Navbar>
-	<!-- <NavbarBrand href="/">Accountable</NavbarBrand> -->
-
-	{#if isLoggedIn}
-		<aside class="actions-container">
-			{#if !isRoute}
-				<ActionButton kind="plain" on:click={goBack}>
-					<BackIcon />
-					<span class="visually-hidden">{$_("common.go-back")}</span>
-				</ActionButton>
-			{/if}
-		</aside>
-	{/if}
+<Navbar expand={isLoggedIn ? false : "md"}>
+	<aside class="actions-container">
+		{#if !isRoute}
+			<ActionButton kind="plain" on:click={goBack}>
+				<BackIcon />
+				<span class="visually-hidden">{$_("common.go-back")}</span>
+			</ActionButton>
+		{/if}
+		{#if !isLoggedIn}
+			<a
+				href={homeRoute}
+				class="navbar-brand"
+				role="heading"
+				aria-label={$_("common.platform")}
+				title={$_("common.platform")}
+				use:link>A&cent;countable</a
+			>
+		{/if}
+	</aside>
 
 	<!-- Tab bar if unlocked and we have room. Title only if unlocked. BootstrapMenu otherwise. Portal the tab bar to a bubble in the corner. -->
-	{#if isUnlocked && isMenuOpen}
-		<TabBar class="tab-bar" />
+	{#if isUnlocked}
+		{#if isMenuOpen}
+			<TabBar class="tab-bar" />
+		{/if}
+	{:else if isLoggedIn}
+		<Lock />
 	{/if}
 
-	{#if isLoggedIn}
-		<NavbarToggler on:click={toggle}>
-			<MenuIcon />
-		</NavbarToggler>
-		<Collapse isOpen={isMenuOpen} navbar on:update={handleUpdate}>
-			<Nav class="ms-auto" navbar>
+	<NavbarToggler
+		aria-controls="navbarNav"
+		aria-expanded={isMenuOpen}
+		aria-label={$_("app.toggle-nav")}
+		on:click={toggle}
+	>
+		<MenuIcon />
+	</NavbarToggler>
+	<Collapse isOpen={isMenuOpen} expand={isLoggedIn ? false : "md"} navbar on:update={handleUpdate}>
+		<Nav id="navbarNav" class="ms-auto" navbar>
+			{#if !isLoggedIn}
+				{#each pages as page (page.path)}
+					<NavItem active={currentPath === page.path}>
+						<a
+							class="nav-link {currentPath === page.path ? 'active' : 'inactive'}"
+							href={page.path}
+							on:click={close}
+							use:link
+							>{$_(page.titleKey)}
+							{#if currentPath === page.path}
+								<span class="visually-hidden">{$_("common.current-aside")}</span>
+							{/if}
+						</a>
+					</NavItem>
+				{/each}
+				<NavItem>
+					<div class="locale">
+						<LanguageSelector />
+					</div>
+				</NavItem>
+			{:else}
 				{#if isUnlocked}
 					<NavItem>
 						<DiskUsage />
@@ -145,17 +208,36 @@
 						<span>{$_("app.nav.log-out")}</span>
 					</Link>
 				</NavItem>
-			</Nav>
-		</Collapse>
-	{:else if !isLoggedIn}
-		<BootstrapMenu />
-	{:else}
-		<Lock />
-	{/if}
+			{/if}
+		</Nav>
+	</Collapse>
 </Navbar>
 
 <style lang="scss" global>
 	@use "styles/colors" as *;
+
+	.navbar-brand {
+		display: block;
+		font-weight: bold;
+		font-size: x-large;
+		z-index: 50;
+		margin-left: 16pt;
+		text-decoration: none;
+		border-radius: 4pt;
+		color: color($label);
+		margin-right: auto;
+
+		@media (hover: hover) {
+			&:hover {
+				color: color($link);
+				text-decoration: underline;
+			}
+		}
+
+		&:focus-visible {
+			outline: 2pt solid color($link);
+		}
+	}
 
 	.tab-bar {
 		margin: 0 auto;
@@ -215,16 +297,47 @@
 			align-items: center;
 			color: color($label);
 
-			@media (hover: hover) {
-				&:hover {
-					text-decoration: none;
-					font-weight: bold;
-				}
+			&.active {
+				color: color($label);
+				font-weight: bold;
+			}
+
+			&.inactive {
+				color: color($label);
 			}
 
 			.icon {
 				color: color($label);
 				margin-right: 8pt;
+			}
+		}
+	}
+
+	nav.navbar {
+		#navbarNav {
+			z-index: 100;
+			margin-left: auto;
+		}
+
+		ul,
+		.navbar-toggler {
+			margin-left: auto;
+			margin-right: 8pt;
+			z-index: 50;
+		}
+
+		li.nav-item {
+			> .locale {
+				width: fit-content;
+				margin-left: auto;
+			}
+
+			a.nav-link {
+				border-radius: 4pt;
+
+				&:focus-visible {
+					outline: 2pt solid color($link);
+				}
 			}
 		}
 	}

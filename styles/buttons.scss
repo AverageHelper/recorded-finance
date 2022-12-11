@@ -3,8 +3,8 @@
 // Customizing Bootstrap
 
 :root {
-	--bs-nav-link-color: var(--label-dark);
-	--bs-navbar-active-color: var(--label-dark);
+	--bs-nav-link-color: var(--label);
+	--bs-navbar-active-color: var(--label);
 }
 
 @mixin color-scheme($name) {
