@@ -15,30 +15,30 @@
 	const signupRoute = signupPath();
 </script>
 
-<main class="content main-a0571b9a">
+<main class="content">
 	<h1 class="tagline">{$_("home.tagline")}</h1>
 
 	<!-- Get started now -->
-	<section id="get-started">
-		<Link to={aboutRoute}>
+	<div class="tagline">
+		<Link to={aboutRoute} class="link">
 			<ActionButton kind={isSignupEnabled ? "secondary" : "primary"}
 				>{$_("common.learn-more")}</ActionButton
 			>
 		</Link>
 		{#if isSignupEnabled}
-			<Link to={signupRoute}>
+			<Link to={signupRoute} class="link">
 				<ActionButton>{$_("home.sign-up-now")}</ActionButton>
 			</Link>
 		{:else}
-			<Link to={aboutRoute}>
+			<Link to={aboutRoute} class="link">
 				<ActionButton kind="secondary">{$_("home.coming-soon")}</ActionButton>
 			</Link>
 		{/if}
-	</section>
+	</div>
 
 	<!-- Your money, where it's been -->
 	<section id="ledger">
-		<LedgerIcon class="section-icon" />
+		<LedgerIcon />
 		<h3>{$_("home.accountability.heading")}</h3>
 		<p>
 			<I18N keypath="home.accountability.p1">
@@ -50,7 +50,7 @@
 
 	<!-- E2E Encrypted -->
 	<section id="encrypted">
-		<EncryptionIcon class="section-icon" />
+		<EncryptionIcon />
 		<h3>{$_("home.encrypted.heading")}</h3>
 		<p>
 			<I18N keypath="home.encrypted.p1">
@@ -67,72 +67,34 @@
 
 	<!-- Open-source and Free -->
 	<section id="open-source">
-		<OpenSourceIcon class="section-icon" />
+		<OpenSourceIcon />
 		<h3>{$_("home.open-source.heading")}</h3>
 		<p>
 			{$_("home.open-source.open")}
-			<br />
-			{$_("home.open-source.let-me-know")}
-		</p>
-	</section>
-
-	<section>
-		<p>
-			<I18N keypath="footer.pr">
+			<I18N keypath="home.open-source.pr">
 				<!-- issue -->
-				<OutLink to={repoNewIssue}>{$_("footer.issue")}</OutLink>
+				<OutLink to={repoNewIssue}>{$_("home.open-source.issue")}</OutLink>
 				<!-- github -->
-				<OutLink to={repoMain}>{$_("footer.github")}</OutLink>
+				<OutLink to={repoMain}>{$_("home.open-source.github")}</OutLink>
 			</I18N>
+			{$_("home.open-source.let-me-know")}
 		</p>
 	</section>
 </main>
 
-<style lang="scss" global>
-	@use "styles/setup" as *;
-	@use "styles/colors" as *;
+<style lang="scss">
+	h1.tagline {
+		text-align: center;
+	}
 
-	.main-a0571b9a {
-		.tagline {
-			text-align: center;
-		}
+	div.tagline {
+		display: flex;
+		flex-flow: row nowrap;
+		width: fit-content;
+		margin: 0 auto;
 
-		p {
-			text-align: left;
-		}
-
-		section {
-			margin-top: 36pt;
-
-			> .section-icon {
-				float: right;
-				margin-left: 24pt;
-				margin-bottom: 24pt;
-				color: color($label);
-			}
-
-			@include mq($until: mobile) {
-				> .section-icon {
-					float: initial;
-					margin: 24pt auto;
-					margin-top: 0;
-				}
-			}
-
-			&#get-started {
-				display: flex;
-				flex-flow: row nowrap;
-				width: fit-content;
-				margin: 0 auto;
-
-				> a {
-					text-decoration: none;
-
-					&:first-of-type {
-						margin-right: 8pt;
-					}
-				}
-			}
+		> :global(.link:first-of-type) {
+			margin-right: 8pt;
 		}
 	}
 </style>

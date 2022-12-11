@@ -404,9 +404,6 @@
 		"license": "This project is licensed under the {name}.",
 		"license-name": "GNU General Public License v3.0",
 		"view-license": "View the full license",
-		"pr": "Feel free to {issue} or submit a pull request on this project's {github}.",
-		"issue": "open an issue",
-		"github": "GitHub page",
 		"view-github": "Check out my GitHub",
 		"view-source": "View this project's source code"
 	},
@@ -435,6 +432,9 @@
 		"open-source": {
 			"heading": "Keep Me Accountable.",
 			"open": "All of Accountable's source code is open to read.",
+			"pr": "Feel free to {issue} or submit a pull request on this project's {github}.",
+			"issue": "open an issue",
+			"github": "GitHub page",
 			"let-me-know": "Let me know if anything needs fixed."
 		}
 	},

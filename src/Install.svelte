@@ -12,22 +12,26 @@
 
 <main class="content">
 	{#if isLoginEnabled}
-		<h1>{$_("install.service.heading")}</h1>
-		<p>
-			<I18N keypath="install.service.p1">
-				<!-- login -->
-				<Link to={loginRoute}>{$_("home.nav.log-in")}</Link>
-			</I18N>
-		</p>
+		<section>
+			<h1>{$_("install.service.heading")}</h1>
+			<p>
+				<I18N keypath="install.service.p1">
+					<!-- login -->
+					<Link to={loginRoute}>{$_("home.nav.log-in")}</Link>
+				</I18N>
+			</p>
+		</section>
 	{/if}
 
-	<h1>{$_("install.self.heading")}</h1>
-	<p>
-		<I18N keypath="install.self.p1">
-			<!-- readme -->
-			<OutLink to={repoReadmeHeading("setup")}>{$_("install.self.readme")}</OutLink>
-		</I18N>
-		{#if !isLoginEnabled}&nbsp;{$_("install.self.planning")}{/if}
-	</p>
-	<p>{$_("install.self.p2")}</p>
+	<section>
+		<h1>{$_("install.self.heading")}</h1>
+		<p>
+			<I18N keypath="install.self.p1">
+				<!-- readme -->
+				<OutLink to={repoReadmeHeading("setup")}>{$_("install.self.readme")}</OutLink>
+			</I18N>
+			{#if !isLoginEnabled}&nbsp;{$_("install.self.planning")}{/if}
+		</p>
+		<p>{$_("install.self.p2")}</p>
+	</section>
 </main>

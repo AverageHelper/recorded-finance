@@ -106,6 +106,29 @@ main.loading {
 section {
 	margin: 0 auto;
 	max-width: 600pt;
+	margin-top: 36pt;
+
+	> p {
+		text-align: left;
+	}
+
+	> .icon {
+		float: right;
+		margin-left: 24pt;
+		margin-bottom: 24pt;
+		color: color($label);
+		text-align: center;
+		width: 5em;
+		height: 5em;
+	}
+
+	@include mq($until: mobile) {
+		> .icon {
+			float: initial;
+			margin: 24pt auto;
+			margin-top: 0;
+		}
+	}
 }
 
 a {
@@ -185,26 +208,6 @@ textarea {
 		display: block;
 		content: "";
 		clear: both;
-	}
-}
-
-.section-icon {
-	text-align: center;
-	width: 5em;
-	height: 5em;
-	margin: 1em auto -0.5em;
-	display: block;
-
-	&.icon {
-		text-align: center;
-		width: 5em;
-		height: 5em;
-		// margin: 1em auto -0.5em;
-		display: block;
-	}
-	.icon {
-		width: auto;
-		height: auto;
 	}
 }
 

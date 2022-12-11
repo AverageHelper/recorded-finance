@@ -229,9 +229,14 @@
 
 		@media (hover: hover) {
 			&:hover {
-				color: color($link);
-				text-decoration: underline;
+				color: color($label);
+				text-decoration: none;
 			}
+		}
+
+		&:active,
+		&:focus {
+			color: color($label);
 		}
 
 		&:focus-visible {
