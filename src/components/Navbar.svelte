@@ -1,16 +1,4 @@
 <script lang="ts">
-	import type { LocaleCode } from "../i18n";
-	import {
-		Collapse,
-		Dropdown,
-		DropdownToggle,
-		DropdownMenu,
-		DropdownItem,
-		Navbar,
-		NavbarToggler,
-		Nav,
-		NavItem,
-	} from "sveltestrap";
 	import {
 		aboutPath,
 		homePath,
@@ -21,17 +9,17 @@
 		securityPath,
 		settingsPath,
 	} from "../router";
-	import { _, locale as currentLocale, locales, setLocale } from "../i18n";
+	import { _ } from "../i18n";
 	import { APP_ROOTS } from "../router";
+	import { Collapse, NavbarToggler, Nav, NavItem } from "sveltestrap";
 	import { isLoginEnabled, pKey, uid } from "../store";
 	import { Link } from "svelte-navigator";
 	import { link, useLocation, useNavigate } from "svelte-navigator";
-	import { tick } from "svelte";
 	import ActionButton from "./buttons/ActionButton.svelte";
 	import BackIcon from "../icons/Back.svelte";
+	import ConditionallyExpandingNavbar from "./ConditionallyExpandingNavbar.svelte";
 	import DiskUsage from "./DiskUsage.svelte";
 	import Gear from "../icons/Gear.svelte";
-	import LanguageSelector from "./LanguageSelector.svelte";
 	import Lock from "../icons/Lock.svelte";
 	import LogOut from "../icons/LogOut.svelte";
 	import MenuIcon from "../icons/Menu.svelte";
@@ -50,9 +38,9 @@
 	$: isRoute = APP_ROOTS.includes(currentPath);
 	$: isLoggedIn = $uid !== null;
 	$: isUnlocked = $pKey !== null;
+	$: expand = isLoggedIn ? false : "md";
 
-	let isMenuOpen = false;
-	let isSelectingLanguage = false;
+	let isOpen = false;
 
 	function isNotNull<T>(tbd: T | null): tbd is T {
 		return tbd !== null;
@@ -71,41 +59,22 @@
 	}
 
 	function handleUpdate(event: CustomEvent<boolean>) {
-		isMenuOpen = event.detail;
-	}
-
-	async function onSelectLocale(code: LocaleCode) {
-		await tick();
-		await setLocale(code);
-		isSelectingLanguage = false;
-		isMenuOpen = false;
+		isOpen = event.detail;
 	}
 
 	function close() {
-		isMenuOpen = false;
-		isSelectingLanguage = false;
-	}
-
-	// Close the menu when nav changes
-	$: $location.pathname && close();
-
-	function open() {
-		isMenuOpen = true;
+		isOpen = false;
 	}
 
 	function toggle() {
-		if (isMenuOpen) {
-			close();
-		} else {
-			open();
-		}
+		isOpen = !isOpen;
 	}
 
-	$: $currentLocale && (isSelectingLanguage = false); // stop selecting when locale changes
-	$: isLoggedIn && close(); // close when we log in
+	$: $location.pathname, close(); // Close when nav changes
+	$: isLoggedIn, close(); // Close when we log in
 </script>
 
-<Navbar expand={isLoggedIn ? false : "md"}>
+<ConditionallyExpandingNavbar expand={!isLoggedIn}>
 	<aside class="actions-container">
 		{#if !isRoute}
 			<ActionButton kind="plain" on:click={goBack}>
@@ -127,7 +96,7 @@
 
 	<!-- Tab bar if unlocked and we have room. Title only if unlocked. BootstrapMenu otherwise. Portal the tab bar to a bubble in the corner. -->
 	{#if isUnlocked}
-		{#if isMenuOpen}
+		{#if isOpen}
 			<TabBar class="tab-bar" />
 		{/if}
 	{:else if isLoggedIn}
@@ -136,13 +105,13 @@
 
 	<NavbarToggler
 		aria-controls="navbarNav"
-		aria-expanded={isMenuOpen}
+		aria-expanded={isOpen}
 		aria-label={$_("app.toggle-nav")}
 		on:click={toggle}
 	>
 		<MenuIcon />
 	</NavbarToggler>
-	<Collapse isOpen={isMenuOpen} expand={isLoggedIn ? false : "md"} navbar on:update={handleUpdate}>
+	<Collapse {isOpen} {expand} navbar on:update={handleUpdate}>
 		<Nav id="navbarNav" class="ms-auto" navbar>
 			{#if !isLoggedIn}
 				{#each pages as page (page.path)}
@@ -159,11 +128,6 @@
 						</a>
 					</NavItem>
 				{/each}
-				<NavItem>
-					<div class="locale">
-						<LanguageSelector />
-					</div>
-				</NavItem>
 			{:else}
 				{#if isUnlocked}
 					<NavItem>
@@ -171,48 +135,32 @@
 					</NavItem>
 				{/if}
 
-				<!-- Language Selector -->
-				<Dropdown nav inNavbar>
-					<DropdownToggle nav caret>
-						<span class="icon">{$currentLocale.flag}</span>
-						<span>{$currentLocale.shortName}</span>
-					</DropdownToggle>
-					<DropdownMenu end>
-						{#each locales as locale (locale.code)}
-							<DropdownItem on:click={() => onSelectLocale(locale.code)}>
-								<span class="icon">{locale.flag}</span>
-								<span>{locale.shortName}</span>
-							</DropdownItem>
-						{/each}
-					</DropdownMenu>
-				</Dropdown>
-
 				{#if isUnlocked}
 					<NavItem>
 						<Link class="nav-link" to={settingsPath()} on:click={close}>
-							<Gear />
 							<span>{$_("app.nav.settings")}</span>
+							<Gear />
 						</Link>
 					</NavItem>
 
 					<NavItem>
 						<Link class="nav-link" to={lockPath()} on:click={close}>
-							<Lock />
 							<span>{$_("app.nav.lock")}</span>
+							<Lock />
 						</Link>
 					</NavItem>
 				{/if}
 
 				<NavItem>
 					<Link class="nav-link" to={logoutPath()} on:click={close}>
-						<LogOut />
 						<span>{$_("app.nav.log-out")}</span>
+						<LogOut />
 					</Link>
 				</NavItem>
 			{/if}
 		</Nav>
 	</Collapse>
-</Navbar>
+</ConditionallyExpandingNavbar>
 
 <style lang="scss" global>
 	@use "styles/colors" as *;
@@ -314,7 +262,7 @@
 
 			.icon {
 				color: color($label);
-				margin-right: 8pt;
+				margin-left: 8pt;
 			}
 		}
 	}

@@ -87,11 +87,13 @@
 	}
 
 	function enterSignupMode() {
+		if (isLoading) return;
 		accountId = "";
 		navigate(signupPath(), { replace: true });
 	}
 
 	function enterLoginMode() {
+		if (isLoading) return;
 		accountId = "";
 		navigate(loginPath(), { replace: true });
 	}
@@ -184,27 +186,25 @@
 	{:else}
 		<Form on:submit={submit}>
 			<h1>{$_("login.log-in")}</h1>
-			{#if !isLoading}
-				<div>
-					{#if !isSignupEnabled}
-						<p>{$_("login.new-account-prompt.open-soon")}.</p>
-					{:else if isLoginMode}
-						<p
-							>{$_("login.new-account-prompt.create.question")}
-							<NopLink on:click={enterSignupMode}
-								>{$_("login.new-account-prompt.create.action")}</NopLink
-							>
-						</p>
-					{:else if isSignupMode}
-						<p
-							>{$_("login.new-account-prompt.already-have.question")}
-							<NopLink on:click={enterLoginMode}
-								>{$_("login.new-account-prompt.already-have.action")}</NopLink
-							>
-						</p>
-					{/if}
-				</div>
-			{/if}
+			<div>
+				{#if !isSignupEnabled}
+					<p>{$_("login.new-account-prompt.open-soon")}</p>
+				{:else if isLoginMode}
+					<p
+						>{$_("login.new-account-prompt.create.question")}
+						<NopLink on:click={enterSignupMode}
+							>{$_("login.new-account-prompt.create.action")}</NopLink
+						>
+					</p>
+				{:else if isSignupMode}
+					<p
+						>{$_("login.new-account-prompt.already-have.question")}
+						<NopLink on:click={enterLoginMode}
+							>{$_("login.new-account-prompt.already-have.action")}</NopLink
+						>
+					</p>
+				{/if}
+			</div>
 
 			{#if isSignupMode && !isLoading}
 				<TextField

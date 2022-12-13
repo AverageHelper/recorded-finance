@@ -9,7 +9,7 @@ import {
 	signupPath,
 } from "./routes";
 
-export const APP_ROOTS = appTabs
+export const APP_ROOTS: ReadonlyArray<string> = appTabs
 	.map(tab => `/${tab}`)
 	.concat([
 		homePath(),

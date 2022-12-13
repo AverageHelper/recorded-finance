@@ -4,10 +4,11 @@
 	import AppVersion from "./components/AppVersion.svelte";
 	import GitHubIcon from "./icons/GitHub.svelte";
 	import I18N from "./components/I18N.svelte";
+	import LanguageSelector from "./components/LanguageSelector.svelte";
 	import OutLink from "./components/OutLink.svelte";
 </script>
 
-<footer class="footer-0696aa0e">
+<footer>
 	<div>
 		<p><AppVersion /></p>
 		<p>
@@ -19,17 +20,18 @@
 			</I18N>
 		</p>
 	</div>
-	<p>
+	<aside>
+		<LanguageSelector />
 		<OutLink to={repoMain} title={$_("footer.view-source")}>
-			<GitHubIcon class="icon" alt={$_("footer.view-github")} title={$_("footer.view-github")} />
+			<GitHubIcon />
 		</OutLink>
-	</p>
+	</aside>
 </footer>
 
-<style lang="scss" global>
+<style lang="scss">
 	@use "styles/colors" as *;
 
-	.footer-0696aa0e {
+	footer {
 		position: fixed;
 		bottom: 0;
 		left: 0;
@@ -46,9 +48,19 @@
 			color: color($secondary-label);
 			margin: 0;
 		}
+
+		aside {
+			display: flex;
+			flex-flow: row nowrap;
+			align-items: center;
+
+			:global(.icon) {
+				margin-bottom: 5pt;
+			}
+		}
 	}
 
-	.icon {
+	:global(.icon) {
 		color: color($label);
 	}
 </style>

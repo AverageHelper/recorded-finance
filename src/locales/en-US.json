@@ -404,7 +404,6 @@
 		"license": "This project is licensed under the {name}.",
 		"license-name": "GNU General Public License v3.0",
 		"view-license": "View the full license",
-		"view-github": "Check out my GitHub",
 		"view-source": "View this project's source code"
 	},
 	"home": {
