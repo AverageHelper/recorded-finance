@@ -12,3 +12,9 @@ form {
 		margin-top: 1em;
 	}
 }
+
+.form-control {
+	&:disabled {
+		background-color: color($secondary-fill);
+	}
+}
