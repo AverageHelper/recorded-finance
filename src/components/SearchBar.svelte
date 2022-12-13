@@ -47,11 +47,12 @@
 	}
 </script>
 
-<div class="search-bef4d73e {$$props['class']}">
+<div class="search {$$props['class']}">
 	<TextField
 		value={searchQuery}
 		on:input={onSearchQueryChange}
 		type="search"
+		label={$_("input.search")}
 		placeholder={$_("input.search")}
 		class="input"
 		on:keyup={onKeyup}
@@ -68,20 +69,22 @@
 	{/if}
 </div>
 
-<style lang="scss" global>
-	.search-bef4d73e {
+<style lang="scss">
+	.search {
 		display: flex;
 		flex-flow: row nowrap;
+		align-items: center;
+		justify-content: center;
 
-		> * {
-			margin: 8pt 0;
-		}
-
-		> .input {
+		:global(.input) {
 			flex-grow: 1;
 		}
 
-		> *:not(:first-child) {
+		:global(.mb-3.form-floating) {
+			margin-bottom: 0 !important; // to override Bootstrap's own !important declaration
+		}
+
+		> :global(:not(:first-child)) {
 			margin-left: 8pt;
 		}
 	}
