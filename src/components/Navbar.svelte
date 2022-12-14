@@ -214,6 +214,10 @@
 			min-width: 2.8em;
 			margin: $margin 1em;
 			color: inherit;
+
+			:global(button) {
+				color: color($label);
+			}
 		}
 
 		.tab-bar {
