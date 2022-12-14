@@ -239,20 +239,16 @@
 		label={$_("transactions.meta.date")}
 		on:input={e => (createdAt = e.detail)}
 	/>
-	<div class="moneys">
-		<CurrencyInput
-			value={amount}
-			class="currency"
-			label={$_("transactions.meta.amount").toLocaleLowerCase($locale.code)}
-			on:input={e => (amount = e.detail)}
-		/>
-		<Checkbox
-			value={isReconciled}
-			class="reconciliation"
-			label={$_("transactions.meta.reconciled")}
-			on:change={e => (isReconciled = e.detail)}
-		/>
-	</div>
+	<CurrencyInput
+		value={amount}
+		label={$_("transactions.meta.amount").toLocaleLowerCase($locale.code)}
+		on:input={e => (amount = e.detail)}
+	/>
+	<Checkbox
+		value={isReconciled}
+		label={$_("transactions.meta.reconciled")}
+		on:change={e => (isReconciled = e.detail)}
+	/>
 	<TextField
 		value={title}
 		label={$_("transactions.meta.title").toLocaleLowerCase($locale.code)}
@@ -301,29 +297,12 @@
 	.form-74f64236 {
 		align-items: center;
 
-		> label:not(.reconciliation) {
+		> label {
 			width: 80%;
 		}
 
-		&.expense h1,
-		&.expense .currency {
+		&.expense h1 {
 			color: color($red);
-		}
-
-		.moneys {
-			display: flex;
-			flex-flow: row nowrap;
-			align-items: flex-end;
-			width: 80%;
-
-			.currency {
-				flex: 1 0 auto; // Grow, don't shrink
-			}
-
-			.reconciliation {
-				margin-bottom: 8pt;
-				margin-left: 8pt;
-			}
 		}
 
 		.buttons {

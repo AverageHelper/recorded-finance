@@ -156,7 +156,6 @@
 				{#each newAccounts as account (account.id)}
 					<li class="importable-9d959f76">
 						<AccountListItem
-							class="account"
 							{account}
 							link={false}
 							count={transactionCounts[account.id] ?? 0}
@@ -179,7 +178,6 @@
 				{#each duplicateAccounts as account (account.id)}
 					<li class="importable-9d959f76">
 						<AccountListItem
-							class="account"
 							{account}
 							link={false}
 							count={transactionCounts[account.id] ?? 0}
@@ -252,10 +250,6 @@
 		display: flex;
 		flex-flow: row nowrap;
 		align-items: center;
-
-		.account {
-			width: 100%;
-		}
 
 		.icon {
 			margin-left: 8pt;

@@ -5,4 +5,4 @@
 	export let color: Color = "primary";
 </script>
 
-<Spinner {color} />
+<Spinner class="spinner" {color} />

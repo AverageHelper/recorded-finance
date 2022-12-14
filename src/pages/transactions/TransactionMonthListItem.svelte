@@ -12,7 +12,6 @@
 </script>
 
 <ListItem
-	class="list-item-82cb4812"
 	to={monthRoute}
 	title={monthName}
 	subtitle={$_("transactions.count.transactions", { values: { n: count } })}
@@ -20,14 +19,10 @@
 	<MonthIcon slot="icon" />
 </ListItem>
 
-<style lang="scss" global>
+<style lang="scss">
 	@use "styles/colors" as *;
 
-	.list-item-82cb4812 {
-		cursor: pointer;
-
-		.icon {
-			margin: 4pt;
-		}
+	:global(.list-item .icon) {
+		margin: 4pt;
 	}
 </style>

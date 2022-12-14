@@ -73,7 +73,6 @@
 		| "photo";
 
 	export let value: string = "";
-	export let dataTest: string | null = null;
 	export let placeholder: string | null = null;
 	export let type: InputType = "text";
 	export let size: number = 20;
@@ -137,7 +136,7 @@
 	}
 </script>
 
-<div bind:this={root} class={$$props["class"]} data-test={dataTest} {disabled}>
+<div bind:this={root} class={$$props["class"]} {disabled}>
 	<FormGroup floating label={displayLabel}>
 		<Input
 			bind:inner={input}

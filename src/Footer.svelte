@@ -58,9 +58,9 @@
 				margin-bottom: 5pt;
 			}
 		}
-	}
 
-	:global(.icon) {
-		color: color($label);
+		:global(.icon) {
+			color: color($label);
+		}
 	}
 </style>

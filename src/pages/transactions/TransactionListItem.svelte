@@ -7,10 +7,10 @@
 	import { toCurrency, toTimestamp } from "../../transformers";
 	import { transaction as newTransaction } from "../../model/Transaction";
 	import { transactionPath } from "../../router";
-	import Checkbox from "../../components/inputs/Checkbox.svelte";
 	import ListItem from "../../components/ListItem.svelte";
 	import LocationIcon from "../../icons/Location.svelte";
 	import PaperclipIcon from "../../icons/Paperclip.svelte";
+	import StylizedCheckbox from "../../components/inputs/StylizedCheckbox.svelte";
 
 	export let transaction: Transaction;
 
@@ -46,16 +46,24 @@
 		seeIfAnyAttachmentsAreBroken();
 	});
 
-	async function markReconciled(isReconciled: CustomEvent<boolean>) {
-		isChangingReconciled = true;
-
+	async function setReconciled(isReconciled: boolean) {
 		try {
 			const newTxn = newTransaction(transaction);
-			newTxn.isReconciled = isReconciled.detail;
+			newTxn.isReconciled = isReconciled;
 			await updateTransaction(newTxn);
 		} catch (error) {
 			handleError(error);
 		}
+	}
+
+	async function toggleReconciled() {
+		await setReconciled(!transaction.isReconciled);
+	}
+
+	async function markReconciled(isReconciled: CustomEvent<boolean>) {
+		isChangingReconciled = true;
+
+		await setReconciled(isReconciled.detail);
 
 		isChangingReconciled = false;
 	}
@@ -69,24 +77,15 @@
 	subCount={accountBalanceSoFar ? toCurrency($locale.code, accountBalanceSoFar) : "--"}
 	negative={isNegative}
 >
-	<div slot="icon" class="checkbox-b9eab07a">
-		<Checkbox
-			disabled={isChangingReconciled}
-			class={isChangingReconciled ? "isChanging" : ""}
+	<div slot="icon">
+		<StylizedCheckbox
+			loading={isChangingReconciled}
 			value={transaction.isReconciled}
 			on:change={markReconciled}
-			on:click={e => {
-				e.stopPropagation();
-				e.preventDefault();
-			}}
 		/>
-		{#if isChangingReconciled}
-			<!-- TODO: Make a loading spinner for this -->
-			<span class="loading" style="min-height: 33pt">...</span>
-		{/if}
 	</div>
 
-	<div slot="aside" class="indicators-b9eab07a">
+	<div slot="aside" class="indicators">
 		{#if hasLocation}
 			<div title={transaction.locationId ?? ""}>
 				<LocationIcon />
@@ -107,25 +106,10 @@
 	</div>
 </ListItem>
 
-<style lang="scss" global>
+<style lang="scss">
 	@use "styles/colors" as *;
 
-	.checkbox-b9eab07a {
-		position: relative;
-
-		.isChanging {
-			opacity: 0;
-		}
-
-		.loading {
-			position: absolute;
-			top: 50%;
-			left: 50%;
-			transform: translate(-75%, -35%);
-		}
-	}
-
-	.indicators-b9eab07a {
+	.indicators {
 		display: flex;
 		flex-flow: row wrap;
 		color: color($secondary-label);

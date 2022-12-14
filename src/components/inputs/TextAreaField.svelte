@@ -9,7 +9,6 @@
 	}>();
 
 	export let value: string = "";
-	export let dataTest: string | undefined = undefined;
 	export let maxlength: number | undefined = undefined;
 	export let label: string = "";
 	export let disabled: boolean = false;
@@ -35,7 +34,7 @@
 	}
 </script>
 
-<FormGroup floating {label} data-test={dataTest}>
+<FormGroup floating {label}>
 	{#if disabled}
 		<Input
 			bind:inner={input}
