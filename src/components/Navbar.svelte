@@ -75,7 +75,7 @@
 </script>
 
 <ConditionallyExpandingNavbar expand={!isLoggedIn}>
-	<aside class="actions-container">
+	<aside class="actions-container" aria-level={1}>
 		{#if !isRoute}
 			<ActionButton kind="plain" on:click={goBack}>
 				<BackIcon />
