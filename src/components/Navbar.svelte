@@ -96,9 +96,7 @@
 
 	<!-- Tab bar if unlocked and we have room. Title only if unlocked. BootstrapMenu otherwise. Portal the tab bar to a bubble in the corner. -->
 	{#if isUnlocked}
-		{#if isOpen}
-			<TabBar />
-		{/if}
+		<TabBar />
 	{:else if isLoggedIn}
 		<Lock />
 	{/if}
