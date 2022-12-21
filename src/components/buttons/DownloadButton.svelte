@@ -19,18 +19,16 @@
 	}
 </script>
 
-<ActionButton
-	class="download-button-03d9029e {$$props['class']}"
-	{disabled}
-	on:click={startDownload}
->
-	<DownloadIcon class="icon" />
-	<span>{$_("common.download-action")}</span>
-</ActionButton>
+<div class="download-button">
+	<ActionButton {disabled} on:click={startDownload}>
+		<DownloadIcon />
+		<span>{$_("common.download-action")}</span>
+	</ActionButton>
+</div>
 
-<style lang="scss" global>
-	.download-button-03d9029e {
-		.icon {
+<style lang="scss">
+	div.download-button {
+		:global(.icon) {
 			margin-right: 6pt;
 		}
 	}

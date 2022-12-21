@@ -91,13 +91,13 @@
 </div>
 
 {#if transactionCount > 0}
-	<div>
+	<div class="transaction-count">
 		{#if transactionCount === 1}
 			<h3>{$_("files.meta.linked-transaction")}</h3>
 		{:else}
 			<h3>{$_("files.meta.linked-transactions")}</h3>
 		{/if}
-		<List class="files-5978c5a2">
+		<List>
 			{#each linkedTransactions as transaction (transaction.id)}
 				<li>
 					<TransactionListItem {transaction} />
@@ -110,15 +110,15 @@
 <h3>Actions</h3>
 <div class="buttons-5978c5a2">
 	{#if file}
-		<DownloadButton class="download" {file} />
+		<DownloadButton {file} />
 	{/if}
 
 	{#if file}
-		<ActionButton class="delete" kind="destructive" on:click={askToDelete}>
+		<ActionButton kind="destructive" on:click={askToDelete}>
 			<TrashIcon /> {$_("common.delete-imperative")}</ActionButton
 		>
 	{:else}
-		<ActionButton class="delete" kind="info" on:click={askToDelete}>
+		<ActionButton kind="info" on:click={askToDelete}>
 			<TrashIcon /> {$_("files.delete.remove-dead-ref")}</ActionButton
 		>
 	{/if}
@@ -137,10 +137,12 @@
 		}
 	}
 
-	.files-5978c5a2 {
-		> li {
-			overflow: hidden;
-			border-radius: 4pt;
+	.transaction-count {
+		:global(ul) {
+			> li {
+				overflow: hidden;
+				border-radius: 4pt;
+			}
 		}
 	}
 
@@ -148,15 +150,21 @@
 		display: flex;
 		flex-flow: row nowrap;
 
-		> button {
+		> :global(button) {
 			margin-top: 0;
+
+			&:last-of-type {
+				margin-left: auto;
+			}
 		}
 
-		> .download {
+		// Download
+		&:first-child {
 			margin-right: 8pt;
 		}
 
-		> .delete {
+		// Delete
+		&:last-child {
 			margin-left: auto;
 
 			.icon {

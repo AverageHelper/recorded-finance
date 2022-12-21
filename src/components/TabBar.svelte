@@ -19,9 +19,9 @@
 </script>
 
 <!-- Portal to corner (?) if mobile width -->
-<nav class={$$props["class"]}>
+<nav class="tab-bar">
 	{#each tabs as tab}
-		<TabItem class="item" {tab} isSelected={currentTab === tab} />
+		<TabItem {tab} isSelected={currentTab === tab} />
 	{/each}
 </nav>
 

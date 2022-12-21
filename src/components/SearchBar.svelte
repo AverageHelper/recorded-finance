@@ -47,14 +47,13 @@
 	}
 </script>
 
-<div class="search {$$props['class']}">
+<div class="search">
 	<TextField
 		value={searchQuery}
 		on:input={onSearchQueryChange}
 		type="search"
 		label={$_("input.search")}
 		placeholder={$_("input.search")}
-		class="input"
 		on:keyup={onKeyup}
 	/>
 	{#if needsCommitSearch}
@@ -76,7 +75,7 @@
 		align-items: center;
 		justify-content: center;
 
-		:global(.input) {
+		&:first-child {
 			flex-grow: 1;
 		}
 

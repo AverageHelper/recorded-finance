@@ -84,7 +84,7 @@
 			value={name}
 			on:input={onTagNameInput}
 			placeholder={params?.name ?? "new tag"}
-			accentColor={name ? colorId : ""}
+			accentColor={name ? colorId : undefined}
 		/>
 		{#if name}
 			<ActionButton type="submit" disabled={!canSave}>

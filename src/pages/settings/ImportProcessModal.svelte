@@ -227,11 +227,7 @@
 	</div>
 
 	<div class="buttons">
-		<ActionButton
-			class="continue"
-			disabled={isImporting || accountIdsToImport.size === 0}
-			on:click={beginImport}
-		>
+		<ActionButton disabled={isImporting || accountIdsToImport.size === 0} on:click={beginImport}>
 			{#if isImporting}
 				<span
 					>{$_("settings.import.in-progress", { values: { percent: importProgressPercent } })}</span
@@ -264,7 +260,7 @@
 			margin-right: 8pt;
 		}
 
-		.continue {
+		:global(button) {
 			margin-left: auto;
 		}
 	}

@@ -56,10 +56,6 @@
 		}
 	}
 
-	async function toggleReconciled() {
-		await setReconciled(!transaction.isReconciled);
-	}
-
 	async function markReconciled(isReconciled: CustomEvent<boolean>) {
 		isChangingReconciled = true;
 

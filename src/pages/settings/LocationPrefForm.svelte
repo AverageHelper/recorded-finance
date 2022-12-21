@@ -62,7 +62,6 @@
 	<div class="options-b0a38164">
 		{#each sensitivityOptions as option}
 			<ActionButton
-				class="option"
 				kind="info"
 				on:click={e => {
 					e.preventDefault();
@@ -120,7 +119,7 @@
 	@use "styles/colors" as *;
 
 	.options-b0a38164 {
-		.option {
+		> :global(button) {
 			display: flex;
 			flex-flow: row nowrap;
 			align-items: center;
@@ -131,7 +130,7 @@
 				margin-bottom: 8pt;
 			}
 
-			&-details {
+			.option-details {
 				display: flex;
 				flex-flow: column nowrap;
 				justify-content: flex-start;

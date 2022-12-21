@@ -41,6 +41,6 @@
 	}
 </script>
 
-<Button class={$$props["class"]} {color} {type} {disabled} on:click={onClick}>
+<Button class="action-button" {color} {type} {disabled} on:click={onClick}>
 	<slot />
 </Button>

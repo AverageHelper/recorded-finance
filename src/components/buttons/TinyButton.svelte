@@ -2,14 +2,16 @@
 	import ActionButton from "./ActionButton.svelte";
 </script>
 
-<ActionButton class="tiny-button-250d758a {$$props['class']}" kind="plain">
-	<slot />
-</ActionButton>
+<div class="tiny-button">
+	<ActionButton kind="plain">
+		<slot />
+	</ActionButton>
+</div>
 
-<style lang="scss" global>
+<style lang="scss">
 	@use "styles/colors" as *;
 
-	button.tiny-button-250d758a {
+	div.tiny-button {
 		min-height: 12pt;
 		min-width: 12pt;
 		font-size: small;

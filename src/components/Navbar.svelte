@@ -97,7 +97,7 @@
 	<!-- Tab bar if unlocked and we have room. Title only if unlocked. BootstrapMenu otherwise. Portal the tab bar to a bubble in the corner. -->
 	{#if isUnlocked}
 		{#if isOpen}
-			<TabBar class="tab-bar" />
+			<TabBar />
 		{/if}
 	{:else if isLoggedIn}
 		<Lock />
@@ -193,7 +193,7 @@
 		}
 	}
 
-	.tab-bar {
+	:global(.tab-bar) {
 		margin: 0 auto;
 	}
 
@@ -220,7 +220,7 @@
 			}
 		}
 
-		.tab-bar {
+		:global(.tab-bar) {
 			height: 100%;
 		}
 	}

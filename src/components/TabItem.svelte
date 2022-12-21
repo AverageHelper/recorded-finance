@@ -11,7 +11,7 @@
 	$: labelId = labelIdForTab(tab);
 </script>
 
-<a class="item-container {isSelected ? 'selected' : ''} {$$props['class']}" {href} use:link
+<a class="item-container {isSelected ? 'selected' : ''}" {href} use:link
 	>{$_(labelId)}
 	{#if isSelected}
 		<span class="visually-hidden">{$_("common.current-aside")}</span>

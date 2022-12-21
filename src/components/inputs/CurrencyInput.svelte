@@ -46,16 +46,13 @@
 
 <div class="currency-input">
 	<TextField
-		class="input"
 		label={label ?? undefined}
 		value={presentableValue}
 		maxlength={18}
 		placeholder={zeroValue}
 		on:input={onInput}
 	/>
-	<ActionButton class="negate" kind="info" on:click={onClick}
-		>{$_("currency.positive-or-negative")}</ActionButton
-	>
+	<ActionButton kind="info" on:click={onClick}>{$_("currency.positive-or-negative")}</ActionButton>
 </div>
 
 <style lang="scss">
@@ -71,7 +68,7 @@
 			margin-bottom: 0 !important; // to override Bootstrap's own !important declaration
 		}
 
-		:global(.input) {
+		&:first-child {
 			flex-grow: 1;
 		}
 

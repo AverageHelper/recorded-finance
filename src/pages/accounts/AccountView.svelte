@@ -7,12 +7,10 @@
 	import { useLocation, useNavigate } from "svelte-navigator";
 	import { zeroDinero } from "../../helpers/dineroHelpers";
 	import AccountEdit from "./AccountEdit.svelte";
-	import ActionButton from "../../components/buttons/ActionButton.svelte";
 	import AddRecordListItem from "./AddRecordListItem.svelte";
-	import EditIcon from "../../icons/Edit.svelte";
+	import EditButton from "../../components/buttons/EditButton.svelte";
 	import Fuse from "fuse.js";
 	import List from "../../components/List.svelte";
-	import Modal from "../../components/Modal.svelte";
 	import SearchBar from "../../components/SearchBar.svelte";
 	import TransactionCreateModal from "../transactions/TransactionCreateModal.svelte";
 	import TransactionMonthListItem from "../transactions/TransactionMonthListItem.svelte";
@@ -31,7 +29,6 @@
 	const location = useLocation();
 	const navigate = useNavigate();
 
-	let isEditingAccount = false;
 	let isEditingTransaction = false;
 
 	$: account = $accounts[accountId] ?? null;
@@ -82,23 +79,21 @@
 	function finishCreatingTransaction() {
 		isEditingTransaction = false;
 	}
-
-	function startEditingAccount() {
-		isEditingAccount = true;
-	}
-
-	function finishEditingAccount() {
-		isEditingAccount = false;
-	}
 </script>
 
-<main class="content">
+<main class="content account-view">
 	<div class="heading">
 		<div class="account-title-1dfc4112">
 			<h1>{account?.title || $_("accounts.noun")}</h1>
-			<ActionButton class="edit" kind="plain" on:click={startEditingAccount}>
-				<EditIcon />
-			</ActionButton>
+			<EditButton>
+				<AccountEdit
+					slot="modal"
+					let:onFinished
+					{account}
+					on:deleted={goBack}
+					on:finished={onFinished}
+				/>
+			</EditButton>
 		</div>
 
 		{#if remainingBalance === null}
@@ -110,11 +105,11 @@
 		{/if}
 	</div>
 
-	<SearchBar class="search" />
+	<SearchBar />
 
 	<!-- Search Results -->
 	{#if searchQuery}
-		<List class="transaction-months-list">
+		<List>
 			{#each filteredTransactions as transaction (transaction.id)}
 				<li class="transaction">
 					<TransactionListItem {transaction} />
@@ -131,7 +126,7 @@
 
 		<!-- Months (normal view) -->
 	{:else}
-		<List class="transaction-months-list">
+		<List>
 			<li>
 				<AddRecordListItem on:click={startCreatingTransaction} />
 			</li>
@@ -154,9 +149,6 @@
 		isOpen={isEditingTransaction}
 		closeModal={finishCreatingTransaction}
 	/>
-	<Modal open={isEditingAccount} closeModal={finishEditingAccount}>
-		<AccountEdit {account} on:deleted={goBack} on:finished={finishEditingAccount} />
-	</Modal>
 {/if}
 
 <style lang="scss" global>
@@ -178,7 +170,7 @@
 				margin: 0;
 			}
 
-			.edit {
+			:global(button) {
 				display: flex;
 				flex-flow: row nowrap;
 				align-items: center;
@@ -208,16 +200,18 @@
 		}
 	}
 
-	.search {
+	:global(.search) {
 		max-width: 36em;
 		margin: 1em auto;
 	}
 
-	.transaction-months-list {
-		.footer {
-			padding-top: 0.5em;
-			user-select: none;
-			color: color($secondary-label);
+	.account-view {
+		:global(ul) {
+			.footer {
+				padding-top: 0.5em;
+				user-select: none;
+				color: color($secondary-label);
+			}
 		}
 	}
 </style>

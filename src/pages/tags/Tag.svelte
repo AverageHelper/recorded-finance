@@ -24,7 +24,7 @@
 		<p class="count">{count}</p>
 	{/if}
 	{#if onRemove}
-		<TinyButton class="remove" on:click={() => onRemove && onRemove(tag)}>&times;</TinyButton>
+		<TinyButton on:click={() => onRemove && onRemove(tag)}>&times;</TinyButton>
 	{/if}
 </div>
 
@@ -74,14 +74,14 @@
 			background-color: color($transparent-gray);
 		}
 
-		.remove {
+		.tiny-button {
 			margin-left: 0.2em;
 			display: none; // hide until hover
 		}
 
 		@media (hover: hover) {
 			&:hover {
-				.remove {
+				.tiny-button {
 					display: inline-block; // back to default while hover
 				}
 			}

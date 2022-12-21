@@ -87,7 +87,7 @@
 	export let spellcheck: boolean | null = null;
 	export let required: boolean = false;
 	export let showsRequired: boolean = true;
-	export let accentColor: ColorID | "" = "";
+	export let accentColor: ColorID | "label" = "label";
 
 	let root: HTMLDivElement | undefined;
 	let input: HTMLInputElement | undefined;
@@ -136,7 +136,7 @@
 	}
 </script>
 
-<div bind:this={root} class={$$props["class"]} {disabled}>
+<div bind:this={root} {disabled} class="text-field">
 	<FormGroup floating label={displayLabel}>
 		<Input
 			bind:inner={input}
@@ -168,6 +168,10 @@
 
 <style lang="scss" global>
 	@use "styles/colors" as *;
+
+	div.text-field {
+		width: 100%;
+	}
 
 	.form-control,
 	.form-control:focus {
