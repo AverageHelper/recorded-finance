@@ -21,16 +21,16 @@
 .btn {
 	&-primary {
 		// --bs-primary (#13a463 light, #0aa567 dark)
-		--bs-btn-color: var(--bs-body-color);
+		--bs-btn-color: var(--inverse-label);
 		--bs-btn-bg: var(--bs-primary);
 		--bs-btn-border-color: var(--bs-primary);
-		--bs-btn-hover-color: var(--bs-body-color);
+		--bs-btn-hover-color: var(--inverse-label);
 		--bs-btn-hover-border-color: var(--bs-btn-hover-bg);
 		--bs-btn-focus-shadow-rgb: var(--bs-primary-rgb);
 		--bs-btn-active-color: var(--bs-btn-hover-color);
 		--bs-btn-active-border-color: var(--bs-btn-active-bg);
 		--bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
-		--bs-btn-disabled-color: var(--bs-body-color);
+		--bs-btn-disabled-color: var(--inverse-label);
 		--bs-btn-disabled-bg: var(--bs-primary);
 		--bs-btn-disabled-border-color: var(--bs-primary);
 		--bs-btn-hover-bg: #119459; // 10%
