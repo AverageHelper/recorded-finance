@@ -118,7 +118,7 @@
 			<TrashIcon /> {$_("common.delete-imperative")}</ActionButton
 		>
 	{:else}
-		<ActionButton kind="info" on:click={askToDelete}>
+		<ActionButton kind="destructive" on:click={askToDelete}>
 			<TrashIcon /> {$_("files.delete.remove-dead-ref")}</ActionButton
 		>
 	{/if}

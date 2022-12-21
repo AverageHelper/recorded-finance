@@ -20,7 +20,7 @@
 </script>
 
 <div class="download-button">
-	<ActionButton {disabled} on:click={startDownload}>
+	<ActionButton kind="info" {disabled} on:click={startDownload}>
 		<DownloadIcon />
 		<span>{$_("common.download-action")}</span>
 	</ActionButton>
