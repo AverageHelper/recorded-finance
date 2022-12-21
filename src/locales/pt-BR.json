@@ -187,7 +187,8 @@
 			"file-type": "Tipo: {type}",
 			"timestamp": "Carimbo de data/hora: {timestamp}",
 			"linked-transaction": "Transação Vinculada",
-			"linked-transactions": "Transações Vinculadas"
+			"linked-transactions": "Transações Vinculadas",
+			"actions": "Ações"
 		},
 		"upload": {
 			"imperative": "Enviar um arquivo",

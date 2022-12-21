@@ -187,7 +187,8 @@
 			"file-type": "Type: {type}",
 			"timestamp": "Timestamp: {timestamp}",
 			"linked-transaction": "Linked Transaction",
-			"linked-transactions": "Linked Transactions"
+			"linked-transactions": "Linked Transactions",
+			"actions": "Actions"
 		},
 		"upload": {
 			"imperative": "Upload a file",
