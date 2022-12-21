@@ -109,8 +109,7 @@
 		</div>
 	{/if}
 
-	<!-- TODO: I18N -->
-	<h3>Actions</h3>
+	<h3>{$_("files.meta.actions")}</h3>
 	<div class="buttons">
 		{#if file}
 			<DownloadButton {file} />
