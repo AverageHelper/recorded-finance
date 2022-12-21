@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { _ } from "../../i18n";
-	import { accountsPath } from "router/routes";
+	import { accountsPath } from "../../router/routes";
 	import { fetchSession, uid } from "../../store";
 	import { onMount } from "svelte";
 	import { useFocus, useNavigate } from "svelte-navigator";
@@ -29,6 +29,6 @@
 {:else}
 	<main class="loading">
 		<p>{$_("login.checking-login-state")}</p>
-		<p><Spinner /></p>
+		<Spinner />
 	</main>
 {/if}

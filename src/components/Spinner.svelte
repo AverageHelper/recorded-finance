@@ -5,4 +5,13 @@
 	export let color: Color = "primary";
 </script>
 
-<Spinner class="spinner" {color} />
+<div class="spinner">
+	<Spinner {color} />
+</div>
+
+<style lang="scss">
+	.spinner {
+		height: fit-content;
+		width: fit-content;
+	}
+</style>

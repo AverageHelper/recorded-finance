@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { _ } from "../../i18n";
 	import { fetchSession, lockVault, pKey, uid } from "../../store/authStore";
-	import { loginPath } from "router/routes";
+	import { loginPath } from "../../router/routes";
 	import { navigate } from "svelte-navigator";
 	import { onMount } from "svelte";
 	import Spinner from "../../components/Spinner.svelte";

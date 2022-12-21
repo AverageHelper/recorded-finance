@@ -101,6 +101,10 @@ main.loading {
 	p {
 		text-align: center;
 	}
+
+	> .spinner {
+		margin: 16pt auto;
+	}
 }
 
 section {
