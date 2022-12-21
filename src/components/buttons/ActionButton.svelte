@@ -15,6 +15,7 @@
 	export let type: ActionButtonType = "button";
 	export let kind: ActionButtonKind = "primary";
 	export let disabled: boolean = false;
+	export let title: string | undefined = undefined;
 
 	let color: ButtonColor;
 	$: switch (kind) {
@@ -41,6 +42,6 @@
 	}
 </script>
 
-<Button class="action-button" {color} {type} {disabled} on:click={onClick}>
+<Button class="action-button" {color} {type} {title} {disabled} on:click={onClick}>
 	<slot />
 </Button>

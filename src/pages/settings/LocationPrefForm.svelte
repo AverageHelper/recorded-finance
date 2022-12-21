@@ -169,14 +169,4 @@
 			margin-left: 8pt;
 		}
 	}
-
-	// Confirm/Reset buttons:
-	.buttons {
-		display: flex;
-		flex-flow: row nowrap;
-
-		> :global(*:not(:last-child)) {
-			margin-right: 8pt;
-		}
-	}
 </style>

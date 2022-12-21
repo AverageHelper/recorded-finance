@@ -71,8 +71,9 @@
 		showsRequired={false}
 		required
 	/>
-	<div class="buttons-47e1be0c">
-		<ActionButton type="submit" kind="plain" disabled={!hasChanges || isLoading}
+
+	<div class="buttons">
+		<ActionButton type="submit" disabled={!hasChanges || isLoading}
 			>{$_("settings.auth.update-passphrase")}</ActionButton
 		>
 		{#if hasChanges}
@@ -82,14 +83,3 @@
 		{/if}
 	</div>
 </Form>
-
-<style lang="scss" global>
-	.buttons-47e1be0c {
-		display: flex;
-		flex-flow: row nowrap;
-
-		:not(:last-child) {
-			margin-right: 8pt;
-		}
-	}
-</style>

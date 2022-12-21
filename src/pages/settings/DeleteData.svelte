@@ -71,7 +71,7 @@
 		required
 	/>
 
-	<div class="buttons-5655e1fc">
+	<div class="buttons">
 		<ActionButton type="submit" kind="destructive" disabled={!hasChanges || isDeleting}>
 			{#if isDeleting}
 				<span>{$_("settings.delete-all.in-progress")}</span>
@@ -92,14 +92,3 @@
 	on:yes={confirmDeleteEverything}
 	on:no={cancelDeleteEverything}
 />
-
-<style lang="scss" global>
-	.buttons-5655e1fc {
-		display: flex;
-		flex-flow: row nowrap;
-
-		:not(:last-child) {
-			margin-right: 8pt;
-		}
-	}
-</style>

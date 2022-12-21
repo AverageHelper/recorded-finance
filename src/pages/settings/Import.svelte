@@ -85,7 +85,8 @@
 <Form>
 	<h3>{$_("settings.import.meta.heading")}</h3>
 	<p>{$_("settings.import.meta.description")}</p>
-	<div class="buttons-79507e92">
+
+	<div class="buttons">
 		<FileInput accept="application/zip" disabled={isLoading} on:input={onFileReceived} let:click>
 			<ActionButton
 				kind="info"
@@ -100,22 +101,3 @@
 </Form>
 
 <ImportProcessModal fileName={dbName} {db} zip={archive} on:finished={forgetFile} />
-
-<style lang="scss" global>
-	p {
-		margin-bottom: 0;
-	}
-
-	.buttons-79507e92 {
-		display: flex;
-		flex-flow: row wrap;
-
-		:not(:last-child) {
-			margin-right: 8pt;
-		}
-
-		* {
-			text-decoration: none;
-		}
-	}
-</style>

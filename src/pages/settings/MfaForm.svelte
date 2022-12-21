@@ -29,15 +29,17 @@
 	<h3>{$_("settings.mfa.general.heading")}</h3>
 	<p>{$_("settings.mfa.general.explanation")}</p>
 
-	{#if isEnrolled}
-		<ActionButton kind="info" on:click={unenroll}
-			>{$_("settings.mfa.general.unenroll-action")}</ActionButton
-		>
-	{:else}
-		<ActionButton kind="info" on:click={enroll}
-			>{$_("settings.mfa.general.enroll-action")}</ActionButton
-		>
-	{/if}
+	<div class="buttons">
+		{#if isEnrolled}
+			<ActionButton kind="info" on:click={unenroll}
+				>{$_("settings.mfa.general.unenroll-action")}</ActionButton
+			>
+		{:else}
+			<ActionButton kind="info" on:click={enroll}
+				>{$_("settings.mfa.general.enroll-action")}</ActionButton
+			>
+		{/if}
+	</div>
 
 	<MfaEnrollModal isOpen={isEnrollingMfa} on:finished={closeModals} />
 	<MfaUnenrollModal isOpen={isUnenrollingMfa} on:finished={closeModals} />

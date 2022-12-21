@@ -15,11 +15,17 @@
 	</div>
 
 	<LocationPrefForm />
+	<hr />
 	<MfaForm />
+	<hr />
 	<ChangeAccountIdForm />
+	<hr />
 	<ChangePasswordForm />
+	<hr />
 	<Import />
+	<hr />
 	<Exports />
+	<hr />
 	<DeleteData />
 </main>
 

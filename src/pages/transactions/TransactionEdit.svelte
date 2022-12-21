@@ -265,12 +265,6 @@
 	/>
 
 	<div class="buttons">
-		{#if !isCreatingTransaction && !hasAttachments}
-			<ActionButton kind="destructive" disabled={isLoading} on:click={askToDeleteTransaction}>
-				<TrashIcon />
-				<span>{$_("common.delete-imperative")}</span>
-			</ActionButton>
-		{/if}
 		<ActionButton type="submit" disabled={!hasChanges || isLoading}>
 			<CheckmarkIcon />
 			{#if !isLoading}
@@ -279,6 +273,12 @@
 				<span>{$_("common.saving-in-progress")}</span>
 			{/if}
 		</ActionButton>
+		{#if !isCreatingTransaction && !hasAttachments}
+			<ActionButton kind="destructive" disabled={isLoading} on:click={askToDeleteTransaction}>
+				<TrashIcon />
+				<span>{$_("common.delete-imperative")}</span>
+			</ActionButton>
+		{/if}
 	</div>
 	{#if hasAttachments}
 		<p>{$_("transactions.delete.detach-first")}</p>
@@ -315,15 +315,6 @@
 
 		h1.expense {
 			color: color($red);
-		}
-
-		.buttons {
-			display: flex;
-			flex-flow: row nowrap;
-
-			:global(button):last-child {
-				margin-left: auto;
-			}
 		}
 	}
 </style>

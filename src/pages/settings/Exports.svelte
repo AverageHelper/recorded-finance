@@ -36,7 +36,8 @@
 		human-readable. If you don't care about that, then we can just export the raw JSON data as
 		small as we can make it.</p
 	> -->
-	<div class="buttons-6933f502">
+
+	<div class="buttons">
 		<ActionButton kind="info" disabled={isLoading} on:click={e => downloadStuff(e, false)}
 			>{$_("settings.export.actions.export-all")}</ActionButton
 		>
@@ -50,18 +51,3 @@
 		{/if}
 	</div>
 </Form>
-
-<style lang="scss" global>
-	p {
-		margin-bottom: 0;
-	}
-
-	.buttons-6933f502 {
-		display: flex;
-		flex-flow: row wrap;
-
-		:not(:last-child) {
-			margin-right: 8pt;
-		}
-	}
-</style>

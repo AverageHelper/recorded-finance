@@ -54,7 +54,8 @@
 		showsRequired={false}
 		required
 	/>
-	<div class="buttons-2cbb2942">
+
+	<div class="buttons">
 		<ActionButton type="submit" disabled={!hasChanges || isLoading}
 			>{$_("settings.auth.get-new-account-id")}</ActionButton
 		>
@@ -67,14 +68,3 @@
 </Form>
 
 <NewLoginModal />
-
-<style lang="scss" global>
-	.buttons-2cbb2942 {
-		display: flex;
-		flex-flow: row nowrap;
-
-		:not(:last-child) {
-			margin-right: 8pt;
-		}
-	}
-</style>

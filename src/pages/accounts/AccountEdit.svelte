@@ -4,9 +4,11 @@
 	import { account as newAccount } from "../../model/Account";
 	import { createEventDispatcher, onMount } from "svelte";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
+	import CheckmarkIcon from "../../icons/Checkmark.svelte";
 	import Form from "../../components/Form.svelte";
 	import TextAreaField from "../../components/inputs/TextAreaField.svelte";
 	import TextField from "../../components/inputs/TextField.svelte";
+	import TrashIcon from "../../icons/Trash.svelte";
 	import {
 		createAccount,
 		deleteAccount as _deleteAccount,
@@ -94,7 +96,7 @@
 	}
 </script>
 
-<Form class="form-d8a5e2ee" on:submit={submit}>
+<Form on:submit={submit}>
 	{#if isCreatingAccount}
 		<h1>{$_("accounts.create")}</h1>
 	{:else}
@@ -120,24 +122,33 @@
 		on:input={e => (notes = e.detail)}
 	/>
 
-	<ActionButton type="submit" disabled={isLoading}>{$_("common.save-imperative")}</ActionButton>
-	{#if !isCreatingAccount && numberOfTransactions === 0}
-		<ActionButton kind="destructive" disabled={isLoading} on:click={deleteAccount}
-			>{$_("accounts.delete-titled", {
-				values: { title: account?.title ?? $_("accounts.noun") },
-			})}</ActionButton
-		>
-	{/if}
-	{#if isLoading}
-		<p>{$_("common.saving-in-progress")}</p>
-	{/if}
+	<div class="buttons">
+		<ActionButton type="submit" disabled={isLoading}>
+			<CheckmarkIcon />
+			{#if !isLoading}
+				<span>{$_("common.save-imperative")}</span>
+			{:else}
+				<span>{$_("common.saving-in-progress")}</span>
+			{/if}
+		</ActionButton>
+		{#if !isCreatingAccount && numberOfTransactions === 0}
+			<ActionButton kind="destructive" disabled={isLoading} on:click={deleteAccount}>
+				<TrashIcon />
+				<span
+					>{$_("accounts.delete-titled", {
+						values: { title: account?.title ?? $_("accounts.noun") },
+					})}</span
+				>
+			</ActionButton>
+		{/if}
+	</div>
 </Form>
 
-<style lang="scss" global>
-	.form-d8a5e2ee {
+<style lang="scss">
+	:global(form) {
 		align-items: center;
 
-		> label {
+		> :global(label) {
 			width: 80%;
 		}
 	}
