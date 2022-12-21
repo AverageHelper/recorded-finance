@@ -59,7 +59,7 @@
 	<h3>{$_("settings.location.heading")}</h3>
 	<p>{$_("settings.location.api-disclaimer")}</p>
 
-	<div class="options-b0a38164">
+	<div class="options">
 		{#each sensitivityOptions as option}
 			<ActionButton
 				kind="info"
@@ -115,11 +115,11 @@
 	</div>
 </Form>
 
-<style lang="scss" global>
+<style lang="scss">
 	@use "styles/colors" as *;
 
-	.options-b0a38164 {
-		> :global(button) {
+	.options {
+		> :global(*) {
 			display: flex;
 			flex-flow: row nowrap;
 			align-items: center;
@@ -129,52 +129,53 @@
 			&:not(:last-child) {
 				margin-bottom: 8pt;
 			}
+		}
 
-			.option-details {
-				display: flex;
-				flex-flow: column nowrap;
-				justify-content: flex-start;
-				text-align: left;
+		.option-details {
+			display: flex;
+			flex-flow: column nowrap;
+			justify-content: flex-start;
+			text-align: left;
 
-				> span {
-					margin-top: 8pt;
-				}
-
-				> p {
-					margin: 4pt 8pt;
-					margin-bottom: 8pt;
-					color: color($secondary-label);
-				}
+			> span {
+				margin-top: 8pt;
 			}
 
-			.selected {
-				min-width: 22pt;
-				width: 22pt;
-				height: 22pt;
-				display: flex;
-				align-items: center;
-				justify-content: center;
+			> p {
+				margin: 4pt 8pt;
+				margin-bottom: 8pt;
+				color: color($secondary-label);
 			}
+		}
 
-			.not-selected {
-				min-width: 22pt;
-				width: 22pt;
-				height: 22pt;
-				border-radius: 50%;
-				border: 2pt solid color($separator);
-			}
+		.selected {
+			min-width: 22pt;
+			width: 22pt;
+			height: 22pt;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
 
-			span {
-				margin-left: 8pt;
-			}
+		.not-selected {
+			min-width: 22pt;
+			width: 22pt;
+			height: 22pt;
+			border-radius: 50%;
+			border: 2pt solid color($separator);
+		}
+
+		span {
+			margin-left: 8pt;
 		}
 	}
 
+	// Confirm/Reset buttons:
 	.buttons {
 		display: flex;
 		flex-flow: row nowrap;
 
-		:not(:last-child) {
+		> :global(*:not(:last-child)) {
 			margin-right: 8pt;
 		}
 	}

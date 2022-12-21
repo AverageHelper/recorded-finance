@@ -154,7 +154,7 @@
 			<h4>{$_("settings.import.new-accounts")}</h4>
 			<List>
 				{#each newAccounts as account (account.id)}
-					<li class="importable-9d959f76">
+					<li class="importable">
 						<AccountListItem
 							{account}
 							link={false}
@@ -176,7 +176,7 @@
 			<p>{$_("settings.import.duplicates-explanation")}</p>
 			<List>
 				{#each duplicateAccounts as account (account.id)}
-					<li class="importable-9d959f76">
+					<li class="importable">
 						<AccountListItem
 							{account}
 							link={false}
@@ -195,7 +195,7 @@
 	<div>
 		<h4>{$_("settings.import.miscellaneous-items")}</h4>
 		<List>
-			<li class="importable-9d959f76">
+			<li class="importable">
 				{#if numberOfLocationsToImport === 1}
 					{$_("locations.count.location")}
 				{:else}
@@ -205,7 +205,7 @@
 				{/if}
 				<Checkmark />
 			</li>
-			<li class="importable-9d959f76">
+			<li class="importable">
 				{#if numberOfTagsToImport === 1}
 					{$_("tags.count.tag")}
 				{:else}
@@ -215,7 +215,7 @@
 				{/if}
 				<Checkmark />
 			</li>
-			<li class="importable-9d959f76">
+			<li class="importable">
 				{#if numberOfAttachmentsToImport === 1}
 					{$_("files.count.attachment")}
 				{:else}
@@ -239,15 +239,15 @@
 	</div>
 </Modal>
 
-<style lang="scss" global>
+<style lang="scss">
 	@use "styles/colors" as *;
 
-	.importable-9d959f76 {
+	.importable {
 		display: flex;
 		flex-flow: row nowrap;
 		align-items: center;
 
-		.icon {
+		:global(.icon) {
 			margin-left: 8pt;
 		}
 	}

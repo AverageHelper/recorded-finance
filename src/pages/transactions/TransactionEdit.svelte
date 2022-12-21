@@ -219,12 +219,12 @@
 	}
 </script>
 
-<Form class="form-74f64236 {isExpense ? 'expense' : ''}" on:submit={submit}>
+<Form on:submit={submit}>
 	{#if isCreatingTransaction}
 		{#if isExpense}
-			<h1>{$_("transactions.create.expense")}</h1>
+			<h1 class={isExpense ? "expense" : undefined}>{$_("transactions.create.expense")}</h1>
 		{:else}
-			<h1>{$_("transactions.create.income")}</h1>
+			<h1 class={isExpense ? "expense" : undefined}>{$_("transactions.create.income")}</h1>
 		{/if}
 	{:else if isExpense}
 		<h1>{$_("transactions.edit.expense")}</h1>
@@ -232,12 +232,14 @@
 		<h1>{$_("transactions.edit.income")}</h1>
 	{/if}
 
-	<span>Account: {account.title ?? $_("accounts.unknown-title")}</span>
+	<p>Account: {account.title ?? $_("accounts.unknown-title")}</p>
 
-	<DateTimeInput
-		value={createdAt}
-		label={$_("transactions.meta.date")}
-		on:input={e => (createdAt = e.detail)}
+	<TextField
+		value={title}
+		label={$_("transactions.meta.title").toLocaleLowerCase($locale.code)}
+		placeholder={$_("example.income-transaction-title")}
+		required
+		on:input={e => (title = e.detail)}
 	/>
 	<CurrencyInput
 		value={amount}
@@ -249,12 +251,10 @@
 		label={$_("transactions.meta.reconciled")}
 		on:change={e => (isReconciled = e.detail)}
 	/>
-	<TextField
-		value={title}
-		label={$_("transactions.meta.title").toLocaleLowerCase($locale.code)}
-		placeholder={$_("example.income-transaction-title")}
-		required
-		on:input={e => (title = e.detail)}
+	<DateTimeInput
+		value={createdAt}
+		label={$_("transactions.meta.date")}
+		on:input={e => (createdAt = e.detail)}
 	/>
 	<LocationField value={locationData} on:change={onLocationUpdate} />
 	<TextAreaField
@@ -265,18 +265,21 @@
 	/>
 
 	<div class="buttons">
-		<ActionButton type="submit" disabled={!hasChanges || isLoading}>
-			<CheckmarkIcon /> {$_("common.save-imperative")}</ActionButton
-		>
 		{#if !isCreatingTransaction && !hasAttachments}
 			<ActionButton kind="destructive" disabled={isLoading} on:click={askToDeleteTransaction}>
-				<TrashIcon /> {$_("common.delete-imperative")}</ActionButton
-			>
+				<TrashIcon />
+				<span>{$_("common.delete-imperative")}</span>
+			</ActionButton>
 		{/if}
+		<ActionButton type="submit" disabled={!hasChanges || isLoading}>
+			<CheckmarkIcon />
+			{#if !isLoading}
+				<span>{$_("common.save-imperative")}</span>
+			{:else}
+				<span>{$_("common.saving-in-progress")}</span>
+			{/if}
+		</ActionButton>
 	</div>
-	{#if isLoading}
-		<p>{$_("common.saving-in-progress")}</p>
-	{/if}
 	{#if hasAttachments}
 		<p>{$_("transactions.delete.detach-first")}</p>
 	{/if}
@@ -291,27 +294,35 @@
 	{/if}
 </Form>
 
-<style lang="scss" global>
+<style lang="scss">
 	@use "styles/colors" as *;
 
-	.form-74f64236 {
+	:global(form) {
 		align-items: center;
+		text-align: center;
 
-		> label {
-			width: 80%;
+		p {
+			text-align: center; // "Account" temp indicator should be centered
 		}
 
-		&.expense h1 {
+		> :global(*) {
+			width: 100%; // fields etc. should be the same width
+		}
+
+		:global(.checkbox) {
+			width: initial; // checkbox shouldn't be so wide
+		}
+
+		h1.expense {
 			color: color($red);
 		}
 
 		.buttons {
 			display: flex;
 			flex-flow: row nowrap;
-			width: 80%;
 
-			:first-child {
-				margin-right: auto;
+			:global(button):last-child {
+				margin-left: auto;
 			}
 		}
 	}
