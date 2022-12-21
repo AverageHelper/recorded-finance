@@ -75,7 +75,7 @@
 </script>
 
 <ConditionallyExpandingNavbar expand={!isLoggedIn}>
-	<aside class="actions-container" aria-level={1}>
+	<aside class="actions-container">
 		{#if !isRoute}
 			<ActionButton kind="plain" on:click={goBack}>
 				<BackIcon />
@@ -88,6 +88,7 @@
 				class="navbar-brand"
 				role="heading"
 				aria-label={$_("common.platform")}
+				aria-level={1}
 				title={$_("common.platform")}
 				use:link>A&cent;countable</a
 			>
