@@ -13,7 +13,7 @@
 	});
 </script>
 
-<OutLink to={repositoryUrl} class={$$props["class"]}
+<OutLink to={repositoryUrl}
 	>{$_("common.platform")}
 	{$_("common.application")} v{clientVersion},
 	{$_("common.server")}

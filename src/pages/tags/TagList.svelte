@@ -15,7 +15,7 @@
 		"remove-tag": TagObject;
 	}>();
 
-	export let tagIds: Array<string>;
+	export let tagIds: ReadonlyArray<string>;
 
 	let tagEdit: TagEdit | undefined;
 	let isCreatingTag = false;

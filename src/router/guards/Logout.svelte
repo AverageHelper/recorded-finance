@@ -4,6 +4,7 @@
 	import { logout } from "../../store";
 	import { onMount } from "svelte";
 	import { useLocation, useNavigate } from "svelte-navigator";
+	import Spinner from "../../components/Spinner.svelte";
 
 	const location = useLocation();
 	const navigate = useNavigate();
@@ -22,6 +23,7 @@
 	});
 </script>
 
-<main class="content">
+<main class="loading">
 	<p>{$_("login.logging-out")}</p>
+	<Spinner />
 </main>

@@ -5,6 +5,8 @@
 
 	const dispatch = createEventDispatcher<{ click: MouseEvent }>();
 
+	type ListItemKind = "add" | "choose";
+
 	export let to: string | null = null;
 	export let replace: boolean = false;
 	export let title: string;
@@ -12,6 +14,7 @@
 	export let count: number | string | null = null;
 	export let subCount: string | null = null;
 	export let negative: boolean = false;
+	export let kind: ListItemKind = "choose";
 
 	function onClick(event: MouseEvent) {
 		console.debug("onClick", to);
@@ -25,9 +28,9 @@
 
 <svelte:element
 	this={to === null ? "div" : "a"}
-	class="list-item list-item-503a10fc {$$props['class']}"
+	class="list-item {kind}"
 	href={to ?? "#"}
-	on:click|preventDefault={onClick}
+	on:click|stopPropagation|preventDefault={onClick}
 >
 	<slot name="icon" />
 
@@ -50,26 +53,38 @@
 		</div>
 	</aside>
 
-	<Chevron class="chevron" />
+	<Chevron />
 </svelte:element>
 
 <style lang="scss" global>
 	@use "styles/colors" as *;
 
-	.list-item-503a10fc {
+	.list-item {
 		display: flex;
 		flex-flow: row nowrap;
 		align-items: center;
 		padding: 0.75em;
-		// margin-bottom: 0.5em;
+		width: 100%;
 		text-decoration: none;
 		border-radius: 4pt;
 		color: color($label);
 		background-color: color($secondary-fill);
 
+		&.add {
+			min-height: 44px;
+			color: color($green);
+
+			@media (hover: hover) {
+				&:hover {
+					color: color($green);
+				}
+			}
+		}
+
 		@media (hover: hover) {
 			&:hover {
-				background-color: color($gray4);
+				background-color: color($secondary-overlay);
+				color: color($label);
 				text-decoration: none;
 			}
 		}
@@ -111,7 +126,7 @@
 				align-items: flex-end;
 
 				> .count {
-					background-color: color($gray);
+					background-color: color($secondary-label);
 					color: color($inverse-label);
 					border-radius: 1em;
 					padding: 0 0.5em;
@@ -130,7 +145,8 @@
 			}
 		}
 
-		.chevron {
+		// Chevron
+		> :last-child {
 			color: color($separator);
 			margin-left: 8pt;
 			user-select: none;

@@ -18,7 +18,6 @@
 	import LocationView from "../locations/LocationView.svelte";
 	import Modal from "../../components/Modal.svelte";
 	import NopLink from "../../components/NopLink.svelte";
-	import NavAction from "../../components/NavAction.svelte";
 	import TagList from "../../pages/tags/TagList.svelte";
 	import TransactionEdit from "./TransactionEdit.svelte";
 	import {
@@ -130,27 +129,23 @@
 	}
 </script>
 
-<!-- FIXME: Make this match the account view, with the button beside the title -->
-{#if account && transaction}
-	<NavAction>
-		<EditButton>
-			<TransactionEdit
-				slot="modal"
-				let:onFinished
-				{account}
-				{transaction}
-				on:deleted={goBack}
-				on:finished={onFinished}
-			/>
-		</EditButton>
-	</NavAction>
-{/if}
-
 {#if transaction}
 	<main class="content main-424352d2">
 		{#if transaction.title || location}
 			<div class="heading">
 				<h1>&quot;{transaction.title ?? location?.title}&quot;</h1>
+				{#if account && transaction}
+					<EditButton>
+						<TransactionEdit
+							slot="modal"
+							let:onFinished
+							{account}
+							{transaction}
+							on:deleted={goBack}
+							on:finished={onFinished}
+						/>
+					</EditButton>
+				{/if}
 				<!-- TODO: Default to the transaction ID -->
 			</div>
 		{/if}
@@ -284,6 +279,7 @@
 	.content.main-424352d2 {
 		max-width: 400pt;
 		margin: 0 auto;
+		margin-bottom: 58pt;
 
 		.heading h1 {
 			margin-left: 0;

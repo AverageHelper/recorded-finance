@@ -20,26 +20,22 @@
 	}
 </script>
 
-<List class="color-picker-632e7c4c">
-	{#each colors as colorId}
-		<li>
-			<ColorDot
-				{colorId}
-				class={colorId === value ? "selected" : ""}
-				tabindex="0"
-				on:keyup={e => onKeyup(e, colorId)}
-				on:click={() => select(colorId)}
-			>
-				<div class="check" />
-			</ColorDot>
-		</li>
-	{/each}
-</List>
+<div class="color-picker">
+	<List>
+		{#each colors as colorId}
+			<li class={colorId === value ? "selected" : ""}>
+				<ColorDot {colorId} on:keyup={e => onKeyup(e, colorId)} on:click={() => select(colorId)}>
+					<div class="check" />
+				</ColorDot>
+			</li>
+		{/each}
+	</List>
+</div>
 
 <style lang="scss" global>
 	@use "styles/colors" as *;
 
-	.color-picker-632e7c4c {
+	:global(.color-picker ul) {
 		display: flex;
 		flex-flow: row wrap;
 		align-items: center;
@@ -73,8 +69,10 @@
 					width: 2.5em;
 					height: 2.5em;
 				}
+			}
 
-				&.selected {
+			&.selected {
+				.dot {
 					width: 4em;
 					height: 4em;
 

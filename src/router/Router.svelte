@@ -5,6 +5,7 @@
 	import Accounts from "../pages/accounts/Accounts.svelte";
 	import AccountView from "../pages/accounts/AccountView.svelte";
 	import Attachments from "../pages/attachments/Attachments.svelte";
+	import Footer from "../Footer.svelte";
 	import Home from "../Home.svelte";
 	import Install from "../Install.svelte";
 	import Locations from "../pages/locations/Locations.svelte";
@@ -40,7 +41,7 @@
 	} from "./routes";
 
 	function paramValue(params: RouteParams, key: string): string {
-		return params[key] as string;
+		return params[key] ?? "";
 	}
 
 	// This has something to do with SSR
@@ -162,4 +163,6 @@
 	<Route path="\*">
 		<NotFound />
 	</Route>
+
+	<Footer />
 </Router>

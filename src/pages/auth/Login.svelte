@@ -7,7 +7,7 @@
 	import { useLocation, useNavigate } from "svelte-navigator";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
 	import ErrorNotice from "../../components/ErrorNotice.svelte";
-	import Footer from "../../Footer.svelte";
+	import Form from "../../components/Form.svelte";
 	import I18N from "../../components/I18N.svelte";
 	import InfoDrawer from "../../components/InfoDrawer.svelte";
 	import NopLink from "../../components/NopLink.svelte";
@@ -87,11 +87,13 @@
 	}
 
 	function enterSignupMode() {
+		if (isLoading) return;
 		accountId = "";
 		navigate(signupPath(), { replace: true });
 	}
 
 	function enterLoginMode() {
+		if (isLoading) return;
 		accountId = "";
 		navigate(loginPath(), { replace: true });
 	}
@@ -110,13 +112,8 @@
 		}
 	}
 
-	function onUpdateTotp(event: CustomEvent<string>) {
+	async function onUpdateTotp(event: CustomEvent<string>) {
 		token = event.detail;
-	}
-
-	async function onTotpPaste(event: CustomEvent<ClipboardEvent>) {
-		event.stopPropagation();
-		event.preventDefault();
 		await tick();
 		if (token.length === 6 && /^\d+$/.test(token)) {
 			// Only if six digits
@@ -183,14 +180,32 @@
 
 <!-- TODO: Break this component into three: Login, Signup, TOTP -->
 
-{#if $bootstrapError}
-	<main class="content">
+<main class="content">
+	{#if $bootstrapError}
 		<ErrorNotice error={$bootstrapError} />
-		<Footer />
-	</main>
-{:else}
-	<main class="content">
-		<form on:submit|preventDefault={submit}>
+	{:else}
+		<Form on:submit={submit}>
+			<h1>{$_("login.log-in")}</h1>
+			<div>
+				{#if !isSignupEnabled}
+					<p>{$_("login.new-account-prompt.open-soon")}</p>
+				{:else if isLoginMode}
+					<p
+						>{$_("login.new-account-prompt.create.question")}
+						<NopLink on:click={enterSignupMode}
+							>{$_("login.new-account-prompt.create.action")}</NopLink
+						>
+					</p>
+				{:else if isSignupMode}
+					<p
+						>{$_("login.new-account-prompt.already-have.question")}
+						<NopLink on:click={enterLoginMode}
+							>{$_("login.new-account-prompt.already-have.action")}</NopLink
+						>
+					</p>
+				{/if}
+			</div>
+
 			{#if isSignupMode && !isLoading}
 				<TextField
 					value={$_("login.value-will-be-generated")}
@@ -216,7 +231,6 @@
 					bind:this={totpField}
 					value={token}
 					on:input={onUpdateTotp}
-					on:paste={onTotpPaste}
 					disabled={isLoading}
 					label={$_("login.totp")}
 					placeholder={$_("example.totp-code")}
@@ -232,7 +246,6 @@
 					on:input={onUpdatePassphrase}
 					type="password"
 					label={isSignupMode ? $_("login.new-passphrase-imperative") : $_("login.passphrase")}
-					placeholder="********"
 					autocomplete={isSignupMode ? "new-password" : "current-password"}
 					showsRequired={false}
 					required
@@ -244,7 +257,6 @@
 					on:input={onUpdateRepeatPassphrase}
 					type="password"
 					label={$_("login.repeat-passphrase")}
-					placeholder="********"
 					autocomplete="new-password"
 					showsRequired={false}
 					required={isSignupMode}
@@ -252,57 +264,30 @@
 			{/if}
 			<ActionButton
 				type="submit"
-				kind={isSignupMode ? "bordered-primary-green" : "bordered-primary"}
+				kind={isSignupMode ? "secondary" : "primary"}
 				disabled={isLoading}
-				>{isSignupMode ? $_("login.create-account") : $_("login.log-in")}</ActionButton
 			>
+				{#if $loginProcessState === null}
+					<span>{isSignupMode ? $_("login.create-account") : $_("login.log-in")}</span>
+				{:else if $loginProcessState === "AUTHENTICATING"}
+					<span>{$_("login.log-in-ongoing")}: {$_("login.process.authenticating")}</span>
+				{:else if $loginProcessState === "GENERATING_KEYS"}
+					<span>{$_("login.log-in-ongoing")}: {$_("login.process.generating-keys")}</span>
+				{:else if $loginProcessState === "FETCHING_KEYS"}
+					<span>{$_("login.log-in-ongoing")}: {$_("login.process.fetching-keys")}</span>
+				{:else if $loginProcessState === "DERIVING_PKEY"}
+					<span>{$_("login.log-in-ongoing")}: {$_("login.process.deriving-pkey")}</span>
+				{/if}
+			</ActionButton>
 
-			{#if $loginProcessState === "AUTHENTICATING"}
-				<span>{$_("login.process.authenticating")}</span>
-			{/if}
-			{#if $loginProcessState === "GENERATING_KEYS"}
-				<span>{$_("login.process.generating-keys")}</span>
-			{/if}
-			{#if $loginProcessState === "FETCHING_KEYS"}
-				<span>{$_("login.process.fetching-keys")}</span>
-			{/if}
-			{#if $loginProcessState === "DERIVING_PKEY"}
-				<span>{$_("login.process.deriving-pkey")}</span>
-			{/if}
-
-			{#if !isLoading}
-				<div>
-					{#if !isSignupEnabled}
-						<p>{$_("login.new-account-prompt.open-soon")}.</p>
-					{:else if isLoginMode}
-						<p
-							>{$_("login.new-account-prompt.create.question")}
-							<NopLink on:click={enterSignupMode}
-								>{$_("login.new-account-prompt.create.action")}</NopLink
-							>
-						</p>
-					{:else if isSignupMode}
-						<p
-							>{$_("login.new-account-prompt.already-have.question")}
-							<NopLink on:click={enterLoginMode}
-								>{$_("login.new-account-prompt.already-have.action")}</NopLink
-							>
-						</p>
-					{/if}
-				</div>
-			{/if}
-
-			{#if !$loginProcessState}
-				<InfoDrawer title={$_("login.cookie-disclaimer-header")}>
-					<p>
-						<I18N keypath="login.cookie-disclaimer">
-							<!-- more -->
-							<OutLink to={repoReadmeHeading("why-use-cookies")}>{$_("login.cookie-more")}</OutLink>
-						</I18N>
-					</p>
-				</InfoDrawer>
-			{/if}
-		</form>
-		<Footer />
-	</main>
-{/if}
+			<InfoDrawer title={$_("login.cookie-disclaimer-header")}>
+				<p>
+					<I18N keypath="login.cookie-disclaimer">
+						<!-- more -->
+						<OutLink to={repoReadmeHeading("why-use-cookies")}>{$_("login.cookie-more")}</OutLink>
+					</I18N>
+				</p>
+			</InfoDrawer>
+		</Form>
+	{/if}
+</main>

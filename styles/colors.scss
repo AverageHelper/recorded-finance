@@ -22,7 +22,7 @@
 // Backgrounds
 $background: background;
 $secondary-background: secondary-background;
-$secondary-overlay: secondary-overlay; // Like background, with a bit of transparence
+$secondary-overlay: secondary-overlay; // Like background, with a bit of transparency
 $navbar-background: navbar-background;
 $sidenav-background: sidenav-background;
 $unread-count: unread-count;
@@ -55,6 +55,7 @@ $input-background: input-background;
 $inverse-label: inverse-label;
 $search-field: search-field;
 $link: link;
+$link-hover: link-hover;
 
 // Separators and accents
 $separator: separator;
@@ -71,32 +72,41 @@ $tab-item: tab-item;
 
 // Grayscale
 $black: black;
-$gray: gray; // Most visible
-$gray2: gray2;
-$gray3: gray3;
-$gray4: gray4;
-$gray5: gray5;
-$gray6: gray6;
-$cloud: cloud; // Least visible
+// $gray-100: gray-100;
+// $gray-200: gray-200;
+// $gray-300: gray-300;
+// $gray-400: gray-400;
+// $gray-500: gray-500;
+// $gray: gray;
+// $gray-600: gray-600;
+// $gray-700: gray-700;
+// $gray-800: gray-800;
+// $gray-900: gray-900;
 $white: white;
 
-// Grayscale that is always light
-$cloud-light: cloud-light;
-$gray6-light: gray6-light;
-$gray5-light: gray5-light;
-$gray4-light: gray4-light;
-$gray3-light: gray3-light;
-$gray2-light: gray2-light;
-$gray-light: gray-light;
+// Grayscale from light mode
+// $gray-100-light: gray-100;
+// $gray-200-light: gray-200;
+// $gray-300-light: gray-300;
+// $gray-400-light: gray-400;
+// $gray-500-light: gray-500;
+// $gray-light: gray;
+// $gray-600-light: gray-600;
+// $gray-700-light: gray-700;
+// $gray-800-light: gray-800;
+// $gray-900-light: gray-900;
 
-// Grayscale that is always dark
-$cloud-dark: cloud-dark;
-$gray6-dark: gray6-dark;
-$gray5-dark: gray5-dark;
-$gray4-dark: gray4-dark;
-$gray3-dark: gray3-dark;
-$gray2-dark: gray2-dark;
-$gray-dark: gray-dark;
+// Grayscale from dark mode
+// $gray-100-dark: gray-100;
+// $gray-200-dark: gray-200;
+// $gray-300-dark: gray-300;
+// $gray-400-dark: gray-400;
+// $gray-500-dark: gray-500;
+// $gray-dark: gray;
+// $gray-600-dark: gray-600;
+// $gray-700-dark: gray-700;
+// $gray-800-dark: gray-800;
+// $gray-900-dark: gray-900;
 
 // Simple Colors
 $blue: blue;

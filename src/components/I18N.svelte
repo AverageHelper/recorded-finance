@@ -150,7 +150,7 @@
 	}
 </script>
 
-<svelte:element this={tag} bind:this={root} class={$$props["class"]}>
+<svelte:element this={tag} bind:this={root}>
 	{#each items as item}
 		{#if item.isVar}{#if debug}&lbrace;begin: {item.name}&rbrace;{/if}<span
 				data-i18n-key={item.name}

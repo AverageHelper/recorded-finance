@@ -6,7 +6,7 @@
 	import { useNavigate } from "svelte-navigator";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
 	import ErrorNotice from "../../components/ErrorNotice.svelte";
-	import Footer from "../../Footer.svelte";
+	import Form from "../../components/Form.svelte";
 	import TextField from "../../components/inputs/TextField.svelte";
 	import {
 		accountId as _accountId,
@@ -43,13 +43,8 @@
 		password = event.detail;
 	}
 
-	function onTotpInput(event: CustomEvent<string>) {
+	async function onTotpInput(event: CustomEvent<string>) {
 		token = event.detail;
-	}
-
-	async function onTotpPaste(event: CustomEvent<ClipboardEvent>) {
-		event.stopPropagation();
-		event.preventDefault();
 		await tick();
 		if (token.length === 6 && /^\d+$/.test(token)) {
 			// Only if six digits
@@ -87,22 +82,19 @@
 	}
 </script>
 
-{#if $bootstrapError}
-	<main class="content">
+<main class="content">
+	{#if $bootstrapError}
 		<ErrorNotice error={$bootstrapError} />
-		<Footer />
-	</main>
-{:else}
-	<main class="content">
-		<form on:submit|preventDefault={submit}>
-			<p>{$_("locked.heading")}</p>
+	{:else}
+		<Form on:submit={submit}>
+			<h1>{$_("locked.heading")}</h1>
+			<p>{$_("locked.explanation")}</p>
 
 			{#if needsTotp}
 				<TextField
 					bind:this={totpField}
 					value={token}
 					on:input={onTotpInput}
-					on:paste={onTotpPaste}
 					disabled={isLoading}
 					label={$_("login.totp")}
 					placeholder={$_("example.totp-code")}
@@ -125,29 +117,24 @@
 					on:input={onPasswordInput}
 					type="password"
 					label={$_("login.passphrase")}
-					placeholder="********"
 					autocomplete="current-password"
 					showsRequired={false}
 					required
 				/>
 			{/if}
-			<ActionButton type="submit" kind="bordered-primary" disabled={isLoading}
-				>{$_("locked.unlock")}</ActionButton
-			>
-
-			{#if $loginProcessState === "AUTHENTICATING"}
-				<span>{$_("login.process.reauthenticating")}</span>
-			{/if}
-			{#if $loginProcessState === "GENERATING_KEYS"}
-				<span>{$_("login.process.generating-keys")}</span>
-			{/if}
-			{#if $loginProcessState === "FETCHING_KEYS"}
-				<span>{$_("login.process.fetching-keys")}</span>
-			{/if}
-			{#if $loginProcessState === "DERIVING_PKEY"}
-				<span>{$_("login.process.deriving-pkey")}</span>
-			{/if}
-		</form>
-		<Footer />
-	</main>
-{/if}
+			<ActionButton type="submit" disabled={isLoading}>
+				{#if $loginProcessState === null}
+					<span>{$_("locked.unlock")}</span>
+				{:else if $loginProcessState === "AUTHENTICATING"}
+					<span>{$_("locked.unlock-ongoing")}: {$_("login.process.reauthenticating")}</span>
+				{:else if $loginProcessState === "GENERATING_KEYS"}
+					<span>{$_("locked.unlock-ongoing")}: {$_("login.process.generating-keys")}</span>
+				{:else if $loginProcessState === "FETCHING_KEYS"}
+					<span>{$_("locked.unlock-ongoing")}: {$_("login.process.fetching-keys")}</span>
+				{:else if $loginProcessState === "DERIVING_PKEY"}
+					<span>{$_("locked.unlock-ongoing")}: {$_("login.process.deriving-pkey")}</span>
+				{/if}
+			</ActionButton>
+		</Form>
+	{/if}
+</main>

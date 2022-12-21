@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { _ } from "../../i18n";
 	import { createEventDispatcher } from "svelte";
+	import { FormGroup, Input } from "sveltestrap";
 	import { stringFormattedDate } from "../../transformers/stringFormattedDate";
 	import ActionButton from "../buttons/ActionButton.svelte";
 
@@ -30,11 +31,9 @@
 	}
 </script>
 
-<div class="date-input-9992f6dc">
-	<label class="text-input__container">
-		<div class="text-input__label">{label}</div>
-		<input
-			class="text-input text-input--has-value"
+<div class="date-input">
+	<FormGroup floating {label}>
+		<Input
 			type="datetime-local"
 			{pattern}
 			max={stringFormattedDate(max)}
@@ -42,74 +41,26 @@
 			value={stringFormattedDate(value)}
 			on:input={onDateUpdated}
 		/>
-	</label>
-	<ActionButton kind="bordered" on:click={reset}>{$_("date-time.now")}</ActionButton>
+	</FormGroup>
+	<ActionButton kind="info" on:click={reset}>{$_("date-time.now")}</ActionButton>
 </div>
 
-<style lang="scss" global>
+<style lang="scss">
 	@use "styles/colors" as *;
 
-	.date-input-9992f6dc {
+	.date-input {
 		display: flex;
 		flex-flow: row nowrap;
-		align-items: flex-end;
+		align-items: center;
+		margin-bottom: 1rem;
 
-		button {
-			padding: 0.4em 0;
-			margin: 0.6em 0;
-			margin-left: 1em;
-			width: fit-content;
+		:global(.mb-3.form-floating) {
+			margin-bottom: 0 !important; // to override Bootstrap's own !important declaration
+			flex-grow: 1;
 		}
 
-		.text-input {
-			display: block;
-			border: 0;
-			border-bottom: 2px solid color($gray5);
-			background-color: color($input-background);
-			padding: 0.5em;
-			width: 100%;
-			font-size: 1em;
-			text-overflow: ellipsis;
-			transition: all 0.2s ease;
-			box-sizing: border-box;
-
-			&::placeholder {
-				color: color($secondary-label);
-			}
-
-			&__container {
-				display: block;
-				padding: 0.6em 0;
-				width: 100%;
-			}
-
-			&__label {
-				display: block;
-				color: color($blue);
-				user-select: none;
-				font-weight: 700;
-				font-size: 0.9em;
-				width: 100%;
-			}
-
-			&:focus,
-			&:focus-within,
-			&.text-input--has-value {
-				outline: none;
-			}
-			&:focus,
-			&:focus-within {
-				border-bottom-color: color($blue);
-			}
-
-			&:disabled {
-				background-color: inherit;
-				opacity: 0.7;
-
-				& ~ .text-input__label {
-					opacity: 0.7;
-				}
-			}
+		:global(button) {
+			margin-left: 8pt;
 		}
 	}
 </style>

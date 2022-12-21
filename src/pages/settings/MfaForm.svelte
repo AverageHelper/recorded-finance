@@ -2,6 +2,7 @@
 	import { _ } from "../../i18n";
 	import { currentUser } from "../../store/authStore";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
+	import Form from "../../components/Form.svelte";
 	import MfaEnrollModal from "./MfaEnrollModal.svelte";
 	import MfaUnenrollModal from "./MfaUnenrollModal.svelte";
 
@@ -24,20 +25,22 @@
 	}
 </script>
 
-<!-- TODO: I18N -->
-<form on:submit|preventDefault>
-	<h3>Multi-factor Authentication</h3>
-	<p
-		>Your password is a single authentication factor ("what you know"). Adding a second factor
-		("what you have" or "what you are") increases your account's security by, like, a lot.</p
-	>
+<Form>
+	<h3>{$_("settings.mfa.general.heading")}</h3>
+	<p>{$_("settings.mfa.general.explanation")}</p>
 
-	{#if isEnrolled}
-		<ActionButton kind="bordered" on:click={unenroll}>Unenroll 2FA</ActionButton>
-	{:else}
-		<ActionButton kind="bordered" on:click={enroll}>Enroll 2FA</ActionButton>
-	{/if}
+	<div class="buttons">
+		{#if isEnrolled}
+			<ActionButton kind="info" on:click={unenroll}
+				>{$_("settings.mfa.general.unenroll-action")}</ActionButton
+			>
+		{:else}
+			<ActionButton kind="info" on:click={enroll}
+				>{$_("settings.mfa.general.enroll-action")}</ActionButton
+			>
+		{/if}
+	</div>
 
 	<MfaEnrollModal isOpen={isEnrollingMfa} on:finished={closeModals} />
 	<MfaUnenrollModal isOpen={isUnenrollingMfa} on:finished={closeModals} />
-</form>
+</Form>

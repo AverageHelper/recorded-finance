@@ -44,47 +44,36 @@
 	}
 </script>
 
-<label class="currency-input-85aa6a92__container {$$props['class']}">
+<div class="currency-input">
 	<TextField
-		class="currency-input-85aa6a92"
 		label={label ?? undefined}
 		value={presentableValue}
 		maxlength={18}
 		placeholder={zeroValue}
 		on:input={onInput}
 	/>
-	<ActionButton class="negate" on:click={onClick}
-		>{$_("currency.positive-or-negative")}</ActionButton
-	>
-</label>
+	<ActionButton kind="info" on:click={onClick}>{$_("currency.positive-or-negative")}</ActionButton>
+</div>
 
-<style lang="scss" global>
+<style lang="scss">
 	@use "styles/colors" as *;
 
-	.currency-input-85aa6a92 {
-		&__container {
-			position: relative;
+	.currency-input {
+		display: flex;
+		flex-flow: row nowrap;
+		align-items: center;
+		margin-bottom: 1rem;
 
-			.negate {
-				position: absolute;
-				right: 2pt;
-				bottom: 19%;
-				font-size: 100%;
-				min-height: 1em;
-				min-width: 2em;
-				height: 2em;
-				border-radius: 4pt;
+		:global(.mb-3.form-floating) {
+			margin-bottom: 0 !important; // to override Bootstrap's own !important declaration
+		}
 
-				@media (hover: hover) {
-					&:hover {
-						background: color($gray4);
-					}
+		&:first-child {
+			flex-grow: 1;
+		}
 
-					&:hover:disabled {
-						background: none;
-					}
-				}
-			}
+		:global(button) {
+			margin-left: 8pt;
 		}
 	}
 </style>

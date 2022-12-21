@@ -29,10 +29,8 @@
 		</I18N>
 	</span>
 
-	<ActionButton slot="primary-action" kind="bordered-destructive" on:click={yes}
+	<ActionButton slot="primary-action" kind="destructive" on:click={yes}
 		>{$_("common.yes")}</ActionButton
 	>
-	<ActionButton slot="secondary-action" kind="bordered-primary" on:click={no}
-		>{$_("common.no")}</ActionButton
-	>
+	<ActionButton slot="secondary-action" on:click={no}>{$_("common.no")}</ActionButton>
 </Confirm>

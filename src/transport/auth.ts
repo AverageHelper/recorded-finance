@@ -177,7 +177,7 @@ export async function enrollTotp(db: AccountableDB): Promise<string> {
 
 	const { secret } = await run(getV0TotpSecret, db);
 
-	if (secret === undefined) throw new TypeError("Expected secret from server, but got nothing"); // TODO: I18N
+	if (secret === undefined) throw new TypeError(t("error.server.missing-secret"));
 
 	return secret;
 }

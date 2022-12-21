@@ -31,7 +31,7 @@
 		"@averagehelper/job-queue": "1.0.1",
 		"@zip.js/zip.js": "2.4.26",
 		"atob-lite": "2.0.0",
-		"bootstrap": "5.2.0",
+		"bootstrap": "5.2.3",
 		"btoa-lite": "1.0.0",
 		"buffer": "6.0.3",
 		"crypto-js": "4.1.1",
@@ -45,6 +45,7 @@
 		"svelte-i18n": "3.4.0",
 		"svelte-navigator": "3.1.6",
 		"svelte-portal": "2.2.0",
+		"sveltestrap": "5.10.0",
 		"uuid": "8.3.2"
 	},
 	"devDependencies": {

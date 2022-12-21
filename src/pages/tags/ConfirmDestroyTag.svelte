@@ -44,13 +44,11 @@
 		{$_("tags.delete.action-cannot-be-undone")}</span
 	>
 
-	<ActionButton slot="primary-action" kind="bordered-destructive" on:click={yes}
+	<ActionButton slot="primary-action" kind="destructive" on:click={yes}
 		>{$_("common.yes")}</ActionButton
 	>
-	<ActionButton slot="secondary-action" kind="bordered-primary" on:click={no}
-		>{$_("common.no")}</ActionButton
-	>
-	<!-- <ActionButton slot="cancel-action" kind="bordered-secondary" on:click={no}>{$_("common.cancel")}</ActionButton> -->
+	<ActionButton slot="secondary-action" on:click={no}>{$_("common.no")}</ActionButton>
+	<!-- <ActionButton slot="cancel-action" kind="secondary" on:click={no}>{$_("common.cancel")}</ActionButton> -->
 </Confirm>
 
 <style lang="scss">

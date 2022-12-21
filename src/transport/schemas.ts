@@ -3,6 +3,7 @@ import type { DataItem } from "./api";
 import type { Infer } from "superstruct";
 import { isArray } from "../helpers/isArray";
 import { isObject } from "../helpers/isObject";
+import { t } from "../i18n";
 import { UnexpectedResponseError } from "./errors";
 import {
 	array,
@@ -93,13 +94,15 @@ export function assertRawServerResponse(tbd: unknown): asserts tbd is RawServerR
 	try {
 		assertSchema(tbd, rawServerResponse);
 	} catch (error) {
-		let message: string;
+		let response: string;
 		if (error instanceof StructError) {
-			message = error.message;
+			response = error.message;
 		} else {
-			message = JSON.stringify(error, undefined, "  ");
+			response = JSON.stringify(error, undefined, "  ");
 		}
-		throw new UnexpectedResponseError(`Invalid server response: ${message}`); // TODO: I18N
+		throw new UnexpectedResponseError(
+			t("error.network.invalid-response", { values: { response } })
+		);
 	}
 }
 
@@ -119,12 +122,14 @@ export function assertFileData(tbd: unknown): asserts tbd is FileData {
 	try {
 		assertSchema(tbd, fileData);
 	} catch (error) {
-		let message: string;
+		let response: string;
 		if (error instanceof StructError) {
-			message = error.message;
+			response = error.message;
 		} else {
-			message = JSON.stringify(error, undefined, "  ");
+			response = JSON.stringify(error, undefined, "  ");
 		}
-		throw new UnexpectedResponseError(`Invalid server response: ${message}`); // TODO: i18n
+		throw new UnexpectedResponseError(
+			t("error.network.invalid-response", { values: { response } })
+		);
 	}
 }

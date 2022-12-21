@@ -17,25 +17,10 @@
 </script>
 
 <ListItem
-	class="add-35efc25c"
+	kind="add"
 	title={$_("actions.add-new-noun", { values: { noun } })}
 	to=""
 	on:click={onClick}
 >
-	<PlusWithCircle slot="icon" class="plus" />
+	<PlusWithCircle slot="icon" />
 </ListItem>
-
-<style lang="scss" global>
-	@use "styles/colors" as *;
-
-	.add-35efc25c {
-		color: color($green);
-		min-height: 44px;
-
-		.plus {
-			margin-right: 7pt;
-			margin-left: 4pt;
-			color: color($green);
-		}
-	}
-</style>

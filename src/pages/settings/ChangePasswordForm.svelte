@@ -4,6 +4,7 @@
 	import { toast } from "@zerodevx/svelte-toast";
 	import { updatePassword } from "../../store/authStore";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
+	import Form from "../../components/Form.svelte";
 	import TextField from "../../components/inputs/TextField.svelte";
 
 	let isLoading = false;
@@ -41,14 +42,13 @@
 	}
 </script>
 
-<form on:submit|preventDefault={submitNewPassword}>
+<Form on:submit={submitNewPassword}>
 	<h3>{$_("settings.auth.passphrase-heading")}</h3>
 	<TextField
 		value={currentPassword}
 		on:input={e => (currentPassword = e.detail)}
 		type="password"
 		label={$_("login.current-passphrase")}
-		placeholder="********"
 		autocomplete="current-password"
 		showsRequired={false}
 		required
@@ -58,7 +58,6 @@
 		on:input={e => (newPassword = e.detail)}
 		type="password"
 		label={$_("login.new-passphrase")}
-		placeholder="************"
 		autocomplete="new-password"
 		showsRequired={false}
 		required
@@ -68,30 +67,19 @@
 		on:input={e => (newPasswordRepeat = e.detail)}
 		type="password"
 		label={$_("login.new-passphrase-repeat")}
-		placeholder="************"
 		autocomplete="new-password"
 		showsRequired={false}
 		required
 	/>
-	<div class="buttons-47e1be0c">
-		<ActionButton type="submit" kind="bordered-primary" disabled={!hasChanges || isLoading}
+
+	<div class="buttons">
+		<ActionButton type="submit" disabled={!hasChanges || isLoading}
 			>{$_("settings.auth.update-passphrase")}</ActionButton
 		>
 		{#if hasChanges}
-			<ActionButton kind="bordered" disabled={isLoading} on:click={reset}
+			<ActionButton kind="info" disabled={isLoading} on:click={reset}
 				>{$_("common.reset")}</ActionButton
 			>
 		{/if}
 	</div>
-</form>
-
-<style lang="scss" global>
-	.buttons-47e1be0c {
-		display: flex;
-		flex-flow: row nowrap;
-
-		:not(:last-child) {
-			margin-right: 8pt;
-		}
-	}
-</style>
+</Form>

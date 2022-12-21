@@ -11,8 +11,11 @@
 	$: labelId = labelIdForTab(tab);
 </script>
 
-<a class="item-container {isSelected ? 'selected' : ''} {$$props['class']}" {href} use:link
-	>{$_(labelId)}</a
+<a class="item-container {isSelected ? 'selected' : ''}" {href} use:link
+	>{$_(labelId)}
+	{#if isSelected}
+		<span class="visually-hidden">{$_("common.current-aside")}</span>
+	{/if}</a
 >
 
 <style lang="scss">
@@ -26,14 +29,16 @@
 		padding: 0 1em;
 		font-weight: bold;
 		text-decoration: none;
+		background-color: color($navbar-background);
+		color: color($label);
 
 		&.selected {
-			border-bottom: 2pt solid color($link);
+			border-bottom: 2pt solid color($label);
 		}
 
 		@media (hover: hover) {
 			&:hover {
-				background: color($gray4);
+				background: color($secondary-overlay);
 				text-decoration: none;
 			}
 		}
