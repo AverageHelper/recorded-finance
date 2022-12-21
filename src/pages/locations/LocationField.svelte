@@ -104,7 +104,7 @@
 			data = await fetchLocationData();
 		} catch (error) {
 			// CORS errors, and possibly others, throw an empty string. Not sure why.
-			handleError(((error as null | undefined) ?? "") || "Something went wrong, not sure what.");
+			handleError(((error as null | undefined) ?? "") || "Something went wrong, not sure what."); // TODO: I18N
 			return;
 		}
 

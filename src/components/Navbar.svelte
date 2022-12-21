@@ -10,7 +10,7 @@
 		settingsPath,
 	} from "../router";
 	import { _ } from "../i18n";
-	import { APP_ROOTS } from "../router";
+	import { APP_ROOTS } from "../model/ui/tabs";
 	import { Collapse, NavbarToggler, Nav, NavItem } from "sveltestrap";
 	import { isLoginEnabled, pKey, uid } from "../store";
 	import { Link } from "svelte-navigator";
