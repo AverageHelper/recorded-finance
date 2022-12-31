@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Improved a11y scores on [webpagetest.org](https://www.webpagetest.org/).
 
+### Security
+- Updated `jsonwebtoken` package used on the server.
+
 ## [0.15.2] - 2022-12-21
 ### Changed
 - Bundle Bootstrap CSS directly, avoid fetching from a CDN.
