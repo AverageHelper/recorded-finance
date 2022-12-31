@@ -457,7 +457,7 @@
 		"create-account": "Crie a sua conta aqui",
 		"cookie-disclaimer-header": "Como funcionam os nossos cookies",
 		"cookie-disclaimer": "O login definirá dois cookies, que juntos contêm informações que declaram seu acesso aos seus dados. Esses cookies permitem que seu navegador lembre com segurança que você está conectado. A alternativa é recuperarmos suas informações de login com JavaScript, que não é um local seguro para guardar coisas. {more}",
-		"cookie-more": "Mais informações.",
+		"cookie-more": "Mais informações...",
 		"process": {
 			"authenticating": "Autenticação...",
 			"reauthenticating": "Autenticando novamente...",
