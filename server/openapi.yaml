@@ -2,15 +2,15 @@ openapi: 3.0.1
 info:
   title: Accountable Server
   version: 0.8.4
-  description: This is the Accountable Server. All the server does is store data given to it by the client. The server controls access to the data with basic password-based auth with optional time-based multi-factor auth. The Accountable client does most of the hard work of encrypting the user's data. You can read Accountable's source code on [GitHub](https://github.com/AverageHelper/accountable-svelte).
+  description: This is the Accountable Server. All the server does is store data given to it by the client. The server controls access to the data with basic password-based auth with optional time-based multi-factor auth. The Accountable client does most of the hard work of encrypting the user's data. You can read Accountable's source code on [GitHub](https://github.com/AverageHelper/recorded-finance).
   license:
     name: GNU General Public License v3.0
-    url: https://github.com/AverageHelper/accountable-svelte/blob/main/LICENSE
+    url: https://github.com/AverageHelper/recorded-finance/blob/main/LICENSE
 externalDocs:
   description: Find out more about Accountable
-  url: https://accountable.average.name
+  url: https://recorded.finance
 servers:
-  - url: https://api.accountable.average.name
+  - url: https://recorded.finance/api/
 tags:
   - name: misc
     description: Make sure everything works

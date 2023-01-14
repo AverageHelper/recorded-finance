@@ -98,7 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.12.0] - 2022-09-24
 ### Added
-- Server endpoints to support TOTP 2FA. See our [API documentation](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/AverageHelper/accountable-svelte/HEAD/server/openapi.yaml) for details.
+- Server endpoints to support TOTP 2FA. See our [API documentation](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/AverageHelper/recorded-finance/HEAD/server/openapi.yaml) for details.
 
 ### Changed
 - BREAKING: The server now requires the `AUTH_SECRET` environment variable to be set. This value should be randomly generated (perhaps using a [password generator](https://bitwarden.com/password-generator/)) and kept safe. This value lets the server sign JWTs and generate user secrets. See the [README](/server/README.md) for info.
@@ -114,7 +114,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.11.2] - 2022-09-09
 ### Added
-- Automated our release process and changelog handling. This changelog entry is a test that I only need to add an entry here for a release to be automatically deployed. The [Releases](https://github.com/AverageHelper/accountable-svelte/releases) view should automatically see this entry.
+- Automated our release process and changelog handling. This changelog entry is a test that I only need to add an entry here for a release to be automatically deployed. The [Releases](https://github.com/AverageHelper/recorded-finance/releases) view should automatically see this entry.
 
 ### Changed
 - Updated some CI/CD analysis tools.
@@ -153,7 +153,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.10.0] - 2022-08-05
 ### Changed
 - Ported front-end code from Vue to Svelte. It's [pretty cool](https://svelte.dev/).
-  - I want to experiment with Accountable under different front-end paradigms. So far, I've used [Flutter](https://github.com/AverageHelper/accountable-flutter), [Vue](https://github.com/AverageHelper/accountable-vue), and now [Svelte](https://github.com/AverageHelper/accountable-svelte). This version is the Svelte port.
+  - I want to experiment with Accountable under different front-end paradigms. So far, I've used [Flutter](https://github.com/AverageHelper/accountable-flutter), [Vue](https://github.com/AverageHelper/accountable-vue), and now [Svelte](https://github.com/AverageHelper/recorded-finance). This version is the Svelte port.
   - Svelte differs from Vue in that Svelte is a compiler, not a runtime. The bundled output contains only code needed for each component to work. There's no virtual DOM, but there's also no helpful front-end safety net.
   - Eventually, I plan to separate the back-end code from the front-end, so I'm not duplicating that part across several front-end repositories.
 
@@ -367,55 +367,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial commit
 
-[Unreleased]: https://github.com/AverageHelper/accountable-svelte/compare/v0.15.2...HEAD
-[0.15.2]: https://github.com/AverageHelper/accountable-svelte/compare/v0.15.1...v0.15.2
-[0.15.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.15.0...v0.15.1
-[0.15.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.14.6...v0.15.0
-[0.14.6]: https://github.com/AverageHelper/accountable-svelte/compare/v0.14.5...v0.14.6
-[0.14.5]: https://github.com/AverageHelper/accountable-svelte/compare/v0.14.4...v0.14.5
-[0.14.4]: https://github.com/AverageHelper/accountable-svelte/compare/v0.14.3...v0.14.4
-[0.14.3]: https://github.com/AverageHelper/accountable-svelte/compare/v0.14.2...v0.14.3
-[0.14.2]: https://github.com/AverageHelper/accountable-svelte/compare/v0.14.1...v0.14.2
-[0.14.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.14.0...v0.14.1
-[0.14.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.13.2...v0.14.0
-[0.13.2]: https://github.com/AverageHelper/accountable-svelte/compare/v0.13.1...v0.13.2
-[0.13.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.13.0...v0.13.1
-[0.13.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.12.0...v0.13.0
-[0.12.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.11.3...v0.12.0
-[0.11.3]: https://github.com/AverageHelper/accountable-svelte/compare/v0.11.2...v0.11.3
-[0.11.2]: https://github.com/AverageHelper/accountable-svelte/compare/v0.11.1...v0.11.2
-[0.11.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.11.0...v0.11.1
-[0.11.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.10.2...v0.11.0
-[0.10.2]: https://github.com/AverageHelper/accountable-svelte/compare/v0.10.1...v0.10.2
-[0.10.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.10.0...v0.10.1
-[0.10.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.9.1...v0.10.0
-[0.9.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.9.0...v0.9.1
-[0.9.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.8.1...v0.9.0
-[0.8.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.8.0...v0.8.1
-[0.8.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.7.0...v0.8.0
-[0.7.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.6.4...v0.7.0
-[0.6.4]: https://github.com/AverageHelper/accountable-svelte/compare/v0.6.3...v0.6.4
-[0.6.3]: https://github.com/AverageHelper/accountable-svelte/compare/v0.6.2...v0.6.3
-[0.6.2]: https://github.com/AverageHelper/accountable-svelte/compare/v0.6.1...v0.6.2
-[0.6.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.6.0...v0.6.1
-[0.6.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.5.7...v0.6.0
-[0.5.7]: https://github.com/AverageHelper/accountable-svelte/compare/v0.5.6...v0.5.7
-[0.5.6]: https://github.com/AverageHelper/accountable-svelte/compare/v0.5.5...v0.5.6
-[0.5.5]: https://github.com/AverageHelper/accountable-svelte/compare/v0.5.4...v0.5.5
-[0.5.4]: https://github.com/AverageHelper/accountable-svelte/compare/v0.5.3...v0.5.4
-[0.5.3]: https://github.com/AverageHelper/accountable-svelte/compare/v0.5.2...v0.5.3
-[0.5.2]: https://github.com/AverageHelper/accountable-svelte/compare/v0.5.1...v0.5.2
-[0.5.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.5.0...v0.5.1
-[0.5.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.4.3...v0.5.0
-[0.4.3]: https://github.com/AverageHelper/accountable-svelte/compare/v0.4.2...v0.4.3
-[0.4.2]: https://github.com/AverageHelper/accountable-svelte/compare/v0.4.1...v0.4.2
-[0.4.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.4.0...v0.4.1
-[0.4.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.3.4...v0.4.0
-[0.3.4]: https://github.com/AverageHelper/accountable-svelte/compare/v0.3.3...v0.3.4
-[0.3.3]: https://github.com/AverageHelper/accountable-svelte/compare/v0.3.2...v0.3.3
-[0.3.2]: https://github.com/AverageHelper/accountable-svelte/compare/v0.3.1...v0.3.2
-[0.3.1]: https://github.com/AverageHelper/accountable-svelte/compare/v0.3.0...v0.3.1
-[0.3.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.2.0...v0.3.0
-[0.2.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/AverageHelper/accountable-svelte/compare/v0.0.0...v0.1.0
-[0.0.0]: https://github.com/AverageHelper/accountable-svelte/releases/tag/v0.0.0
+[Unreleased]: https://github.com/AverageHelper/recorded-finance/compare/v0.15.2...HEAD
+[0.15.2]: https://github.com/AverageHelper/recorded-finance/compare/v0.15.1...v0.15.2
+[0.15.1]: https://github.com/AverageHelper/recorded-finance/compare/v0.15.0...v0.15.1
+[0.15.0]: https://github.com/AverageHelper/recorded-finance/compare/v0.14.6...v0.15.0
+[0.14.6]: https://github.com/AverageHelper/recorded-finance/compare/v0.14.5...v0.14.6
+[0.14.5]: https://github.com/AverageHelper/recorded-finance/compare/v0.14.4...v0.14.5
+[0.14.4]: https://github.com/AverageHelper/recorded-finance/compare/v0.14.3...v0.14.4
+[0.14.3]: https://github.com/AverageHelper/recorded-finance/compare/v0.14.2...v0.14.3
+[0.14.2]: https://github.com/AverageHelper/recorded-finance/compare/v0.14.1...v0.14.2
+[0.14.1]: https://github.com/AverageHelper/recorded-finance/compare/v0.14.0...v0.14.1
+[0.14.0]: https://github.com/AverageHelper/recorded-finance/compare/v0.13.2...v0.14.0
+[0.13.2]: https://github.com/AverageHelper/recorded-finance/compare/v0.13.1...v0.13.2
+[0.13.1]: https://github.com/AverageHelper/recorded-finance/compare/v0.13.0...v0.13.1
+[0.13.0]: https://github.com/AverageHelper/recorded-finance/compare/v0.12.0...v0.13.0
+[0.12.0]: https://github.com/AverageHelper/recorded-finance/compare/v0.11.3...v0.12.0
+[0.11.3]: https://github.com/AverageHelper/recorded-finance/compare/v0.11.2...v0.11.3
+[0.11.2]: https://github.com/AverageHelper/recorded-finance/compare/v0.11.1...v0.11.2
+[0.11.1]: https://github.com/AverageHelper/recorded-finance/compare/v0.11.0...v0.11.1
+[0.11.0]: https://github.com/AverageHelper/recorded-finance/compare/v0.10.2...v0.11.0
+[0.10.2]: https://github.com/AverageHelper/recorded-finance/compare/v0.10.1...v0.10.2
+[0.10.1]: https://github.com/AverageHelper/recorded-finance/compare/v0.10.0...v0.10.1
+[0.10.0]: https://github.com/AverageHelper/recorded-finance/compare/v0.9.1...v0.10.0
+[0.9.1]: https://github.com/AverageHelper/recorded-finance/compare/v0.9.0...v0.9.1
+[0.9.0]: https://github.com/AverageHelper/recorded-finance/compare/v0.8.1...v0.9.0
+[0.8.1]: https://github.com/AverageHelper/recorded-finance/compare/v0.8.0...v0.8.1
+[0.8.0]: https://github.com/AverageHelper/recorded-finance/compare/v0.7.0...v0.8.0
+[0.7.0]: https://github.com/AverageHelper/recorded-finance/compare/v0.6.4...v0.7.0
+[0.6.4]: https://github.com/AverageHelper/recorded-finance/compare/v0.6.3...v0.6.4
+[0.6.3]: https://github.com/AverageHelper/recorded-finance/compare/v0.6.2...v0.6.3
+[0.6.2]: https://github.com/AverageHelper/recorded-finance/compare/v0.6.1...v0.6.2
+[0.6.1]: https://github.com/AverageHelper/recorded-finance/compare/v0.6.0...v0.6.1
+[0.6.0]: https://github.com/AverageHelper/recorded-finance/compare/v0.5.7...v0.6.0
+[0.5.7]: https://github.com/AverageHelper/recorded-finance/compare/v0.5.6...v0.5.7
+[0.5.6]: https://github.com/AverageHelper/recorded-finance/compare/v0.5.5...v0.5.6
+[0.5.5]: https://github.com/AverageHelper/recorded-finance/compare/v0.5.4...v0.5.5
+[0.5.4]: https://github.com/AverageHelper/recorded-finance/compare/v0.5.3...v0.5.4
+[0.5.3]: https://github.com/AverageHelper/recorded-finance/compare/v0.5.2...v0.5.3
+[0.5.2]: https://github.com/AverageHelper/recorded-finance/compare/v0.5.1...v0.5.2
+[0.5.1]: https://github.com/AverageHelper/recorded-finance/compare/v0.5.0...v0.5.1
+[0.5.0]: https://github.com/AverageHelper/recorded-finance/compare/v0.4.3...v0.5.0
+[0.4.3]: https://github.com/AverageHelper/recorded-finance/compare/v0.4.2...v0.4.3
+[0.4.2]: https://github.com/AverageHelper/recorded-finance/compare/v0.4.1...v0.4.2
+[0.4.1]: https://github.com/AverageHelper/recorded-finance/compare/v0.4.0...v0.4.1
+[0.4.0]: https://github.com/AverageHelper/recorded-finance/compare/v0.3.4...v0.4.0
+[0.3.4]: https://github.com/AverageHelper/recorded-finance/compare/v0.3.3...v0.3.4
+[0.3.3]: https://github.com/AverageHelper/recorded-finance/compare/v0.3.2...v0.3.3
+[0.3.2]: https://github.com/AverageHelper/recorded-finance/compare/v0.3.1...v0.3.2
+[0.3.1]: https://github.com/AverageHelper/recorded-finance/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/AverageHelper/recorded-finance/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/AverageHelper/recorded-finance/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/AverageHelper/recorded-finance/compare/v0.0.0...v0.1.0
+[0.0.0]: https://github.com/AverageHelper/recorded-finance/releases/tag/v0.0.0

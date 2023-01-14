@@ -1,5 +1,5 @@
 {
-	"name": "accountable-server",
+	"name": "recorded-finance-server",
 	"version": "0.8.5",
 	"scripts": {
 		"start": "./node_modules/.bin/vercel pull && npm run build:client && ./node_modules/.bin/concurrently -s first -kn VERCEL,APP \"npm run vercel:dev -- --color\" \"sleep 3 && npm run dev:client\"",

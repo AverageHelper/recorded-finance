@@ -1,6 +1,6 @@
-# Accountable
+# Recorded Finance
 
-[![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/AverageHelper/accountable-svelte.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/AverageHelper/accountable-svelte/context:javascript) [![Total alerts](https://img.shields.io/lgtm/alerts/g/AverageHelper/accountable-svelte.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/AverageHelper/accountable-svelte/alerts/)
+[![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/AverageHelper/recorded-finance.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/AverageHelper/recorded-finance/context:javascript) [![Total alerts](https://img.shields.io/lgtm/alerts/g/AverageHelper/recorded-finance.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/AverageHelper/recorded-finance/alerts/)
 
 A Svelte app for managing monetary assets. All data is encrypted client-side and stored on a server that you control.
 
@@ -69,7 +69,7 @@ If you're hosting the Accountable server on the same machine that hosts the Acco
 Using `localhost` for this will cause clients to try _themselves_ as the Accountable server, and that's usually not what you want.
 
 ```sh
-$ cd accountable-svelte       # Be in the root directory
+$ cd recorded-finance       # Be in the root directory
 $ npm ci                      # Install dependencies
 $ npm run build:client:quick  # Compile the client
 $ npm run dev:client          # Start a local webserver
@@ -79,7 +79,7 @@ $ npm run dev:client          # Start a local webserver
 
 The webserver will print a URL in your terminal to paste into your browser. It should look something like [http://127.0.0.1:5173](http://127.0.0.1:5173). Give that a go, and you're off to the races!
 
-I recommend you deploy the client (the contents of the `accountable-svelte/dist` folder) on a webserver like [nginx](https://nginx.org/en/).
+I recommend you deploy the client (the contents of the `recorded-finance/dist` folder) on a webserver like [nginx](https://nginx.org/en/).
 
 DO NOT FORGET your Accountable ACCOUNT ID or PASSWORD. If you do, your data is irretrievably lost. You have been warned. :)
 
@@ -89,7 +89,7 @@ DO NOT FORGET your Accountable ACCOUNT ID or PASSWORD. If you do, your data is i
 
 ## Contributing
 
-This project is entirely open source. Do with it what you will. If you're willing to help me improve this project, consider [filing an issue](https://github.com/AverageHelper/accountable-svelte/issues/new/choose).
+This project is entirely open source. Do with it what you will. If you're willing to help me improve this project, consider [filing an issue](https://github.com/AverageHelper/recorded-finance/issues/new/choose).
 
 See [CONTRIBUTING.md](/CONTRIBUTING.md) for ways to contribute.
 
@@ -118,7 +118,7 @@ While our cookies indeed deal with the user's login "session," [GDPR.edu](https:
 
 ### How do releases work?
 
-The manual way is complicated: add a version entry to [CHANGELOG.md](/CHANGELOG.md), straighten out the not-yet-valid URLs in the changelog footer, update [package.json](/package.json) and [package-lock.json](/package-lock.json) (the latter using `npm i`), then merge the PR, then copy the changelog entry to cut a new [Release](https://github.com/AverageHelper/accountable-svelte/releases) and tag using GitHub's UI. The changelog's version links now point to the relevant newly-created tags.
+The manual way is complicated: add a version entry to [CHANGELOG.md](/CHANGELOG.md), straighten out the not-yet-valid URLs in the changelog footer, update [package.json](/package.json) and [package-lock.json](/package-lock.json) (the latter using `npm i`), then merge the PR, then copy the changelog entry to cut a new [Release](https://github.com/AverageHelper/recorded-finance/releases) and tag using GitHub's UI. The changelog's version links now point to the relevant newly-created tags.
 
 I've missed some steps before. For example, version [0.9.0](/CHANGELOG.md#090---2022-07-12) didn't originally have a tag, so related comparison links were broken. Not ideal. Since we use [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), we can automate most of our release steps, as follows:
 
