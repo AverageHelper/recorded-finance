@@ -18,6 +18,12 @@ import * as serverVersion from "./api/v0/version";
 
 const PORT = 40850;
 
+// For CSRF
+// 0. Set an HttpOnly and SameSite cookie on client on login with a JWT that contains a new random value (or maybe a simple HMAC?)
+// 1. Send the CSRF value in both a cookie and as a request param
+// 2. Server verifies both match
+// 3. Reject the request (HTTP 400?) if the values do not match or one is missing
+
 export const app = express()
 	.use(helmet()) // also disables 'x-powered-by' header
 	.use(cors());

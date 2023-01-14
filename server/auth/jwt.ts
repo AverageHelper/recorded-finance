@@ -160,6 +160,12 @@ export function jwtFromRequest(req: APIRequest, res: APIResponse): string | null
 	return null;
 }
 
+/**
+ * Decodes and verifies the given JWT `token` value.
+ *
+ * @returns A Promise that resolves with an object containing the
+ * key-value pairs encoded in the JWT.
+ */
 export async function verifyJwt(token: string): Promise<JwtPayload> {
 	return await new Promise<JwtPayload>((resolve, reject) => {
 		_verifyJwt(token, persistentSecret, (err, payload) => {

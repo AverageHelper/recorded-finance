@@ -1,6 +1,6 @@
+import { allowedOriginHostnames } from "../constants/allowedOriginHostnames";
 import { assertMethod } from "./assertMethod";
 import { BadMethodError } from "../errors/BadMethodError";
-import { env } from "../environment";
 import { handleErrors } from "../handleErrors";
 import { logger } from "../logger";
 import { OriginError } from "../errors/OriginError";
@@ -66,7 +66,9 @@ export function dispatchRequests(
 export function apiHandler(method: HTTPMethod, cb: APIRequestHandler): APIRequestHandler {
 	return async (req, res) => {
 		await handleErrors(req, res, async (req, res) => {
+			// TODO: helmet?
 			cors(req, res);
+			// TODO: Handle CSURF
 
 			if (req.method === "OPTIONS") return respondOk(res);
 			assertMethod(req.method, method);
@@ -75,29 +77,12 @@ export function apiHandler(method: HTTPMethod, cb: APIRequestHandler): APIReques
 	};
 }
 
-const allowedOriginHostnames = new Set<string>();
-
-// Add typical localhost variants
-allowedOriginHostnames.add("localhost");
-allowedOriginHostnames.add("127.0.0.1");
-allowedOriginHostnames.add("::1");
-
-// Add configured host to list of allowed origins
-let configuredHostUrl = env("HOST") ?? env("VERCEL_URL") ?? null;
-if (configuredHostUrl !== null) {
-	if (!configuredHostUrl.startsWith("http")) {
-		configuredHostUrl = `https://${configuredHostUrl}`;
-	}
-	try {
-		const { hostname } = new URL(configuredHostUrl);
-		allowedOriginHostnames.add(hostname);
-	} catch {
-		logger.error(`Value for env key HOST is not a valid URL: '${configuredHostUrl}'`);
-	}
-}
-
-logger.debug(`allowedOriginHostnames: ${JSON.stringify(Array.from(allowedOriginHostnames))}`);
-
+/**
+ * Asserts that the request `Origin` header is valid; one of the following applies:
+ * - `Origin` is not provided (likely `curl` or a custom client)
+ * - `Origin` is some variant of `localhost`
+ * - `Origin` matches the configured front-end origin address
+ */
 function cors(req: APIRequest, res: APIResponse): void {
 	res.setHeader(
 		"Access-Control-Allow-Headers",
@@ -133,4 +118,6 @@ function cors(req: APIRequest, res: APIResponse): void {
 	logger.debug(`Handling request from origin: ${cleanOrigin}`);
 	res.setHeader("Access-Control-Allow-Origin", cleanOrigin);
 	res.setHeader("Access-Control-Allow-Credentials", "true");
+
+	// TODO: Also check Referrer header?
 }
