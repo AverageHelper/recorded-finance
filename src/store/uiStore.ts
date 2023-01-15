@@ -1,7 +1,7 @@
-import { AccountableError, NetworkError } from "../transport/errors/index.js";
-import { getServerVersion } from "../transport/server.js";
 import { derived, get, writable } from "svelte/store";
+import { getServerVersion } from "../transport/server.js";
 import { logger } from "../logger.js";
+import { NetworkError, PlatformError } from "../transport/errors/index.js";
 import { StructError } from "superstruct";
 import { t } from "../i18n.js";
 import { toast } from "@zerodevx/svelte-toast";
@@ -93,7 +93,7 @@ export async function loadServerVersion(): Promise<void> {
 
 export function handleError(error: unknown): void {
 	let message: string;
-	if (error instanceof AccountableError) {
+	if (error instanceof PlatformError) {
 		message = error.code;
 	} else if (error instanceof StructError) {
 		message = `ValidationError: ${error.message}`;

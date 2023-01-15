@@ -20,7 +20,11 @@
 
 	<!-- What kind of encryption? -->
 	<section>
-		<h2>{$_("security-faq.encryption-kind.question")}</h2>
+		<h2
+			>{$_("security-faq.encryption-kind.question", {
+				values: { platform: $_("common.platform") },
+			})}</h2
+		>
 		<p>
 			<I18N keypath="security-faq.encryption-kind.answer">
 				<!-- mge -->
@@ -37,10 +41,16 @@
 		<p>{$_("security-faq.where-keys.answer1")}</p>
 		<p>
 			<I18N keypath="security-faq.where-keys.answer2">
+				<!-- platform -->
+				<span>{$_("common.platform")}</span>
 				<!-- dek -->
 				<em>{$_("security-faq.where-keys.dek")}</em>
+				<!-- platform -->
+				<span>{$_("common.platform")}</span>
 				<!-- kek -->
 				<em>{$_("security-faq.where-keys.kek")}</em>
+				<!-- platform -->
+				<span>{$_("common.platform")}</span>
 			</I18N>
 		</p>
 		<p>
@@ -63,10 +73,20 @@
 
 	<!-- Auth: What about my password? -->
 	<section>
-		<h2>{$_("security-faq.passphrase-handling.question")}</h2>
-		<p>{$_("security-faq.passphrase-handling.answer1")}</p>
+		<h2
+			>{$_("security-faq.passphrase-handling.question", {
+				values: { platform: $_("common.platform") },
+			})}</h2
+		>
+		<p
+			>{$_("security-faq.passphrase-handling.answer1", {
+				values: { platform: $_("common.platform") },
+			})}</p
+		>
 		<p>
 			<I18N keypath="security-faq.passphrase-handling.answer2">
+				<!-- platform -->
+				<span>{$_("common.platform")}</span>
 				<!-- salts -->
 				<OutLink to="https://en.wikipedia.org/wiki/Salt_(cryptography)"
 					>{$_("security-faq.passphrase-handling.salts")}</OutLink
@@ -77,9 +97,15 @@
 				>
 			</I18N>
 		</p>
-		<p>{$_("security-faq.passphrase-handling.answer3")}</p>
+		<p
+			>{$_("security-faq.passphrase-handling.answer3", {
+				values: { platform: $_("common.platform") },
+			})}</p
+		>
 		<p>
 			<I18N keypath="security-faq.passphrase-handling.answer4">
+				<!-- platform -->
+				<span>{$_("common.platform")}</span>
 				<!-- dek -->
 				<em>{$_("security-faq.passphrase-handling.dek")}</em>
 			</I18N>
@@ -106,7 +132,11 @@
 	<section>
 		<h2>{$_("security-faq.change-passphrase.question")}</h2>
 		<p>{$_("security-faq.change-passphrase.answer1")}</p>
-		<p>{$_("security-faq.change-passphrase.answer2")}</p>
+		<p
+			>{$_("security-faq.change-passphrase.answer2", {
+				values: { platform: $_("common.platform") },
+			})}</p
+		>
 		<p>{$_("security-faq.change-passphrase.answer3")}</p>
 	</section>
 

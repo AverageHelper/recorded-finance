@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { _ } from "../../i18n";
-	import { AccountableError } from "../../transport/errors";
 	import { createEventDispatcher, onMount } from "svelte";
+	import { PlatformError } from "../../transport/errors";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
 	import Modal from "../../components/Modal.svelte";
 	import TextField from "../../components/inputs/TextField.svelte";
@@ -53,7 +53,7 @@
 		// Must already be logged in
 		const accountId = $currentUser?.accountId;
 		if (accountId === undefined) {
-			handleError(new AccountableError("auth/unauthenticated"));
+			handleError(new PlatformError("auth/unauthenticated"));
 			return;
 		}
 
@@ -78,7 +78,7 @@
 
 		// Must have already retrieved a secret
 		if (totpSecrets === null) {
-			handleError(new AccountableError("auth/unauthenticated"));
+			handleError(new PlatformError("auth/unauthenticated"));
 			return;
 		}
 

@@ -9,6 +9,8 @@
 		<h1 id="goals">{$_("about.goals.heading")}</h1>
 		<p>
 			<I18N keypath="about.goals.p1">
+				<!-- platform -->
+				<span>{$_("common.platform")}</span>
 				<!-- selfhost -->
 				<OutLink to="https://en.wikipedia.org/wiki/Self-hosting_(web_services)"
 					>{$_("about.goals.selfhost")}</OutLink
@@ -17,6 +19,10 @@
 				<OutLink to="https://en.wikipedia.org/wiki/Open-source_software"
 					>{$_("about.goals.opensource")}</OutLink
 				>
+				<!-- platform -->
+				<span>{$_("common.platform")}</span>
+				<!-- platform -->
+				<span>{$_("common.platform")}</span>
 			</I18N>
 		</p>
 	</section>
@@ -87,6 +93,7 @@
 	</section>
 	<!-- TODO: Reorganize. Mention https://www.budgetwithbuckets.com/ -->
 
+	<!-- TODO: Recorded Finance's Goal. Above mentions business model... what's ours? -->
 	<!-- TODO: About the "team" -->
 </main>
 

@@ -23,7 +23,7 @@ describe("TOTP", () => {
 	const accountId = "bob"; // doesn't matter much, just handy for the URI
 	const secret = base32Encode(Buffer.from("the user's special TOTP secret in plaintext"));
 	const secretUri = new URL(
-		`otpauth://totp/Accountable:${accountId}?algorithm=SHA1&digits=6&issuer=Accountable&period=30&secret=${secret}`
+		`otpauth://totp/RecordedFinance:${accountId}?algorithm=SHA1&digits=6&issuer=RecordedFinance&period=30&secret=${secret}`
 	);
 
 	test("secret generator throws if the seed is empty", () => {
@@ -68,13 +68,13 @@ describe("TOTP", () => {
 
 			expect(uri.protocol).toBe("otpauth:");
 			expect(uri.hostname).toBe("totp");
-			expect(uri.pathname).toBe(`/Accountable:${accountId}`);
+			expect(uri.pathname).toBe(`/RecordedFinance:${accountId}`);
 
 			const searchParams = uri.searchParams; // should have no more than the needed params
 			expect(Array.from(searchParams.keys())).toHaveLength(5);
 			expect(searchParams.get("algorithm")).toBe("SHA1");
 			expect(searchParams.get("digits")).toBe("6");
-			expect(searchParams.get("issuer")).toBe("Accountable");
+			expect(searchParams.get("issuer")).toBe("RecordedFinance");
 			expect(searchParams.get("period")).toBe("30");
 			expect(searchParams.get("secret")).toBe(secret);
 			// param order doesn't matter

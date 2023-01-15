@@ -1,13 +1,13 @@
 openapi: 3.0.1
 info:
-  title: Accountable Server
+  title: Recorded Finance Auth/Storage Server
   version: 0.8.4
-  description: This is the Accountable Server. All the server does is store data given to it by the client. The server controls access to the data with basic password-based auth with optional time-based multi-factor auth. The Accountable client does most of the hard work of encrypting the user's data. You can read Accountable's source code on [GitHub](https://github.com/AverageHelper/recorded-finance).
+  description: This is the Recorded Finance Server. All the server does is store data given to it by the client. The server controls access to the data with basic password-based auth with optional time-based multi-factor auth. The Recorded Finance client does most of the hard work of encrypting the user's data. You can read Recorded Finance's source code on [GitHub](https://github.com/AverageHelper/recorded-finance).
   license:
     name: GNU General Public License v3.0
     url: https://github.com/AverageHelper/recorded-finance/blob/main/LICENSE
 externalDocs:
-  description: Find out more about Accountable
+  description: Find out more about Recorded Finance
   url: https://recorded.finance
 servers:
   - url: https://recorded.finance/api/
@@ -74,7 +74,7 @@ paths:
                     example: "0.3.0"
                   message:
                     type: string
-                    example: "Accountable v0.3.0"
+                    example: "Recorded Finance v0.3.0"
 
   "/v0/join":
     post:
@@ -1479,7 +1479,7 @@ components:
             - v0
             - v1
           default: v0
-          description: A string identifying the type of encryption used. Informs Accountable's client how to decrypt the data. The Accountable server does not care about this value, since it cannot decrypt the user's data anyway.
+          description: A string identifying the type of encryption used. Informs the client how to decrypt the data. The server does not care about this value, since it cannot decrypt the user's data anyway.
     Keys:
       type: object
       required:
@@ -1489,19 +1489,19 @@ components:
         dekMaterial:
           type: string
           maxLength: 65535
-          description: Encrypted data that the Accountable client uses to derive the user's Data Encryption Key. The Data Encryption Key is used to en/decrypt the ciphertext of documents. The Accountable server cannot decrypt this key, since it never receives the user's plaintext password. The Data Encryption Key should rarely change, but the `dekMaterial` may change often.
+          description: Encrypted data that the client uses to derive the user's Data Encryption Key. The Data Encryption Key is used to en/decrypt the ciphertext of documents. The server cannot decrypt this key, since it never receives the user's plaintext password. The Data Encryption Key should rarely change, but the `dekMaterial` may change often.
         passSalt:
           type: string
           maxLength: 191
-          description: The salt which the Accountable client used to generate the Password Key. The Password Key and the user's plaintext password are combined to decrypt the `dekMaterial` and retrieve the user's Data Encryption Key.
+          description: The salt which the client used to generate the Password Key. The Password Key and the user's plaintext password are combined to decrypt the `dekMaterial` and retrieve the user's Data Encryption Key.
         oldDekMaterial:
           type: string
           maxLength: 65535
-          description: The former `dekMaterial`. This value is used while changing the user's password, so the Accountable client has an opportunity to revert the password change if the user aborts the operation or something goes wrong.
+          description: The former `dekMaterial`. This value is used while changing the user's password, so the client has an opportunity to revert the password change if the user aborts the operation or something goes wrong.
         oldPassSalt:
           type: string
           maxLength: 191
-          description: The former `passSalt`. This value is used while changing the user's password, so the Accountable client has an opportunity to revert the password change if the user aborts the operation or something goes wrong.
+          description: The former `passSalt`. This value is used while changing the user's password, so the client has an opportunity to revert the password change if the user aborts the operation or something goes wrong.
     CollectionID:
       type: string
       enum:

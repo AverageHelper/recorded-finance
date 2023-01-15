@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Changed
+- Renamed from 'Accountable' to 'Recorded Finance'. Hopefully we don't have to rename ourselves again soon!
 - Improved a11y scores on [webpagetest.org](https://www.webpagetest.org/).
 
 ## [0.15.2] - 2022-12-21

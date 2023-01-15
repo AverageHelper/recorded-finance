@@ -1,4 +1,4 @@
-# Accountable Server
+# Recorded Finance Server
 
 The machine that stores stuff.
 
@@ -47,7 +47,7 @@ HOST={your frontend hostname, with protocol}
 MAX_USERS={the limit to the number of users allowed to register new accounts}
 # optional, defaults to 5
 
-MAX_BYTES={the total number of bytes that Accountable attachments are permitted to occupy on the system}
+MAX_BYTES={the total number of bytes that file attachments are permitted to occupy on the system}
 # optional, defaults to 20000000000 (20 GB)
 
 PUBNUB_PUBLISH_KEY={publish key given by PubNub}

@@ -1,5 +1,5 @@
-import type { AccountableDB } from "./db";
 import type { CollectionId } from "./api";
+import type { PlatformDB } from "./db";
 import type { RawServerResponse } from "./schemas.js";
 import type { RequestOpts } from "oazapfts/lib/runtime";
 import { assertRawServerResponse } from "./schemas.js";
@@ -32,7 +32,7 @@ interface APIResponse {
  */
 export async function run<A extends Array<unknown>>(
 	r: APIRequest<A>,
-	db: AccountableDB,
+	db: PlatformDB,
 	...args: A
 ): Promise<RawServerResponse> {
 	const opts: RequestOpts = { baseUrl: db.url.href, credentials: "include" };

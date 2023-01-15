@@ -6,7 +6,7 @@
 		"flag": "🇧🇷"
 	},
 	"common": {
-		"platform": "Accountable",
+		"platform": "Recorded Finance",
 		"cancel": "Cancelar",
 		"application": "Aplicativo",
 		"current-language": "Idioma Atual: {name}",
@@ -248,7 +248,7 @@
 			},
 			"meta": {
 				"heading": "Exportar",
-				"description": "Exporta uma cópia {unencrypted} de todos os seus dados no formato JSON. (Exceto os anexos, é claro, eles virão como o Accountable os recebeu).",
+				"description": "Exporta uma cópia {unencrypted} de todos os seus dados no formato JSON. (Exceto os anexos, é claro, eles virão como o {platform} os recebeu).",
 				"unencrypted": "não criptografada"
 			}
 		},
@@ -273,7 +273,7 @@
 		},
 		"location": {
 			"heading": "Servico de Localização",
-			"api-disclaimer": "Por padrão, não nos comunicamos com nenhuma API de localização externa. No entanto, se você quiser que Accountable preencha os campos de localização da transação automaticamente, será necessário selecionar uma opção diferente abaixo.",
+			"api-disclaimer": "Por padrão, não nos comunicamos com nenhuma API de localização externa. No entanto, se você quiser que {platform} preencha os campos de localização da transação automaticamente, será necessário selecionar uma opção diferente abaixo.",
 			"iplocate": "IPLocate",
 			"manual-disclaimer": "Observe que não temos recursos de localização \"automáticos\". Nós apenas buscamos sua localização atual quando você pressiona um botão para solicitá-la. Usamos a API {iplocate} para obter dados de localização vagos.",
 			"actions": {
@@ -425,13 +425,13 @@
 		},
 		"encrypted": {
 			"heading": "Seu Livro-razão De Dinheiro, Não O Meu.",
-			"p1": "Accountable, por projeto, não pode ver seus dados, mesmo em nossos próprios servidores. Não precisamos nem queremos ver o que você faz com seu dinheiro. Esse não é o meu trabalho. {legal}",
+			"p1": "{platform}, por projeto, não pode ver seus dados, mesmo em nossos próprios servidores. Não precisamos nem queremos ver o que você faz com seu dinheiro. Esse não é o meu trabalho. {legal}",
 			"legal": "(Prefiro que você {not} faça coisas ilegais com ele.)",
 			"not": "não"
 		},
 		"open-source": {
 			"heading": "Mantenha-me Responsável.",
-			"open": "Todo o código-fonte do Accountable está aberto para leitura.",
+			"open": "Todo o nosso código-fonte está aberto para leitura.",
 			"pr": "Fique a vontade para {issue} ou envie um pull request no {github} deste projeto.",
 			"issue": "abra um problema",
 			"github": "página do GitHub",
@@ -501,20 +501,20 @@
 	"install": {
 		"service": {
 			"heading": "Serviço Hospedado",
-			"p1": "Há uma arquitetura cliente-servidor Accountable aqui! Clique no link de {login} acima para criar uma conta."
+			"p1": "Há uma arquitetura cliente-servidor {platform} hospedou aqui! Clique no link de {login} acima para criar uma conta."
 		},
 		"self": {
 			"heading": "Servidor Auto-hospedado",
-			"p1": "Confira o {readme} para saber mais sobre como configurar o Accountable em seu próprio computador.",
+			"p1": "Confira o {readme} para saber mais sobre como configurar o {platform} em seu próprio computador.",
 			"planning": "Estamos planejando uma solução hospedada aqui em breve.",
-			"p2": "Estou pensando em (opcionalmente) usar o Firebase como um servidor Accountable. Isso seria ótimo para usuários que aceitam usar um serviço do Google e não desejam pagar para hospedar sua própria instalação.",
+			"p2": "Estou pensando em (opcionalmente) usar o Firebase como um servidor de armazenamento {platform}. Isso seria ótimo para usuários que aceitam usar um serviço do Google e não desejam pagar para hospedar sua própria instalação.",
 			"readme": "README"
 		}
 	},
 	"about": {
 		"goals": {
 			"heading": "Metas",
-			"p1": "O objetivo do Accountable é ser um ponto portátil e multiplataforma para manter seus registros e recibos de transações. Eu pretendo ter clientes móveis adequados eventualmente. A opção de {selfhost} estará sempre disponível, e pretendo que este projeto seja sempre de {opensource}. Você sempre terá acesso aos registros financeiros que fornecer ao Accountable, e o Accountable não pode compartilhar esses registros com mais ninguém.",
+			"p1": "O objetivo do {platform} é ser um ponto portátil e multiplataforma para manter seus registros e recibos de transações. Eu pretendo ter clientes móveis adequados eventualmente. A opção de {selfhost} estará sempre disponível, e pretendo que este projeto seja sempre de {opensource}. Você sempre terá acesso aos registros financeiros que fornecer ao {platform}, e o {platform} não pode compartilhar esses registros com mais ninguém.",
 			"selfhost": "auto-hospedagem",
 			"opensource": "código aberto"
 		},
@@ -547,14 +547,14 @@
 		"summary": "{tldr} Seus dados são ilegíveis por qualquer pessoa, exceto você (até onde sei.)",
 		"tldr": "Em resumo:",
 		"encryption-kind": {
-			"question": "Que tipo de criptografia Accountable faz?",
+			"question": "Que tipo de criptografia {platform} faz?",
 			"answer": "Usamos apenas o melhor {mge} como todos os outros.",
 			"mge": "\"criptografia de nível militar\""
 		},
 		"where-keys": {
 			"question": "Quem detém as chaves de criptografia?",
 			"answer1": "Você faz.",
-			"answer2": "Quando você cria uma conta, o Accountable gera uma chave de criptografia de dados {dek} a ser usada para criptografar e descriptografar seus dados. Accountable gera uma chave de criptografia de chave separada {kek} de sua senha fornecida para usar para criptografar seu DEK. Accountable envia o blob DEK criptografado para nossos servidores para armazenamento.Esse blob criptografado é inútil sem a KEK para descriptografá-lo e sua KEK é desconhecida sem sua senha.",
+			"answer2": "Quando você cria uma conta, o {platform} gera uma chave de criptografia de dados {dek} a ser usada para criptografar e descriptografar seus dados. {platform} gera uma chave de criptografia de chave separada {kek} de sua senha fornecida para usar para criptografar seu DEK. {platform} envia o blob DEK criptografado para nossos servidores para armazenamento.Esse blob criptografado é inútil sem a KEK para descriptografá-lo e sua KEK é desconhecida sem sua senha.",
 			"dek": "(DEK)",
 			"kek": "(KEK)",
 			"answer3": "Usamos {sha512} e {pbkdf2} com 10.000 rodadas para gerar essas chaves. Veja {source}.",
@@ -563,13 +563,13 @@
 			"source": "o código-fonte relevante"
 		},
 		"passphrase-handling": {
-			"question": "O que o Accountable faz com minha senha?",
-			"answer1": "Accountable nunca transmite sua senha em qualquer lugar, mesmo por TLS.",
-			"answer2": "Accountable gera um cerquilha unidirecional de sua frase secreta e o envia em seu lugar. O servidor então {salts} e {hashes} desse cerquilha, e armazena o mingau resultante. (Esse mingau não tem nada a ver com a forma como seus dados são criptografados; veja acima..)",
+			"question": "O que o {platform} faz com minha senha?",
+			"answer1": "{platform} nunca transmite sua senha em qualquer lugar, mesmo por TLS.",
+			"answer2": "{platform} gera um cerquilha unidirecional de sua frase secreta e o envia em seu lugar. O servidor então {salts} e {hashes} desse cerquilha, e armazena o mingau resultante. (Esse mingau não tem nada a ver com a forma como seus dados são criptografados; veja acima..)",
 			"salts": "salga",
 			"hashes": "faz cerquilha",
-			"answer3": "Quando você fizer login novamente, o Accountable tentará novamente com sua senha com cerquilha e verificará se esse novo mingau corresponde ao mingau armazenado.",
-			"answer4": "Esse mingau é o que o servidor do Accountable usa para proteger o acesso ao seu banco de dados criptografado. Se alguém puder fornecer ao servidor um cerquilha de senha que resulte no mingau correto, o servidor assumirá que essa pessoa é você e enviará alegremente seus dados criptografados. Nenhuma parte deste mingau—o cerquilha que o servidor obtém, o sal que o servidor gera ou o mingau final deles—pode ser usada para descriptografar seus dados. (Accountable usa seu {dek} para isso; veja acima.)",
+			"answer3": "Quando você fizer login novamente, o {platform} tentará novamente com sua senha com cerquilha e verificará se esse novo mingau corresponde ao mingau armazenado.",
+			"answer4": "Esse mingau é o que o servidor de armazenamento usa para proteger o acesso ao seu banco de dados criptografado. Se alguém puder fornecer ao servidor um cerquilha de senha que resulte no mingau correto, o servidor assumirá que essa pessoa é você e enviará alegremente seus dados criptografados. Nenhuma parte deste mingau—o cerquilha que o servidor obtém, o sal que o servidor gera ou o mingau final deles—pode ser usada para descriptografar seus dados. ({platform} usa seu {dek} para isso; veja acima.)",
 			"dek": "DEK",
 			"answer5": "Usamos {sha512} e {bcrypt} com um fator de custo de 15. Veja {source}.",
 			"sha512": "SHA-512",
@@ -579,7 +579,7 @@
 		"change-passphrase": {
 			"question": "E se eu mudar minha senha?",
 			"answer1": "Não criptografamos novamente todo o banco de dados, se é isso que você está pensando.",
-			"answer2": "Como sua frase secreta é usada apenas para gerar uma KEK, o Accountable criptografa novamente a DEK usando a nova KEK gerada por sua nova frase secreta.",
+			"answer2": "Como sua frase secreta é usada apenas para gerar uma KEK, o {platform} criptografa novamente a DEK usando a nova KEK gerada por sua nova frase secreta.",
 			"answer3": "Se você acha que seu DEK pode estar comprometido, sinto muito. Você pode exportar seus dados, excluir sua conta antiga, criar uma nova conta, e importar seus dados novamente. Isso criptografará tudo novamente usando um novo DEK."
 		},
 		"lost-passphrase": {
@@ -589,7 +589,7 @@
 		},
 		"database-breach": {
 			"question": "O que acontece se alguém roubar o banco de dados?",
-			"answer1": "Se sua senha for longa e complicada, não há nada que alguém possa fazer com o banco de dados do Accountable. O servidor nunca vê sua DEK, a KEK de sua frase secreta, ou sua frase secreta. Nenhum deles está no banco de dados."
+			"answer1": "Se sua senha for longa e complicada, não há nada que alguém possa fazer com o nosso banco de dados. O servidor nunca vê sua DEK, a KEK de sua frase secreta, ou sua frase secreta. Nenhum deles está no banco de dados."
 		}
 	}
 }

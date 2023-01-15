@@ -1,12 +1,12 @@
 import { version } from "./version";
 
-/** Accountable's repo homepage. */
+/** Recorded Finance's repo homepage. */
 export const repoMain = "https://github.com/AverageHelper/recorded-finance";
 
-/** Accountable's homepage for filing new issues. */
+/** Recorded Finance's homepage for filing new issues. */
 export const repoNewIssue = `${repoMain}/issues/new/choose` as const;
 
-/** Accountable's repo URL for the current version tag. */
+/** Recorded Finance's repo URL for the current version tag. */
 export const repo = `${repoMain}/tree/v${version}` as const;
 
 /**
