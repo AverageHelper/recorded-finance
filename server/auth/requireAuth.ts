@@ -3,14 +3,17 @@ import { assertSchema, jwtPayload } from "../database/schemas";
 import { BadRequestError } from "../errors/BadRequestError";
 import { blacklistHasJwt, jwtFromRequest, verifyJwt } from "./jwt";
 import { InternalError } from "../errors/InternalError";
-import { JsonWebTokenError } from "jsonwebtoken";
 import { logger } from "../logger";
 import { NotFoundError } from "../errors/NotFoundError";
 import { pathSegments } from "../helpers/pathSegments";
 import { StructError } from "superstruct";
 import { UnauthorizedError } from "../errors/UnauthorizedError";
 import { userWithUid } from "../database/read";
+import _jwt from "jsonwebtoken";
 import safeCompare from "tsscmp";
+
+// FIXME: Not sure why, but tests fail unless we do this:
+const { JsonWebTokenError } = _jwt;
 
 interface Metadata {
 	/** The user's auth data. */

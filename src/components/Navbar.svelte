@@ -87,10 +87,9 @@
 				href={homeRoute}
 				class="navbar-brand"
 				role="heading"
-				aria-label={$_("common.platform")}
 				aria-level={1}
 				title={$_("common.platform")}
-				use:link>A&cent;countable</a
+				use:link>{$_("common.platform")}</a
 			>
 		{/if}
 	</aside>

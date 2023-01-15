@@ -8,9 +8,9 @@ project.
 
 ## Reporting a Bug
 
-Thank you for improving the security of Accountable!
+Thank you for improving the security of Recorded Finance!
 
-If you discover a security vulnerability in Accountable, please disclose it via [our huntr page](https://huntr.dev/repos/averagehelper/accountable-svelte). Bounties, CVE assignment, response times, and past reports are all there, or will be there following the first report.
+If you discover a security vulnerability in Recorded Finance, please disclose it by [drafting a security advisory on our GitHub](https://github.com/RecordedFinance/recorded-finance/security/advisories/new). I do not yet have a way of paying out bounties for bugs, but I expect to have one set up once this project is profitable.
 
 Report security bugs in third-party modules to the person or team maintaining
 the module.

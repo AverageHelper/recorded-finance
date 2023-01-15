@@ -21,7 +21,7 @@ export default defineConfig({
 		// See https://github.com/ElMassimo/vite-plugin-environment#usage-with-default-values
 		env(
 			{
-				VITE_ACCOUNTABLE_SERVER_URL: null, // optional
+				VITE_PLATFORM_SERVER_URL: null, // optional
 				VITE_PUBNUB_SUBSCRIBE_KEY: null, // optional
 				VITE_ENABLE_LOGIN: "true",
 				VITE_ENABLE_SIGNUP: "false",

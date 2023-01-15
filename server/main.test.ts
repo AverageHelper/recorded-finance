@@ -40,7 +40,7 @@ describe("Routes", () => {
 				.get("/v0/version")
 				.expect("Content-Type", /json/u);
 			expect(response.status).toBe(200);
-			expect(response.body).toStrictEqual({ message: `Accountable v${version}`, version });
+			expect(response.body).toStrictEqual({ message: `Recorded Finance v${version}`, version });
 		});
 	});
 });

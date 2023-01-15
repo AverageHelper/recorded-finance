@@ -1,7 +1,7 @@
 {
 	"apps": [
 		{
-			"name": "accountable",
+			"name": "recorded-finance",
 			"script": "./dist/server.js",
 			"source_map_support": true,
 			"watch": ["dist"],

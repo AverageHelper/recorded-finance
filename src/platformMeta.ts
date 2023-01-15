@@ -1,12 +1,12 @@
 import { version } from "./version";
 
-/** Accountable's repo homepage. */
-export const repoMain = "https://github.com/AverageHelper/accountable-svelte";
+/** Recorded Finance's repo homepage. */
+export const repoMain = "https://github.com/RecordedFinance/recorded-finance";
 
-/** Accountable's homepage for filing new issues. */
+/** Recorded Finance's homepage for filing new issues. */
 export const repoNewIssue = `${repoMain}/issues/new/choose` as const;
 
-/** Accountable's repo URL for the current version tag. */
+/** Recorded Finance's repo URL for the current version tag. */
 export const repo = `${repoMain}/tree/v${version}` as const;
 
 /**
@@ -15,7 +15,7 @@ export const repo = `${repoMain}/tree/v${version}` as const;
  * @example
  * ```ts
  * repoReadmeHeading("why-use-cookies")
- * // Returns "https://github.com/AverageHelper/accountable-svelte/tree/v10.0.1/README.md#why-use-cookies"
+ * // Returns "https://github.com/RecordedFinance/recorded-finance/tree/v10.0.1/README.md#why-use-cookies"
  * ```
  */
 export function repoReadmeHeading<H extends string>(
@@ -30,7 +30,7 @@ export function repoReadmeHeading<H extends string>(
  * @example
  * ```ts
  * repoFile("LICENSE")
- * // Returns "https://github.com/AverageHelper/accountable-svelte/tree/v10.0.1/LICENSE"
+ * // Returns "https://github.com/RecordedFinance/recorded-finance/tree/v10.0.1/LICENSE"
  * ```
  */
 export function repoFile<P extends string>(path: P): `${typeof repo}/${typeof path}` {

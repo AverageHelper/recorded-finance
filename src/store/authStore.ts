@@ -2,12 +2,12 @@ import type { AttachmentSchema, DatabaseSchema } from "../model/DatabaseSchema.j
 import type { Attachment } from "../model/Attachment.js";
 import type { HashStore, KeyMaterial, Unsubscribe, UserPreferences } from "../transport/index.js";
 import type { User } from "../transport/auth.js";
-import { AccountableError, NetworkError } from "../transport/errors/index.js";
 import { attachment as newAttachment } from "../model/Attachment.js";
 import { BlobReader, Data64URIWriter, TextReader, ZipWriter } from "@zip.js/zip.js";
 import { bootstrap, updateUserStats } from "./uiStore.js";
 import { derived, get, writable } from "svelte/store";
 import { logger } from "../logger.js";
+import { NetworkError, PlatformError } from "../transport/errors/index.js";
 import { t } from "../i18n.js";
 import { v4 as uuid } from "uuid";
 import {
@@ -143,7 +143,7 @@ export async function fetchSession(): Promise<void> {
 
 export async function unlockVault(password: string): Promise<void> {
 	const acctId = get(accountId);
-	if (get(uid) === null || acctId === null) throw new AccountableError("auth/unauthenticated");
+	if (get(uid) === null || acctId === null) throw new PlatformError("auth/unauthenticated");
 
 	await login(acctId, password);
 
@@ -173,7 +173,7 @@ export async function login(accountId: string, password: string): Promise<void> 
 			accountId,
 			await hashed(password) // FIXME: Should use OPAQUE or SRP instead
 		);
-		if (user.mfa.includes("totp")) throw new AccountableError("auth/unauthenticated");
+		if (user.mfa.includes("totp")) throw new PlatformError("auth/unauthenticated");
 		await finalizeLogin(password, user);
 	} finally {
 		// In any event, error or not:
@@ -196,7 +196,7 @@ export async function loginWithTotp(password: string, token: string): Promise<vo
 }
 
 /**
- * Requests a new TOTP secret from the Accountable server. If the user
+ * Requests a new TOTP secret from the storage server. If the user
  * has not already confirmed a TOTP enrollment, then this function
  * resolves with the user's secret. Present this secret to the user,
  * perhaps as a QR code.
@@ -329,7 +329,7 @@ export async function regenerateAccountId(currentPassword: string): Promise<void
 export async function updatePassword(oldPassword: string, newPassword: string): Promise<void> {
 	const user = auth.currentUser;
 	if (user === null) {
-		throw new AccountableError("auth/unauthenticated");
+		throw new PlatformError("auth/unauthenticated");
 	}
 
 	// Get old DEK material
@@ -415,7 +415,7 @@ export async function compressUserData(shouldMinify: boolean): Promise<string> {
 	logger.debug("Prepared zip writer");
 
 	try {
-		const rootName = "accountable";
+		const rootName = "recorded-finance";
 		logger.debug("Writing root folder");
 		logger.debug("Wrote root folder");
 

@@ -2,8 +2,8 @@
 	import { _ } from "../../i18n";
 	import { accountsPath, loginPath, signupPath } from "../../router";
 	import { onMount, tick } from "svelte";
+	import { PlatformError, UnreachableCaseError } from "../../transport/errors";
 	import { repoReadmeHeading } from "../../platformMeta";
-	import { AccountableError, UnreachableCaseError } from "../../transport/errors";
 	import { useLocation, useNavigate } from "svelte-navigator";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
 	import ErrorNotice from "../../components/ErrorNotice.svelte";
@@ -164,7 +164,7 @@
 			navigate(accountsPath(), { replace: true });
 		} catch (error) {
 			// FIXME: Better semantics here:
-			if (error instanceof AccountableError && error.code === "auth/unauthenticated") {
+			if (error instanceof PlatformError && error.code === "auth/unauthenticated") {
 				// Switch to TOTP mode
 				needsTotp = true;
 				console.debug(`Entering ${mode} mode`);

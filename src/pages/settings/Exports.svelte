@@ -14,7 +14,7 @@
 
 		try {
 			const dataUri = await compressUserData(shouldMinify);
-			downloadFileAtUrl(dataUri, "accountable.zip");
+			downloadFileAtUrl(dataUri, "recorded-finance.zip");
 		} catch (error) {
 			handleError(error);
 		} finally {
@@ -29,6 +29,8 @@
 		<I18N keypath="settings.export.meta.description">
 			<!-- unencrypted -->
 			<strong>{$_("settings.export.meta.unencrypted")}</strong>
+			<!-- platform -->
+			<span>{$_("common.platform")}</span>
 		</I18N>
 	</p>
 	<!-- <p

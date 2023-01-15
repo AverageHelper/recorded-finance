@@ -45,5 +45,5 @@ app
 	});
 
 app.listen(PORT, () => {
-	logger.info(`Accountable storage server v${appVersion} listening on port ${PORT}`);
+	logger.info(`Recorded Finance storage server v${appVersion} listening on port ${PORT}`);
 });
