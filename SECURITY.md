@@ -10,7 +10,7 @@ project.
 
 Thank you for improving the security of Recorded Finance!
 
-If you discover a security vulnerability in Recorded Finance, please disclose it via [our huntr page](https://huntr.dev/repos/recordedfinance/recorded-finance). Bounties, CVE assignment, response times, and past reports are all there, or will be there following the first report.
+If you discover a security vulnerability in Recorded Finance, please disclose it by [drafting a security advisory on our GitHub](https://github.com/RecordedFinance/recorded-finance/security/advisories/new). I do not yet have a way of paying out bounties for bugs, but I expect to have one set up once this project is profitable.
 
 Report security bugs in third-party modules to the person or team maintaining
 the module.
