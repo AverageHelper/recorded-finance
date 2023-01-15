@@ -1,4 +1,5 @@
 import type { JwtPayload, MFAOption, User } from "../database/schemas";
+import type { SignOptions } from "jsonwebtoken";
 import { addJwtToDatabase } from "../database/write";
 import { assertJwtPayload } from "../database/schemas";
 import { env, requireEnv } from "../environment";
@@ -6,9 +7,12 @@ import { generateSecureToken } from "./generators";
 import { jwtExistsInDatabase } from "../database/read";
 import { newPubNubTokenForUser, revokePubNubToken } from "./pubnub";
 import { ONE_HOUR } from "../constants/time";
+import _jwt from "jsonwebtoken";
 import Cookies from "cookies";
-import jwt from "jsonwebtoken";
 import Keygrip from "keygrip";
+
+// FIXME: Not sure why, but tests fail unless we do this:
+const { sign: _signJwt, verify: _verifyJwt } = _jwt;
 
 /** A special secret that only the server should ever know. */
 export const persistentSecret = requireEnv("AUTH_SECRET");
@@ -63,7 +67,7 @@ export async function newAccessTokens(
 	user: User,
 	validatedWithMfa: Array<MFAOption>
 ): Promise<AccessTokens> {
-	const options: jwt.SignOptions = { expiresIn: "1h" };
+	const options: SignOptions = { expiresIn: "1h" };
 	const payload: JwtPayload = {
 		pubnubToken: await newPubNubTokenForUser(user),
 		uid: user.uid,
@@ -161,7 +165,7 @@ export function jwtFromRequest(req: APIRequest, res: APIResponse): string | null
 
 export async function verifyJwt(token: string): Promise<JwtPayload> {
 	return await new Promise<JwtPayload>((resolve, reject) => {
-		jwt.verify(token, persistentSecret, (err, payload) => {
+		_verifyJwt(token, persistentSecret, (err, payload) => {
 			// Fail if failed i guess
 			if (err) return reject(err);
 
@@ -186,9 +190,9 @@ export async function verifyJwt(token: string): Promise<JwtPayload> {
 	});
 }
 
-async function createJwt(payload: JwtPayload, options: jwt.SignOptions): Promise<string> {
+async function createJwt(payload: JwtPayload, options: SignOptions): Promise<string> {
 	return await new Promise<string>((resolve, reject) => {
-		jwt.sign(payload, persistentSecret, options, (err, token) => {
+		_signJwt(payload, persistentSecret, options, (err, token) => {
 			if (err) {
 				reject(err);
 				return;

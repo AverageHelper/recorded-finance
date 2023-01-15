@@ -1,7 +1,5 @@
 # Recorded Finance
 
-[![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/AverageHelper/recorded-finance.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/AverageHelper/recorded-finance/context:javascript) [![Total alerts](https://img.shields.io/lgtm/alerts/g/AverageHelper/recorded-finance.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/AverageHelper/recorded-finance/alerts/)
-
 A Svelte app for managing monetary assets. All data is encrypted client-side and stored on a server that you control.
 
 > This project is undergoing rapid development and should be considered experimental. Use it at your own risk. 🤙
@@ -89,7 +87,7 @@ DO NOT FORGET your ACCOUNT ID or PASSWORD. If you do, your data is irretrievably
 
 ## Contributing
 
-This project is entirely open source. Do with it what you will. If you're willing to help me improve this project, consider [filing an issue](https://github.com/AverageHelper/recorded-finance/issues/new/choose).
+This project is entirely open source. Do with it what you will. If you're willing to help me improve this project, consider [filing an issue](https://github.com/RecordedFinance/recorded-finance/issues/new/choose).
 
 See [CONTRIBUTING.md](/CONTRIBUTING.md) for ways to contribute.
 
@@ -118,7 +116,7 @@ While our cookies indeed deal with the user's login "session," [GDPR.edu](https:
 
 ### How do releases work?
 
-The manual way is complicated: add a version entry to [CHANGELOG.md](/CHANGELOG.md), straighten out the not-yet-valid URLs in the changelog footer, update [package.json](/package.json) and [package-lock.json](/package-lock.json) (the latter using `npm i`), then merge the PR, then copy the changelog entry to cut a new [Release](https://github.com/AverageHelper/recorded-finance/releases) and tag using GitHub's UI. The changelog's version links now point to the relevant newly-created tags.
+The manual way is complicated: add a version entry to [CHANGELOG.md](/CHANGELOG.md), straighten out the not-yet-valid URLs in the changelog footer, update [package.json](/package.json) and [package-lock.json](/package-lock.json) (the latter using `npm i`), then merge the PR, then copy the changelog entry to cut a new [Release](https://github.com/RecordedFinance/recorded-finance/releases) and tag using GitHub's UI. The changelog's version links now point to the relevant newly-created tags.
 
 I've missed some steps before. For example, version [0.9.0](/CHANGELOG.md#090---2022-07-12) didn't originally have a tag, so related comparison links were broken. Not ideal. Since we use [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), we can automate most of our release steps, as follows:
 

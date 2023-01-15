@@ -1,15 +1,19 @@
-import type { JsonWebTokenError } from "jsonwebtoken";
 import type { MFAOption, User } from "../database/schemas";
 import { assertSchema, jwtPayload } from "../database/schemas";
 import { BadRequestError } from "../errors/BadRequestError";
 import { blacklistHasJwt, jwtFromRequest, verifyJwt } from "./jwt";
+import { InternalError } from "../errors/InternalError";
 import { logger } from "../logger";
 import { NotFoundError } from "../errors/NotFoundError";
 import { pathSegments } from "../helpers/pathSegments";
 import { StructError } from "superstruct";
 import { UnauthorizedError } from "../errors/UnauthorizedError";
 import { userWithUid } from "../database/read";
+import _jwt from "jsonwebtoken";
 import safeCompare from "tsscmp";
+
+// FIXME: Not sure why, but tests fail unless we do this:
+const { JsonWebTokenError } = _jwt;
 
 interface Metadata {
 	/** The user's auth data. */
@@ -33,9 +37,14 @@ export async function metadataFromRequest(req: APIRequest, res: APIResponse): Pr
 		throw new UnauthorizedError("expired-token");
 	}
 
-	const payload = await verifyJwt(token).catch((error: JsonWebTokenError) => {
-		logger.debug(`JWT failed to verify because ${error.message}`);
-		throw new UnauthorizedError("expired-token");
+	const payload = await verifyJwt(token).catch((error: unknown) => {
+		if (error instanceof JsonWebTokenError) {
+			logger.debug(`JWT failed to verify because ${error.message}`);
+			throw new UnauthorizedError("expired-token");
+		} else {
+			logger.error(`JWT failed to verify due to an unknown error:`, error);
+			throw new InternalError();
+		}
 	});
 
 	try {
