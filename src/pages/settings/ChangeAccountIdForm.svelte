@@ -4,6 +4,7 @@
 	import { handleError } from "../../store";
 	import { toast } from "@zerodevx/svelte-toast";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
+	import Form from "../../components/Form.svelte";
 	import NewLoginModal from "../../components/NewLoginModal.svelte";
 	import TextField from "../../components/inputs/TextField.svelte";
 
@@ -35,7 +36,7 @@
 	}
 </script>
 
-<form on:submit|preventDefault={regenerateAccountId}>
+<Form on:submit={regenerateAccountId}>
 	<h3>{$_("settings.auth.account-id-heading")}</h3>
 	<p>{$_("settings.auth.account-id-description")}</p>
 	<TextField
@@ -49,32 +50,21 @@
 		on:input={e => (currentPassword = e.detail)}
 		type="password"
 		label={$_("login.current-passphrase")}
-		placeholder="********"
 		autocomplete="current-password"
 		showsRequired={false}
 		required
 	/>
-	<div class="buttons-2cbb2942">
-		<ActionButton type="submit" kind="bordered-primary" disabled={!hasChanges || isLoading}
+
+	<div class="buttons">
+		<ActionButton type="submit" disabled={!hasChanges || isLoading}
 			>{$_("settings.auth.get-new-account-id")}</ActionButton
 		>
 		{#if hasChanges}
-			<ActionButton kind="bordered" disabled={isLoading} on:click={reset}
+			<ActionButton kind="info" disabled={isLoading} on:click={reset}
 				>{$_("common.reset")}</ActionButton
 			>
 		{/if}
 	</div>
-</form>
+</Form>
 
 <NewLoginModal />
-
-<style lang="scss" global>
-	.buttons-2cbb2942 {
-		display: flex;
-		flex-flow: row nowrap;
-
-		:not(:last-child) {
-			margin-right: 8pt;
-		}
-	}
-</style>

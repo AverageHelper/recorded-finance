@@ -1,11 +1,12 @@
 import type { User } from "../../../../../../../database/schemas";
 import { apiHandler, dispatchRequests } from "../../../../../../../helpers/apiHandler";
 import { BadRequestError } from "../../../../../../../errors/BadRequestError";
+import { logger } from "../../../../../../../logger";
 import { NotFoundError } from "../../../../../../../errors/NotFoundError";
 import { pathSegments } from "../../../../../../../helpers/pathSegments";
 import { requireAuth } from "../../../../../../../auth/requireAuth";
 import { respondData, respondSuccess } from "../../../../../../../responses";
-import { statsForUser } from "../../../../../../../database/reads";
+import { statsForUser } from "../../../../../../../database/read";
 import {
 	CollectionReference,
 	DocumentReference,
@@ -35,7 +36,7 @@ function documentRef(user: User, req: APIRequest): DocumentReference | null {
 export const GET = apiHandler("GET", async (req, res) => {
 	const { documentId } = pathSegments(req, "documentId");
 	if (documentId === ".websocket") {
-		console.debug(`Received GET request for a document called '.websocket'. Why are we here?`);
+		logger.debug(`Received GET request for a document called '.websocket'. Why are we here?`);
 		return; // we were never meant to be here
 	}
 
@@ -45,7 +46,8 @@ export const GET = apiHandler("GET", async (req, res) => {
 	// console.debug(`Handling GET for document at ${ref?.path ?? "null"}`);
 	if (!ref) throw new NotFoundError();
 
-	const { data } = await getDocument(ref);
+	const doc = await getDocument(ref);
+	const data = doc.data;
 	// console.debug(`Found item: ${JSON.stringify(data, undefined, "  ")}`);
 	respondData(res, data);
 });

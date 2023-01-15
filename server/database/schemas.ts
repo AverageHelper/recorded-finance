@@ -148,7 +148,7 @@ export const user = object({
 });
 export type User = Infer<typeof user>;
 
-export function sortStrings(a: string, b: string): number {
+function sortStrings(a: string, b: string): number {
 	if (a > b) return 1;
 	if (b > a) return -1;
 	return 0;
@@ -231,7 +231,13 @@ export function isCollectionId(tbd: string): tbd is CollectionID {
 }
 
 /** A subset of {@link CollectionID} that's used as a discriminator for DataItem collections. */
-export type DataItemKey = "accounts" | "attachments" | "locations" | "tags" | "transactions";
+export type DataItemKey =
+	| "accounts"
+	| "attachments"
+	| "locations"
+	| "tags"
+	| "transactions"
+	| "users";
 
 export function isDataItemKey(id: CollectionID): id is DataItemKey {
 	switch (id) {
@@ -240,17 +246,17 @@ export function isDataItemKey(id: CollectionID): id is DataItemKey {
 		case "locations":
 		case "tags":
 		case "transactions":
+		case "users":
 			return true;
 
 		case "keys":
-		case "users":
 			return false;
 		default:
 			throw new UnreachableCaseError(id);
 	}
 }
 
-export type AnyData = DataItem | UserKeys | User;
+export type AnyData = DataItem | UserKeys;
 
 const documentRef = object({
 	collectionId: enums(allCollectionIds),
@@ -285,6 +291,6 @@ function _identified<T>(struct: Struct<T>): Struct<T & Infer<typeof identified>>
 
 export type Identified<T> = Infer<ReturnType<typeof _identified<T>>>;
 
-export const identifiedDataItem = union([_identified(dataItem), _identified(userKeys), user]);
+export const identifiedDataItem = union([_identified(dataItem), _identified(userKeys)]);
 
 export type IdentifiedDataItem = Infer<typeof identifiedDataItem>;

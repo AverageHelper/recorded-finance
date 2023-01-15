@@ -154,9 +154,8 @@
 			<h4>{$_("settings.import.new-accounts")}</h4>
 			<List>
 				{#each newAccounts as account (account.id)}
-					<li class="importable-9d959f76">
+					<li class="importable">
 						<AccountListItem
-							class="account"
 							{account}
 							link={false}
 							count={transactionCounts[account.id] ?? 0}
@@ -177,9 +176,8 @@
 			<p>{$_("settings.import.duplicates-explanation")}</p>
 			<List>
 				{#each duplicateAccounts as account (account.id)}
-					<li class="importable-9d959f76">
+					<li class="importable">
 						<AccountListItem
-							class="account"
 							{account}
 							link={false}
 							count={transactionCounts[account.id] ?? 0}
@@ -197,7 +195,7 @@
 	<div>
 		<h4>{$_("settings.import.miscellaneous-items")}</h4>
 		<List>
-			<li class="importable-9d959f76">
+			<li class="importable">
 				{#if numberOfLocationsToImport === 1}
 					{$_("locations.count.location")}
 				{:else}
@@ -207,7 +205,7 @@
 				{/if}
 				<Checkmark />
 			</li>
-			<li class="importable-9d959f76">
+			<li class="importable">
 				{#if numberOfTagsToImport === 1}
 					{$_("tags.count.tag")}
 				{:else}
@@ -217,7 +215,7 @@
 				{/if}
 				<Checkmark />
 			</li>
-			<li class="importable-9d959f76">
+			<li class="importable">
 				{#if numberOfAttachmentsToImport === 1}
 					{$_("files.count.attachment")}
 				{:else}
@@ -229,12 +227,7 @@
 	</div>
 
 	<div class="buttons">
-		<ActionButton
-			class="continue"
-			kind="bordered-primary"
-			disabled={isImporting || accountIdsToImport.size === 0}
-			on:click={beginImport}
-		>
+		<ActionButton disabled={isImporting || accountIdsToImport.size === 0} on:click={beginImport}>
 			{#if isImporting}
 				<span
 					>{$_("settings.import.in-progress", { values: { percent: importProgressPercent } })}</span
@@ -246,19 +239,15 @@
 	</div>
 </Modal>
 
-<style lang="scss" global>
+<style lang="scss">
 	@use "styles/colors" as *;
 
-	.importable-9d959f76 {
+	.importable {
 		display: flex;
 		flex-flow: row nowrap;
 		align-items: center;
 
-		.account {
-			width: 100%;
-		}
-
-		.icon {
+		:global(.icon) {
 			margin-left: 8pt;
 		}
 	}
@@ -271,7 +260,7 @@
 			margin-right: 8pt;
 		}
 
-		.continue {
+		:global(button) {
 			margin-left: auto;
 		}
 	}

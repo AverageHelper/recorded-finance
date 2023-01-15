@@ -1,6 +1,7 @@
-import { AccountableError, NetworkError } from "../transport/errors/index.js";
-import { getServerVersion } from "../transport/server.js";
 import { derived, get, writable } from "svelte/store";
+import { getServerVersion } from "../transport/server.js";
+import { logger } from "../logger.js";
+import { NetworkError, PlatformError } from "../transport/errors/index.js";
 import { StructError } from "superstruct";
 import { t } from "../i18n.js";
 import { toast } from "@zerodevx/svelte-toast";
@@ -40,7 +41,7 @@ export function watchColorScheme(): void {
 	if (isDarkMode) activateDarkMode();
 	if (isLightMode) activateLightMode();
 	if (isNotSpecified || hasNoSupport) {
-		console.warn("System color scheme not supported. Defaulting to light.");
+		logger.warn("System color scheme not supported. Defaulting to light.");
 		activateLightMode();
 	}
 }
@@ -50,9 +51,7 @@ export function activateDarkMode(): void {
 }
 
 export function activateLightMode(): void {
-	// TODO: Reenable light mode
-	// preferredColorScheme.set("light");
-	preferredColorScheme.set("dark");
+	preferredColorScheme.set("light");
 }
 
 export async function updateUserStats(): Promise<void> {
@@ -83,7 +82,7 @@ export async function loadServerVersion(): Promise<void> {
 		serverVersion.set("loading");
 		serverVersion.set(await getServerVersion(db));
 	} catch (error) {
-		console.error(error);
+		logger.error(error);
 		if (error instanceof Error) {
 			serverVersion.set(error);
 		} else {
@@ -94,7 +93,7 @@ export async function loadServerVersion(): Promise<void> {
 
 export function handleError(error: unknown): void {
 	let message: string;
-	if (error instanceof AccountableError) {
+	if (error instanceof PlatformError) {
 		message = error.code;
 	} else if (error instanceof StructError) {
 		message = `ValidationError: ${error.message}`;
@@ -115,5 +114,5 @@ export function handleError(error: unknown): void {
 	} else {
 		toast.push(message, { classes: ["toast-error"] });
 	}
-	console.error(error);
+	logger.error(error);
 }

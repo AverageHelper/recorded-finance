@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { _ } from "../../i18n";
 	import { fetchSession, lockVault, pKey, uid } from "../../store/authStore";
-	import { loginPath } from "router/routes";
+	import { loginPath } from "../../router/routes";
 	import { navigate } from "svelte-navigator";
 	import { onMount } from "svelte";
+	import Spinner from "../../components/Spinner.svelte";
 
 	let isChecking = true;
 	$: isVaultLocked = $uid !== null && !$pKey; // we have a uid but no pKey
@@ -23,7 +24,10 @@
 </script>
 
 {#if isChecking}
-	<p>{$_("locked.locking")}</p>
+	<main class="loading">
+		<p>{$_("locked.locking")}</p>
+		<Spinner />
+	</main>
 {:else}
 	<slot />
 {/if}

@@ -1,10 +1,11 @@
 import type { User } from "../../../../../../database/schemas";
 import { apiHandler, dispatchRequests } from "../../../../../../helpers/apiHandler";
+import { logger } from "../../../../../../logger";
 import { NotFoundError } from "../../../../../../errors/NotFoundError";
 import { pathSegments } from "../../../../../../helpers/pathSegments";
 import { requireAuth } from "../../../../../../auth/requireAuth";
 import { respondData, respondSuccess } from "../../../../../../responses";
-import { statsForUser } from "../../../../../../database/reads";
+import { statsForUser } from "../../../../../../database/read";
 import {
 	CollectionReference,
 	deleteCollection,
@@ -22,7 +23,7 @@ function collectionRef(user: User, req: APIRequest): CollectionReference | null 
 export const GET = apiHandler("GET", async (req, res) => {
 	const { collectionId } = pathSegments(req, "collectionId");
 	if (collectionId === ".websocket") {
-		console.debug(`Received GET request for a collection called '.websocket'. Why are we here?`);
+		logger.debug(`Received GET request for a collection called '.websocket'. Why are we here?`);
 		return; // we were never meant to be here
 	}
 

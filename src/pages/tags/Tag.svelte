@@ -1,7 +1,8 @@
 <script lang="ts">
 	import type { Tag } from "../../model/Tag";
 	import { numberOfReferencesForTag } from "../../store";
-	import TinyButton from "../../components/buttons/TinyButton.svelte";
+	import ActionButton from "../../components/buttons/ActionButton.svelte";
+	import XIcon from "../../icons/X.svelte";
 
 	export let tag: Tag;
 	export let showsCount: boolean = false;
@@ -12,7 +13,7 @@
 </script>
 
 <div
-	class={`tag-e076a556 tag-e076a556--${tag.colorId} ${onSelect ? "selectable" : ""}`}
+	class={`tag tag--${tag.colorId} ${onSelect ? "selectable" : ""}`}
 	title={tag.id}
 	on:click={() => onSelect && onSelect(tag)}
 >
@@ -24,14 +25,18 @@
 		<p class="count">{count}</p>
 	{/if}
 	{#if onRemove}
-		<TinyButton class="remove" on:click={() => onRemove && onRemove(tag)}>&times;</TinyButton>
+		<!-- FIXME: This is crap on mobile -->
+		<ActionButton kind="plain" on:click={() => onRemove && onRemove(tag)}>
+			<!-- &times; -->
+			<XIcon />
+		</ActionButton>
 	{/if}
 </div>
 
-<style lang="scss" global>
+<style lang="scss">
 	@use "styles/colors" as *;
 
-	.tag-e076a556 {
+	.tag {
 		display: flex;
 		flex-flow: row nowrap;
 		align-items: center;
@@ -74,15 +79,38 @@
 			background-color: color($transparent-gray);
 		}
 
-		.remove {
-			margin-left: 0.2em;
-			display: none; // hide until hover
+		> :global(button) {
+			position: relative;
+			color: color($label);
+			text-decoration: none;
+			min-height: 12pt;
+			min-width: 12pt;
+			border-radius: 12pt;
+			padding: 0;
+			margin: 0;
+			display: none; // hide until hovering over the tag item
+
+			@media (hover: hover) {
+				&:hover {
+					background-color: color($transparent-gray);
+					color: color($label);
+				}
+			}
+
+			> :global(.icon) {
+				position: absolute;
+				top: 50%;
+				left: 50%;
+				transform: translate(-50%, -50%);
+				height: 6pt;
+			}
 		}
 
+		// Show the 'x' button while hovering over the tag item
 		@media (hover: hover) {
 			&:hover {
-				.remove {
-					display: inline-block; // back to default while hover
+				:global(button) {
+					display: inline-block;
 				}
 			}
 		}

@@ -41,8 +41,8 @@ jobs:
       - name: Lint and Build
         run: npm run build:client
         env:
-          VITE_ENABLE_LOGIN: true
-          VITE_ENABLE_SIGNUP: true
+          VITE_ENABLE_LOGIN: ${{ vars.VITE_ENABLE_LOGIN }}
+          VITE_ENABLE_SIGNUP: ${{ vars.VITE_ENABLE_SIGNUP }}
           VITE_PUBNUB_SUBSCRIBE_KEY: ${{ secrets.VITE_PUBNUB_SUBSCRIBE_KEY }}
 
   build_server:
@@ -129,6 +129,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
+      - name: Load Client Dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.npm
+            node_modules
+          key: ${{ runner.os }}-node-client-${{ github.event.pull_request.head.sha }}
 
       - name: Load Server Dependencies
         uses: actions/cache@v3

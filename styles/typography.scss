@@ -14,6 +14,21 @@ html {
 	text-size-adjust: auto;
 }
 
+// The screen should be screen-height. (Keeps the footer at the bottom)
+html,
+body {
+	height: 100vh;
+	min-height: 100vh;
+	max-height: 100vh;
+}
+
+hr {
+	width: 30vw;
+	margin-left: auto;
+	margin-right: auto;
+	margin-top: 32pt;
+}
+
 input,
 textarea {
 	font-family: $fontFamily;
@@ -87,9 +102,44 @@ p {
 	text-align: justify;
 }
 
+main.loading {
+	padding-top: 24pt;
+
+	p {
+		text-align: center;
+	}
+
+	> .spinner {
+		margin: 16pt auto;
+	}
+}
+
 section {
 	margin: 0 auto;
 	max-width: 600pt;
+	margin-top: 36pt;
+
+	> p {
+		text-align: left;
+	}
+
+	> .icon {
+		float: right;
+		margin-left: 24pt;
+		margin-bottom: 24pt;
+		color: color($label);
+		text-align: center;
+		width: 5em;
+		height: 5em;
+	}
+
+	@include mq($until: mobile) {
+		> .icon {
+			float: initial;
+			margin: 24pt auto;
+			margin-top: 0;
+		}
+	}
 }
 
 a {
@@ -135,7 +185,7 @@ blockquote {
 }
 
 code {
-	background-color: color($cloud);
+	background-color: color($secondary-fill);
 	vertical-align: bottom;
 	padding: 2px 4px;
 	border-radius: 4px;
@@ -169,26 +219,6 @@ textarea {
 		display: block;
 		content: "";
 		clear: both;
-	}
-}
-
-.section-icon {
-	text-align: center;
-	width: 5em;
-	height: 5em;
-	margin: 1em auto -0.5em;
-	display: block;
-
-	&.icon {
-		text-align: center;
-		width: 5em;
-		height: 5em;
-		// margin: 1em auto -0.5em;
-		display: block;
-	}
-	.icon {
-		width: auto;
-		height: auto;
 	}
 }
 

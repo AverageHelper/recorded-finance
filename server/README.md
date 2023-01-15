@@ -1,4 +1,4 @@
-# Accountable Server
+# Recorded Finance Server
 
 The machine that stores stuff.
 
@@ -8,7 +8,7 @@ The machine that stores stuff.
 
 This server doesn't do much on its own once you're authenticated. You give it data, and you ask for that data back. If you want to encrypt that data, do that yourself before you send it.
 
-The API is documented using [OpenAPI](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/AverageHelper/accountable-svelte/main/server/openapi.yaml).
+The API is documented using [OpenAPI](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/RecordedFinance/recorded-finance/main/server/openapi.yaml).
 
 ## Setup
 
@@ -47,7 +47,7 @@ HOST={your frontend hostname, with protocol}
 MAX_USERS={the limit to the number of users allowed to register new accounts}
 # optional, defaults to 5
 
-MAX_BYTES={the total number of bytes that Accountable attachments are permitted to occupy on the system}
+MAX_BYTES={the total number of bytes that file attachments are permitted to occupy on the system}
 # optional, defaults to 20000000000 (20 GB)
 
 PUBNUB_PUBLISH_KEY={publish key given by PubNub}
@@ -63,16 +63,18 @@ PUBNUB_SECRET_KEY={secret key given by PubNub}
 Run these commands to compile and run
 
 ```sh
-$ cd accountable-svelte/server  # Be in the server directory (if you aren't already)
+$ cd recorded-finance/server  # Be in the server directory (if you aren't already)
 $ npm ci                     # Install dependencies
 $ npm run build              # Compile the server
 $ node .                     # Start the server in development mode
 ```
 
+Alternatively, if you want to try a local Vercel environment, run `npm start` instead of `node .`.
+
 I recommend using something like [PM2](https://pm2.keymetrics.io) to run the server properly. (Instructions coming soon™)
 
 ## Contributing
 
-This project is entirely open source. Do with it what you will. If you're willing to help me improve this project, consider [filing an issue](https://github.com/AverageHelper/accountable-svelte/issues/new/choose).
+This project is entirely open source. Do with it what you will. If you're willing to help me improve this project, consider [filing an issue](https://github.com/RecordedFinance/recorded-finance/issues/new/choose).
 
 See [CONTRIBUTING.md](/CONTRIBUTING.md) for ways to contribute.

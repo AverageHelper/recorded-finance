@@ -2,6 +2,7 @@ import type { Infer } from "superstruct";
 import type { Unsubscribe, User } from "./database";
 import type { WebsocketRequestHandler } from "express-ws";
 import { array, enums, nullable, object, optional, union } from "superstruct";
+import { logger } from "./logger";
 import { requireAuth } from "./auth/requireAuth";
 import { WebSocketCode } from "./networking/WebSocketCode";
 import { ws } from "./networking/websockets";
@@ -60,11 +61,11 @@ export const webSocket: WebsocketRequestHandler = ws(
 			setHeader: () => fakeRes,
 		} as unknown as APIResponse;
 		try {
-			console.debug("[WebSocket] Checking auth state...");
+			logger.debug("[WebSocket] Checking auth state...");
 			user = await requireAuth(req, fakeRes, true);
-			console.debug("[WebSocket] Success! User is logged in.");
+			logger.debug("[WebSocket] Success! User is logged in.");
 		} catch {
-			console.debug("[WebSocket] Fail! User is not logged in.");
+			logger.debug("[WebSocket] Fail! User is not logged in.");
 			close(WebSocketCode.VIOLATED_CONTRACT, "You must be logged in to access user data");
 			return;
 		}
@@ -74,7 +75,7 @@ export const webSocket: WebsocketRequestHandler = ws(
 		if (documentId !== null) {
 			const ref = new DocumentReference(collection, documentId);
 			unsubscribe = watchUpdatesToDocument(ref, data => {
-				console.debug(`Got update for document at ${ref.path}`);
+				logger.debug(`Got update for document at ${ref.path}`);
 				send("data", {
 					message: "Here's your data",
 					dataType: "single",
@@ -83,7 +84,7 @@ export const webSocket: WebsocketRequestHandler = ws(
 			});
 		} else {
 			unsubscribe = watchUpdatesToCollection(collection, data => {
-				console.debug(`Got update for collection at ${collection.path}`);
+				logger.debug(`Got update for collection at ${collection.path}`);
 				send("data", {
 					message: "Here's your data",
 					dataType: "multiple",

@@ -1,16 +1,16 @@
 openapi: 3.0.1
 info:
-  title: Accountable Server
-  version: 0.8.0
-  description: This is the Accountable Server. All the server does is store data given to it by the client. The server controls access to the data with basic password-based auth with optional time-based multi-factor auth. The Accountable client does most of the hard work of encrypting the user's data. You can read Accountable's source code on [GitHub](https://github.com/AverageHelper/accountable-svelte).
+  title: Recorded Finance Auth/Storage Server
+  version: 0.8.4
+  description: This is the Recorded Finance Server. All the server does is store data given to it by the client. The server controls access to the data with basic password-based auth with optional time-based multi-factor auth. The Recorded Finance client does most of the hard work of encrypting the user's data. You can read Recorded Finance's source code on [GitHub](https://github.com/RecordedFinance/recorded-finance).
   license:
     name: GNU General Public License v3.0
-    url: https://github.com/AverageHelper/accountable-svelte/blob/main/LICENSE
+    url: https://github.com/RecordedFinance/recorded-finance/blob/main/LICENSE
 externalDocs:
-  description: Find out more about Accountable
-  url: https://accountable.average.name
+  description: Find out more about Recorded Finance
+  url: https://recorded.finance
 servers:
-  - url: https://api.accountable.average.name
+  - url: https://recorded.finance/api/
 tags:
   - name: misc
     description: Make sure everything works
@@ -74,7 +74,7 @@ paths:
                     example: "0.3.0"
                   message:
                     type: string
-                    example: "Accountable v0.3.0"
+                    example: "Recorded Finance v0.3.0"
 
   "/v0/join":
     post:
@@ -779,28 +779,48 @@ paths:
             schema:
               type: array
               items:
-                type: object
-                required:
-                  - type
-                  - ref
-                properties:
-                  type:
-                    type: string
-                    enum:
-                      - set
-                      - delete
-                  ref:
-                    type: object
+                oneOf:
+                  - type: object
                     required:
-                      - collectionId
-                      - documentId
+                      - type
+                      - ref
+                      - data
                     properties:
-                      collectionId:
-                        $ref: "#/components/schemas/CollectionID"
-                      documentId:
+                      type:
                         type: string
-                  data:
-                    $ref: "#/components/schemas/DataItem"
+                        enum:
+                          - set
+                      ref:
+                        type: object
+                        required:
+                          - collectionId
+                          - documentId
+                        properties:
+                          collectionId:
+                            $ref: "#/components/schemas/CollectionID"
+                          documentId:
+                            type: string
+                      data:
+                        $ref: "#/components/schemas/DataItem"
+                  - type: object
+                    required:
+                      - type
+                      - ref
+                    properties:
+                      type:
+                        type: string
+                        enum:
+                          - delete
+                      ref:
+                        type: object
+                        required:
+                          - collectionId
+                          - documentId
+                        properties:
+                          collectionId:
+                            $ref: "#/components/schemas/CollectionID"
+                          documentId:
+                            type: string
       responses:
         200:
           description: All operations successful
@@ -882,6 +902,49 @@ paths:
             application/json:
               schema:
                 type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      oneOf:
+                        # TODO: Instead link to Keys and DataItem
+                        - type: object
+                          required:
+                            - _id
+                            - dekMaterial
+                            - passSalt
+                          properties:
+                            _id:
+                              type: string
+                              description: The document ID.
+                            dekMaterial:
+                              type: string
+                            passSalt:
+                              type: string
+                            oldDekMaterial:
+                              type: string
+                            oldPassSalt:
+                              type: string
+                        - type: object
+                          required:
+                            - _id
+                            - ciphertext
+                            - objectType
+                            - cryption
+                          properties:
+                            _id:
+                              type: string
+                            ciphertext:
+                              type: string
+                            objectType:
+                              type: string
+                            cryption:
+                              type: string
+                              enum:
+                                - v0
+                                - v1
         403:
           description: The caller does not have permission to access the resource
           content:
@@ -993,7 +1056,49 @@ paths:
             application/json:
               schema:
                 type: object
-                nullable: true
+                required:
+                  - data
+                properties:
+                  data:
+                    oneOf:
+                      # TODO: Instead link to Keys and DataItem
+                      - type: object
+                        nullable: true
+                        required:
+                          - _id
+                          - dekMaterial
+                          - passSalt
+                        properties:
+                          _id:
+                            type: string
+                            description: The document ID.
+                          dekMaterial:
+                            type: string
+                          passSalt:
+                            type: string
+                          oldDekMaterial:
+                            type: string
+                          oldPassSalt:
+                            type: string
+                      - type: object
+                        nullable: true
+                        required:
+                          - _id
+                          - ciphertext
+                          - objectType
+                          - cryption
+                        properties:
+                          _id:
+                            type: string
+                          ciphertext:
+                            type: string
+                          objectType:
+                            type: string
+                          cryption:
+                            type: string
+                            enum:
+                              - v0
+                              - v1
         403:
           description: The caller does not have permission to access the resource
           content:
@@ -1186,10 +1291,17 @@ paths:
               schema:
                 type: object
                 properties:
-                  contents:
+                  message:
                     type: string
-                  _id:
-                    type: string
+                    enum:
+                      - "Success!"
+                  data:
+                    type: object
+                    properties:
+                      contents:
+                        type: string
+                      _id:
+                        type: string
         400:
           description: Bad ID or file name
           content:
@@ -1247,6 +1359,7 @@ paths:
               properties:
                 file:
                   type: string
+                  format: binary
       responses:
         200:
           description: Operation successful
@@ -1413,7 +1526,7 @@ components:
             - v0
             - v1
           default: v0
-          description: A string identifying the type of encryption used. Informs Accountable's client how to decrypt the data. The Accountable server does not care about this value, since it cannot decrypt the user's data anyway.
+          description: A string identifying the type of encryption used. Informs the client how to decrypt the data. The server does not care about this value, since it cannot decrypt the user's data anyway.
     Keys:
       type: object
       required:
@@ -1423,19 +1536,19 @@ components:
         dekMaterial:
           type: string
           maxLength: 65535
-          description: Encrypted data that the Accountable client uses to derive the user's Data Encryption Key. The Data Encryption Key is used to en/decrypt the ciphertext of documents. The Accountable server cannot decrypt this key, since it never receives the user's plaintext password. The Data Encryption Key should rarely change, but the `dekMaterial` may change often.
+          description: Encrypted data that the client uses to derive the user's Data Encryption Key. The Data Encryption Key is used to en/decrypt the ciphertext of documents. The server cannot decrypt this key, since it never receives the user's plaintext password. The Data Encryption Key should rarely change, but the `dekMaterial` may change often.
         passSalt:
           type: string
           maxLength: 191
-          description: The salt which the Accountable client used to generate the Password Key. The Password Key and the user's plaintext password are combined to decrypt the `dekMaterial` and retrieve the user's Data Encryption Key.
+          description: The salt which the client used to generate the Password Key. The Password Key and the user's plaintext password are combined to decrypt the `dekMaterial` and retrieve the user's Data Encryption Key.
         oldDekMaterial:
           type: string
           maxLength: 65535
-          description: The former `dekMaterial`. This value is used while changing the user's password, so the Accountable client has an opportunity to revert the password change if the user aborts the operation or something goes wrong.
+          description: The former `dekMaterial`. This value is used while changing the user's password, so the client has an opportunity to revert the password change if the user aborts the operation or something goes wrong.
         oldPassSalt:
           type: string
           maxLength: 191
-          description: The former `passSalt`. This value is used while changing the user's password, so the Accountable client has an opportunity to revert the password change if the user aborts the operation or something goes wrong.
+          description: The former `passSalt`. This value is used while changing the user's password, so the client has an opportunity to revert the password change if the user aborts the operation or something goes wrong.
     CollectionID:
       type: string
       enum:

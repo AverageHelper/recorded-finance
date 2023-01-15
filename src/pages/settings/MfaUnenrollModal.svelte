@@ -49,9 +49,8 @@
 	}
 </script>
 
-<!-- TODO: I18N -->
 <Modal open={isOpen} closeModal={close}>
-	<h1>Unenroll from MFA</h1>
+	<h1>{$_("settings.mfa.unenroll.heading")}</h1>
 
 	<!-- Renew existing password auth -->
 	<TextField
@@ -59,7 +58,6 @@
 		type="password"
 		autocomplete="current-password"
 		label={$_("login.passphrase")}
-		placeholder="********"
 		on:input={onPasswordInput}
 	/>
 
@@ -73,7 +71,7 @@
 	/>
 
 	<!-- Then close -->
-	<ActionButton kind="bordered-destructive" disabled={isLoading} on:click={disable2fa}
-		>Disable 2FA</ActionButton
+	<ActionButton kind="destructive" disabled={isLoading} on:click={disable2fa}
+		>{$_("settings.mfa.unenroll.disable-action")}</ActionButton
 	>
 </Modal>

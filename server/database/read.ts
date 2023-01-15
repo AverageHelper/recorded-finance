@@ -4,6 +4,7 @@ import type { FileData } from "@prisma/client";
 import { computeRequiredAddtlAuth } from "./schemas";
 import { dataSource } from "./io";
 import { generateAESCipherKey } from "../auth/generators";
+import { logger } from "../logger";
 import { maxSpacePerUser } from "../auth/limits";
 import { NotFoundError } from "../errors/NotFoundError";
 import { UnreachableCaseError } from "../errors/UnreachableCaseError";
@@ -21,13 +22,18 @@ export async function statsForUser(uid: string): Promise<UserStats> {
 }
 
 export async function numberOfUsers(): Promise<number> {
-	return await dataSource.user.count();
+	return await dataSource().user.count();
+}
+
+export async function listAllUserIds(): Promise<Array<string>> {
+	const users = await dataSource().user.findMany({ select: { uid: true } });
+	return users.map(({ uid }) => uid);
 }
 
 // MARK: - Pseudo Large-file Storage
 
 export async function fetchFileData(userId: string, fileName: string): Promise<FileData | null> {
-	return await dataSource.fileData.findUnique({
+	return await dataSource().fileData.findUnique({
 		where: { userId_fileName: { userId, fileName } },
 	});
 }
@@ -36,7 +42,7 @@ export async function fetchFileData(userId: string, fileName: string): Promise<F
  * Returns the total number of bytes that comprise a given file.
  */
 export async function totalSizeOfFile(userId: string, fileName: string): Promise<number | null> {
-	const file = await dataSource.fileData.findUnique({
+	const file = await dataSource().fileData.findUnique({
 		where: { userId_fileName: { userId, fileName } },
 		select: { size: true },
 	});
@@ -48,11 +54,18 @@ export async function totalSizeOfFile(userId: string, fileName: string): Promise
  * Returns the number of bytes of the user's stored files.
  */
 export async function totalSizeOfFilesForUser(userId: string): Promise<number> {
-	const files = await dataSource.fileData.findMany({
+	const files = await dataSource().fileData.findMany({
 		where: { userId },
 		select: { size: true },
 	});
 	return files.reduce((prev, { size }) => prev + size, 0);
+}
+
+/**
+ * Returns the number of files stored for the user.
+ */
+export async function countFileBlobsForUser(userId: string): Promise<number> {
+	return await dataSource().fileData.count({ where: { userId } });
 }
 
 // MARK: - Database
@@ -61,11 +74,36 @@ export async function totalSizeOfFilesForUser(userId: string): Promise<number> {
  * Resolves to `true` if the given token exists in the database.
  */
 export async function jwtExistsInDatabase(token: string): Promise<boolean> {
-	const result = await dataSource.expiredJwt.findUnique({
+	const result = await dataSource().expiredJwt.findUnique({
 		where: { token },
 		select: { token: true },
 	});
 	return result !== null;
+}
+
+export async function numberOfExpiredJwts(): Promise<number> {
+	return await dataSource().expiredJwt.count();
+}
+
+export async function countRecordsInCollection(ref: CollectionReference): Promise<number> {
+	switch (ref.id) {
+		case "accounts":
+		case "attachments":
+		case "locations":
+		case "tags":
+		case "transactions":
+		case "users":
+			return await dataSource().dataItem.count({
+				where: {
+					userId: ref.uid,
+					collectionId: ref.id,
+				},
+			});
+		case "keys":
+			return await dataSource().userKeys.count({
+				where: { userId: ref.uid },
+			});
+	}
 }
 
 export async function fetchDbCollection(
@@ -79,8 +117,9 @@ export async function fetchDbCollection(
 		case "locations":
 		case "tags":
 		case "transactions":
+		case "users":
 			return (
-				await dataSource.dataItem.findMany({
+				await dataSource().dataItem.findMany({
 					where: { userId: uid, collectionId: ref.id },
 					select: {
 						ciphertext: true,
@@ -92,7 +131,7 @@ export async function fetchDbCollection(
 			).map(v => ({ ...v, _id: v.docId }));
 		case "keys":
 			return (
-				await dataSource.userKeys.findMany({
+				await dataSource().userKeys.findMany({
 					where: { userId: uid },
 					select: {
 						dekMaterial: true,
@@ -108,24 +147,6 @@ export async function fetchDbCollection(
 				oldDekMaterial: k.oldDekMaterial ?? undefined,
 				oldPassSalt: k.oldPassSalt ?? undefined,
 			}));
-		case "users": {
-			// Special handling: fetch all users
-			const rawUsers = (await dataSource.user.findMany()).map(computeRequiredAddtlAuth);
-			return await Promise.all(
-				rawUsers.map(async user => {
-					// Upsert the cipher key if it doesn't exist
-					let pubnubCipherKey = user.pubnubCipherKey;
-					if (pubnubCipherKey === null) {
-						pubnubCipherKey = await generateAESCipherKey();
-						await dataSource.user.update({
-							where: { uid: user.uid },
-							data: { pubnubCipherKey },
-						});
-					}
-					return { ...user, pubnubCipherKey };
-				})
-			);
-		}
 		default:
 			throw new UnreachableCaseError(ref.id);
 	}
@@ -135,7 +156,7 @@ async function findUserWithProperties(
 	query: Partial<Pick<User, "uid" | "currentAccountId">>
 ): Promise<User | null> {
 	if (Object.keys(query).length === 0) return null; // Fail gracefully for an empty query
-	const first = await dataSource.user.findFirst({
+	const first = await dataSource().user.findFirst({
 		where: {
 			uid: query.uid,
 			currentAccountId: query.currentAccountId,
@@ -147,7 +168,7 @@ async function findUserWithProperties(
 	let pubnubCipherKey = first.pubnubCipherKey;
 	if (pubnubCipherKey === null) {
 		pubnubCipherKey = await generateAESCipherKey();
-		await dataSource.user.update({
+		await dataSource().user.update({
 			where: { uid: first.uid },
 			data: { pubnubCipherKey },
 		});
@@ -183,7 +204,7 @@ interface Snapshot {
  * @returns a view of database data.
  */
 export async function fetchDbDoc(ref: DocumentReference): Promise<Snapshot> {
-	console.debug(`Retrieving document at ${ref.path}...`);
+	logger.debug(`Retrieving document at ${ref.path}...`);
 	const collectionId = ref.parent.id;
 	const docId = ref.id;
 	switch (collectionId) {
@@ -191,12 +212,13 @@ export async function fetchDbDoc(ref: DocumentReference): Promise<Snapshot> {
 		case "attachments":
 		case "locations":
 		case "tags":
-		case "transactions": {
-			const result = await dataSource.dataItem.findFirst({
+		case "transactions":
+		case "users": {
+			const result = await dataSource().dataItem.findFirst({
 				where: { docId, collectionId },
 			});
 			if (result === null) {
-				console.debug(`Got nothing at ${ref.path}`);
+				logger.debug(`Got nothing at ${ref.path}`);
 				return { ref, data: null };
 			}
 
@@ -206,13 +228,13 @@ export async function fetchDbDoc(ref: DocumentReference): Promise<Snapshot> {
 				ciphertext: result.ciphertext,
 				cryption: result.cryption ?? "v0",
 			};
-			console.debug(`Got document at ${ref.path}`);
+			logger.debug(`Got document at ${ref.path}`);
 			return { ref, data };
 		}
 		case "keys": {
-			const result = await dataSource.userKeys.findUnique({ where: { userId: docId } });
+			const result = await dataSource().userKeys.findUnique({ where: { userId: docId } });
 			if (result === null) {
-				console.debug(`Got nothing at ${ref.path}`);
+				logger.debug(`Got nothing at ${ref.path}`);
 				return { ref, data: null };
 			}
 
@@ -223,41 +245,7 @@ export async function fetchDbDoc(ref: DocumentReference): Promise<Snapshot> {
 				oldPassSalt: result.oldPassSalt ?? undefined,
 				passSalt: result.passSalt,
 			};
-			console.debug(`Got document at ${ref.path}`);
-			return { ref, data };
-		}
-		case "users": {
-			const rawResult = await dataSource.user.findUnique({
-				where: { uid: docId },
-			});
-			if (rawResult === null) {
-				console.debug(`Got nothing at ${ref.path}`);
-				return { ref, data: null };
-			}
-
-			// Upsert the cipher key if it doesn't exist
-			let pubnubCipherKey = rawResult.pubnubCipherKey;
-			if (pubnubCipherKey === null) {
-				pubnubCipherKey = await generateAESCipherKey();
-				await dataSource.user.update({
-					where: { uid: rawResult.uid },
-					data: { pubnubCipherKey },
-				});
-			}
-
-			const result = computeRequiredAddtlAuth(rawResult);
-			const data: Identified<User> = {
-				_id: result.uid,
-				uid: result.uid,
-				currentAccountId: result.currentAccountId,
-				mfaRecoverySeed: result.mfaRecoverySeed,
-				passwordHash: result.passwordHash,
-				passwordSalt: result.passwordSalt,
-				pubnubCipherKey,
-				requiredAddtlAuth: result.requiredAddtlAuth,
-				totpSeed: result.totpSeed,
-			};
-			console.debug(`Got nothing at ${ref.path}`);
+			logger.debug(`Got document at ${ref.path}`);
 			return { ref, data };
 		}
 		default:

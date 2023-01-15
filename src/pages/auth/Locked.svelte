@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { _ } from "../../i18n";
-	import { AccountableError, NetworkError } from "../../transport/errors";
 	import { accountsPath } from "../../router";
-	import { onMount } from "svelte";
+	import { NetworkError, PlatformError } from "../../transport/errors";
+	import { onMount, tick } from "svelte";
 	import { useNavigate } from "svelte-navigator";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
 	import ErrorNotice from "../../components/ErrorNotice.svelte";
-	import Footer from "../../Footer.svelte";
+	import Form from "../../components/Form.svelte";
 	import TextField from "../../components/inputs/TextField.svelte";
 	import {
 		accountId as _accountId,
@@ -27,18 +27,29 @@
 	let isLoading = false;
 
 	let passwordField: TextField | undefined;
+	let totpField: TextField | undefined;
 
 	onMount(() => {
 		passwordField?.focus();
 		bootstrap();
 	});
 
+	$: if (needsTotp) {
+		// Focus the field when we enter TOTP mode
+		totpField?.focus();
+	}
+
 	function onPasswordInput(event: CustomEvent<string>) {
 		password = event.detail;
 	}
 
-	function onTotpInput(event: CustomEvent<string>) {
+	async function onTotpInput(event: CustomEvent<string>) {
 		token = event.detail;
+		await tick();
+		if (token.length === 6 && /^\d+$/.test(token)) {
+			// Only if six digits
+			submit();
+		}
 	}
 
 	async function submit() {
@@ -58,7 +69,7 @@
 			if (
 				(error instanceof NetworkError && error.code === "missing-mfa-credentials") ||
 				(error instanceof NetworkError && error.code === "missing-token") ||
-				(error instanceof AccountableError && error.code === "auth/unauthenticated")
+				(error instanceof PlatformError && error.code === "auth/unauthenticated")
 			) {
 				// Switch to TOTP mode
 				needsTotp = true;
@@ -71,18 +82,17 @@
 	}
 </script>
 
-{#if $bootstrapError}
-	<main class="content">
+<main class="content">
+	{#if $bootstrapError}
 		<ErrorNotice error={$bootstrapError} />
-		<Footer />
-	</main>
-{:else}
-	<main class="content">
-		<form on:submit|preventDefault={submit}>
-			<p>{$_("locked.heading")}</p>
+	{:else}
+		<Form on:submit={submit}>
+			<h1>{$_("locked.heading")}</h1>
+			<p>{$_("locked.explanation")}</p>
 
 			{#if needsTotp}
 				<TextField
+					bind:this={totpField}
 					value={token}
 					on:input={onTotpInput}
 					disabled={isLoading}
@@ -107,29 +117,24 @@
 					on:input={onPasswordInput}
 					type="password"
 					label={$_("login.passphrase")}
-					placeholder="********"
 					autocomplete="current-password"
 					showsRequired={false}
 					required
 				/>
 			{/if}
-			<ActionButton type="submit" kind="bordered-primary" disabled={isLoading}
-				>{$_("locked.unlock")}</ActionButton
-			>
-
-			{#if $loginProcessState === "AUTHENTICATING"}
-				<span>{$_("login.process.reauthenticating")}</span>
-			{/if}
-			{#if $loginProcessState === "GENERATING_KEYS"}
-				<span>{$_("login.process.generating-keys")}</span>
-			{/if}
-			{#if $loginProcessState === "FETCHING_KEYS"}
-				<span>{$_("login.process.fetching-keys")}</span>
-			{/if}
-			{#if $loginProcessState === "DERIVING_PKEY"}
-				<span>{$_("login.process.deriving-pkey")}</span>
-			{/if}
-		</form>
-		<Footer />
-	</main>
-{/if}
+			<ActionButton type="submit" disabled={isLoading}>
+				{#if $loginProcessState === null}
+					<span>{$_("locked.unlock")}</span>
+				{:else if $loginProcessState === "AUTHENTICATING"}
+					<span>{$_("locked.unlock-ongoing")}: {$_("login.process.reauthenticating")}</span>
+				{:else if $loginProcessState === "GENERATING_KEYS"}
+					<span>{$_("locked.unlock-ongoing")}: {$_("login.process.generating-keys")}</span>
+				{:else if $loginProcessState === "FETCHING_KEYS"}
+					<span>{$_("locked.unlock-ongoing")}: {$_("login.process.fetching-keys")}</span>
+				{:else if $loginProcessState === "DERIVING_PKEY"}
+					<span>{$_("locked.unlock-ongoing")}: {$_("login.process.deriving-pkey")}</span>
+				{/if}
+			</ActionButton>
+		</Form>
+	{/if}
+</main>

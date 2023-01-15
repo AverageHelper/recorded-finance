@@ -3,40 +3,42 @@
 	import { aboutPath, signupPath } from "./router";
 	import { isSignupEnabled } from "./store";
 	import { Link } from "svelte-navigator";
+	import { repoMain, repoNewIssue } from "./platformMeta";
 	import ActionButton from "./components/buttons/ActionButton.svelte";
 	import EncryptionIcon from "./icons/Lock.svelte";
-	import Footer from "./Footer.svelte";
 	import I18N from "./components/I18N.svelte";
 	import LedgerIcon from "./icons/MoneyTower.svelte";
-	import NopLink from "./components/NopLink.svelte";
 	import OpenSourceIcon from "./icons/IdeaBox.svelte";
+	import OutLink from "./components/OutLink.svelte";
 
 	const aboutRoute = aboutPath();
 	const signupRoute = signupPath();
 </script>
 
-<main class="content main-a0571b9a">
+<main class="content">
 	<h1 class="tagline">{$_("home.tagline")}</h1>
 
 	<!-- Get started now -->
-	<section id="get-started">
-		<Link to={aboutRoute}>
-			<ActionButton kind="bordered-secondary">{$_("common.learn-more")}</ActionButton>
+	<div class="tagline">
+		<Link to={aboutRoute} class="link">
+			<ActionButton kind={isSignupEnabled ? "secondary" : "primary"}
+				>{$_("common.learn-more")}</ActionButton
+			>
 		</Link>
 		{#if isSignupEnabled}
-			<Link to={signupRoute}>
-				<ActionButton kind="bordered-primary-green">{$_("home.sign-up-now")}</ActionButton>
+			<Link to={signupRoute} class="link">
+				<ActionButton>{$_("home.sign-up-now")}</ActionButton>
 			</Link>
 		{:else}
-			<NopLink>
-				<ActionButton kind="bordered-primary-green">{$_("home.coming-soon")}</ActionButton>
-			</NopLink>
+			<Link to={aboutRoute} class="link">
+				<ActionButton kind="secondary">{$_("home.coming-soon")}</ActionButton>
+			</Link>
 		{/if}
-	</section>
+	</div>
 
 	<!-- Your money, where it's been -->
 	<section id="ledger">
-		<LedgerIcon class="section-icon" />
+		<LedgerIcon />
 		<h3>{$_("home.accountability.heading")}</h3>
 		<p>
 			<I18N keypath="home.accountability.p1">
@@ -48,10 +50,12 @@
 
 	<!-- E2E Encrypted -->
 	<section id="encrypted">
-		<EncryptionIcon class="section-icon" />
+		<EncryptionIcon />
 		<h3>{$_("home.encrypted.heading")}</h3>
 		<p>
 			<I18N keypath="home.encrypted.p1">
+				<!-- platform -->
+				<span>{$_("common.platform")}</span>
 				<!-- legal -->
 				<small>
 					<I18N keypath="home.encrypted.legal">
@@ -65,61 +69,34 @@
 
 	<!-- Open-source and Free -->
 	<section id="open-source">
-		<OpenSourceIcon class="section-icon" />
+		<OpenSourceIcon />
 		<h3>{$_("home.open-source.heading")}</h3>
 		<p>
 			{$_("home.open-source.open")}
-			<br />
+			<I18N keypath="home.open-source.pr">
+				<!-- issue -->
+				<OutLink to={repoNewIssue}>{$_("home.open-source.issue")}</OutLink>
+				<!-- github -->
+				<OutLink to={repoMain}>{$_("home.open-source.github")}</OutLink>
+			</I18N>
 			{$_("home.open-source.let-me-know")}
 		</p>
 	</section>
-
-	<Footer />
 </main>
 
-<style lang="scss" global>
-	@use "styles/setup" as *;
+<style lang="scss">
+	h1.tagline {
+		text-align: center;
+	}
 
-	.main-a0571b9a {
-		.tagline {
-			text-align: center;
-		}
+	div.tagline {
+		display: flex;
+		flex-flow: row nowrap;
+		width: fit-content;
+		margin: 0 auto;
 
-		p {
-			text-align: left;
-		}
-
-		section {
-			margin-top: 36pt;
-
-			> .section-icon {
-				float: right;
-				margin-left: 24pt;
-				margin-bottom: 24pt;
-			}
-
-			@include mq($until: mobile) {
-				> .section-icon {
-					float: initial;
-					margin: 24pt auto;
-					margin-top: 0;
-				}
-			}
-
-			&#get-started {
-				display: flex;
-				flex-flow: row nowrap;
-				width: fit-content;
-				margin: 0 auto;
-
-				> a {
-					text-decoration: none;
-
-					&:first-of-type {
-						margin-right: 8pt;
-					}
-				}
-			}
+		> :global(.link:first-of-type) {
+			margin-right: 8pt;
 		}
 	}
 </style>

@@ -1,6 +1,7 @@
 import type { CollectionReference, DocumentReference, IdentifiedDataItem, User } from "../database";
+import { logger } from "../logger";
 import { requireEnv } from "../environment";
-import { userWithUid } from "../database/reads";
+import { userWithUid } from "../database/read";
 import PubNub from "pubnub";
 
 /**
@@ -32,7 +33,7 @@ export async function publishWriteForRef(
 	// TODO: This should be a no-op when we're in Express
 
 	const channel = pubNubChannelNameForRef(ref);
-	console.debug(`Posting write for channel '${channel}'...`);
+	logger.debug(`Posting write for channel '${channel}'...`);
 	try {
 		await pubnubForUser(ref.user, (pubnub, cipherKey) => {
 			const message = pubnub.encrypt(
@@ -51,9 +52,9 @@ export async function publishWriteForRef(
 				sendByPost: true,
 			});
 		});
-		console.debug(`Posted write for channel '${channel}'`);
+		logger.debug(`Posted write for channel '${channel}'`);
 	} catch (error) {
-		console.error("Failed to post write for channel '%s' due to error", channel, error);
+		logger.error("Failed to post write for channel '%s' due to error", channel, error);
 	}
 }
 

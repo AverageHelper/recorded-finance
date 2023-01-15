@@ -1,13 +1,35 @@
 import type { ComponentType } from "svelte";
 import { accountsPath, attachmentsPath, locationsPath, tagsPath } from "router";
+import { UnreachableCaseError } from "../../transport/errors";
 import AccountIcon from "../../icons/IdCard.svelte";
 import FileIcon from "../../icons/File.svelte";
 import LocationIcon from "../../icons/Location.svelte";
 import TagIcon from "../../icons/Tag.svelte";
+import {
+	aboutPath,
+	homePath,
+	installPath,
+	lockPath,
+	loginPath,
+	securityPath,
+	signupPath,
+} from "../../router/routes";
 
 export const appTabs = ["accounts", "attachments", "locations", "tags"] as const;
 
 export type Tab = typeof appTabs[number];
+
+export const APP_ROOTS: ReadonlyArray<string> = appTabs
+	.map(tab => `/${tab}`)
+	.concat([
+		homePath(),
+		aboutPath(),
+		securityPath(),
+		installPath(),
+		loginPath(),
+		lockPath(),
+		signupPath(),
+	]);
 
 export function isAppTab(tbd: string | null | undefined): tbd is Tab {
 	if (!(tbd ?? "")) return false; // nullish values don't count as `Tab` values lol
@@ -34,7 +56,7 @@ export function routeForTab(tab: Tab): `/${typeof tab}` | "#" {
 	}
 }
 
-export function iconForTab(tab: Tab): ComponentType | null {
+export function iconForTab(tab: Tab): ComponentType {
 	switch (tab) {
 		case "accounts":
 			return AccountIcon;
@@ -45,6 +67,6 @@ export function iconForTab(tab: Tab): ComponentType | null {
 		case "tags":
 			return TagIcon;
 		default:
-			return null;
+			throw new UnreachableCaseError(tab);
 	}
 }

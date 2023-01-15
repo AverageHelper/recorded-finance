@@ -5,6 +5,7 @@ name: Check Versions Match
 on:
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   check:

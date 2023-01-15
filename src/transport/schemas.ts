@@ -1,7 +1,10 @@
 import type { CollectionID } from "./db";
+import type { DataItem } from "./api";
 import type { Infer } from "superstruct";
 import { isArray } from "../helpers/isArray";
 import { isObject } from "../helpers/isObject";
+import { t } from "../i18n";
+import { UnexpectedResponseError } from "./errors";
 import {
 	array,
 	assert as assertSchema,
@@ -14,6 +17,7 @@ import {
 	number,
 	optional,
 	string,
+	StructError,
 	type,
 	union,
 } from "superstruct";
@@ -30,9 +34,6 @@ function isPrimitiveOrArray(tbd: unknown): tbd is Primitive | Array<Primitive> {
 }
 
 export type DocumentData = Record<string, Primitive>;
-export type PrimitiveRecord<T> = {
-	[K in keyof T]: Primitive;
-};
 
 interface DocumentRef {
 	collectionId: CollectionID;
@@ -42,7 +43,7 @@ interface DocumentRef {
 interface SetBatch {
 	type: "set";
 	ref: DocumentRef;
-	data: DocumentData;
+	data: DataItem;
 }
 
 interface DeleteBatch {
@@ -71,6 +72,7 @@ export const mfaValidation = enums(["totp"] as const);
 export type MFAValidation = Infer<typeof mfaValidation>;
 
 const rawServerResponse = type({
+	_id: optional(string()),
 	message: optional(string()),
 	code: optional(string()),
 	version: optional(string()),
@@ -89,7 +91,23 @@ const rawServerResponse = type({
 });
 
 export function assertRawServerResponse(tbd: unknown): asserts tbd is RawServerResponse {
-	assertSchema(tbd, rawServerResponse);
+	try {
+		assertSchema(tbd, rawServerResponse);
+	} catch (error) {
+		let response: string;
+		if (error instanceof StructError) {
+			response = error.message;
+		} else {
+			response = JSON.stringify(error, undefined, "  ");
+		}
+		throw new UnexpectedResponseError(
+			t("error.network.invalid-response", { values: { response } })
+		);
+	}
+}
+
+export function isRawServerResponse(tbd: unknown): tbd is RawServerResponse {
+	return is(tbd, rawServerResponse);
 }
 
 export type RawServerResponse = Infer<typeof rawServerResponse>;
@@ -100,6 +118,18 @@ const fileData = type({
 });
 export type FileData = Infer<typeof fileData>;
 
-export function isFileData(tbd: unknown): tbd is FileData {
-	return is(tbd, fileData);
+export function assertFileData(tbd: unknown): asserts tbd is FileData {
+	try {
+		assertSchema(tbd, fileData);
+	} catch (error) {
+		let response: string;
+		if (error instanceof StructError) {
+			response = error.message;
+		} else {
+			response = JSON.stringify(error, undefined, "  ");
+		}
+		throw new UnexpectedResponseError(
+			t("error.network.invalid-response", { values: { response } })
+		);
+	}
 }

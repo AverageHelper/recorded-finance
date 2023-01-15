@@ -45,6 +45,5 @@
 	{subtitle}
 	count={remainingBalance ? toCurrency($locale.code, remainingBalance) : "--"}
 	negative={isBalanceNegative}
-	class={$$props["class"]}
 	on:click
 />

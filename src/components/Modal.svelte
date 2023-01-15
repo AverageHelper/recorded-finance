@@ -22,7 +22,7 @@
 
 <Portal target="#modal">
 	{#if open}
-		<div transition:fly class="modal-6ca181ee__wrapper" on:click|self={onClose}>
+		<div transition:fly|local class="modal-6ca181ee__wrapper" on:click|self={onClose}>
 			{#if closeModal}
 				<span class="modal-6ca181ee__close-button">
 					<NopLink white on:click={closeModal}>

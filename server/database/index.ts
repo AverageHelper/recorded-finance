@@ -1,8 +1,9 @@
 import type { AnyData, IdentifiedDataItem } from "./schemas";
 import type { CollectionReference, DocumentReference } from "./references";
-import type { DocUpdate } from "./writes";
-import { deleteDbCollection, deleteDbDoc, deleteDbDocs, upsertDbDocs } from "./writes";
-import { fetchDbCollection, fetchDbDoc, fetchDbDocs } from "./reads";
+import type { DocUpdate } from "./write";
+import { deleteDbCollection, deleteDbDoc, deleteDbDocs, upsertDbDocs } from "./write";
+import { fetchDbCollection, fetchDbDoc, fetchDbDocs } from "./read";
+import { logger } from "../logger";
 import { publishWriteForRef } from "../auth/pubnub";
 
 // Since all data is encrypted on the client, we only
@@ -38,7 +39,7 @@ export function watchUpdatesToDocument(
 	ref: DocumentReference,
 	onChange: SDataChangeCallback
 ): Unsubscribe {
-	console.debug(`Watching updates to document at ${ref.path}`);
+	logger.debug(`Watching updates to document at ${ref.path}`);
 	const handle: DocumentWatcher = {
 		id: ref.id,
 		collectionId: ref.parent.id,
@@ -56,8 +57,8 @@ export function watchUpdatesToDocument(
 			}
 		})
 		.catch((error: unknown) => {
-			console.error(`Error on initial data load from document watcher at path ${ref.path}:`, error);
-			console.debug(
+			logger.error(`Error on initial data load from document watcher at path ${ref.path}:`, error);
+			logger.debug(
 				`Removing listener '${handle.id}' for document ${ref.path} due to error on initial load`
 			);
 			documentWatchers.delete(handle.id);
@@ -65,7 +66,7 @@ export function watchUpdatesToDocument(
 	/* eslint-enable promise/prefer-await-to-then */
 
 	return (): void => {
-		console.debug(`Removing listener '${handle.id}' for document ${ref.path}`);
+		logger.debug(`Removing listener '${handle.id}' for document ${ref.path}`);
 		documentWatchers.delete(handle.id);
 	};
 }
@@ -84,11 +85,11 @@ export function watchUpdatesToCollection(
 			await informWatchersForCollection(ref, data);
 		})
 		.catch((error: unknown) => {
-			console.error(
+			logger.error(
 				`Error on initial data load from collection watcher at path ${ref.path}:`,
 				error
 			);
-			console.debug(
+			logger.debug(
 				`Removing listener '${handle.id}' for collection ${ref.path} due to error on initial load`
 			);
 			collectionWatchers.delete(handle.id);
@@ -96,7 +97,7 @@ export function watchUpdatesToCollection(
 	/* eslint-enable promise/prefer-await-to-then */
 
 	return (): void => {
-		console.debug(`Removing listener '${handle.id}' for collection ${ref.path}`);
+		logger.debug(`Removing listener '${handle.id}' for collection ${ref.path}`);
 		collectionWatchers.delete(handle.id);
 	};
 }
@@ -112,7 +113,7 @@ async function informWatchersForDocument(
 		.filter(w => w.id === ref.parent.id);
 
 	if (docListeners.length + collectionListeners.length > 0) {
-		console.debug(
+		logger.debug(
 			`Informing ${
 				docListeners.length + collectionListeners.length
 			} listener(s) about changes to document ${ref.path}`
@@ -133,7 +134,7 @@ async function informWatchersForCollection(
 		.filter(w => w.id === ref.id);
 
 	if (listeners.length > 0) {
-		console.debug(
+		logger.debug(
 			`Informing ${listeners.length} listener(s) about changes to collection ${ref.path}`
 		);
 	}

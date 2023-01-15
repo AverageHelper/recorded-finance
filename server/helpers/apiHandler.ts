@@ -2,6 +2,7 @@ import { assertMethod } from "./assertMethod";
 import { BadMethodError } from "../errors/BadMethodError";
 import { env } from "../environment";
 import { handleErrors } from "../handleErrors";
+import { logger } from "../logger";
 import { OriginError } from "../errors/OriginError";
 import { respondError, respondOk } from "../responses";
 import { URL } from "node:url";
@@ -91,11 +92,11 @@ if (configuredHostUrl !== null) {
 		const { hostname } = new URL(configuredHostUrl);
 		allowedOriginHostnames.add(hostname);
 	} catch {
-		console.error(`Value for env key HOST is not a valid URL: '${configuredHostUrl}'`);
+		logger.error(`Value for env key HOST is not a valid URL: '${configuredHostUrl}'`);
 	}
 }
 
-console.debug(`allowedOriginHostnames: ${JSON.stringify(Array.from(allowedOriginHostnames))}`);
+logger.debug(`allowedOriginHostnames: ${JSON.stringify(Array.from(allowedOriginHostnames))}`);
 
 function cors(req: APIRequest, res: APIResponse): void {
 	res.setHeader(
@@ -106,7 +107,7 @@ function cors(req: APIRequest, res: APIResponse): void {
 	// Allow requests with no origin (mobile apps, curl, etc.)
 	const origin = req.headers.origin;
 	if (origin === undefined || !origin) {
-		console.debug(`Handling request that has no origin`);
+		logger.debug(`Handling request that has no origin`);
 		return;
 	}
 
@@ -119,17 +120,17 @@ function cors(req: APIRequest, res: APIResponse): void {
 		hostname = url.hostname;
 		cleanOrigin = url.origin;
 	} catch {
-		console.debug(`Blocking request from origin: ${origin} (inferred hostname: <invalid-url>`);
+		logger.debug(`Blocking request from origin: ${origin} (inferred hostname: <invalid-url>`);
 		throw new OriginError();
 	}
 
 	if (!allowedOriginHostnames.has(hostname)) {
-		console.debug(`Blocking request from origin: ${origin} (inferred hostname: ${hostname}`);
+		logger.debug(`Blocking request from origin: ${origin} (inferred hostname: ${hostname}`);
 		throw new OriginError();
 	}
 
 	// Origin must be OK! Let 'em in
-	console.debug(`Handling request from origin: ${cleanOrigin}`);
+	logger.debug(`Handling request from origin: ${cleanOrigin}`);
 	res.setHeader("Access-Control-Allow-Origin", cleanOrigin);
 	res.setHeader("Access-Control-Allow-Credentials", "true");
 }

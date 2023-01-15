@@ -3,11 +3,12 @@ import type { DocumentData } from "./schemas.js";
 import type { Infer } from "superstruct";
 import type { ListenerParameters } from "pubnub";
 import { documentData } from "./schemas.js";
-import { AccountableError, UnexpectedResponseError, UnreachableCaseError } from "./errors/index.js";
-import { databaseCollection, databaseDocument } from "./api-types/index.js";
+import { databaseCollection, databaseDocument } from "./apiStruts";
 import { doc as docRef, getDoc, getDocs } from "./db.js";
 import { isArray } from "../helpers/isArray.js";
 import { isString } from "../helpers/isString.js";
+import { logger } from "../logger.js";
+import { PlatformError, UnexpectedResponseError, UnreachableCaseError } from "./errors/index.js";
 import { t } from "../i18n.js";
 import { WebSocketCode } from "./websockets/WebSocketCode.js";
 import { wsFactory } from "./websockets/websockets.js";
@@ -304,7 +305,7 @@ export function onSnapshot<T>(
 	onError?: (error: Error) => void
 ): Unsubscribe;
 
-export function onSnapshot<T extends DocumentData>(
+export function onSnapshot<T>(
 	queryOrReference: CollectionReference<T> | DocumentReference<T>,
 	onNextOrObserver:
 		| QuerySnapshotCallback<T>
@@ -321,13 +322,13 @@ export function onSnapshot<T extends DocumentData>(
 	// Grab callback functions
 	if (typeof onNextOrObserver === "object") {
 		onNextCallback = onNextOrObserver.next ?? ((): void => undefined);
-		onErrorCallback = onNextOrObserver.error ?? onError ?? ((err): void => console.error(err));
+		onErrorCallback = onNextOrObserver.error ?? onError ?? ((err): void => logger.error(err));
 	} else {
 		onNextCallback = onNextOrObserver;
-		onErrorCallback = onError ?? ((err): void => console.error(err));
+		onErrorCallback = onError ?? ((err): void => logger.error(err));
 	}
 
-	if (!db.currentUser) throw new AccountableError("database/unauthenticated");
+	if (!db.currentUser) throw new PlatformError("database/unauthenticated");
 
 	let previousSnap: QuerySnapshot<T> | null = null;
 	async function handleData({ data, shouldFetch = false }: WatcherData): Promise<void> {
@@ -412,26 +413,28 @@ export function onSnapshot<T extends DocumentData>(
 
 	const pubnub = db.pubnub;
 	if (pubnub) {
+		// ** Long polling (PubNub)
+
 		// Vercel doesn't support direct WebSockets. Use PubNub instead
 		const channel =
 			type === "collection"
 				? `${db.currentUser.uid}/${queryOrReference.id}`
 				: `${db.currentUser.uid}/${queryOrReference.parent.id}/${queryOrReference.id}`;
-		console.debug(`[onSnapshot] Subscribing to channel '${channel}'`);
+		logger.debug(`[onSnapshot] Subscribing to channel '${channel}'`);
 		const listener: ListenerParameters = {
 			message(event) {
 				// Only bother with messages for this channel
 				if (event.channel !== channel) {
-					console.debug(
+					logger.debug(
 						`[onSnapshot] Skipping message from channel '${event.channel}'; it doesn't match expected channel '${channel}'`
 					);
 					return;
 				}
 
-				// Make sure the publisher claims to be Accountable's server. (Only holds back kid hackers with our keys)
+				// Make sure the publisher claims to be our server. (Only holds back kid hackers with our keys)
 				const serverPublisher = "server";
 				if (event.publisher !== serverPublisher) {
-					console.debug(
+					logger.debug(
 						`[onSnapshot] Skipping message from publisher '${event.publisher}'; it doesn't match expected publisher '${serverPublisher}'`
 					);
 					return;
@@ -445,21 +448,21 @@ export function onSnapshot<T extends DocumentData>(
 				try {
 					const rawData: unknown = pubnub.decrypt(event.message as string | object, cipherKey);
 					if (typeof rawData === "string") {
-						console.debug("[onSnapshot] Parsing data from message string");
+						logger.debug("[onSnapshot] Parsing data from message string");
 						data = JSON.parse(rawData) as unknown;
 					} else {
-						console.debug("[onSnapshot] Taking message as data");
+						logger.debug("[onSnapshot] Taking message as data");
 						data = rawData;
 					}
 				} catch (error) {
-					console.error(`[onSnapshot] Failed to decrypt message:`, error);
+					logger.error(`[onSnapshot] Failed to decrypt message:`, error);
 					return;
 				}
 
 				// Ensure the data fits our expectations
 				try {
 					assert(data, watcherData);
-					console.debug(`[onSnapshot] Received snapshot from channel '${channel}'`);
+					logger.debug(`[onSnapshot] Received snapshot from channel '${channel}'`);
 				} catch (error) {
 					let message: unknown;
 					if (error instanceof StructError) {
@@ -467,7 +470,7 @@ export function onSnapshot<T extends DocumentData>(
 					} else {
 						message = error;
 					}
-					console.error(`[onSnapshot] Skipping message for channel '%s';`, channel, message);
+					logger.error(`[onSnapshot] Skipping message for channel '%s';`, channel, message);
 					return;
 				}
 
@@ -478,43 +481,43 @@ export function onSnapshot<T extends DocumentData>(
 				// See https://www.pubnub.com/docs/sdks/javascript/status-events
 				switch (event.category) {
 					case "PNNetworkUpCategory":
-						console.debug(`[onSnapshot] PubNub says the network is up.`);
+						logger.debug(`[onSnapshot] PubNub says the network is up.`);
 						break;
 					case "PNNetworkDownCategory":
-						console.debug(`[onSnapshot] PubNub says the network is down.`);
+						logger.debug(`[onSnapshot] PubNub says the network is down.`);
 						break;
 					case "PNNetworkIssuesCategory":
-						console.debug(`[onSnapshot] PubNub failed to subscribe due to network issues.`);
+						logger.debug(`[onSnapshot] PubNub failed to subscribe due to network issues.`);
 						break;
 					case "PNReconnectedCategory":
-						console.debug(`[onSnapshot] PubNub reconnected.`);
+						logger.debug(`[onSnapshot] PubNub reconnected.`);
 						break;
 					case "PNConnectedCategory":
-						console.debug(
+						logger.debug(
 							`[onSnapshot] PubNub connected with new channels: ${JSON.stringify(
 								event.subscribedChannels
 							)}`
 						);
 						break;
 					case "PNAccessDeniedCategory":
-						console.debug(
+						logger.debug(
 							`[onSnapshot] PubNub did not permit connecting to channel. Check Access Manager configuration for user tokens.`
 						);
 						break;
 					case "PNMalformedResponseCategory":
-						console.debug(`[onSnapshot] PubNub crashed trying to parse JSON.`);
+						logger.debug(`[onSnapshot] PubNub crashed trying to parse JSON.`);
 						break;
 					case "PNBadRequestCategory":
-						console.debug(`[onSnapshot] PubNub request was malformed.`);
+						logger.debug(`[onSnapshot] PubNub request was malformed.`);
 						break;
 					case "PNDecryptionErrorCategory":
-						console.debug(`[onSnapshot] PubNub message decryption failed.`);
+						logger.debug(`[onSnapshot] PubNub message decryption failed.`);
 						break;
 					case "PNTimeoutCategory":
-						console.debug(`[onSnapshot] Timed out trying to connect to PubNub.`);
+						logger.debug(`[onSnapshot] Timed out trying to connect to PubNub.`);
 						break;
 					default:
-						console.debug(
+						logger.debug(
 							`[onSnapshot] Received a non-200 response code from PubNub for operation '${
 								event.operation
 							}' that affects channel(s) ${JSON.stringify(
@@ -528,7 +531,7 @@ export function onSnapshot<T extends DocumentData>(
 		};
 
 		const unsubscribe = (): void => {
-			console.debug(`[onSnapshot] Unsubscribing from channel '${channel}'`);
+			logger.debug(`[onSnapshot] Unsubscribing from channel '${channel}'`);
 			pubnub.removeListener(listener);
 			pubnub.unsubscribe({ channels: [channel] });
 		};
@@ -543,7 +546,7 @@ export function onSnapshot<T extends DocumentData>(
 					getDocs(queryOrReference)
 						// eslint-disable-next-line promise/prefer-await-to-then
 						.then(snap => {
-							console.debug(`[onSnapshot] Received initial snapshot from channel '${channel}'`);
+							logger.debug(`[onSnapshot] Received initial snapshot from channel '${channel}'`);
 							const data = snap.docs.map(doc => ({ ...doc.data(), _id: doc.id }));
 							void handleData({
 								data,
@@ -560,7 +563,7 @@ export function onSnapshot<T extends DocumentData>(
 					getDoc(queryOrReference)
 						// eslint-disable-next-line promise/prefer-await-to-then
 						.then(snap => {
-							console.debug(`[onSnapshot] Received initial snapshot from channel '${channel}'`);
+							logger.debug(`[onSnapshot] Received initial snapshot from channel '${channel}'`);
 							const data = snap.data() ?? null;
 							void handleData({
 								data: { ...data, _id: snap.id },
@@ -579,8 +582,9 @@ export function onSnapshot<T extends DocumentData>(
 		return unsubscribe;
 	}
 
+	// ** WebSockets (Express)
 	const uid = db.currentUser.uid;
-	const baseUrl = new URL(`ws://${db.url.hostname}:${db.url.port}`);
+	const baseUrl = new URL(`wss://${db.url.hostname}:${db.url.port}`);
 	let url: URL;
 
 	switch (type) {
@@ -609,7 +613,7 @@ export function onSnapshot<T extends DocumentData>(
 	onMessage("data", data => void handleData(data));
 
 	onClose((code, _reason) => {
-		console.debug(
+		logger.debug(
 			t("error.ws.closed-with-code-reason", {
 				values: { code, reason: _reason || t("error.ws.no-reason-given") },
 			})

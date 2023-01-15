@@ -1,14 +1,19 @@
-import type { JsonWebTokenError } from "jsonwebtoken";
 import type { MFAOption, User } from "../database/schemas";
 import { assertSchema, jwtPayload } from "../database/schemas";
 import { BadRequestError } from "../errors/BadRequestError";
 import { blacklistHasJwt, jwtFromRequest, verifyJwt } from "./jwt";
+import { InternalError } from "../errors/InternalError";
+import { logger } from "../logger";
 import { NotFoundError } from "../errors/NotFoundError";
 import { pathSegments } from "../helpers/pathSegments";
 import { StructError } from "superstruct";
 import { UnauthorizedError } from "../errors/UnauthorizedError";
-import { userWithUid } from "../database/reads";
+import { userWithUid } from "../database/read";
+import _jwt from "jsonwebtoken";
 import safeCompare from "tsscmp";
+
+// FIXME: Not sure why, but tests fail unless we do this:
+const { JsonWebTokenError } = _jwt;
 
 interface Metadata {
 	/** The user's auth data. */
@@ -24,26 +29,31 @@ interface Metadata {
 export async function metadataFromRequest(req: APIRequest, res: APIResponse): Promise<Metadata> {
 	const token = jwtFromRequest(req, res);
 	if (token === null) {
-		console.debug("Request has no JWT");
+		logger.debug("Request has no JWT");
 		throw new UnauthorizedError("missing-token");
 	}
 	if (await blacklistHasJwt(token)) {
-		console.debug("Request has a blacklisted JWT");
+		logger.debug("Request has a blacklisted JWT");
 		throw new UnauthorizedError("expired-token");
 	}
 
-	const payload = await verifyJwt(token).catch((error: JsonWebTokenError) => {
-		console.debug(`JWT failed to verify because ${error.message}`);
-		throw new UnauthorizedError("expired-token");
+	const payload = await verifyJwt(token).catch((error: unknown) => {
+		if (error instanceof JsonWebTokenError) {
+			logger.debug(`JWT failed to verify because ${error.message}`);
+			throw new UnauthorizedError("expired-token");
+		} else {
+			logger.error(`JWT failed to verify due to an unknown error:`, error);
+			throw new InternalError();
+		}
 	});
 
 	try {
 		assertSchema(payload, jwtPayload);
 	} catch (error) {
 		if (error instanceof StructError) {
-			console.debug(`JWT payload failed to verify: ${error.message}`);
+			logger.debug(`JWT payload failed to verify: ${error.message}`);
 		} else {
-			console.debug(`JWT payload failed to verify: ${JSON.stringify(error)}`);
+			logger.debug(`JWT payload failed to verify: ${JSON.stringify(error)}`);
 		}
 		throw new BadRequestError("Invalid JWT payload");
 	}

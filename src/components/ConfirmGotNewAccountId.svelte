@@ -28,10 +28,8 @@
 		<code>{$accountId}</code>
 	</I18N>
 
-	<ActionButton slot="primary-action" kind="bordered-primary" on:click={yes}
-		>{$_("common.yes")}</ActionButton
-	>
-	<ActionButton slot="cancel-action" kind="bordered-secondary" on:click={no}
+	<ActionButton slot="primary-action" on:click={yes}>{$_("common.yes")}</ActionButton>
+	<ActionButton slot="cancel-action" kind="secondary" on:click={no}
 		>{$_("common.not-yet")}</ActionButton
 	>
 </Confirm>

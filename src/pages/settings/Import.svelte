@@ -9,8 +9,9 @@
 	import { schema } from "../../model/DatabaseSchema";
 	import { toast } from "@zerodevx/svelte-toast";
 	import { useNavigate } from "svelte-navigator";
-	import FileInput from "../attachments/FileInput.svelte";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
+	import FileInput from "../attachments/FileInput.svelte";
+	import Form from "../../components/Form.svelte";
 	import ImportProcessModal from "./ImportProcessModal.svelte";
 
 	const navigate = useNavigate();
@@ -52,7 +53,7 @@
 				},
 			});
 
-			const expectedDbName = "accountable/database.json";
+			const expectedDbName = "recorded-finance/database.json";
 			const dbFile = zipFile.find(f => f.filename === expectedDbName);
 			if (!dbFile?.getData)
 				throw new TypeError(
@@ -81,13 +82,14 @@
 	}
 </script>
 
-<form on:submit|preventDefault>
+<Form>
 	<h3>{$_("settings.import.meta.heading")}</h3>
 	<p>{$_("settings.import.meta.description")}</p>
-	<div class="buttons-79507e92">
+
+	<div class="buttons">
 		<FileInput accept="application/zip" disabled={isLoading} on:input={onFileReceived} let:click>
 			<ActionButton
-				kind="bordered"
+				kind="info"
 				disabled={isLoading}
 				on:click={e => {
 					e.preventDefault();
@@ -96,25 +98,6 @@
 			>
 		</FileInput>
 	</div>
-</form>
+</Form>
 
 <ImportProcessModal fileName={dbName} {db} zip={archive} on:finished={forgetFile} />
-
-<style lang="scss" global>
-	p {
-		margin-bottom: 0;
-	}
-
-	.buttons-79507e92 {
-		display: flex;
-		flex-flow: row wrap;
-
-		:not(:last-child) {
-			margin-right: 8pt;
-		}
-
-		* {
-			text-decoration: none;
-		}
-	}
-</style>

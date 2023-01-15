@@ -1,14 +1,33 @@
+@use "styles/colors" as *;
+
 form {
 	display: flex;
 	flex-direction: column;
 	max-width: 36em;
 	margin: 0 auto;
+	text-align: left;
 
-	button {
+	> button {
 		margin: 1em 0;
 	}
 
-	p {
+	> p {
 		margin-top: 1em;
+	}
+
+	// Grouped "confirm" or "reset" or "cancel" etc. buttons
+	.buttons {
+		display: flex;
+		flex-flow: row nowrap;
+
+		> *:not(:last-child) {
+			margin-right: 8pt;
+		}
+	}
+}
+
+.form-control {
+	&:disabled {
+		background-color: color($secondary-fill);
 	}
 }

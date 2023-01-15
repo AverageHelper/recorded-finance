@@ -6,7 +6,7 @@
 		"flag": "🇺🇸"
 	},
 	"common": {
-		"platform": "Accountable",
+		"platform": "Recorded Finance",
 		"cancel": "Cancel",
 		"application": "Client",
 		"current-language": "Current Language: {name}",
@@ -15,6 +15,7 @@
 		"delete-imperative": "Delete",
 		"disk-usage": "Used {used} of {total}",
 		"download-action": "Download",
+		"go-back": "Go back",
 		"learn-more": "Learn More",
 		"loading-in-progress": "Loading...",
 		"saving-in-progress": "Saving...",
@@ -42,11 +43,12 @@
 	},
 	"error": {
 		"auth": {
-			"account-already-exists": "Someone already has an account with that ID.",
+			"account-already-exists": "Someone already has an account with that ID",
+			"totp-already-verified": "You've already verified your TOTP enrollment",
 			"internal": "Internal auth error",
 			"invalid-argument": "Invalid auth argument",
 			"invalid-credential": "Invalid account ID or passphrase",
-			"invalid-email": "That doesn't quite look like an email address.",
+			"invalid-email": "That doesn't quite look like an email address",
 			"create-account-first": "You must create an accout first",
 			"unauthenticated": "You must sign in first"
 		},
@@ -57,14 +59,14 @@
 			"missing-pek": "No decryption key"
 		},
 		"db": {
-			"account-has-transactions": "Cannot delete an account that has transactions.",
+			"account-has-transactions": "Cannot delete an account that has transactions",
 			"could-not-parse-document": "Failed to parse record from server document {id}",
 			"failed-precondition": "Failed precondition",
 			"internal": "Internal database error",
 			"invalid-argument": "Invalid database argument",
 			"record-does-not-match-guard": "Record does not match '{guard}' type guard",
 			"batch": {
-				"op-limit": "Cannot batch more than {limit} write operations.",
+				"op-limit": "Cannot batch more than {limit} write operations",
 				"one-db": "Must use exactly one database in a write batch"
 			}
 		},
@@ -75,13 +77,14 @@
 		"fs": {
 			"invalid-uri-no-byte-string": "Invalid Data URI: Could not get byte string",
 			"invalid-uri-no-mime-string": "Invalid Data URI: Could not get MIME string",
-			"expected-string": "Expected string output, got {type}"
+			"expected-string": "Expected string output, got '{type}'"
 		},
 		"network": {
 			"account-conflict": "An account with that ID already exists",
-			"bad-gateway": "The CORS policy for this site does not allow access from the specified Origin.",
+			"bad-gateway": "The CORS policy for this site does not allow access from the specified Origin",
 			"bad-method": "That method is not allowed here. What are you trying to do?",
 			"expired-token": "You must sign in again in order to proceed",
+			"invalid-response": "Invalid server response: {response}",
 			"missing-mfa-credentials": "You must provide a TOTP code",
 			"missing-token": "Unauthorized",
 			"not-found": "No data found",
@@ -95,14 +98,15 @@
 			"unknown": "Not sure what went wrong. Try again maybe?"
 		},
 		"sanity": {
-			"empty-param": "{name} parameter cannot be empty",
-			"missing-env-var": "No value found for environment variable {key}",
+			"empty-param": "'{name}' parameter cannot be empty",
+			"missing-env-var": "No value found for environment variable '{key}'",
 			"missing-constructor-property": "Missing property in constructor",
 			"unreachable-case": "Unreachable case: {value}"
 		},
 		"server": {
-			"id-not-string": "Expected ID to be string",
+			"id-not-string": "Expected ID to be of type 'string'",
 			"missing-access-token": "Expected access token from server, but got none",
+			"missing-secret": "Expected secret from server, but got nothing",
 			"no-data": "Expected data from server, but got none",
 			"no-version": "No version string found",
 			"throttled": "You are being throttled",
@@ -111,15 +115,15 @@
 			"unexpected-response": "Server response was unexpected: {message}"
 		},
 		"settings": {
-			"missing-db-file": "{filename} not present at root of zip",
-			"invalid-location-preference": "{pref} is not a valid location preference."
+			"missing-db-file": "'{filename}' not present at root of zip",
+			"invalid-location-preference": "'{pref}' is not a valid location preference"
 		},
 		"storage": {
 			"internal": "Internal storage error",
 			"invalid-argument": "Invalid storage argument",
 			"invalid-checksum": "The uploaded file does not match the provided checksum. Please reupload",
 			"invalid-ref-path": "Invalid storage ref: {path}",
-			"malformed-payload": "Improperly formatted payload.",
+			"malformed-payload": "Improperly formatted payload",
 			"no-data-found": "No data found at the ref",
 			"server-file-wrong-size": "The uploaded file does not match the provided file size. Please reupload"
 		},
@@ -129,7 +133,6 @@
 			"data-not-array": "Data is not an array",
 			"data-is-array": "Data is an array",
 			"endpoints-closing-down": "Endpoint(s) closing down for now",
-			"invalid-response": "Invalid server response: {response}",
 			"internet-gone": "Internet connection lost",
 			"no-reason-given": "No reason given",
 			"not-json": "The message could not be parsed as JSON: {message}",
@@ -137,7 +140,7 @@
 		}
 	},
 	"debug": {
-		"something-is-wrong": "Something's wrong",
+		"something-is-wrong": "Something's wrong.",
 		"account-but-no-transaction": "We have an account, but no transaction.",
 		"transaction-id": "The transaction ID is {id}.",
 		"count-one-transaction": "There is 1 transaction in the cache.",
@@ -184,7 +187,8 @@
 			"file-type": "Type: {type}",
 			"timestamp": "Timestamp: {timestamp}",
 			"linked-transaction": "Linked Transaction",
-			"linked-transactions": "Linked Transactions"
+			"linked-transactions": "Linked Transactions",
+			"actions": "Actions"
 		},
 		"upload": {
 			"imperative": "Upload a file",
@@ -215,7 +219,7 @@
 		}
 	},
 	"months": {
-		"does-not-match-pattern": "{month} does not match a month identifier pattern"
+		"does-not-match-pattern": "'{month}' does not match a month identifier pattern"
 	},
 	"settings": {
 		"heading": "Settings",
@@ -244,7 +248,7 @@
 			},
 			"meta": {
 				"heading": "Export",
-				"description": "Exports an {unencrypted} copy of all your data in JSON format. (Except attachments of course, those will come as Accountable got them).",
+				"description": "Exports an {unencrypted} copy of all your data in JSON format. (Except attachments of course, those will come as {platform} got them).",
 				"unencrypted": "unencrypted"
 			}
 		},
@@ -269,7 +273,7 @@
 		},
 		"location": {
 			"heading": "Location Service",
-			"api-disclaimer": "By default, we don't talk to any external location APIs. However, if you want Accountable to prefill transaction location fields, you'll need to select a different option below.",
+			"api-disclaimer": "By default, we don't talk to any external location APIs. However, if you want {platform} to prefill transaction location fields, you'll need to select a different option below.",
 			"iplocate": "IPLocate",
 			"manual-disclaimer": "Note that we have no \"automatic\" location features. We only fetch your current location when you press a button to request it. We use the {iplocate} API to obtain vague location data.",
 			"actions": {
@@ -282,6 +286,28 @@
 				"imprecise-description": "Get, on-demand, a locale based on your IP address.",
 				"precise": "Precise",
 				"precise-description": "Get the best-available location information."
+			}
+		},
+		"mfa": {
+			"general": {
+				"heading": "Multi-factor Authentication",
+				"explanation": "Your passphrase is a single authentication factor (\"something you know\"). Adding a second factor (\"something you have\" or \"something you are\") increases your account's security by, like, a lot.",
+				"enroll-action": "Enroll 2FA",
+				"unenroll-action": "Unenroll 2FA"
+			},
+			"enroll": {
+				"heading": "Enroll in MFA",
+				"enter-password": "Enter your passphrase to enable 2FA:",
+				"continue-action": "Continue",
+				"scan-secret": "Scan this code with your authenticator app:",
+				"manual-secret-input": "Or use this code:",
+				"check-code-action": "Check",
+				"recovery-code-explanation": "Here is your recovery token. Keep it safe, somewhere you can get to it if you lose your 2FA auth device:",
+				"acknowledge-action": "I understand"
+			},
+			"unenroll": {
+				"heading": "Unenroll from MFA",
+				"disable-action": "Disable 2FA"
 			}
 		}
 	},
@@ -379,10 +405,6 @@
 		"license": "This project is licensed under the {name}.",
 		"license-name": "GNU General Public License v3.0",
 		"view-license": "View the full license",
-		"pr": "Feel free to {issue} or submit a pull request on this project's {github}.",
-		"issue": "open an issue",
-		"github": "GitHub page",
-		"view-github": "Check out my GitHub",
 		"view-source": "View this project's source code"
 	},
 	"home": {
@@ -403,13 +425,16 @@
 		},
 		"encrypted": {
 			"heading": "Your Ledger, Not Mine.",
-			"p1": "Accountable, by design, cannot see your data, even on our own servers. We don't need or want to see what you do with your money. That's not my job. {legal}",
+			"p1": "{platform}, by design, cannot see your data, even on our own servers. We don't need or want to see what you do with your money. That's not my job. {legal}",
 			"legal": "(I'd rather you {not} do illegal stuff with this.)",
 			"not": "not"
 		},
 		"open-source": {
 			"heading": "Keep Me Accountable.",
-			"open": "All of Accountable's source code is open to read.",
+			"open": "All of our source code is open to read.",
+			"pr": "Feel free to {issue} or submit a pull request on this project's {github}.",
+			"issue": "open an issue",
+			"github": "GitHub page",
 			"let-me-know": "Let me know if anything needs fixed."
 		}
 	},
@@ -417,6 +442,7 @@
 		"account-id": "account ID",
 		"totp": "token",
 		"checking-lock-state": "Checking lock state...",
+		"checking-login-state": "Checking login state...",
 		"current-account-id": "current account ID",
 		"current-passphrase": "current passphrase",
 		"logging-out": "Logging out...",
@@ -427,9 +453,10 @@
 		"new-passphrase-imperative": "Create a strong passphrase",
 		"value-will-be-generated": "to be generated...",
 		"log-in": "Log in",
+		"log-in-ongoing": "Logging in",
 		"create-account": "Create an account",
 		"cookie-disclaimer-header": "How our cookies work",
-		"cookie-disclaimer": "Logging in will set two cookies, which together contain information that declares your access to your data. These cookies let your browser securely remember that you are logged in. The alternative is for us to recall your login information with JavaScript, which is not a safe place to keep thing. {more}",
+		"cookie-disclaimer": "Logging in will set two cookies, which together contain information that declares your access to your data. These cookies let your browser securely remember that you are logged in. The alternative is for us to recall your login information with JavaScript, which is not a safe place to keep things. {more}",
 		"cookie-more": "More info.",
 		"process": {
 			"authenticating": "Authenticating...",
@@ -439,7 +466,7 @@
 			"deriving-pkey": "Deriving key from passphrase..."
 		},
 		"new-account-prompt": {
-			"open-soon": "Don't have an account? We'll be open for new accounts soon™",
+			"open-soon": "Don't have an account? We'll be open for new accounts soon!",
 			"create": {
 				"question": "Need to create an account?",
 				"action": "Create one!"
@@ -461,9 +488,11 @@
 		}
 	},
 	"locked": {
-		"heading": "You're logged in, but your ledger is locked. Enter your passphrase to unlock the ledger.",
+		"heading": "Vault locked",
+		"explanation": "You're logged in, but your ledger is locked. Enter your passphrase to unlock the ledger.",
 		"locking": "Locking...",
-		"unlock": "Unlock"
+		"unlock": "Unlock",
+		"unlock-ongoing": "Unlocking"
 	},
 	"404": {
 		"heading": "404",
@@ -472,26 +501,26 @@
 	"install": {
 		"service": {
 			"heading": "Hosted Service",
-			"p1": "There's an Accountable client-server architecture right here! Click the {login} link above to create an account."
+			"p1": "There's a hosted {platform} client-server architecture right here! Click the {login} link above to create an account."
 		},
 		"self": {
 			"heading": "Self-host Server",
-			"p1": "Check out the {readme} for more on how to set Accountable up on your own computer.",
+			"p1": "Check out the {readme} for more on how to set {platform} up on your own computer.",
 			"planning": "We're planning a hosted solution right here soon.",
-			"p2": "I'm toying with the idea of (optionally) using Firebase as an Accountable server. This would be great for users who are okay with using a Google service and don't want to pay to host your own installation.",
+			"p2": "I'm toying with the idea of (optionally) using Firebase as a {platform} storage server. This would be great for users who are okay with using a Google service and don't want to pay to host their own installation.",
 			"readme": "README"
 		}
 	},
 	"about": {
 		"goals": {
 			"heading": "Goals",
-			"p1": "The aim of Accountable is to be a cross-platform and portable spot to keep your transaction records and receipts. I plan to have proper mobile clients eventually. The {selfhost} option will always be available, and I intend for this project to always be {opensource}. You will always have access to the financial records that you give to Accountable, and Accountable cannot share those records with anyone else.",
+			"p1": "The aim of {platform} is to be a cross-platform and portable spot to keep your transaction records and receipts. I plan to have proper mobile clients eventually. The {selfhost} option will always be available, and I intend for this project to always be {opensource}. You will always have access to the financial records that you give to {platform}, and {platform} cannot share those records with anyone else.",
 			"selfhost": "self-host",
 			"opensource": "open-source"
 		},
 		"alternatives": {
 			"heading": "Alternatives",
-			"p1": "There are a few {alts} out there, but none I've found that I like. Lots of proprietary ones, too. Feel free to use them if you'd like, I'm not sponsored by any of them. Their respective names are trademarks of their owners:",
+			"p1": "There are a few {alts} out there, but none I've found that I like. Lots of proprietary ones, too. Feel free to use them if you'd like, I'm not sponsored by any of them. Their names are trademarks of their respective owners:",
 			"alts": "open-source desktop balance keepers",
 
 			"alt1": "You may have heard of {ynab}.",
@@ -518,14 +547,14 @@
 		"summary": "{tldr} Your data is unreadable by anyone but you (as far as I know.)",
 		"tldr": "TL;DR",
 		"encryption-kind": {
-			"question": "What sort of encryption does Accountable do?",
+			"question": "What sort of encryption does {platform} do?",
 			"answer": "We use only the best {mge} everyone else uses.",
 			"mge": "\"military-grade encryption\""
 		},
 		"where-keys": {
 			"question": "Who holds the encryption keys?",
 			"answer1": "You do.",
-			"answer2": "When you create an account, Accountable generates a data-encryption key {dek} to use to encrypt and decrypt your data. Accountable generates a separate key-encryption key {kek} from your given passphrase to use to encrypt your DEK. Accountable then encrypts the DEK and sends it to our servers to store. This encrypted blob is useless without the KEK to decrypt it, and your KEK is unknown without your passphrase.",
+			"answer2": "When you create an account, {platform} generates a data-encryption key {dek} to use to encrypt and decrypt your data. {platform} generates a separate key-encryption key {kek} from your given passphrase to use to encrypt your DEK. {platform} sends the encrypted DEK blob to our servers to store. This encrypted blob is useless without the KEK to decrypt it, and your KEK is unknown without your passphrase.",
 			"dek": "(DEK)",
 			"kek": "(KEK)",
 			"answer3": "We use {sha512} and {pbkdf2} with 10,000 rounds to generate these keys. See {source}.",
@@ -534,13 +563,13 @@
 			"source": "the relevant source code"
 		},
 		"passphrase-handling": {
-			"question": "What does Accountable do with my passphrase?",
-			"answer1": "Accountable never transmits your passphrase anywhere, even over TLS.",
-			"answer2": "Accountable generates a one-way hash of your passphrase, and sends that instead. The server then {salts} and {hashes} that hash, and stores the resulting mash. (That mash has nothing to do with how your data is encrypted; see above.)",
+			"question": "What does {platform} do with my passphrase?",
+			"answer1": "{platform} never transmits your passphrase anywhere, even over TLS.",
+			"answer2": "{platform} generates a one-way hash of your passphrase, and sends that instead. The server then {salts} and {hashes} that hash, and stores the resulting mash. (That mash has nothing to do with how your data is encrypted; see above.)",
 			"salts": "salts",
 			"hashes": "hashes",
-			"answer3": "When you log in again, Accountable repeats the procedure on your hashed passphrase, and checks to see whether this new mash matches the stored mash.",
-			"answer4": "This mash is what Accountable's server uses to guard access to your encrypted database. If someone can give the server a passphrase hash that results in the correct mash, the server assumes that person is you, and happily sends over your encrypted data. No part of this mash—the hash the server gets, the salt the server generates, or the final mash of the two—can be used to decrypt your data. (Accountable uses your {dek} for that; see above.)",
+			"answer3": "When you log in again, {platform} repeats the procedure on your hashed passphrase, and checks to see whether this new mash matches the stored mash.",
+			"answer4": "This mash is what our storage server uses to guard access to your encrypted database. If someone can give the server a passphrase hash that results in the correct mash, the server assumes that person is you, and happily sends over your encrypted data. No part of this mash—the hash the server gets, the salt the server generates, or the final mash of the two—can be used to decrypt your data. ({platform} uses your {dek} for that; see above.)",
 			"dek": "DEK",
 			"answer5": "We use {sha512} and {bcrypt} with a cost factor of 15. See {source}.",
 			"sha512": "SHA-512",
@@ -550,17 +579,17 @@
 		"change-passphrase": {
 			"question": "What if I change my passphrase?",
 			"answer1": "We don't re-encrypt the entire database, if that's what you're thinking.",
-			"answer2": "Since your passphrase is only used to generate a KEK, Accountable only re-encrypts the DEK using the new KEK that your new passphrase generates.",
+			"answer2": "Since your passphrase is only used to generate a KEK, {platform} only re-encrypts the DEK using the new KEK that your new passphrase generates.",
 			"answer3": "If you think your DEK may be compromised, I'm sorry. You may export your data, delete your old account, create a new account, and import your data again. This will re-encrypt everything using a fresh DEK."
 		},
 		"lost-passphrase": {
 			"question": "What happens if I lose my passphrase?",
-			"answer1": "You lose your data. There is nothing I or anyone can do (unless your passphrase is easily-cracked. Give it a go!) Without your passphrase, nobody can generate the KEK that encrypts the DEK that encrypts your data. Without that passphrase, your data is lost.",
+			"answer1": "You lose your data. There is nothing I or anyone else can do to bring your data back. (That is, unless your passphrase is easily cracked. Give it a go!) Without your passphrase, nobody can generate the KEK that encrypted the DEK that encrypted your data. Without that passphrase, your data is lost.",
 			"answer2": "Don't lose your passphrase."
 		},
 		"database-breach": {
 			"question": "What happens if someone steals the database?",
-			"answer1": "If your passphrase is good, there's nothing anyone but you can do with Accountable's database. The server never sees your DEK, its corresponding KEK, or your passphrase, and cannot put those into the database."
+			"answer1": "If your passphrase is long and complicated, there's nothing that anyone can do with our database. The server never sees your DEK, your passphrase's KEK, or your passphrase. None of those are in the database."
 		}
 	}
 }

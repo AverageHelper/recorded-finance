@@ -1,14 +1,9 @@
 import type { AnyData, DataItem, DataItemKey, User, UserKeys } from "./schemas";
 import type { CollectionReference, DocumentReference } from "./references";
 import type { FileData, PrismaPromise, User as DBUser } from "@prisma/client";
-import {
-	assertSchema,
-	isDataItemKey,
-	isNonEmptyArray,
-	sortStrings,
-	user as userSchema,
-} from "./schemas";
+import { assertSchema, isDataItemKey, isNonEmptyArray, user as userSchema } from "./schemas";
 import { dataSource } from "./io";
+import { logger } from "../logger";
 import { ONE_HOUR } from "../constants/time";
 import { UnreachableCaseError } from "../errors/UnreachableCaseError";
 
@@ -25,7 +20,7 @@ export function upsertFileData(
 	const contents = attachment.contents;
 	const size = contents.length;
 
-	return dataSource.fileData.upsert({
+	return dataSource().fileData.upsert({
 		select: { size: true },
 		where: {
 			userId_fileName: { userId, fileName },
@@ -48,7 +43,7 @@ export function upsertFileData(
  * @returns a `Promise` that resolves with the number of bytes deleted.
  */
 export async function destroyFileData(userId: string, fileName: string): Promise<number> {
-	const file = await dataSource.fileData.delete({
+	const file = await dataSource().fileData.delete({
 		where: { userId_fileName: { userId, fileName } },
 		select: { size: true },
 	});
@@ -65,7 +60,7 @@ export async function destroyFileData(userId: string, fileName: string): Promise
  * window elapses.
  */
 export async function addJwtToDatabase(token: string): Promise<void> {
-	await dataSource.expiredJwt.upsert({
+	await dataSource().expiredJwt.upsert({
 		where: { token },
 		update: {}, // nop if the value already exists
 		create: { token }, // database generates the timestamp
@@ -77,7 +72,7 @@ export async function addJwtToDatabase(token: string): Promise<void> {
  */
 export async function purgeExpiredJwts(): Promise<void> {
 	const twoHrsAgo = new Date(new Date().getTime() - 2 * ONE_HOUR);
-	await dataSource.expiredJwt.deleteMany({
+	await dataSource().expiredJwt.deleteMany({
 		where: {
 			createdAt: { lte: twoHrsAgo },
 		},
@@ -88,7 +83,7 @@ export function upsertUser(properties: Required<User>): PrismaPromise<Pick<DBUse
 	assertSchema(properties, userSchema); // assures nonempty fields
 	const uid = properties.uid;
 
-	return dataSource.user.upsert({
+	return dataSource().user.upsert({
 		select: { uid: true },
 		where: { uid },
 		update: properties,
@@ -99,9 +94,9 @@ export function upsertUser(properties: Required<User>): PrismaPromise<Pick<DBUse
 export async function destroyUser(uid: string): Promise<void> {
 	if (!uid) throw new TypeError("uid was empty");
 
-	await dataSource.dataItem.deleteMany({ where: { userId: uid } });
-	await dataSource.userKeys.deleteMany({ where: { userId: uid } });
-	await dataSource.user.delete({ where: { uid } });
+	await dataSource().dataItem.deleteMany({ where: { userId: uid } });
+	await dataSource().userKeys.deleteMany({ where: { userId: uid } });
+	await dataSource().user.delete({ where: { uid } });
 }
 
 export interface DocUpdate {
@@ -136,32 +131,17 @@ export async function upsertDbDocs(updates: Array<DocUpdate>): Promise<void> {
 			const data: UserKeys = update.data;
 			dekMaterialUpserts.push(data);
 			return;
-		} else if ("uid" in update.data) {
-			// User
-			const data: User = update.data;
-			const upsert = {
-				uid: data.uid,
-				currentAccountId: data.currentAccountId,
-				passwordHash: data.passwordHash,
-				passwordSalt: data.passwordSalt,
-				pubnubCipherKey: data.pubnubCipherKey,
-				mfaRecoverySeed: data.mfaRecoverySeed ?? null,
-				totpSeed: data.totpSeed ?? null,
-				requiredAddtlAuth: Array.from(new Set(data.requiredAddtlAuth?.sort(sortStrings) ?? [])),
-			};
-			userUpserts.push(upsert);
-			return;
 		}
 
 		throw new UnreachableCaseError(update.data);
 	});
 
-	console.debug(
+	logger.debug(
 		`Upserting ${updates.length} records (${dataItemUpserts.length} DataItem, ${dekMaterialUpserts.length} UserKeys, ${userUpserts.length} User)...`
 	);
 
 	// FIXME: This gets REEEEEALLY slow after about 10 records
-	// await dataSource.$transaction([
+	// await dataSource().$transaction([
 	await Promise.all([
 		...dataItemUpserts.map(data => {
 			const collectionId = data.collectionId;
@@ -171,7 +151,7 @@ export async function upsertDbDocs(updates: Array<DocUpdate>): Promise<void> {
 				objectType: data.objectType,
 				cryption: data.cryption ?? "v0",
 			};
-			return dataSource.dataItem.upsert({
+			return dataSource().dataItem.upsert({
 				select: { docId: true },
 				where: { userId_collectionId_docId: { userId, collectionId, docId } },
 				update: upsert,
@@ -192,7 +172,7 @@ export async function upsertDbDocs(updates: Array<DocUpdate>): Promise<void> {
 				oldDekMaterial: data.oldDekMaterial ?? null,
 				oldPassSalt: data.oldPassSalt ?? null,
 			};
-			return dataSource.userKeys.upsert({
+			return dataSource().userKeys.upsert({
 				select: { userId: true },
 				where: { userId },
 				update: upsert,
@@ -205,7 +185,7 @@ export async function upsertDbDocs(updates: Array<DocUpdate>): Promise<void> {
 			});
 		}),
 		...userUpserts.map(data => {
-			return dataSource.user.upsert({
+			return dataSource().user.upsert({
 				select: { uid: true },
 				where: { uid: userId },
 				update: data,
@@ -224,7 +204,6 @@ export async function deleteDbDocs(refs: NonEmptyArray<DocumentReference>): Prom
 	// Group refs by collection
 	const dataItemRefs: Array<DocumentReference> = [];
 	const keyRefs: Array<DocumentReference> = [];
-	const userRefs: Array<DocumentReference> = [];
 
 	for (const ref of refs) {
 		switch (ref.parent.id) {
@@ -233,13 +212,11 @@ export async function deleteDbDocs(refs: NonEmptyArray<DocumentReference>): Prom
 			case "locations":
 			case "tags":
 			case "transactions":
+			case "users":
 				dataItemRefs.push(ref);
 				continue;
 			case "keys":
 				keyRefs.push(ref);
-				continue;
-			case "users":
-				userRefs.push(ref);
 				continue;
 			default:
 				throw new UnreachableCaseError(ref.parent.id);
@@ -247,7 +224,7 @@ export async function deleteDbDocs(refs: NonEmptyArray<DocumentReference>): Prom
 	}
 
 	// Run deletes
-	await dataSource.$transaction([
+	await dataSource().$transaction([
 		// Not sure about deleteMany here, since we need each doc to match each ref
 		...dataItemRefs.map(ref => {
 			const collectionId = ref.parent.id;
@@ -256,7 +233,7 @@ export async function deleteDbDocs(refs: NonEmptyArray<DocumentReference>): Prom
 				throw new TypeError(
 					`SANITY FAIL: Collection ID '${collectionId}' suddenly appeared among DataItem data.`
 				);
-			return dataSource.dataItem.delete({
+			return dataSource().dataItem.delete({
 				where: {
 					userId_collectionId_docId: {
 						userId: ref.uid,
@@ -266,8 +243,7 @@ export async function deleteDbDocs(refs: NonEmptyArray<DocumentReference>): Prom
 				},
 			});
 		}),
-		dataSource.userKeys.deleteMany({ where: { userId: { in: keyRefs.map(r => r.id) } } }),
-		dataSource.user.deleteMany({ where: { uid: { in: userRefs.map(r => r.id) } } }),
+		dataSource().userKeys.deleteMany({ where: { userId: { in: keyRefs.map(r => r.id) } } }),
 	]);
 }
 
@@ -284,16 +260,11 @@ export async function deleteDbCollection(ref: CollectionReference): Promise<void
 		case "locations":
 		case "tags":
 		case "transactions":
-			await dataSource.dataItem.deleteMany({ where: { userId: uid } });
+		case "users":
+			await dataSource().dataItem.deleteMany({ where: { userId: uid, collectionId: ref.id } });
 			return;
 		case "keys":
-			await dataSource.userKeys.deleteMany({ where: { userId: uid } });
-			return;
-		case "users":
-			// Special handling: delete all users, and burn everything
-			await dataSource.dataItem.deleteMany();
-			await dataSource.userKeys.deleteMany();
-			await dataSource.user.deleteMany();
+			await dataSource().userKeys.deleteMany({ where: { userId: uid } });
 			return;
 		default:
 			throw new UnreachableCaseError(ref.id);

@@ -19,7 +19,6 @@
 		"noUncheckedIndexedAccess": true,
 		"useUnknownInCatchVariables": true,
 		"esModuleInterop": true,
-		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true,
 		"types": [],
 		"typeRoots": ["./node_modules/@types", "./src"],
@@ -33,5 +32,11 @@
 		"./tsconfig.json",
 		"coverage",
 		"tsconfig.*"
-	]
+	],
+	"ts-node": {
+		"transpileOnly": true,
+		"compilerOptions": {
+			"module": "CommonJS"
+		}
+	}
 }

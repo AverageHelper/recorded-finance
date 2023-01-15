@@ -3,6 +3,7 @@ import type { TagRecordPackage, Unsubscribe, WriteBatch } from "../transport";
 import type { TagSchema } from "../model/DatabaseSchema";
 import { derived, get, writable } from "svelte/store";
 import { getDekMaterial, pKey } from "./authStore";
+import { logger } from "../logger";
 import { recordFromTag, tag } from "../model/Tag";
 import { t } from "../i18n";
 import { updateUserStats } from "./uiStore";
@@ -40,7 +41,7 @@ export function clearTagsCache(): void {
 	}
 	tags.set({});
 	tagsLoadError.set(null);
-	console.debug("tagsStore: cache cleared");
+	logger.debug("tagsStore: cache cleared");
 }
 
 export async function watchTags(force: boolean = false): Promise<void> {
@@ -89,7 +90,7 @@ export async function watchTags(force: boolean = false): Promise<void> {
 				const watcher = get(tagsWatcher);
 				if (watcher) watcher();
 				tagsWatcher.set(null);
-				console.error(error);
+				logger.error(error);
 			}
 		)
 	);

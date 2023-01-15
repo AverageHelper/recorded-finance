@@ -104,7 +104,7 @@
 			data = await fetchLocationData();
 		} catch (error) {
 			// CORS errors, and possibly others, throw an empty string. Not sure why.
-			handleError(((error as null | undefined) ?? "") || "Something went wrong, not sure what.");
+			handleError(((error as null | undefined) ?? "") || $_("error.network.unknown"));
 			return;
 		}
 
@@ -156,7 +156,6 @@
 			<TextField
 				bind:this={titleField}
 				value={title}
-				class="title-field"
 				label={title ? $_("input.location.title") : $_("input.location.self")}
 				placeholder={$_("example.business-name")}
 				on:input={updateTitle}
@@ -164,7 +163,6 @@
 			{#if title || subtitle}
 				<TextField
 					value={subtitle}
-					class="title-field"
 					label={$_("input.location.subtitle")}
 					placeholder={$_("example.city-country")}
 					on:input={updateSubtitle}
@@ -173,7 +171,7 @@
 		</div>
 
 		{#if hasFocus}
-			<List bind:this={recentsList} class="recent-location-select">
+			<List bind:this={recentsList}>
 				{#if newLocationTitle}
 					<li tabindex="0">
 						<LocationListItem location={textLocationPreview} quote />
@@ -197,22 +195,12 @@
 		{/if}
 
 		{#if !!selectedLocationId || !!title || !!subtitle || !!coordinate}
-			<ActionButton
-				class="clear"
-				kind="bordered-destructive"
-				title={$_("actions.location.clear")}
-				on:click={clear}
-			>
+			<ActionButton kind="destructive" title={$_("actions.location.clear")} on:click={clear}>
 				<span>X</span>
 			</ActionButton>
 		{/if}
 		{#if mayGetLocation && !selectedLocationId && !title}
-			<ActionButton
-				class="current-location"
-				kind="bordered"
-				title={$_("actions.location.get-current")}
-				on:click={getLocation}
-			>
+			<ActionButton kind="info" title={$_("actions.location.get-current")} on:click={getLocation}>
 				<LocationIcon />
 			</ActionButton>
 		{/if}
@@ -240,41 +228,36 @@
 			display: flex;
 			flex-flow: column nowrap;
 			width: 100%;
-		}
 
-		.title-field {
-			width: 100%;
-		}
+			:global(ul) {
+				position: absolute;
+				top: 4.4em;
+				left: 0;
+				z-index: 100;
+				width: calc(100% - 44pt - 8pt);
+				border-radius: 0 0 4pt 4pt;
+				background-color: color($secondary-fill);
 
-		.recent-location-select {
-			position: absolute;
-			top: 4.4em;
-			left: 0;
-			z-index: 100;
-			width: calc(100% - 44pt - 8pt);
-			border-radius: 0 0 4pt 4pt;
-			background-color: color($secondary-fill);
+				> li {
+					background-color: color($clear);
+					padding: 4pt;
 
-			> li {
-				background-color: color($clear);
-				padding: 4pt;
+					.icon {
+						margin-right: 4pt;
+					}
 
-				.icon {
-					margin-right: 4pt;
-				}
-
-				&:focus {
-					background-color: color($fill);
-
-					> .location {
+					&:focus {
 						background-color: color($fill);
+
+						> .location {
+							background-color: color($fill);
+						}
 					}
 				}
 			}
 		}
 
-		.current-location,
-		.clear {
+		:global(button) {
 			margin: 0 0 8pt 8pt;
 			margin-top: 1.8em;
 			height: 100%;

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { _ } from "../../i18n";
-	import { AccountableError } from "../../transport/errors";
 	import { createEventDispatcher, onMount } from "svelte";
+	import { PlatformError } from "../../transport/errors";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
 	import Modal from "../../components/Modal.svelte";
 	import TextField from "../../components/inputs/TextField.svelte";
@@ -53,7 +53,7 @@
 		// Must already be logged in
 		const accountId = $currentUser?.accountId;
 		if (accountId === undefined) {
-			handleError(new AccountableError("auth/unauthenticated"));
+			handleError(new PlatformError("auth/unauthenticated"));
 			return;
 		}
 
@@ -78,7 +78,7 @@
 
 		// Must have already retrieved a secret
 		if (totpSecrets === null) {
-			handleError(new AccountableError("auth/unauthenticated"));
+			handleError(new PlatformError("auth/unauthenticated"));
 			return;
 		}
 
@@ -105,29 +105,27 @@
 	}
 </script>
 
-<!-- TODO: I18N -->
 <Modal open={isOpen} closeModal={close}>
-	<h1>Enroll in MFA</h1>
+	<h1>{$_("settings.mfa.enroll.heading")}</h1>
 
 	{#if totpSecrets === null}
 		<!-- Renew existing password auth, get TOTP secret -->
-		<p>Enter your password to enable 2FA:</p>
+		<p>{$_("settings.mfa.enroll.enter-password")}</p>
 		<TextField
 			value={password}
 			type="password"
 			autocomplete="current-password"
 			label={$_("login.passphrase")}
-			placeholder="********"
 			on:input={onPasswordInput}
 		/>
-		<ActionButton kind="bordered-primary" disabled={isLoading} on:click={getTotpSecret}
-			>Continue</ActionButton
+		<ActionButton disabled={isLoading} on:click={getTotpSecret}
+			>{$_("settings.mfa.enroll.continue-action")}</ActionButton
 		>
 	{:else if totpSecrets.recoveryToken === null}
 		<!-- Display a TOTP secret, ask for TOTP to confirm, get recovery token -->
-		<p>Scan this code with your authenticator app:</p>
+		<p>{$_("settings.mfa.enroll.scan-secret")}</p>
 		<QR value={totpSecrets.secret.href} />
-		<p>Or use this code: <code>{totpSecret}</code></p>
+		<p>{$_("settings.mfa.enroll.manual-secret-input")} <code>{totpSecret}</code></p>
 		<TextField
 			value={token}
 			autocomplete="one-time-code"
@@ -135,17 +133,14 @@
 			placeholder={$_("example.totp-code")}
 			on:input={onTokenInput}
 		/>
-		<ActionButton kind="bordered-primary" disabled={isLoading} on:click={getRecoveryToken}
-			>Check</ActionButton
+		<ActionButton disabled={isLoading} on:click={getRecoveryToken}
+			>{$_("settings.mfa.enroll.check-code-action")}</ActionButton
 		>
 	{:else}
 		<!-- Display recovery token -->
-		<p
-			>Here is your recovery token. Keep it safe, somewhere you can get to it if you lose your 2FA
-			auth device:</p
-		>
+		<p>{$_("settings.mfa.enroll.recovery-code-explanation")}</p>
 		<p><code>{totpSecrets.recoveryToken}</code></p>
 		<!-- Then close -->
-		<ActionButton kind="bordered-primary" on:click={close}>I understand</ActionButton>
+		<ActionButton on:click={close}>{$_("settings.mfa.enroll.acknowledge-action")}</ActionButton>
 	{/if}
 </Modal>

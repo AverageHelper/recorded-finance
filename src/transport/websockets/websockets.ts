@@ -1,6 +1,7 @@
 import type { ValueIteratorTypeGuard } from "lodash";
 import { isRecord } from "../schemas.js";
 import { isWebSocketCode, WebSocketCode } from "./WebSocketCode.js";
+import { logger } from "../../logger.js";
 import { t } from "../../i18n.js";
 import { UnexpectedResponseError } from "../errors/UnexpectedResponseError.js";
 
@@ -92,6 +93,7 @@ export function wsFactory<T extends WebSocketMessages>(
 	}
 
 	// Application-layer communications
+	const WS_ORIGIN = url.origin;
 	const ws = new WebSocket(url);
 	return {
 		onClose(cb): void {
@@ -115,18 +117,18 @@ export function wsFactory<T extends WebSocketMessages>(
 		},
 
 		onMessage(name, cb): void {
-			ws.addEventListener("message", res => {
-				if (res.origin !== url.origin) {
-					// Apparently, we need to check this. See: https://cwe.mitre.org/data/definitions/20.html
-					console.warn(
-						`Received WebSocket message from unknown origin '${res.origin}'. (Expected origin is '${url.origin}')`
+			ws.addEventListener("message", event => {
+				if (event.origin !== WS_ORIGIN) {
+					// Check that this message is from the expected source. See: https://cwe.mitre.org/data/definitions/20.html
+					logger.warn(
+						`Received WebSocket message from unknown origin '${event.origin}'. (Expected origin is '${WS_ORIGIN}')`
 					);
 					return;
 				}
 
 				let message: unknown;
 				try {
-					message = JSON.parse((res.data as { toString: () => string }).toString()) as unknown;
+					message = JSON.parse((event.data as { toString: () => string }).toString()) as unknown;
 				} catch (error) {
 					throw new UnexpectedResponseError(
 						t("error.ws.not-json", { values: { message: JSON.stringify(error) } })
@@ -142,14 +144,14 @@ export function wsFactory<T extends WebSocketMessages>(
 					if (error instanceof WebSocketError) {
 						close(ws, error.code, error.reason);
 					} else {
-						console.error(error);
+						logger.error(error);
 						close(ws, WebSocketCode.UNEXPECTED_CONDITION, "Internal error");
 					}
 				}
 			});
 
 			ws.addEventListener("error", error => {
-				console.error("Websocket error:", error);
+				logger.error("Websocket error:", error);
 			});
 		},
 

@@ -30,7 +30,7 @@ To create a translation for a language which we don't yet support:
 
 ## Issues
 
-[Issues](https://github.com/AverageHelper/accountable-svelte/issues/new/choose) are very valuable to this project.
+[Issues](https://github.com/RecordedFinance/recorded-finance/issues/new/choose) are very valuable to this project.
 
 - Ideas are a valuable source of contributions others can make
 - Problems show where this project is lacking
