@@ -9,20 +9,30 @@
 	export let open: boolean;
 	export let closeModal: (() => void) | null = null;
 
-	function onClose() {
+	function doClose() {
 		if (closeModal) {
 			closeModal();
 		}
 	}
 
+	function onClose(event: MouseEvent | KeyboardEvent) {
+		if ("key" in event && event.key !== "Escape") return;
+		doClose();
+	}
+
 	onDestroy(() => {
-		onClose();
+		doClose();
 	});
 </script>
 
 <Portal target="#modal">
 	{#if open}
-		<div transition:fly|local class="modal-6ca181ee__wrapper" on:click|self={onClose}>
+		<div
+			transition:fly|local
+			class="modal-6ca181ee__wrapper"
+			on:keyup={onClose}
+			on:click|self={onClose}
+		>
 			{#if closeModal}
 				<span class="modal-6ca181ee__close-button">
 					<NopLink white on:click={closeModal}>

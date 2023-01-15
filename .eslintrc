@@ -19,13 +19,26 @@
 		"plugin:jest/recommended",
 		"plugin:@typescript-eslint/recommended",
 		"plugin:@typescript-eslint/recommended-requiring-type-checking",
+		"plugin:import/recommended",
 		"plugin:prettier/recommended"
 	],
-	"plugins": ["prettier", "unicorn", "promise", "deprecation", "@typescript-eslint"],
+	"plugins": ["prettier", "unicorn", "promise", "deprecation", "@typescript-eslint", "import"],
 	"parser": "@typescript-eslint/parser",
 	"parserOptions": {
 		"project": "./tsconfig.prod.json",
 		"tsconfigRootDir": "."
+	},
+	"settings": {
+		"import/parsers": {
+			"@typescript-eslint/parser": [".ts", ".tsx"]
+		},
+		"import/resolver": {
+			"node": true,
+			"typescript": {
+				"alwaysTryTypes": true,
+				"project": ["./tsconfig.prod.json", "./tsconfig.test.json"]
+			}
+		}
 	},
 	"rules": {
 		"deprecation/deprecation": "warn",
@@ -34,9 +47,9 @@
 		"no-console": "error",
 		"no-dupe-else-if": "warn",
 		"consistent-return": "off", // TS handles this
-		"no-duplicate-imports": "off", // typescript-eslint handles this
+		"no-duplicate-imports": "off", // eslint-plugin-import handles this
+		"import/no-duplicates": "error",
 		"@typescript-eslint/no-namespace": "off",
-		"@typescript-eslint/no-duplicate-imports": "error",
 		"@typescript-eslint/consistent-type-assertions": "off",
 		"@typescript-eslint/no-empty-interface": "off",
 		"@typescript-eslint/require-await": "warn",
@@ -56,8 +69,7 @@
 		"@typescript-eslint/consistent-type-imports": "warn",
 		"@typescript-eslint/no-dynamic-delete": "off",
 		"new-cap": "off", // Many decorators do not follow normal function conventions
-		"unicorn/catch-error-name": ["warn", { "name": "error" }],
-		"unicorn/import-index": ["error", { "ignoreImports": true }]
+		"unicorn/catch-error-name": ["warn", { "name": "error" }]
 	},
 
 	"overrides": [
@@ -74,7 +86,6 @@
 				"jest": true
 			},
 			"rules": {
-				"prettier/prettier": "warn",
 				"max-nested-callbacks": "off" // Unit tests involve a lot of nested callbacks
 			}
 		},

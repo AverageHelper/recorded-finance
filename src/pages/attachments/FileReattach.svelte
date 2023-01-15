@@ -59,8 +59,16 @@
 				<ListItem
 					title={$_("files.upload.imperative")}
 					to=""
+					on:keyup={e => {
+						e.preventDefault();
+						e.detail.preventDefault();
+						if (e.detail.key === " ") {
+							click();
+						}
+					}}
 					on:click={e => {
 						e.preventDefault();
+						e.detail.preventDefault();
 						click();
 					}}
 				/>
@@ -70,8 +78,16 @@
 			<li>
 				<FileListItem
 					fileId={file.id}
+					on:keyup={e => {
+						e.preventDefault();
+						e.detail.preventDefault();
+						if (e.detail.key === " ") {
+							selectNewFile(file);
+						}
+					}}
 					on:click={e => {
 						e.preventDefault();
+						e.detail.preventDefault();
 						selectNewFile(file);
 					}}
 				/>

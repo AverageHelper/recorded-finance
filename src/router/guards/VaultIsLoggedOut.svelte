@@ -27,7 +27,6 @@
 	let isChecking = true;
 	$: isVaultLoggedIn = $uid !== null;
 
-	$: console.debug("isInSafeZone:", isInSafeZone);
 	$: if (isVaultLoggedIn && !isInSafeZone) {
 		// Whenever we log in, go home if we aren't already in the safe zone:
 		navigate(accountsPath(), { replace: true });

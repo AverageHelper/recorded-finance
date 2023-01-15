@@ -12,7 +12,7 @@ import type {
 
 export const locationPrefs = ["none", "vague" /* , "specific"*/] as const;
 
-export type LocationPref = typeof locationPrefs[number];
+export type LocationPref = (typeof locationPrefs)[number];
 
 export type LocationRecordPackage = EPackage<"Location">;
 

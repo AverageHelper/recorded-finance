@@ -20,7 +20,8 @@
 
 	$: account = $accounts[accountId] ?? null;
 
-	function startCreatingTransaction() {
+	function startCreatingTransaction(event: CustomEvent<MouseEvent> | CustomEvent<KeyboardEvent>) {
+		if ("key" in event.detail && event.detail.key !== " ") return;
 		isEditingTransaction = true;
 	}
 
@@ -39,7 +40,10 @@
 	{#if month}
 		<List>
 			<li>
-				<AddRecordListItem on:click={startCreatingTransaction} />
+				<AddRecordListItem
+					on:keyup={startCreatingTransaction}
+					on:click={startCreatingTransaction}
+				/>
 			</li>
 			{#each monthTransactions as transaction (transaction.id)}
 				<li class="transaction">

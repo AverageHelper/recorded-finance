@@ -20,7 +20,7 @@ const errorCodes = [
 	"unknown",
 ] as const;
 
-type ErrorCode = typeof errorCodes[number];
+type ErrorCode = (typeof errorCodes)[number];
 
 function isKnownErrorCode(tbd: unknown): tbd is ErrorCode {
 	return errorCodes.includes(tbd as ErrorCode);
