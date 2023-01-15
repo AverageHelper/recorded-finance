@@ -36,7 +36,8 @@
 		await load();
 	});
 
-	function startCreatingAccount() {
+	function startCreatingAccount(event: CustomEvent<MouseEvent> | CustomEvent<KeyboardEvent>) {
+		if ("key" in event.detail && event.detail.key !== " ") return;
 		isCreatingAccount = true;
 	}
 
@@ -59,7 +60,11 @@
 	{:else}
 		<List>
 			<li>
-				<AddRecordListItem noun="account" on:click={startCreatingAccount} />
+				<AddRecordListItem
+					noun="account"
+					on:keyup={startCreatingAccount}
+					on:click={startCreatingAccount}
+				/>
 			</li>
 			{#each $allAccounts as account (account.id)}
 				<li>

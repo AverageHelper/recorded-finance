@@ -75,7 +75,7 @@
 </script>
 
 <ConditionallyExpandingNavbar expand={!isLoggedIn}>
-	<aside class="actions-container">
+	<aside class="actions-container" role="heading" aria-level={1}>
 		{#if !isRoute}
 			<ActionButton kind="plain" on:click={goBack}>
 				<BackIcon />
@@ -83,13 +83,8 @@
 			</ActionButton>
 		{/if}
 		{#if !isLoggedIn}
-			<a
-				href={homeRoute}
-				class="navbar-brand"
-				role="heading"
-				aria-level={1}
-				title={$_("common.platform")}
-				use:link>{$_("common.platform")}</a
+			<a href={homeRoute} class="navbar-brand" title={$_("common.platform")} use:link
+				>{$_("common.platform")}</a
 			>
 		{/if}
 	</aside>

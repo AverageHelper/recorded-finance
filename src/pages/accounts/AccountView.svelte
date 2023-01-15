@@ -72,7 +72,8 @@
 		navigate(-1);
 	}
 
-	function startCreatingTransaction() {
+	function startCreatingTransaction(event: CustomEvent<MouseEvent> | CustomEvent<KeyboardEvent>) {
+		if ("key" in event.detail && event.detail.key !== " ") return;
 		isEditingTransaction = true;
 	}
 
@@ -128,7 +129,10 @@
 	{:else}
 		<List>
 			<li>
-				<AddRecordListItem on:click={startCreatingTransaction} />
+				<AddRecordListItem
+					on:keyup={startCreatingTransaction}
+					on:click={startCreatingTransaction}
+				/>
 			</li>
 			{#each transactionMonths as [month, monthTransactions] (month)}
 				<li>

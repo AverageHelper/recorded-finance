@@ -10,12 +10,19 @@
 	export let onRemove: ((tag: Tag) => void) | null = null;
 
 	$: count = numberOfReferencesForTag(tag.id);
+
+	function selectTag(event: KeyboardEvent | MouseEvent, tag: Tag) {
+		if ("key" in event && event.key !== " ") return;
+		if (!onSelect) return;
+		onSelect(tag);
+	}
 </script>
 
 <div
 	class={`tag tag--${tag.colorId} ${onSelect ? "selectable" : ""}`}
 	title={tag.id}
-	on:click={() => onSelect && onSelect(tag)}
+	on:keyup={e => selectTag(e, tag)}
+	on:click={e => selectTag(e, tag)}
 >
 	<span class="title">{tag.name}</span>
 

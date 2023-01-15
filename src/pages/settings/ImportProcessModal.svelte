@@ -88,9 +88,18 @@
 		forgetDb();
 	}
 
-	function toggleAccount(event: Event, account: Account) {
+	function toggleAccount(
+		event: CustomEvent<MouseEvent> | CustomEvent<KeyboardEvent>,
+		account: Account
+	) {
 		event.preventDefault();
-		if (isImporting) return; // Don't modify import state while we're importing
+		event.detail.preventDefault();
+
+		// Don't modify import state while we're importing
+		if (isImporting) return;
+
+		// If keyboard, make sure it's space
+		if ("key" in event.detail && event.detail.key !== " ") return;
 
 		if (accountIdsToImport.has(account.id)) {
 			accountIdsToImport.delete(account.id);
@@ -159,6 +168,7 @@
 							{account}
 							link={false}
 							count={transactionCounts[account.id] ?? 0}
+							on:keyup={e => toggleAccount(e, account)}
 							on:click={e => toggleAccount(e, account)}
 						/>
 						{#if accountIdsToImport.has(account.id)}
@@ -181,6 +191,7 @@
 							{account}
 							link={false}
 							count={transactionCounts[account.id] ?? 0}
+							on:keyup={e => toggleAccount(e, account)}
 							on:click={e => toggleAccount(e, account)}
 						/>
 						{#if accountIdsToImport.has(account.id)}

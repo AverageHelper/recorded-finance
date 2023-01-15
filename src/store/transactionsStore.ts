@@ -10,7 +10,6 @@ import { allAccounts, currentBalance } from "./accountsStore";
 import { chronologically, reverseChronologically } from "../model/utility/sort";
 import { derived, get, writable } from "svelte/store";
 import { getDekMaterial, pKey } from "./authStore";
-import { getDocs } from "../transport/index.js";
 import { handleError, updateUserStats } from "./uiStore";
 import { logger } from "../logger";
 import { t } from "../i18n";
@@ -27,6 +26,7 @@ import {
 	getTransactionsForAccount as _getTransactionsForAccount,
 	createTransaction as _createTransaction,
 	deriveDEK,
+	getDocs,
 	updateTransaction as _updateTransaction,
 	deleteTransaction as _deleteTransaction,
 	transactionFromSnapshot,

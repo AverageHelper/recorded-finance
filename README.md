@@ -22,10 +22,10 @@ To run the app in your browser, you'll need one of the following browsers and ve
 
 - Chrome >=87
 - Firefox >=78
-- Safari >=13
+- Safari >=14
 - Edge >=88
 
-(I've not tested any of these boundaries, but [Vite.js recommends them](https://vitejs.dev/guide/migration.html#modern-browser-baseline-change).)
+(I've not tested any of these boundaries, but [Vite.js recommends them](https://vitejs.dev/guide/build.html#browser-compatibility).)
 
 Developing for this project requires Node 16.5 and NPM v7 or above. You can check what versions you have installed by running `npm -v` and `node -v`:
 
