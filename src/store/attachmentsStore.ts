@@ -230,9 +230,9 @@ export async function importAttachment(
 ): Promise<void> {
 	const storedAttachment = get(attachments)[attachmentToImport.id];
 
-	const path = `accountable/storage/${attachmentToImport.storagePath.split(".")[0] as string}/${
-		attachmentToImport.title
-	}`;
+	const path = `recorded-finance/storage/${
+		attachmentToImport.storagePath.split(".")[0] as string
+	}/${attachmentToImport.title}`;
 	const fileRef = zip?.find(f => f.filename === path) ?? null;
 	if (!fileRef?.getData) {
 		logger.warn(`No file found in zip with path ${path}`);

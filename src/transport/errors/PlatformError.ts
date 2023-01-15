@@ -1,7 +1,7 @@
 import { t } from "../../i18n";
 import { UnreachableCaseError } from "./UnreachableCaseError.js";
 
-export type AccountableErrorCode =
+export type PlatformErrorCode =
 	| "auth/account-already-exists"
 	| "auth/internal-error"
 	| "auth/invalid-argument"
@@ -21,7 +21,7 @@ export type AccountableErrorCode =
 	| "storage/server-file-wrong-size"
 	| "storage/unauthenticated";
 
-function messageFromCode(code: AccountableErrorCode): string {
+function messageFromCode(code: PlatformErrorCode): string {
 	switch (code) {
 		case "auth/account-already-exists":
 			return t("error.auth.account-already-exists");
@@ -60,12 +60,12 @@ function messageFromCode(code: AccountableErrorCode): string {
 	}
 }
 
-export class AccountableError extends Error {
-	readonly code: AccountableErrorCode;
+export class PlatformError extends Error {
+	readonly code: PlatformErrorCode;
 	customData?: Record<string, unknown> | undefined;
-	readonly name = "AccountableError";
+	readonly name = "PlatformError";
 
-	constructor(code: AccountableErrorCode, customData?: Record<string, unknown> | undefined) {
+	constructor(code: PlatformErrorCode, customData?: Record<string, unknown> | undefined) {
 		super(messageFromCode(code));
 		this.code = code;
 		this.customData = customData;

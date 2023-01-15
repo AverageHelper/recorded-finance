@@ -117,7 +117,7 @@ export function verifyTOTP(token: string, secretOrUri: string, options?: Verifie
 export function generateTOTPSecretURI(accountId: string, seed: string): string {
 	if (!accountId) throw new TypeError("accountId cannot be empty");
 
-	const issuer = "Accountable";
+	const issuer = "RecordedFinance";
 	const digits = 6; // number of digits
 	const period = 30; // seconds
 	const secret = generateSecret(seed);

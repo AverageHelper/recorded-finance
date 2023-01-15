@@ -16,6 +16,8 @@
 			<h1>{$_("install.service.heading")}</h1>
 			<p>
 				<I18N keypath="install.service.p1">
+					<!-- platform -->
+					<span>{$_("common.platform")}</span>
 					<!-- login -->
 					<Link to={loginRoute}>{$_("home.nav.log-in")}</Link>
 				</I18N>
@@ -29,9 +31,11 @@
 			<I18N keypath="install.self.p1">
 				<!-- readme -->
 				<OutLink to={repoReadmeHeading("setup")}>{$_("install.self.readme")}</OutLink>
+				<!-- platform -->
+				<span>{$_("common.platform")}</span>
 			</I18N>
 			{#if !isLoginEnabled}&nbsp;{$_("install.self.planning")}{/if}
 		</p>
-		<p>{$_("install.self.p2")}</p>
+		<p>{$_("install.self.p2", { values: { platform: $_("common.platform") } })}</p>
 	</section>
 </main>

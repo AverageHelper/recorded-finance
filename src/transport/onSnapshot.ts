@@ -3,12 +3,12 @@ import type { DocumentData } from "./schemas.js";
 import type { Infer } from "superstruct";
 import type { ListenerParameters } from "pubnub";
 import { documentData } from "./schemas.js";
-import { AccountableError, UnexpectedResponseError, UnreachableCaseError } from "./errors/index.js";
 import { databaseCollection, databaseDocument } from "./apiStruts";
 import { doc as docRef, getDoc, getDocs } from "./db.js";
 import { isArray } from "../helpers/isArray.js";
 import { isString } from "../helpers/isString.js";
 import { logger } from "../logger.js";
+import { PlatformError, UnexpectedResponseError, UnreachableCaseError } from "./errors/index.js";
 import { t } from "../i18n.js";
 import { WebSocketCode } from "./websockets/WebSocketCode.js";
 import { wsFactory } from "./websockets/websockets.js";
@@ -328,7 +328,7 @@ export function onSnapshot<T>(
 		onErrorCallback = onError ?? ((err): void => logger.error(err));
 	}
 
-	if (!db.currentUser) throw new AccountableError("database/unauthenticated");
+	if (!db.currentUser) throw new PlatformError("database/unauthenticated");
 
 	let previousSnap: QuerySnapshot<T> | null = null;
 	async function handleData({ data, shouldFetch = false }: WatcherData): Promise<void> {
@@ -431,7 +431,7 @@ export function onSnapshot<T>(
 					return;
 				}
 
-				// Make sure the publisher claims to be Accountable's server. (Only holds back kid hackers with our keys)
+				// Make sure the publisher claims to be our server. (Only holds back kid hackers with our keys)
 				const serverPublisher = "server";
 				if (event.publisher !== serverPublisher) {
 					logger.debug(

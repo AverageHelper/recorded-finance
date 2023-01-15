@@ -4,13 +4,13 @@ import type { EPackage, HashStore } from "./cryption.js";
 import type { Unsubscribe } from "./onSnapshot.js";
 import type { User } from "./auth.js";
 import type { ValueIteratorTypeGuard } from "lodash";
-import { AccountableError } from "./errors/index.js";
 import { decrypt } from "./cryption.js";
 import { forgetJobQueue, useJobQueue } from "@averagehelper/job-queue";
 import { isArray } from "../helpers/isArray";
 import { isPrimitive } from "./schemas.js";
 import { isString } from "../helpers/isString";
 import { logger } from "../logger";
+import { PlatformError } from "./errors/index.js";
 import { run } from "./apiStruts";
 import { t } from "../i18n";
 import { v4 as uuid } from "uuid";
@@ -29,7 +29,7 @@ import {
 	postV0DbUsersByUidAndCollDoc,
 } from "./api.js";
 
-export class AccountableDB {
+export class PlatformDB {
 	#currentUser: User | null;
 	#lastKnownUserStats: UserStats | null;
 	#pubnub: PubNub | null;
@@ -113,10 +113,10 @@ export interface Query<T = DocumentData> {
 	readonly type: "query" | "collection";
 
 	/**
-	 * The {@link AccountableDB} instance for the Accountable database (useful for performing
+	 * The {@link PlatformDB} instance for our database (useful for performing
 	 * transactions, etc.).
 	 */
-	readonly db: AccountableDB;
+	readonly db: PlatformDB;
 }
 
 export type CollectionID =
@@ -129,7 +129,7 @@ export type CollectionID =
 	| "users";
 
 export interface CollectionReference<T = DocumentData> extends Query<T> {
-	/** The type of this Accountable reference. */
+	/** The type of this database reference. */
 	readonly type: "collection";
 
 	/** The collection's identifier. */
@@ -140,12 +140,12 @@ export interface CollectionReference<T = DocumentData> extends Query<T> {
  * Creates a `CollectionReference` instance that refers to the collection at
  * the specified absolute path.
  *
- * @param db - A reference to the root `AccountableDB` instance.
+ * @param db - A reference to the root {@link PlatformDB} instance.
  * @param id - A collection ID.
  * @returns A new {@link CollectionReference} instance.
  */
 export function collection<T = DocumentData>(
-	db: AccountableDB,
+	db: PlatformDB,
 	id: CollectionID
 ): CollectionReference<T> {
 	return { db, id, type: "collection" };
@@ -166,10 +166,10 @@ export interface DocumentReference<T = DocumentData> {
 	readonly id: string;
 
 	/**
-	 * The {@link AccountableDB} instance the document is in.
+	 * The {@link PlatformDB} instance the document is in.
 	 * This is useful for performing transactions, for example.
 	 */
-	readonly db: AccountableDB;
+	readonly db: PlatformDB;
 }
 
 /**
@@ -185,19 +185,19 @@ export function doc<T = DocumentData>(collection: CollectionReference<T>): Docum
  * Creates a `DocumentReference` instance that refers to the document at the
  * specified absolute path.
  *
- * @param db - A reference to the root `AccountableDB` instance.
+ * @param db - A reference to the root {@link PlatformDB} instance.
  * @param collectionId - A collection ID.
  * @param id - A document ID.
  * @returns A new {@link DocumentReference} instance.
  */
 export function doc<T = DocumentData>(
-	db: AccountableDB,
+	db: PlatformDB,
 	collectionId: CollectionID,
 	id: string
 ): DocumentReference<T>;
 
 export function doc<T = DocumentData>(
-	dbOrCollection: AccountableDB | CollectionReference<T>,
+	dbOrCollection: PlatformDB | CollectionReference<T>,
 	collectionId?: CollectionID,
 	id?: string
 ): DocumentReference<T> {
@@ -232,7 +232,7 @@ interface DeleteOperation {
 type WriteOperation = PutOperation | DeleteOperation;
 
 export class WriteBatch {
-	#db: AccountableDB | null;
+	#db: PlatformDB | null;
 	#operations: Array<WriteOperation>;
 
 	constructor() {
@@ -276,7 +276,7 @@ export class WriteBatch {
 
 		// Build and commit the list of operations in one go
 		const currentUser = this.#db.currentUser;
-		if (!currentUser) throw new AccountableError("database/unauthenticated");
+		if (!currentUser) throw new PlatformError("database/unauthenticated");
 
 		const uid = currentUser.uid;
 
@@ -311,7 +311,7 @@ export function writeBatch(): WriteBatch {
 	return new WriteBatch();
 }
 
-export let db: AccountableDB;
+export let db: PlatformDB;
 
 export function isWrapperInstantiated(): boolean {
 	return db !== undefined;
@@ -323,27 +323,27 @@ export function isWrapperInstantiated(): boolean {
  * @param url The server URL to use instead of environment variables
  * to instantiate the backend connection.
  */
-export function bootstrap(url?: string): AccountableDB {
+export function bootstrap(url?: string): PlatformDB {
 	if (isWrapperInstantiated()) {
 		throw new TypeError("db has already been instantiated");
 	}
 
 	// VITE_ env variables get type definitions in env.d.ts
-	let serverUrl = url ?? import.meta.env.VITE_ACCOUNTABLE_SERVER_URL;
+	let serverUrl = url ?? import.meta.env.VITE_PLATFORM_SERVER_URL;
 
 	if (serverUrl === undefined || !serverUrl) {
 		serverUrl = `https://${window.location.hostname}/api/`;
 	}
 
-	db = new AccountableDB(serverUrl);
+	db = new PlatformDB(serverUrl);
 	return db;
 }
 
 /**
  * Gets statistics about the space the user's data occupies on the server.
  */
-export async function getUserStats(db: AccountableDB): Promise<UserStats> {
-	// This might be on the server too, but since Accountable gets this back with every write, we keep a copy here and use an async function to retrieve it.
+export async function getUserStats(db: PlatformDB): Promise<UserStats> {
+	// This might be on the server too, but since we get this back from the server with every write, we keep a copy here and use an async function to retrieve it.
 	// TODO: Add an endpoint for this
 	const stats = db.lastKnownUserStats;
 	return await Promise.resolve({
@@ -361,7 +361,7 @@ export async function getUserStats(db: AccountableDB): Promise<UserStats> {
  */
 export async function getDoc<T>(reference: DocumentReference<T>): Promise<DocumentSnapshot<T>> {
 	const currentUser = reference.db.currentUser;
-	if (!currentUser) throw new AccountableError("database/unauthenticated");
+	if (!currentUser) throw new PlatformError("database/unauthenticated");
 
 	const uid = currentUser.uid;
 	const collection = reference.parent.id;
@@ -389,7 +389,7 @@ export async function setDoc<T extends DataItem | Keys>(
 	data: T
 ): Promise<void> {
 	const currentUser = reference.db.currentUser;
-	if (!currentUser) throw new AccountableError("database/unauthenticated");
+	if (!currentUser) throw new PlatformError("database/unauthenticated");
 
 	const uid = currentUser.uid;
 	const collection = reference.parent.id;
@@ -417,7 +417,7 @@ export async function setDoc<T extends DataItem | Keys>(
  */
 export async function deleteDoc(reference: DocumentReference): Promise<void> {
 	const currentUser = reference.db.currentUser;
-	if (!currentUser) throw new AccountableError("database/unauthenticated");
+	if (!currentUser) throw new PlatformError("database/unauthenticated");
 
 	const uid = currentUser.uid;
 	const collection = reference.parent.id;
@@ -442,7 +442,7 @@ export async function deleteDoc(reference: DocumentReference): Promise<void> {
  */
 export async function getDocs<T>(query: CollectionReference<T>): Promise<QuerySnapshot<T>> {
 	const currentUser = query.db.currentUser;
-	if (!currentUser) throw new AccountableError("database/unauthenticated");
+	if (!currentUser) throw new PlatformError("database/unauthenticated");
 
 	const uid = currentUser.uid;
 	const collection = query.id;

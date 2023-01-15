@@ -1,7 +1,7 @@
-import type { AccountableDB, DocumentReference } from "./db";
+import type { PlatformDB, DocumentReference } from "./db";
 import type { AttachmentRecordPackage } from "./attachments";
-import { AccountableError } from "./errors/index.js";
 import { assertFileData } from "./schemas";
+import { PlatformError } from "./errors/index.js";
 import { run } from "./apiStruts";
 import {
 	deleteV0DbUsersByUidAttachmentsAndDocBlobKey,
@@ -10,14 +10,14 @@ import {
 } from "./api";
 
 /**
- * Represents a reference to an Accountable Storage object. Developers can
+ * Represents a reference to a large-storage database object. Developers can
  * upload, download, and delete objects, as well as get/set object metadata.
  */
 export interface StorageReference {
 	/**
-	 * The {@link AccountableDB} instance associated with this reference.
+	 * The {@link PlatformDB} instance associated with this reference.
 	 */
-	readonly db: AccountableDB;
+	readonly db: PlatformDB;
 
 	/**
 	 * The ID of the user which owns the storage object.
@@ -38,13 +38,13 @@ export interface StorageReference {
 
 /**
  * Returns a {@link StorageReference} for the given url.
- * @param db - {@link AccountableDB} instance.
+ * @param db - {@link PlatformDB} instance.
  * @param uid - The ID of the user that owns the reference.
  * @param docRef - A reference to the document that owns the reference.
  * @param name - The file name.
  */
 export function ref(
-	db: AccountableDB,
+	db: PlatformDB,
 	uid: string,
 	docRef: DocumentReference<AttachmentRecordPackage>,
 	name: string
@@ -56,15 +56,14 @@ export function ref(
  * Downloads a string from this object's location.
  * @param ref - {@link StorageReference} where string should exist.
  *
- * @throws an {@link AccountableError} if there was a problem, including
+ * @throws an {@link PlatformError} if there was a problem, including
  * 	if the file was not found.
  * @returns The stored string.
  */
 export async function downloadString(ref: StorageReference): Promise<string> {
 	const uid = ref.db.currentUser?.uid;
-	if (uid === undefined || !uid) throw new AccountableError("storage/unauthenticated");
-	if (ref.docRef.parent.id !== "attachments")
-		throw new AccountableError("storage/invalid-argument");
+	if (uid === undefined || !uid) throw new PlatformError("storage/unauthenticated");
+	if (ref.docRef.parent.id !== "attachments") throw new PlatformError("storage/invalid-argument");
 
 	const { data } = await run(
 		getV0DbUsersByUidAttachmentsAndDocBlobKey,
@@ -85,7 +84,7 @@ export async function downloadString(ref: StorageReference): Promise<string> {
  */
 export async function uploadString(ref: StorageReference, value: string): Promise<void> {
 	const uid = ref.db.currentUser?.uid;
-	if (uid === undefined || !uid) throw new AccountableError("storage/unauthenticated");
+	if (uid === undefined || !uid) throw new PlatformError("storage/unauthenticated");
 
 	const file = new File([value], "file.json", { type: "application/json" });
 
@@ -119,7 +118,7 @@ export async function uploadString(ref: StorageReference, value: string): Promis
  */
 export async function deleteObject(ref: StorageReference): Promise<void> {
 	const uid = ref.db.currentUser?.uid;
-	if (uid === undefined || !uid) throw new AccountableError("storage/unauthenticated");
+	if (uid === undefined || !uid) throw new PlatformError("storage/unauthenticated");
 
 	const { usedSpace, totalSpace } = await run(
 		deleteV0DbUsersByUidAttachmentsAndDocBlobKey,

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { _ } from "../../i18n";
-	import { AccountableError, NetworkError } from "../../transport/errors";
 	import { accountsPath } from "../../router";
+	import { NetworkError, PlatformError } from "../../transport/errors";
 	import { onMount, tick } from "svelte";
 	import { useNavigate } from "svelte-navigator";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
@@ -69,7 +69,7 @@
 			if (
 				(error instanceof NetworkError && error.code === "missing-mfa-credentials") ||
 				(error instanceof NetworkError && error.code === "missing-token") ||
-				(error instanceof AccountableError && error.code === "auth/unauthenticated")
+				(error instanceof PlatformError && error.code === "auth/unauthenticated")
 			) {
 				// Switch to TOTP mode
 				needsTotp = true;

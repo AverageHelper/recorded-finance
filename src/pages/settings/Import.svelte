@@ -53,7 +53,7 @@
 				},
 			});
 
-			const expectedDbName = "accountable/database.json";
+			const expectedDbName = "recorded-finance/database.json";
 			const dbFile = zipFile.find(f => f.filename === expectedDbName);
 			if (!dbFile?.getData)
 				throw new TypeError(

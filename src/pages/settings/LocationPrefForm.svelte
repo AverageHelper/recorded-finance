@@ -57,7 +57,7 @@
 
 <Form on:submit={submitNewLocationPref}>
 	<h3>{$_("settings.location.heading")}</h3>
-	<p>{$_("settings.location.api-disclaimer")}</p>
+	<p>{$_("settings.location.api-disclaimer", { values: { platform: $_("common.platform") } })}</p>
 
 	<div class="options">
 		{#each sensitivityOptions as option}

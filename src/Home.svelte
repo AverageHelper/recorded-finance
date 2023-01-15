@@ -54,6 +54,8 @@
 		<h3>{$_("home.encrypted.heading")}</h3>
 		<p>
 			<I18N keypath="home.encrypted.p1">
+				<!-- platform -->
+				<span>{$_("common.platform")}</span>
 				<!-- legal -->
 				<small>
 					<I18N keypath="home.encrypted.legal">

@@ -1,6 +1,6 @@
-# Accountable
+# Recorded Finance
 
-[![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/AverageHelper/accountable-svelte.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/AverageHelper/accountable-svelte/context:javascript) [![Total alerts](https://img.shields.io/lgtm/alerts/g/AverageHelper/accountable-svelte.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/AverageHelper/accountable-svelte/alerts/)
+[![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/AverageHelper/recorded-finance.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/AverageHelper/recorded-finance/context:javascript) [![Total alerts](https://img.shields.io/lgtm/alerts/g/AverageHelper/recorded-finance.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/AverageHelper/recorded-finance/alerts/)
 
 A Svelte app for managing monetary assets. All data is encrypted client-side and stored on a server that you control.
 
@@ -14,7 +14,7 @@ There are many open-source balance keepers out there, but none I've found that I
 
 ### The Goal
 
-The aim of Accountable is to be cross-platform and portable. Eventually, I plan to have an Android client on the F-droid store, an iOS app on the App Store, and a website as well. The self-host option will always be available, and I intend for this project to always be open-source.
+The aim of this project is to be a cross-platform and portable place to keep personal financial records. There will always be a way to self-host the storage server, and I intend for this project to always be open-source.
 
 ## Setup
 
@@ -52,7 +52,7 @@ See [the server's README](/server/README.md) for info on that.
 # .env
 
 # Where your server lives (optional for Vercel, required with Express)
-VITE_ACCOUNTABLE_SERVER_URL={your Accountable backend URL}:40850
+VITE_PLATFORM_SERVER_URL={your storage server URL}:40850
 
 # Enables the "Login" menu item (optional, defaults to "true")
 VITE_ENABLE_LOGIN=true
@@ -64,12 +64,12 @@ VITE_ENABLE_SIGNUP=false
 VITE_PUBNUB_SUBSCRIBE_KEY={your subscribe key from PubNub}
 ```
 
-If you're hosting the Accountable server on the same machine that hosts the Accountable client, do NOT use `localhost` for the `VITE_ACCOUNTABLE_SERVER_URL`. You must set this to a URL that _clients_—that is, web browsers—can use to access your Accountable backend.
+If you're hosting the storage server on the same machine that hosts the Recorded Finance web client, do NOT use `localhost` for the `VITE_PLATFORM_SERVER_URL`. You must set this to a URL that _clients_—that is, web browsers—can use to access your back-end.
 
-Using `localhost` for this will cause clients to try _themselves_ as the Accountable server, and that's usually not what you want.
+Using `localhost` for this will cause clients to try _themselves_ as the storage server, and that's usually not what you want.
 
 ```sh
-$ cd accountable-svelte       # Be in the root directory
+$ cd recorded-finance       # Be in the root directory
 $ npm ci                      # Install dependencies
 $ npm run build:client:quick  # Compile the client
 $ npm run dev:client          # Start a local webserver
@@ -79,9 +79,9 @@ $ npm run dev:client          # Start a local webserver
 
 The webserver will print a URL in your terminal to paste into your browser. It should look something like [http://127.0.0.1:5173](http://127.0.0.1:5173). Give that a go, and you're off to the races!
 
-I recommend you deploy the client (the contents of the `accountable-svelte/dist` folder) on a webserver like [nginx](https://nginx.org/en/).
+I recommend you deploy the client (the contents of the `recorded-finance/dist` folder) on a webserver like [nginx](https://nginx.org/en/).
 
-DO NOT FORGET your Accountable ACCOUNT ID or PASSWORD. If you do, your data is irretrievably lost. You have been warned. :)
+DO NOT FORGET your ACCOUNT ID or PASSWORD. If you do, your data is irretrievably lost. That data is encrypted, and can only be retrieved using those details. You have been warned. :)
 
 ## Acknowledgements
 
@@ -89,7 +89,7 @@ DO NOT FORGET your Accountable ACCOUNT ID or PASSWORD. If you do, your data is i
 
 ## Contributing
 
-This project is entirely open source. Do with it what you will. If you're willing to help me improve this project, consider [filing an issue](https://github.com/AverageHelper/accountable-svelte/issues/new/choose).
+This project is entirely open source. Do with it what you will. If you're willing to help me improve this project, consider [filing an issue](https://github.com/AverageHelper/recorded-finance/issues/new/choose).
 
 See [CONTRIBUTING.md](/CONTRIBUTING.md) for ways to contribute.
 
@@ -99,14 +99,14 @@ Some questions I've asked myself while developing this. You might have these que
 
 ### Why use cookies?
 
-JavaScript is not a safe spot to store cookies. The nascent versions of Accountable's front-end client stored the user's login token in a JavaScript variable. I later learned a better way: don't handle the token myself, let the browser handle it with [standard cookie security APIs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#restrict_access_to_cookies).
+JavaScript is not a safe spot to store cookies. Nascent versions of our front-end client stored the user's login token in a JavaScript variable. I later learned a better way: don't handle the token myself, let the browser handle it with [standard cookie security APIs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#restrict_access_to_cookies).
 
-Accountable's back-end server still responds to successful login requests with the token in the response body, but the server also now asks requesting clients to set the token as a cookie with the following attributes:
+Our storage server still responds to successful login requests with the token in the response body, but the server also now asks requesting clients to set the token as a cookie with the following attributes:
 
 - `HttpOnly` - According to [MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#restrict_access_to_cookies): "A cookie with the HttpOnly attribute is inaccessible to the JavaScript [`Document.cookie`](https://developer.mozilla.org/en-US/docs/Web/API/Document/cookie) API; it's only sent to the server. For example, cookies that persist in server-side sessions _don't need to be available to JavaScript_ and should have the `HttpOnly` attribute. This precaution helps mitigate cross-site scripting ([XSS](<https://developer.mozilla.org/en-US/docs/Web/Security/Types_of_attacks#cross-site_scripting_(xss)>)) attacks." (emphasis mine)
 - `Secure` - Not set if the server is running on `localhost`. According to [MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#restrict_access_to_cookies): "A cookie with the Secure attribute is only sent to the server with an encrypted request over the HTTPS protocol."
 
-If create your own Accountable client, please don't mishandle the token. If you dig back in our git history to find and use a version that uses the old JavaScript way, know that you may be getting into avoidable security vulnerabilities.
+If you create your own client to use against our hosted storage server, please don't mishandle the auth token. If you dig back in our git history to find and use a version that uses the old JavaScript-based auth method, know that you may be getting into avoidable security vulnerabilities.
 
 ### Why disclose cookies?
 
@@ -118,7 +118,7 @@ While our cookies indeed deal with the user's login "session," [GDPR.edu](https:
 
 ### How do releases work?
 
-The manual way is complicated: add a version entry to [CHANGELOG.md](/CHANGELOG.md), straighten out the not-yet-valid URLs in the changelog footer, update [package.json](/package.json) and [package-lock.json](/package-lock.json) (the latter using `npm i`), then merge the PR, then copy the changelog entry to cut a new [Release](https://github.com/AverageHelper/accountable-svelte/releases) and tag using GitHub's UI. The changelog's version links now point to the relevant newly-created tags.
+The manual way is complicated: add a version entry to [CHANGELOG.md](/CHANGELOG.md), straighten out the not-yet-valid URLs in the changelog footer, update [package.json](/package.json) and [package-lock.json](/package-lock.json) (the latter using `npm i`), then merge the PR, then copy the changelog entry to cut a new [Release](https://github.com/AverageHelper/recorded-finance/releases) and tag using GitHub's UI. The changelog's version links now point to the relevant newly-created tags.
 
 I've missed some steps before. For example, version [0.9.0](/CHANGELOG.md#090---2022-07-12) didn't originally have a tag, so related comparison links were broken. Not ideal. Since we use [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), we can automate most of our release steps, as follows:
 
@@ -149,6 +149,6 @@ I have a long wishlist for this project. In no particular order:
 - API v1.
 - Detailed documentation webpage (protocols, API, etc.)
 - Standard API evolution protocol (deprecation and obsoleting of old API versions).
-- SDK for third-party tools to participate in Accountable's E2EE data access without needing to re-implement the protocols themselves against our API.
-- Figure out if we can use the name "Accountable" or whether we must change that.
+- SDK for third-party tools to participate in our hosted E2EE data access without needing to re-implement the correct protocols directly.
 - Logo.
+- Mobile apps?

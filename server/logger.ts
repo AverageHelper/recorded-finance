@@ -27,7 +27,7 @@ interface BaseLogger {
 
 interface Logger extends BaseLogger {}
 
-const name = "Accountable";
+const name = "Recorded Finance";
 const baseLogger = bunyan.createLogger({ name, level: "debug" });
 
 /**
