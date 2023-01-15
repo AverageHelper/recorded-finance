@@ -1,7 +1,5 @@
 # Recorded Finance
 
-[![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/AverageHelper/recorded-finance.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/AverageHelper/recorded-finance/context:javascript) [![Total alerts](https://img.shields.io/lgtm/alerts/g/AverageHelper/recorded-finance.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/AverageHelper/recorded-finance/alerts/)
-
 A Svelte app for managing monetary assets. All data is encrypted client-side and stored on a server that you control.
 
 > This project is undergoing rapid development and should be considered experimental. Use it at your own risk. 🤙
