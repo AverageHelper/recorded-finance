@@ -7,9 +7,12 @@ import { generateSecureToken } from "./generators";
 import { jwtExistsInDatabase } from "../database/read";
 import { newPubNubTokenForUser, revokePubNubToken } from "./pubnub";
 import { ONE_HOUR } from "../constants/time";
-import { sign as _signJwt, verify as _verifyJwt } from "jsonwebtoken";
+import _jwt from "jsonwebtoken";
 import Cookies from "cookies";
 import Keygrip from "keygrip";
+
+// FIXME: Not sure why, but tests fail unless we do this:
+const { sign: _signJwt, verify: _verifyJwt } = _jwt;
 
 /** A special secret that only the server should ever know. */
 export const persistentSecret = requireEnv("AUTH_SECRET");
