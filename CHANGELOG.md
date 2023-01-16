@@ -13,7 +13,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Because the page is not dynamically generated, we can only render the Home page, regardless of the URL path at load time. Here is room for future improvement!
   - Because our locale detection relies on JavaScript, this webpage is _only rendered in English_.
   - Because our in-app navigation routing relies on JavaScript, internal navigation routes are disabled, and replaced in some areas with hints to enable JavaScript.
-  - I may later include a brief paragraph on how this app works, with a focus on the JavaScript requirement, to make more clear to readers that, both as an SPA and an E2EE app, we require JavaScript to run on the client.
   - This feature helps us have a contentful load much more quickly, and helps out search-engine indexers who don't wanna run potentially-unsafe JavaScript.
 
 ## [0.16.0] - 2023-01-15

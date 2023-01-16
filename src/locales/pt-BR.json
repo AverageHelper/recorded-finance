@@ -436,6 +436,11 @@
 			"issue": "abra um problema",
 			"github": "página do GitHub",
 			"let-me-know": "Deixe-me saber se alguma coisa precisa ser consertada."
+		},
+		"how-we-work": {
+			"p": "{platform} é um {spa} que criptografa e descriptografa seus dados em seu próprio dispositivo. Isso significa que nossos servidores não podem saber o que está em sua carteira. Isso funciona inteiramente no navegador, usando APIs JavaScript padrão modernas. Você pode {read} se estiver curioso!",
+			"spa": "aplicativo de página única",
+			"read": "verifique você mesmo o código"
 		}
 	},
 	"login": {

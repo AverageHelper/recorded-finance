@@ -3,7 +3,7 @@
 	import { aboutPath, signupPath } from "./router";
 	import { isSignupEnabled } from "./store";
 	import { Link } from "svelte-navigator";
-	import { repoMain, repoNewIssue } from "./platformMeta";
+	import { repoFile, repoMain, repoNewIssue } from "./platformMeta";
 	import ActionButton from "./components/buttons/ActionButton.svelte";
 	import EncryptionIcon from "./icons/Lock.svelte";
 	import I18N from "./components/I18N.svelte";
@@ -83,5 +83,19 @@
 		</p>
 	</section>
 
-	<!-- TODO: Include a paragraph about how we work (especially why we need JS) -->
+	<!-- How we work, why JS -->
+	<section id="how-we-work">
+		<p>
+			<I18N keypath="home.how-we-work.p">
+				<!-- platform -->
+				<span>{$_("common.platform")}</span>
+				<!-- spa -->
+				<OutLink to="https://developer.mozilla.org/en-US/docs/Glossary/SPA"
+					>{$_("home.how-we-work.spa")}</OutLink
+				>
+				<!-- read -->
+				<OutLink to={repoFile("src/transport/cryption.ts")}>{$_("home.how-we-work.read")}</OutLink>
+			</I18N>
+		</p>
+	</section>
 </main>

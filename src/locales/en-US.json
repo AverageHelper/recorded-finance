@@ -436,6 +436,11 @@
 			"issue": "open an issue",
 			"github": "GitHub page",
 			"let-me-know": "Let me know if anything needs fixed."
+		},
+		"how-we-work": {
+			"p": "{platform} is a {spa} that encrypts and decrypts your data on your own device. This means that our servers cannot know what's in your wallet. This works entirely in the browser, using modern standard JavaScript APIs. You can {read} if you're curious!",
+			"spa": "single-page application",
+			"read": "check the code yourself"
 		}
 	},
 	"login": {
