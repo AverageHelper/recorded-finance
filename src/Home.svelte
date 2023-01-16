@@ -19,7 +19,7 @@
 	<h1 class="tagline">{$_("home.tagline")}</h1>
 
 	<!-- Get started now -->
-	<div class="tagline">
+	<aside class="tagline">
 		<Link to={aboutRoute} class="link">
 			<ActionButton kind={isSignupEnabled ? "secondary" : "primary"}
 				>{$_("common.learn-more")}</ActionButton
@@ -34,7 +34,7 @@
 				<ActionButton kind="secondary">{$_("home.coming-soon")}</ActionButton>
 			</Link>
 		{/if}
-	</div>
+	</aside>
 
 	<!-- Your money, where it's been -->
 	<section id="ledger">
@@ -83,20 +83,3 @@
 		</p>
 	</section>
 </main>
-
-<style lang="scss">
-	h1.tagline {
-		text-align: center;
-	}
-
-	div.tagline {
-		display: flex;
-		flex-flow: row nowrap;
-		width: fit-content;
-		margin: 0 auto;
-
-		> :global(.link:first-of-type) {
-			margin-right: 8pt;
-		}
-	}
-</style>
