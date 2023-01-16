@@ -3,7 +3,7 @@
 	import { aboutPath, signupPath } from "./router";
 	import { isSignupEnabled } from "./store";
 	import { Link } from "svelte-navigator";
-	import { repoMain, repoNewIssue } from "./platformMeta";
+	import { repoFile, repoMain, repoNewIssue } from "./platformMeta";
 	import ActionButton from "./components/buttons/ActionButton.svelte";
 	import EncryptionIcon from "./icons/Lock.svelte";
 	import I18N from "./components/I18N.svelte";
@@ -19,7 +19,7 @@
 	<h1 class="tagline">{$_("home.tagline")}</h1>
 
 	<!-- Get started now -->
-	<div class="tagline">
+	<aside class="tagline">
 		<Link to={aboutRoute} class="link">
 			<ActionButton kind={isSignupEnabled ? "secondary" : "primary"}
 				>{$_("common.learn-more")}</ActionButton
@@ -34,7 +34,7 @@
 				<ActionButton kind="secondary">{$_("home.coming-soon")}</ActionButton>
 			</Link>
 		{/if}
-	</div>
+	</aside>
 
 	<!-- Your money, where it's been -->
 	<section id="ledger">
@@ -82,21 +82,20 @@
 			{$_("home.open-source.let-me-know")}
 		</p>
 	</section>
+
+	<!-- How we work, why JS -->
+	<section id="how-we-work">
+		<p>
+			<I18N keypath="home.how-we-work.p">
+				<!-- platform -->
+				<span>{$_("common.platform")}</span>
+				<!-- spa -->
+				<OutLink to="https://developer.mozilla.org/en-US/docs/Glossary/SPA"
+					>{$_("home.how-we-work.spa")}</OutLink
+				>
+				<!-- read -->
+				<OutLink to={repoFile("src/transport/cryption.ts")}>{$_("home.how-we-work.read")}</OutLink>
+			</I18N>
+		</p>
+	</section>
 </main>
-
-<style lang="scss">
-	h1.tagline {
-		text-align: center;
-	}
-
-	div.tagline {
-		display: flex;
-		flex-flow: row nowrap;
-		width: fit-content;
-		margin: 0 auto;
-
-		> :global(.link:first-of-type) {
-			margin-right: 8pt;
-		}
-	}
-</style>

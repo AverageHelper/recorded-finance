@@ -41,6 +41,21 @@ strong {
 	font-weight: bold;
 }
 
+aside.tagline {
+	display: flex;
+	flex-flow: row nowrap;
+	width: fit-content;
+	margin: 0 auto;
+
+	> .link:first-of-type {
+		margin-right: 8pt;
+	}
+}
+
+h1.tagline {
+	text-align: center;
+}
+
 h1,
 h2,
 h3,
@@ -111,6 +126,16 @@ main.loading {
 
 	> .spinner {
 		margin: 16pt auto;
+	}
+}
+
+main.content {
+	padding: 16pt 24pt;
+	overflow-y: scroll;
+	overflow-x: hidden;
+
+	.error {
+		color: color($red);
 	}
 }
 

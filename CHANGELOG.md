@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.1] - 2023-01-16
+### Added
+- Improved experience for users who have JavaScript disabled.
+  - If the front-end loads with JavaScript disabled (whether at the browser level, or by an extension such as [NoScript](https://noscript.net)), then the Home page will now appear, and will be very similar in appearance to the way it would render normally in the en-US locale.
+  - This page is hard-coded. It is removed and replaced when JavaScript loads.
+  - Because the page is not dynamically generated, we can only render the Home page, regardless of the URL path at load time. Here is room for future improvement!
+  - Because our locale detection relies on JavaScript, this webpage is _only rendered in English_.
+  - Because our in-app navigation routing relies on JavaScript, internal navigation routes are disabled, and replaced in some areas with hints to enable JavaScript.
+  - This feature helps us have a contentful load much more quickly, and helps out search-engine indexers who don't wanna run potentially-unsafe JavaScript.
+
 ## [0.16.0] - 2023-01-15
 ### Changed
 - Dropped support for Safari 13, [because Vite](https://vitejs.dev/guide/build.html#browser-compatibility).
@@ -376,6 +386,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial commit
 
+[0.16.1]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.0...v0.16.1
 [0.16.0]: https://github.com/RecordedFinance/recorded-finance/compare/v0.15.3...v0.16.0
 [0.15.3]: https://github.com/RecordedFinance/recorded-finance/compare/v0.15.2...v0.15.3
 [0.15.2]: https://github.com/RecordedFinance/recorded-finance/compare/v0.15.1...v0.15.2
