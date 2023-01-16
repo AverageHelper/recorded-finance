@@ -8,54 +8,520 @@
 		<link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.min.css" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<style type="text/css">
-			html,
-			main {
+			/* Basic styles until JS loads. TODO: Import these from our built styles */
+			:root {
+				--label: #292929;
+				--secondary-label: #79797c;
+				--inverse-label: #f8f8f8;
+				--link: #0e8650;
+				--link-hover: #0e8650;
+				--background: #fff;
+				--secondary-background: #f2f2f2;
+				--navbar-background: var(--background);
+				--green: #13a463;
+				--secondary-fill: #eeeeee;
+
+				--bs-body-color: var(--label);
+				--bs-link-color: var(--link);
+				--bs-link-hover-color: var(--link-hover);
+				--bs-primary: var(--green);
+				--bs-secondary: var(--secondary-fill);
+			}
+
+			html {
+				font-family: var(--bs-font-sans-serif);
+				color: var(--label);
+				background-color: var(--background);
 				transition: background 0.6s;
-				background-color: #fff;
+				font-size: 16px;
+				font-weight: 300;
+				font-style: normal;
+				line-height: 1.5;
+				-webkit-font-smoothing: antialiased;
+				-webkit-overflow-scrolling: touch;
+				-moz-osx-font-smoothing: grayscale;
+				text-size-adjust: auto;
+			}
+
+			.btn-primary {
+				--bs-btn-color: var(--inverse-label);
+				--bs-btn-bg: var(--bs-primary);
+				--bs-btn-border-color: var(--bs-primary);
+				--bs-btn-hover-color: var(--inverse-label);
+				--bs-btn-hover-border-color: var(--bs-btn-hover-bg);
+				--bs-btn-focus-shadow-rgb: var(--bs-primary-rgb);
+				--bs-btn-active-color: var(--bs-btn-hover-color);
+				--bs-btn-active-border-color: var(--bs-btn-active-bg);
+				--bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+				--bs-btn-disabled-color: var(--inverse-label);
+				--bs-btn-disabled-bg: var(--bs-primary);
+				--bs-btn-disabled-border-color: var(--bs-primary);
+				--bs-btn-hover-bg: #119459;
+				--bs-btn-active-bg: #0f834f;
+			}
+
+			.btn-secondary {
+				--bs-btn-color: var(--bs-body-color);
+				--bs-btn-bg: var(--bs-secondary);
+				--bs-btn-border-color: var(--bs-secondary);
+				--bs-btn-hover-color: var(--bs-body-color);
+				--bs-btn-hover-border-color: var(--bs-btn-hover-bg);
+				--bs-btn-focus-shadow-rgb: var(--bs-secondary-rgb);
+				--bs-btn-active-color: var(--bs-btn-hover-color);
+				--bs-btn-active-border-color: var(--bs-btn-active-bg);
+				--bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+				--bs-btn-disabled-color: var(--bs-body-color);
+				--bs-btn-disabled-bg: var(--bs-secondary);
+				--bs-btn-disabled-border-color: var(--bs-secondary);
+				--bs-btn-hover-bg: #d6d6d6;
+				--bs-btn-active-bg: #bebebe;
+			}
+
+			/* The screen should be screen-height. (Keeps the footer at the bottom) */
+			html,
+			body {
+				height: 100vh;
+				min-height: 100vh;
+				max-height: 100vh;
+				background-color: var(--background);
+				transition: background 0.6s;
+			}
+
+			.icon {
+				height: 1.3em;
+				width: 1.3em;
+				vertical-align: middle;
+				display: inline-block;
+				overflow: visible;
+			}
+
+			main.content {
+				padding: 16pt 24pt;
+				overflow-y: scroll;
+				overflow-x: hidden;
+			}
+
+			a {
+				text-decoration: none;
+			}
+
+			@media (hover: hover) {
+				a:hover {
+					text-decoration: underline;
+				}
+			}
+
+			ul,
+			ol {
+				margin: auto;
+				margin-top: 0.5rem;
+				margin-bottom: 1.5rem;
+			}
+
+			.navbar-brand {
+				display: block;
+				font-weight: bold;
+				font-size: x-large;
+				z-index: 50;
+				margin-left: 16pt;
+				text-decoration: none;
+				border-radius: 4pt;
+				color: var(--label);
+				margin-right: auto;
+			}
+
+			@media (hover: hover) {
+				.navbar-brand:hover {
+					color: var(--label);
+					text-decoration: none;
+				}
+			}
+
+			.navbar-brand:active,
+			.navbar-brand:focus {
+				color: var(--label);
+			}
+
+			.navbar-brand:focus-visible {
+				outline: 2pt solid var(--link);
+			}
+
+			.navbar {
+				position: sticky;
+				top: 0;
+				z-index: 1000;
+				background-color: var(--navbar-background);
+				color: var(--label);
+			}
+
+			.navbar .actions-container {
+				display: flex;
+				flex-flow: row nowrap;
+				align-items: center;
+				justify-content: space-evenly;
+				height: calc(100% - 0.75em * 2);
+				min-width: 2.8em;
+				margin: 0.75em 1em;
+				color: inherit;
+			}
+
+			.navbar-toggler {
+				height: 36pt;
+				width: 44pt;
+				padding: 0 4pt;
+				color: var(--label);
+				border-color: transparent;
+				margin-left: auto;
+				z-index: 100;
+			}
+
+			.navbar-toggler .icon {
+				width: 100%;
+				height: 100%;
+			}
+
+			ul.navbar-nav {
+				margin-left: 16pt;
+				margin-right: 16pt;
+			}
+
+			li.nav-item {
+				height: fit-content;
+				margin-left: auto;
+			}
+
+			li.nav-item > .nav-link {
+				display: flex;
+				flex-flow: row nowrap;
+				align-items: center;
+				color: var(--label);
+			}
+
+			li.nav-item > .nav-link.active {
+				color: var(--label);
+				font-weight: bold;
+			}
+
+			li.nav-item > .nav-link.inactive {
+				color: var(--label);
+			}
+
+			li.nav-item > .nav-link .icon {
+				color: var(--label);
+				margin-left: 8pt;
+			}
+
+			nav.navbar #navbarNav {
+				z-index: 100;
+				margin-left: auto;
+			}
+
+			nav.navbar ul,
+			nav.navbar .navbar-toggler {
+				margin-left: auto;
+				margin-right: 8pt;
+				z-index: 50;
+			}
+
+			nav.navbar li.nav-item > .locale {
+				width: fit-content;
+				margin-left: auto;
+			}
+
+			nav.navbar li.nav-item a.nav-link {
+				border-radius: 4pt;
+			}
+
+			nav.navbar li.nav-item a.nav-link:focus-visible {
+				outline: 2pt solid var(--link);
+			}
+
+			section {
+				margin: 0 auto;
+				max-width: 600pt;
+				margin-top: 36pt;
+			}
+
+			section > p {
+				text-align: left;
+			}
+
+			section > .icon {
+				float: right;
+				margin-left: 24pt;
+				margin-bottom: 24pt;
+				color: var(--label);
+				transition: color 0.6s;
+				text-align: center;
+				width: 5em;
+				height: 5em;
+			}
+
+			h1,
+			h2,
+			h3,
+			h4,
+			h5,
+			h6 {
+				margin: auto;
+				max-width: 600pt;
+				font-weight: 700;
+				line-height: 1.2;
+				margin-top: 28pt;
+				margin-bottom: 14pt;
+				color: var(--label);
+				transition: color 0.6s;
+			}
+
+			h1 {
+				font-size: 2.2rem;
+			}
+
+			h2 {
+				font-size: 1.8rem;
+			}
+
+			h3 {
+				font-size: 1.4rem;
+				font-weight: 600;
+			}
+
+			p {
+				margin: auto;
+				margin-top: 0;
+				margin-bottom: 1.2rem;
+				max-width: 600pt;
+				color: var(--label);
+				transition: color 0.6s;
+				line-height: 1.8;
+				text-align: justify;
+			}
+
+			footer {
+				position: fixed;
+				bottom: 0;
+				left: 0;
+				right: 0;
+				display: flex;
+				flex-flow: row nowrap;
+				justify-content: space-between;
+				align-items: center;
+				margin: 0;
+				padding: 8pt 16pt;
+				background-color: var(--secondary-background);
+			}
+
+			footer p {
+				color: var(--secondary-label);
+				margin: 0;
+			}
+
+			footer aside {
+				display: flex;
+				flex-flow: row nowrap;
+				align-items: center;
+			}
+
+			footer aside .icon {
+				margin-bottom: 5pt;
+			}
+
+			footer .icon {
+				color: var(--label);
 			}
 
 			@media only screen and (prefers-color-scheme: dark) {
-				html,
-				main {
-					background: #181818;
+				:root {
+					--label: #f8f8f8;
+					--secondary-label: #9999a0;
+					--inverse-label: #292929;
+					--link: #0aa567;
+					--link-hover: #0aa567;
+					--background: #181818;
+					--secondary-background: #2b2b2c;
+					--green: #0aa567;
+					--secondary-fill: #2b2b2c;
 				}
 
-				#noscript p {
-					color: #eee;
+				.btn-primary {
+					--bs-btn-hover-bg: #09955d;
+					--bs-btn-active-bg: #088452;
 				}
-			}
-		</style>
-		<style type="text/css">
-			/* Hide the noscript bit until we're sure JavaScript is disabled. */
-			#noscript {
-				height: 0;
-				overflow: hidden;
-				animation: reveal 3.5s forwards;
-			}
-			@keyframes reveal {
-				from {
-					height: 0;
-				}
-				to {
-					height: initial;
+
+				.btn-secondary {
+					--bs-btn-hover-bg: #272728;
+					--bs-btn-active-bg: #222223;
 				}
 			}
 		</style>
 	</head>
 	<body>
 		<div id="app">
-			<main id="noscript">
-				<!-- We're avoiding the <noscript> tag because selective-JS-blocking extensions don't enable that tag. -->
-				<!-- FIXME: This might not appear if the user disables JS while viewing the site. -->
-				<!-- CSS ensures that this tag shows up if JS doesn't load within 0.8 seconds. -->
-				<!-- JS removes this tag if JS is enabled! -->
-				<!-- TODO: Display as much as we can without JavaScript. Would SSR work? -->
-				<p
-					>I'm sorry but Recorded Finance doesn't work without JavaScript enabled. (I know, it's
-					silly.)</p
-				>
-				<p><strong>Please enable JavaScript to continue.</strong></p>
-			</main>
+			<div id="noscript">
+				<!-- Looks like JavaScript isn't enabled, or hasn't loaded yet. -->
+				<!-- JS-blocking extensions don't fall back on the <noscript> tag, so instead we do this. -->
+
+				<!-- This is a stub of our main page: -->
+				<nav class="navbar navbar-expand-md">
+					<div class="container-fluid">
+						<aside class="actions-container" role="heading" aria-level="1">
+							<a href="/" class="navbar-brand" title="Recorded Finance">Recorded Finance</a>
+						</aside>
+						<div class="navbar-collapse collapse">
+							<ul id="navbarNav" class="ms-auto navbar-nav">
+								<li class="nav-item active">
+									<a class="nav-link active" href="/"
+										>Home <span class="visually-hidden">(current)</span>
+									</a>
+								</li>
+								<li class="nav-item"
+									><span class="nav-link inactive" aria-label="JavaScript has not yet loaded"
+										>Enable JavaScript to read more</span
+									></li
+								>
+							</ul>
+						</div>
+					</div>
+				</nav>
+
+				<main class="content">
+					<h1 class="tagline" style="text-align: center">Respectful digital financial records.</h1>
+					<div
+						class="tagline"
+						style="display: flex; flex-flow: row nowrap; width: fit-content; margin: 0 auto"
+					>
+						<button
+							type="button"
+							class="action-button btn btn-primary link"
+							style="margin-right: 8pt"
+							disabled
+							>Learn More</button
+						>
+						<button type="button" class="action-button btn btn-secondary link" disabled
+							>Coming Soon</button
+						>
+					</div>
+					<section id="ledger">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="icon">
+							<path
+								fill="currentColor"
+								d="M18 11c2.757 0 5 2.243 5 5s-2.243 5-5 5-5-2.243-5-5 2.243-5 5-5zm0-1c-3.313 0-6 2.687-6 6s2.687 6 6 6 6-2.687 6-6-2.687-6-6-6zm.5 8.474v.526h-.5v-.499c-.518-.009-1.053-.132-1.5-.363l.228-.822c.478.186 1.114.383 1.612.27.574-.13.692-.721.057-1.005-.465-.217-1.889-.402-1.889-1.622 0-.681.52-1.292 1.492-1.425v-.534h.5v.509c.362.01.768.073 1.221.21l-.181.824c-.384-.135-.808-.257-1.222-.232-.744.043-.81.688-.29.958.856.402 1.972.7 1.972 1.773.001.858-.672 1.315-1.5 1.432zm-7.911-5.474h-2.589v-2h3.765c-.484.602-.881 1.274-1.176 2zm-.589 3h-2v-2h2.264c-.166.641-.264 1.309-.264 2zm2.727-6h-4.727v-2h7v.589c-.839.341-1.604.822-2.273 1.411zm2.273-6h-7v-2h7v2zm0 3h-7v-2h7v2zm-4.411 12h-2.589v-2h2.069c.088.698.264 1.369.52 2zm-10.589-11h7v2h-7v-2zm0 3h7v2h-7v-2zm12.727 11h-4.727v-2h3.082c.438.753.994 1.428 1.645 2zm-12.727-5h7v2h-7v-2zm0 3h7v2h-7v-2zm0-6h7v2h-7v-2z"
+							></path>
+						</svg>
+						<h3>Accountable To Yourself.</h3>
+						<p>
+							Keep a close eye on your spending. Never lose a dime again! If you're the sort to
+							obsess about where your money is going, this might be the tool for you.
+						</p>
+					</section>
+					<section id="encrypted">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="icon">
+							<path
+								fill="currentColor"
+								d="M10 16c0-1.104.896-2 2-2s2 .896 2 2c0 .738-.404 1.376-1 1.723v2.277h-2v-2.277c-.596-.347-1-.985-1-1.723zm11-6v14h-18v-14h3v-4c0-3.313 2.687-6 6-6s6 2.687 6 6v4h3zm-13 0h8v-4c0-2.206-1.795-4-4-4s-4 1.794-4 4v4zm11 2h-14v10h14v-10z"
+							></path>
+						</svg>
+						<h3>Your Ledger, Not Mine.</h3>
+						<p>
+							Recorded Finance, by design, cannot see your data, even on our own servers. We don't
+							need or want to see what you do with your money. That's not my job.
+							<small>(I'd rather you <em>not</em> do illegal stuff with this.)</small>
+						</p>
+					</section>
+					<section id="open-source">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							fill-rule="evenodd"
+							clip-rule="evenodd"
+							viewBox="0 0 24 24"
+							class="icon"
+						>
+							<path
+								fill="currentColor"
+								d="M5.25 17.322l-2.25-1.221 2.234-3.067-2.234-1.96 4.713-2.562c.204.231.41.504.604.807l-3.584 1.948 1.181 1.037 3.058-1.686c.119.314.216.641.282.977l-3.261 1.801 6.018 3.109 5.989-3.105-3.152-1.745c.061-.347.144-.667.248-.968l2.933 1.615 1.234-1.095-3.5-1.855c.183-.275.388-.54.614-.803l4.623 2.449-2.261 2.008.011.006 2.25 3.081-2.25 1.224v3.087l-6.75 3.596-6.75-3.596v-3.082zm7.246-.094v5.377l5.255-2.799v-1.946l-3.501 1.905-1.754-2.537zm-6.247.636v1.942l5.248 2.796v-5.373l-1.747 2.536-3.501-1.901zm-1.772-2.096l4.96 2.692 1.099-1.594-4.983-2.575-1.076 1.477zm8.988 1.107l1.096 1.585 4.961-2.698-1.073-1.471-4.984 2.584zm-1.192-2.915h-.521c-.136 0-.268-.046-.358-.127l-.692-.455h2.621l-.692.455c-.089.081-.221.127-.358.127zm1.075-1.164h-2.655c-.161 0-.291-.129-.291-.29 0-.161.13-.291.291-.291h2.655c.161 0 .291.13.291.291 0 .161-.13.29-.291.29zm.287-1.163h-3.245c0-2.297-1.872-3.291-1.872-5.367 0-2.166 1.746-3.358 3.493-3.358 1.748 0 3.497 1.194 3.497 3.358 0 2.076-1.872 3.038-1.873 5.367zm-.901-.997c.188-.954.624-1.689 1.018-2.356.424-.714.757-1.279.757-2.014 0-1.55-1.257-2.361-2.498-2.361-1.239 0-2.495.811-2.495 2.361 0 .739.337 1.312.763 2.035.392.664.822 1.396 1.012 2.335h1.443zm-5.357-4.321h-1.772v-.997h1.818c-.039.219-.059.445-.059.674l.013.323zm11.043 0h-1.761l.014-.323c0-.229-.02-.455-.06-.674h1.807v.997zm-9.983-3.011c-.227.247-.424.518-.584.809l-1.439-1.021.578-.813 1.445 1.025zm7.159-.005l1.437-1.02.578.813-1.43 1.015c-.161-.29-.358-.561-.585-.808zm-5.3-1.22c-.318.115-.619.261-.899.433l-.772-1.575.897-.438.774 1.58zm3.435-.004l.773-1.576.896.438-.769 1.57c-.28-.172-.581-.318-.9-.432zm-1.219-.271c-.162-.016-.327-.024-.494-.024-.17 0-.339.009-.505.025v-1.805h.999v1.804z"
+							></path>
+						</svg>
+						<h3>Keep Me Accountable.</h3>
+						<p
+							>All of our source code is open to read.
+							<span
+								>Feel free to
+								<a
+									href="https://github.com/RecordedFinance/recorded-finance/issues/new/choose"
+									target="_blank"
+									rel="noopener noreferrer"
+									>open an issue</a
+								>
+								or submit a pull request on this project's
+								<a
+									href="https://github.com/RecordedFinance/recorded-finance"
+									target="_blank"
+									rel="noopener noreferrer"
+									>GitHub page</a
+								>.
+							</span>
+							Let me know if anything needs fixed.</p
+						>
+					</section>
+				</main>
+
+				<footer>
+					<div>
+						<p>
+							<a
+								href="https://github.com/RecordedFinance/recorded-finance/"
+								target="_blank"
+								rel="noopener noreferrer"
+								>Recorded Finance Client</a
+							>
+							(JavaScript not yet loaded)
+						</p>
+						<p>
+							This project is licensed under the
+							<a
+								href="https://github.com/RecordedFinance/recorded-finance/tree/main/LICENSE"
+								target="_blank"
+								rel="noopener noreferrer"
+								title="View the full license"
+								>GNU General Public License v3.0</a
+							>.
+						</p>
+					</div>
+					<aside>
+						<a
+							href="https://github.com/RecordedFinance/recorded-finance"
+							target="_blank"
+							rel="noopener noreferrer"
+							title="View this project's source code"
+						>
+							<svg
+								style="
+									fill-rule: nonzero;
+									clip-rule: evenodd;
+									stroke-linecap: round;
+									stroke-linejoin: round;
+								"
+								xmlns="http://www.w3.org/2000/svg"
+								xml:space="preserve"
+								viewBox="136.3 383.42 32.6 31.8"
+								class="icon"
+							>
+								<path
+									fill="currentColor"
+									d="M152.608 383.441c-8.995 0-16.288 7.293-16.288 16.29 0 7.197 4.667 13.302 11.14 15.457.815.149 1.112-.354 1.112-.786 0-.386-.014-1.411-.022-2.77-4.531.984-5.487-2.184-5.487-2.184-.741-1.882-1.809-2.383-1.809-2.383-1.479-1.01.112-.99.112-.99 1.635.115 2.495 1.679 2.495 1.679 1.453 2.489 3.813 1.77 4.741 1.353.148-1.052.568-1.77 1.034-2.177-3.617-.411-7.42-1.809-7.42-8.051 0-1.778.635-3.232 1.677-4.371-.168-.412-.727-2.068.159-4.311 0 0 1.368-.438 4.48 1.67a15.56 15.56 0 0 1 4.078-.548c1.383.006 2.777.186 4.078.548 3.11-2.108 4.475-1.67 4.475-1.67.889 2.243.33 3.899.162 4.311 1.044 1.139 1.675 2.593 1.675 4.371 0 6.258-3.809 7.635-7.438 8.038.585.503 1.106 1.497 1.106 3.017 0 2.177-.02 3.934-.02 4.468 0 .436.293.943 1.12.784 6.468-2.159 11.131-8.26 11.131-15.455 0-8.997-7.294-16.29-16.291-16.29"
+									fill="#fff"
+								></path></svg></a
+					></aside>
+				</footer>
+
+				<noscript>
+					<p
+						>I'm sorry but Recorded Finance doesn't work very well without JavaScript enabled. (I
+						know, it's silly.)</p
+					>
+					<p><strong>Please enable JavaScript to continue.</strong></p>
+				</noscript>
+			</div>
 		</div>
 		<script type="module" src="/src/main.ts"></script>
 	</body>
