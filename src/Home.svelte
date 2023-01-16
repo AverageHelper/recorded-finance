@@ -82,4 +82,6 @@
 			{$_("home.open-source.let-me-know")}
 		</p>
 	</section>
+
+	<!-- TODO: Include a paragraph about how we work (especially why we need JS) -->
 </main>
