@@ -1,0 +1,14 @@
+# Our form for reporting security advisories
+Contact: https://github.com/RecordedFinance/recorded-finance/security/advisories/new
+
+# The date after which you should consider this document stale
+Expires: 2023-03-07T07:00:00.000Z
+
+# The only language I confidently understand
+Preferred-Languages: en
+
+# The canonical location of our security.txt file
+Canonical: https://recorded.finance/.well-known/security.txt
+
+# Our security policy
+Policy: https://github.com/RecordedFinance/recorded-finance/security/policy
