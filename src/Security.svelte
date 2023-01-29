@@ -161,9 +161,7 @@
 		<p>
 			<I18N keypath="security-faq.report-vuln.answer">
 				<!-- sec-txt -->
-				<OutLink to="https://recorded.finance/.well-known/security.txt"
-					>{$_("security-faq.report-vuln.sec-txt")}</OutLink
-				>
+				<OutLink to="/.well-known/security.txt">{$_("security-faq.report-vuln.sec-txt")}</OutLink>
 			</I18N>
 		</p>
 	</section>
