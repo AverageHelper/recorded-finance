@@ -20,10 +20,15 @@ jobs:
       - name: Parse Changelog
         id: changelog
         uses: mindsers/changelog-reader-action@v2.2.2
+        with:
+          validation_level: error
+          version: Unreleased
 
       - name: Output status
         id: output
-        run: echo "status=${{ steps.changelog.outputs.status }}" >> $GITHUB_OUTPUT
+        run: |
+          echo "Found version '${{ steps.changelog.outputs.version }}'"
+          echo "status=${{ steps.changelog.outputs.status }}" >> $GITHUB_OUTPUT
 
   build_client:
     name: Build Client
