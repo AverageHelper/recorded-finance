@@ -19,7 +19,7 @@ jobs:
 
       - name: Parse Changelog
         id: changelog
-        uses: coditory/changelog-parser@v1.0.2
+        uses: mindsers/changelog-reader-action@v2.2.2
 
       - name: Output status
         id: output
