@@ -9,8 +9,26 @@ on:
   workflow_dispatch:
 
 jobs:
+  release_status:
+    name: Check version
+    runs-on: ubuntu-latest
+    outputs:
+      status: ${{ steps.output.outputs.status }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Parse Changelog
+        id: changelog
+        uses: coditory/changelog-parser@v1.0.2
+
+      - name: Output status
+        id: output
+        run: echo "status=${{ steps.changelog.outputs.status }}" >> $GITHUB_OUTPUT
+
   build_client:
     name: Build Client
+    needs: release_status
+    if: needs.release_status.outputs.status != 'unreleased'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -50,6 +68,8 @@ jobs:
 
   build_server:
     name: Build Server
+    needs: release_status
+    if: needs.release_status.outputs.status != 'unreleased'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
