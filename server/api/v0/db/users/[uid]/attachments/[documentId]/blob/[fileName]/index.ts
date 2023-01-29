@@ -1,4 +1,3 @@
-import type { DocumentData } from "../../../../../../../../../database/schemas";
 import type { Params } from "./Params";
 import type {
 	Request as ExpressRequest,
@@ -84,11 +83,10 @@ export const GET = apiHandler("GET", async (req, res) => {
 	if (file === null) throw new NotFoundError();
 
 	const contents = file.contents.toString("utf8");
-	const fileData: DocumentData<FileData> = {
+	respondData<FileData>(res, {
 		contents,
 		_id: fileName,
-	};
-	respondData(res, fileData);
+	});
 });
 
 export const POST = apiHandler("POST", async (req, res) => {

@@ -45,6 +45,9 @@
 				</I18N>
 			</li>
 
+			<!-- TODO: Add https://copilot.money -->
+			<!-- TODO: Add https://gnucash.org -->
+
 			<li>
 				<I18N keypath="about.alternatives.alt2" tag="p">
 					<!-- intuit -->

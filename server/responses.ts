@@ -27,6 +27,7 @@ export function respondData<T extends { _id: string } | { uid: string }>(
 	res: APIResponse,
 	data: DocumentData<T> | Array<DocumentData<T>> | null
 ): void {
+	// TODO: Should this go down as a multipart thingthing instead?
 	res
 		.setHeader(...CACHE_CONTROL)
 		.setHeader(...VARY)
