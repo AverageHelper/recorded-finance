@@ -144,9 +144,11 @@ Google Analytics is spoopy as heck, and even [illegal in the EU](https://noyb.eu
 
 I have a long wishlist for this project. In no particular order:
 
-- API v1.
-- Detailed documentation webpage (protocols, API, etc.)
-- Standard API evolution protocol (deprecation and obsoleting of old API versions).
-- SDK for third-party tools to participate in our hosted E2EE data access without needing to re-implement the correct protocols directly.
-- Logo.
-- Mobile apps?
+- [x] Move repo to our own GitHub org
+- [ ] Separate the "website" from the "app" to make self-hosting easier
+- [ ] Standard API evolution protocol (deprecation and obsoleting of old API versions)
+- [ ] API v1
+- [ ] Detailed documentation webpage (protocols, API, etc.)
+- [ ] SDK for third-party tools to participate in our hosted E2EE data access without needing to re-implement the correct protocols directly
+- [ ] Logo
+- [ ] Mobile apps (?)

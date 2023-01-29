@@ -595,6 +595,11 @@
 		"database-breach": {
 			"question": "O que acontece se alguém roubar o banco de dados?",
 			"answer1": "Se sua senha for longa e complicada, não há nada que alguém possa fazer com o nosso banco de dados. O servidor nunca vê sua DEK, a KEK de sua frase secreta, ou sua frase secreta. Nenhum deles está no banco de dados."
+		},
+		"report-vuln": {
+			"question": "Como faço para relatar uma vulnerabilidade de segurança?",
+			"answer": "Você pode relatar vulnerabilidades de forma privada por meio do GitHub ou por e-mail. Tudo o que você precisa para entrar em contato conosco está em {sec-txt}. Não fazemos recompensas por bugs (ainda), então estamos muito gratos a você por dedicar seu tempo para nos ajudar!",
+			"sec-txt": "nosso arquivo security.txt"
 		}
 	}
 }

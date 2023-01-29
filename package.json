@@ -17,7 +17,7 @@
 		"api:generate": "rm -rf ./src/transport/api.ts && ./node_modules/.bin/oazapfts ./server/openapi.yaml ./src/transport/api.ts",
 		"build": "npm run build:client && npm run build:server",
 		"build:server": "cd ./server && npm run build",
-		"build:client": "rm -rf ./dist && npm run lint && npm run svelte-check && npm run vite:build",
+		"build:client": "rm -rf ./dist && npm run lint && npm run svelte-check && npm run vite:build && cp ./dist/.well-known/security.txt ./dist/security.txt",
 		"build:client:quick": "rm -rf ./dist && npm run api:generate && npm run export-version && npm run vite:build",
 		"svelte-check": "./node_modules/.bin/svelte-check --tsconfig tsconfig.prod.json --use-new-transformation",
 		"vite:build": "./node_modules/.bin/vite build",

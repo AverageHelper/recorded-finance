@@ -1,0 +1,20 @@
+# Our form for reporting security advisories
+Contact: https://github.com/RecordedFinance/recorded-finance/security/advisories/new
+
+# Our security address
+Contact: mailto:security@recorded.finance
+
+# The date after which you should consider this document stale
+Expires: 2023-03-07T07:00:00.000Z
+
+# Our OpenPGP key
+Encryption: https://keys.openpgp.org/vks/v1/by-fingerprint/B538EC90D2E4A997E4EE3852B673552B3C21FBCE
+
+# The only language I confidently understand
+Preferred-Languages: en
+
+# The canonical location of our security.txt file
+Canonical: https://recorded.finance/.well-known/security.txt
+
+# Our security policy
+Policy: https://github.com/RecordedFinance/recorded-finance/security/policy
