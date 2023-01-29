@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Our pipeline now only deploys to production if we've cut a new semver version.
 
+### Removed
+- Got rid of our default Vue favicon.
+
 ## [0.16.1] - 2023-01-16
 ### Added
 - Improved experience for users who have JavaScript disabled.
