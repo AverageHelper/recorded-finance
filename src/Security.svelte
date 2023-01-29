@@ -154,4 +154,17 @@
 		<h2>{$_("security-faq.database-breach.question")}</h2>
 		<p>{$_("security-faq.database-breach.answer1")}</p>
 	</section>
+
+	<!-- Report vulnerabilities -->
+	<section>
+		<h2>{$_("security-faq.report-vuln.question")}</h2>
+		<p>
+			<I18N keypath="security-faq.report-vuln.answer">
+				<!-- sec-txt -->
+				<OutLink to="https://recorded.finance/.well-known/security.txt"
+					>{$_("security-faq.report-vuln.sec-txt")}</OutLink
+				>
+			</I18N>
+		</p>
+	</section>
 </main>
