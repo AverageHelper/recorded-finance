@@ -1,5 +1,6 @@
 import type { DocumentReference, QueryDocumentSnapshot } from "./db";
-import type { EPackage, HashStore } from "./cryption";
+import type { EPackage } from "./cryption";
+import type { HashStore } from "./HashStore";
 import type { LocationPref } from "./locations";
 import { db, doc, recordFromSnapshot, setDoc, deleteDoc } from "./db";
 import { encrypt } from "./cryption";

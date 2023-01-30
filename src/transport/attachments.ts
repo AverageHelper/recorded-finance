@@ -6,7 +6,8 @@ import type {
 } from "./db";
 import type { Attachment, AttachmentRecordParams } from "../model/Attachment";
 import type { StorageReference } from "./storage.js";
-import type { EPackage, HashStore } from "./cryption";
+import type { EPackage } from "./cryption";
+import type { HashStore } from "./HashStore";
 import { attachment, isAttachmentRecord, recordFromAttachment } from "../model/Attachment";
 import { collection, db, doc, recordFromSnapshot, setDoc, deleteDoc } from "./db";
 import { deleteObject, downloadString, ref, uploadString } from "./storage.js";

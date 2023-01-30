@@ -1,4 +1,5 @@
-import type { EPackage, HashStore } from "./cryption";
+import type { EPackage } from "./cryption";
+import type { HashStore } from "./HashStore";
 import type { Location, LocationRecordParams } from "../model/Location";
 import { collection, db, doc, recordFromSnapshot, setDoc, deleteDoc } from "./db";
 import { encrypt } from "./cryption";

@@ -1,5 +1,6 @@
 import type { Account } from "../model/Account";
-import type { EPackage, HashStore } from "./cryption";
+import type { EPackage } from "./cryption";
+import type { HashStore } from "./HashStore";
 import type { Transaction, TransactionRecordParams } from "../model/Transaction";
 import type {
 	CollectionReference,
