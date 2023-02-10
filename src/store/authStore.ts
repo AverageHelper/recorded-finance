@@ -1,7 +1,9 @@
 import type { AttachmentSchema, DatabaseSchema } from "../model/DatabaseSchema.js";
 import type { Attachment } from "../model/Attachment.js";
-import type { HashStore, KeyMaterial, Unsubscribe, UserPreferences } from "../transport/index.js";
+import type { HashStore, Unsubscribe, UserPreferences } from "../transport/index.js";
+import type { KeyMaterial } from "../transport/cryptionProtocols";
 import type { User } from "../transport/auth.js";
+import { asyncMap } from "../helpers/asyncMap.js";
 import { attachment as newAttachment } from "../model/Attachment.js";
 import { BlobReader, Data64URIWriter, TextReader, ZipWriter } from "@zip.js/zip.js";
 import { bootstrap, updateUserStats } from "./uiStore.js";
@@ -11,7 +13,6 @@ import { NetworkError, PlatformError } from "../transport/errors/index.js";
 import { t } from "../i18n.js";
 import { v4 as uuid } from "uuid";
 import {
-	asyncMap,
 	dataUriToBlob,
 	defaultPrefs,
 	deleteAuthMaterial,
@@ -96,9 +97,9 @@ export function onSignedIn(user: User): void {
 	userPrefsWatcher.set(
 		watchRecord(userDoc, async snap => {
 			const { dekMaterial } = await getDekMaterial();
-			const dek = deriveDEK(key, dekMaterial);
+			const dek = await deriveDEK(key, dekMaterial);
 			if (snap.exists()) {
-				const prefs = userPreferencesFromSnapshot(snap, dek);
+				const prefs = await userPreferencesFromSnapshot(snap, dek);
 				preferences.set(prefs);
 			} else {
 				preferences.set(defaultPrefs());
@@ -309,7 +310,7 @@ export async function updateUserPreferences(prefs: Partial<UserPreferences>): Pr
 	if (userId === null) throw new Error(t("error.auth.unauthenticated"));
 
 	const { dekMaterial } = await getDekMaterial();
-	const dek = deriveDEK(key, dekMaterial);
+	const dek = await deriveDEK(key, dekMaterial);
 	await setUserPreferences(userId, prefs, dek);
 	await updateUserStats();
 }
@@ -379,7 +380,7 @@ export async function getAllUserDataAsJson(): Promise<DatabaseSchema> {
 	const { getAllTagsAsJson } = await import("./tagsStore");
 
 	const { dekMaterial } = await getDekMaterial();
-	const dek = deriveDEK(key, dekMaterial);
+	const dek = await deriveDEK(key, dekMaterial);
 
 	const userDoc = userRef(userId);
 	const snap = await getDoc(userDoc);
@@ -392,7 +393,7 @@ export async function getAllUserDataAsJson(): Promise<DatabaseSchema> {
 	]);
 
 	const prefs = snap.exists() //
-		? userPreferencesFromSnapshot(snap, dek)
+		? await userPreferencesFromSnapshot(snap, dek)
 		: defaultPrefs();
 
 	// JS seems to put these in the order we lay them. Do prefs first, since they're smol

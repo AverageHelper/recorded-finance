@@ -1,6 +1,8 @@
 import type { Tag, TagRecordParams } from "../model/Tag";
 import type { TagRecordPackage, Unsubscribe, WriteBatch } from "../transport";
 import type { TagSchema } from "../model/DatabaseSchema";
+import { asyncForEach } from "../helpers/asyncForEach";
+import { asyncMap } from "../helpers/asyncMap";
 import { derived, get, writable } from "svelte/store";
 import { getDekMaterial, pKey } from "./authStore";
 import { logger } from "../logger";
@@ -56,15 +58,15 @@ export async function watchTags(force: boolean = false): Promise<void> {
 	const key = get(pKey);
 	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 	const { dekMaterial } = await getDekMaterial();
-	const dek = deriveDEK(key, dekMaterial);
+	const dek = await deriveDEK(key, dekMaterial);
 
 	const collection = tagsCollection();
 	tagsLoadError.set(null);
 	tagsWatcher.set(
 		watchAllRecords(
 			collection,
-			snap => {
-				snap.docChanges().forEach(change => {
+			async snap =>
+				await asyncForEach(snap.docChanges(), async change => {
 					switch (change.type) {
 						case "removed":
 							tags.update(tags => {
@@ -75,16 +77,17 @@ export async function watchTags(force: boolean = false): Promise<void> {
 							break;
 
 						case "added":
-						case "modified":
+						case "modified": {
+							const tag = await tagFromSnapshot(change.doc, dek);
 							tags.update(tags => {
 								const copy = { ...tags };
-								copy[change.doc.id] = tagFromSnapshot(change.doc, dek);
+								copy[change.doc.id] = tag;
 								return copy;
 							});
 							break;
+						}
 					}
-				});
-			},
+				}),
 			error => {
 				tagsLoadError.set(error);
 				const watcher = get(tagsWatcher);
@@ -106,7 +109,7 @@ export async function createTag(record: TagRecordParams, batch?: WriteBatch): Pr
 	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 
 	const { dekMaterial } = await getDekMaterial();
-	const dek = deriveDEK(key, dekMaterial);
+	const dek = await deriveDEK(key, dekMaterial);
 	const newTag = await _createTag(record, dek, batch);
 	tags.update(tags => {
 		const copy = { ...tags };
@@ -122,7 +125,7 @@ export async function updateTag(tag: Tag, batch?: WriteBatch): Promise<void> {
 	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 
 	const { dekMaterial } = await getDekMaterial();
-	const dek = deriveDEK(key, dekMaterial);
+	const dek = await deriveDEK(key, dekMaterial);
 	await _updateTag(tag, dek, batch);
 	tags.update(tags => {
 		const copy = { ...tags };
@@ -155,13 +158,12 @@ export async function getAllTagsAsJson(): Promise<Array<TagSchema>> {
 	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 
 	const { dekMaterial } = await getDekMaterial();
-	const dek = deriveDEK(key, dekMaterial);
+	const dek = await deriveDEK(key, dekMaterial);
 
 	const collection = tagsCollection();
 	const snap = await getDocs<TagRecordPackage>(collection);
-	return snap.docs
-		.map(doc => tagFromSnapshot(doc, dek))
-		.map(t => ({ ...recordFromTag(t), id: t.id }));
+	const stored = await asyncMap(snap.docs, async doc => await tagFromSnapshot(doc, dek));
+	return stored.map(t => ({ ...recordFromTag(t), id: t.id }));
 }
 
 export async function importTag(tagToImport: TagSchema, batch?: WriteBatch): Promise<void> {

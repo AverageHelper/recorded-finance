@@ -2,6 +2,8 @@ import type { Attachment, AttachmentRecordParams } from "../model/Attachment";
 import type { AttachmentSchema } from "../model/DatabaseSchema";
 import type { AttachmentRecordPackage, Unsubscribe, WriteBatch } from "../transport";
 import type { Entry as ZipEntry } from "@zip.js/zip.js";
+import { asyncForEach } from "../helpers/asyncForEach";
+import { asyncMap } from "../helpers/asyncMap";
 import { attachment, recordFromAttachment } from "../model/Attachment";
 import { BlobWriter } from "@zip.js/zip.js";
 import { derived, get, writable } from "svelte/store";
@@ -60,15 +62,15 @@ export async function watchAttachments(force: boolean = false): Promise<void> {
 	const key = get(pKey);
 	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 	const { dekMaterial } = await getDekMaterial();
-	const dek = deriveDEK(key, dekMaterial);
+	const dek = await deriveDEK(key, dekMaterial);
 
 	const collection = attachmentsCollection();
 	attachmentsLoadError.set(null);
 	attachmentsWatcher.set(
 		watchAllRecords(
 			collection,
-			snap => {
-				snap.docChanges().forEach(change => {
+			async snap =>
+				await asyncForEach(snap.docChanges(), async change => {
 					switch (change.type) {
 						case "removed":
 							attachments.update(attachments => {
@@ -79,16 +81,17 @@ export async function watchAttachments(force: boolean = false): Promise<void> {
 							break;
 
 						case "added":
-						case "modified":
+						case "modified": {
+							const attachment = await attachmentFromSnapshot(change.doc, dek);
 							attachments.update(attachments => {
 								const copy = { ...attachments };
-								copy[change.doc.id] = attachmentFromSnapshot(change.doc, dek);
+								copy[change.doc.id] = attachment;
 								return copy;
 							});
 							break;
+						}
 					}
-				});
-			},
+				}),
 			error => {
 				attachmentsLoadError.set(error);
 				const watcher = get(attachmentsWatcher);
@@ -120,7 +123,7 @@ export async function createAttachment(
 	if (userId === null) throw new Error(t("error.auth.unauthenticated"));
 
 	const { dekMaterial } = await getDekMaterial();
-	const dek = deriveDEK(key, dekMaterial);
+	const dek = await deriveDEK(key, dekMaterial);
 	const newAttachment = await _createAttachment(userId, file, record, dek);
 	await updateUserStats();
 	attachments.update(attachments => {
@@ -138,7 +141,7 @@ export async function updateAttachment(attachment: Attachment, file?: File): Pro
 	if (userId === null) throw new Error(t("error.auth.unauthenticated"));
 
 	const { dekMaterial } = await getDekMaterial();
-	const dek = deriveDEK(key, dekMaterial);
+	const dek = await deriveDEK(key, dekMaterial);
 	await _updateAttachment(userId, file ?? null, attachment, dek);
 	await updateUserStats();
 	attachments.update(attachments => {
@@ -195,7 +198,7 @@ export async function imageDataFromFile(
 	if (userId === null) throw new Error(t("error.auth.unauthenticated"));
 
 	const { dekMaterial } = await getDekMaterial();
-	const dek = deriveDEK(key, dekMaterial);
+	const dek = await deriveDEK(key, dekMaterial);
 	const imageData = await embeddableDataForFile(dek, file);
 
 	if (shouldCache) {
@@ -215,13 +218,12 @@ export async function getAllAttachmentsAsJson(): Promise<Array<AttachmentSchema>
 	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 
 	const { dekMaterial } = await getDekMaterial();
-	const dek = deriveDEK(key, dekMaterial);
+	const dek = await deriveDEK(key, dekMaterial);
 
 	const collection = attachmentsCollection();
 	const snap = await getDocs<AttachmentRecordPackage>(collection);
-	return snap.docs
-		.map(doc => attachmentFromSnapshot(doc, dek))
-		.map(t => ({ ...recordFromAttachment(t), id: t.id }));
+	const stored = await asyncMap(snap.docs, async doc => await attachmentFromSnapshot(doc, dek));
+	return stored.map(t => ({ ...recordFromAttachment(t), id: t.id }));
 }
 
 export async function importAttachment(

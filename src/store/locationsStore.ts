@@ -1,6 +1,8 @@
 import type { Location, LocationRecordParams } from "../model/Location";
 import type { LocationRecordPackage, Unsubscribe, WriteBatch } from "../transport";
 import type { LocationSchema } from "../model/DatabaseSchema";
+import { asyncForEach } from "../helpers/asyncForEach";
+import { asyncMap } from "../helpers/asyncMap";
 import { derived, get, writable } from "svelte/store";
 import { getDekMaterial, pKey, uid } from "./authStore";
 import { location, recordFromLocation } from "../model/Location";
@@ -52,15 +54,15 @@ export async function watchLocations(force: boolean = false): Promise<void> {
 	const key = get(pKey);
 	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 	const { dekMaterial } = await getDekMaterial();
-	const dek = deriveDEK(key, dekMaterial);
+	const dek = await deriveDEK(key, dekMaterial);
 
 	const collection = locationsCollection();
 	locationsLoadError.set(null);
 	locationsWatcher.set(
 		watchAllRecords(
 			collection,
-			snap => {
-				snap.docChanges().forEach(change => {
+			async snap =>
+				await asyncForEach(snap.docChanges(), async change => {
 					switch (change.type) {
 						case "removed":
 							locations.update(locations => {
@@ -71,16 +73,17 @@ export async function watchLocations(force: boolean = false): Promise<void> {
 							break;
 
 						case "added":
-						case "modified":
+						case "modified": {
+							const location = await locationFromSnapshot(change.doc, dek);
 							locations.update(locations => {
 								const copy = { ...locations };
-								copy[change.doc.id] = locationFromSnapshot(change.doc, dek);
+								copy[change.doc.id] = location;
 								return copy;
 							});
 							break;
+						}
 					}
-				});
-			},
+				}),
 			error => {
 				locationsLoadError.set(error);
 				const watcher = get(locationsWatcher);
@@ -102,7 +105,7 @@ export async function createLocation(
 	if (userId === null) throw new Error(t("error.auth.unauthenticated"));
 
 	const { dekMaterial } = await getDekMaterial();
-	const dek = deriveDEK(key, dekMaterial);
+	const dek = await deriveDEK(key, dekMaterial);
 
 	// If the record matches the title and coords of an extant location, return that instead
 	const extantLocation = record.coordinate
@@ -134,7 +137,7 @@ export async function updateLocation(location: Location, batch?: WriteBatch): Pr
 	if (userId === null) throw new Error(t("error.auth.unauthenticated"));
 
 	const { dekMaterial } = await getDekMaterial();
-	const dek = deriveDEK(key, dekMaterial);
+	const dek = await deriveDEK(key, dekMaterial);
 	await _updateLocation(location, dek, batch);
 	if (!batch) await updateUserStats();
 	locations.update(locations => {
@@ -170,19 +173,18 @@ export async function getAllLocations(): Promise<void> {
 	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 
 	const { dekMaterial } = await getDekMaterial();
-	const dek = deriveDEK(key, dekMaterial);
+	const dek = await deriveDEK(key, dekMaterial);
 
 	const collection = locationsCollection();
 	const snap = await getDocs<LocationRecordPackage>(collection);
-	snap.docs
-		.map(doc => locationFromSnapshot(doc, dek))
-		.forEach(l => {
-			locations.update(locations => {
-				const copy = { ...locations };
-				copy[l.id] = l;
-				return copy;
-			});
+	const stored = await asyncMap(snap.docs, async doc => await locationFromSnapshot(doc, dek));
+	for (const l of stored) {
+		locations.update(locations => {
+			const copy = { ...locations };
+			copy[l.id] = l;
+			return copy;
 		});
+	}
 }
 
 export async function getAllLocationsAsJson(): Promise<Array<LocationSchema>> {
@@ -190,13 +192,12 @@ export async function getAllLocationsAsJson(): Promise<Array<LocationSchema>> {
 	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 
 	const { dekMaterial } = await getDekMaterial();
-	const dek = deriveDEK(key, dekMaterial);
+	const dek = await deriveDEK(key, dekMaterial);
 
 	const collection = locationsCollection();
 	const snap = await getDocs<LocationRecordPackage>(collection);
-	return snap.docs
-		.map(doc => locationFromSnapshot(doc, dek))
-		.map(t => ({ ...recordFromLocation(t), id: t.id }));
+	const stored = await asyncMap(snap.docs, async doc => await locationFromSnapshot(doc, dek));
+	return stored.map(t => ({ ...recordFromLocation(t), id: t.id }));
 }
 
 export async function importLocation(

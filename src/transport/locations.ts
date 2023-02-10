@@ -1,4 +1,4 @@
-import type { EPackage } from "./cryption";
+import type { EPackage } from "./cryptionProtocols";
 import type { HashStore } from "./HashStore";
 import type { Location, LocationRecordParams } from "../model/Location";
 import { collection, db, doc, recordFromSnapshot, setDoc, deleteDoc } from "./db";
@@ -25,11 +25,11 @@ export function locationsCollection(): CollectionReference<LocationRecordPackage
 	return collection<LocationRecordPackage>(db, "locations");
 }
 
-export function locationFromSnapshot(
+export async function locationFromSnapshot(
 	doc: QueryDocumentSnapshot<LocationRecordPackage>,
 	dek: HashStore
-): Location {
-	const { id, record } = recordFromSnapshot(doc, dek, isLocationRecord);
+): Promise<Location> {
+	const { id, record } = await recordFromSnapshot(doc, dek, isLocationRecord);
 	return location({
 		id,
 		coordinate: record.coordinate
@@ -50,7 +50,7 @@ export async function createLocation(
 	dek: HashStore,
 	batch?: WriteBatch
 ): Promise<Location> {
-	const pkg = encrypt(record, "Location", dek);
+	const pkg = await encrypt(record, "Location", dek);
 	const ref = doc(locationsCollection());
 	if (batch) {
 		batch.set(ref, pkg);
@@ -77,7 +77,7 @@ export async function updateLocation(
 	batch?: WriteBatch
 ): Promise<void> {
 	const record = recordFromLocation(location);
-	const pkg = encrypt(record, "Location", dek);
+	const pkg = await encrypt(record, "Location", dek);
 	const ref = locationRef(location);
 	if (batch) {
 		batch.set(ref, pkg);

@@ -1,6 +1,10 @@
 import atob from "atob-lite";
 import btoa from "btoa-lite";
 
+/**
+ * An object that stores a string value in base-64. Useful for
+ * keeping secret values hard to read in plaintext memory.
+ */
 export class HashStore {
 	private _hashedValue: string;
 
@@ -8,11 +12,30 @@ export class HashStore {
 		this._hashedValue = btoa(value);
 	}
 
+	/**
+	 * Constructs a new hash store that contains the given encoded value.
+	 */
+	static fromHashed(hashedValue: string): HashStore {
+		return new HashStore(atob(hashedValue));
+	}
+
+	/**
+	 * Decodes the internal value and returns it.
+	 */
 	get value(): string {
 		return atob(this._hashedValue);
 	}
 
-	/** Overwrites the buffer with random data for _maximum paranoia_ */
+	/**
+	 * Returns the encoded internal value.
+	 */
+	get hashedValue(): string {
+		return this._hashedValue;
+	}
+
+	/**
+	 * Overwrites the buffer with random data for _maximum paranoia_.
+	 */
 	destroy(): void {
 		const length = this._hashedValue.length;
 		let result = "";

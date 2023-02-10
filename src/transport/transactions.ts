@@ -1,5 +1,5 @@
 import type { Account } from "../model/Account";
-import type { EPackage } from "./cryption";
+import type { EPackage } from "./cryptionProtocols";
 import type { HashStore } from "./HashStore";
 import type { Transaction, TransactionRecordParams } from "../model/Transaction";
 import type {
@@ -23,11 +23,11 @@ export function transactionsCollection(): CollectionReference<TransactionRecordP
 	return collection<TransactionRecordPackage>(db, "transactions");
 }
 
-export function transactionFromSnapshot(
+export async function transactionFromSnapshot(
 	doc: QueryDocumentSnapshot<TransactionRecordPackage>,
 	dek: HashStore
-): Transaction {
-	const { id, record } = recordFromSnapshot(doc, dek, isTransactionRecord);
+): Promise<Transaction> {
+	const { id, record } = await recordFromSnapshot(doc, dek, isTransactionRecord);
 	return transaction({
 		id,
 		accountId: record.accountId,
@@ -51,7 +51,7 @@ export async function getTransactionsForAccount(
 
 	const result: Record<string, Transaction> = {};
 	for (const doc of snap.docs) {
-		const transaction = transactionFromSnapshot(doc, dek);
+		const transaction = await transactionFromSnapshot(doc, dek);
 		if (transaction.accountId === account.id) {
 			result[doc.id] = transaction;
 		}
@@ -64,7 +64,7 @@ export async function createTransaction(
 	dek: HashStore,
 	batch?: WriteBatch
 ): Promise<Transaction> {
-	const pkg = encrypt(record, "Transaction", dek);
+	const pkg = await encrypt(record, "Transaction", dek);
 	const ref = doc(transactionsCollection());
 	if (batch) {
 		batch.set(ref, pkg);
@@ -92,7 +92,7 @@ export async function updateTransaction(
 	batch?: WriteBatch
 ): Promise<void> {
 	const record = recordFromTransaction(transaction);
-	const pkg = encrypt(record, "Transaction", dek);
+	const pkg = await encrypt(record, "Transaction", dek);
 	const ref = transactionRef(transaction);
 	if (batch) {
 		batch.set(ref, pkg);

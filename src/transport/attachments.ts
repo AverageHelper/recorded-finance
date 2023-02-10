@@ -6,7 +6,7 @@ import type {
 } from "./db";
 import type { Attachment, AttachmentRecordParams } from "../model/Attachment";
 import type { StorageReference } from "./storage.js";
-import type { EPackage } from "./cryption";
+import type { EPackage } from "./cryptionProtocols";
 import type { HashStore } from "./HashStore";
 import { attachment, isAttachmentRecord, recordFromAttachment } from "../model/Attachment";
 import { collection, db, doc, recordFromSnapshot, setDoc, deleteDoc } from "./db";
@@ -53,18 +53,18 @@ export async function embeddableDataForFile(dek: HashStore, file: Attachment): P
 		throw new TypeError(t("error.storage.malformed-payload"));
 	}
 
-	const imageData = decrypt(pkg, dek);
+	const imageData = await decrypt(pkg, dek);
 	if (typeof imageData !== "string") {
 		throw new TypeError(t("error.fs.expected-string", { values: { type: typeof imageData } }));
 	}
 	return imageData;
 }
 
-export function attachmentFromSnapshot(
+export async function attachmentFromSnapshot(
 	doc: QueryDocumentSnapshot<AttachmentRecordPackage>,
 	dek: HashStore
-): Attachment {
-	const { id, record } = recordFromSnapshot(doc, dek, isAttachmentRecord);
+): Promise<Attachment> {
+	const { id, record } = await recordFromSnapshot(doc, dek, isAttachmentRecord);
 	return attachment({
 		id,
 		createdAt: record.createdAt,
@@ -82,7 +82,7 @@ export async function createAttachment(
 	dek: HashStore
 ): Promise<Attachment> {
 	const imageData = await dataUrlFromFile(file);
-	const fileToUpload = JSON.stringify(encrypt(imageData, "ImageData", dek));
+	const fileToUpload = JSON.stringify(await encrypt(imageData, "ImageData", dek));
 
 	const docRef = doc(attachmentsCollection()); // generates unique document ID
 	const storageName = doc(attachmentsCollection()); // generates unique file name
@@ -97,7 +97,7 @@ export async function createAttachment(
 		title: record.title,
 		type: record.type,
 	};
-	const pkg = encrypt(recordToSave, "Attachment", dek);
+	const pkg = await encrypt(recordToSave, "Attachment", dek);
 	await setDoc(docRef, pkg); // Save the record
 
 	return attachment({
@@ -117,7 +117,7 @@ export async function updateAttachment(
 	dek: HashStore
 ): Promise<void> {
 	const record = recordFromAttachment(attachment);
-	const pkg = encrypt(record, "Attachment", dek);
+	const pkg = await encrypt(record, "Attachment", dek);
 	await setDoc(attachmentRef(uid, attachment), pkg);
 
 	if (file) {
@@ -127,7 +127,7 @@ export async function updateAttachment(
 
 		// store the new file
 		const imageData = await dataUrlFromFile(file);
-		const fileToUpload = JSON.stringify(encrypt(imageData, "ImageData", dek));
+		const fileToUpload = JSON.stringify(await encrypt(imageData, "ImageData", dek));
 
 		await uploadString(storageRef, fileToUpload);
 	}
