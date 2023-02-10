@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- The app now displays a big scary warning message in the devtools console. Nobody should be pasting stuff in there that strangers tell them to paste in, so we make that clear.
+
 ### Fixed
 - The height of the language selector should now be reasonable on Chromium-based browsers.
 
