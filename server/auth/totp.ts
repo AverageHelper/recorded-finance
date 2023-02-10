@@ -64,7 +64,7 @@ interface GeneratorOptions {
 /** Generates a TOTP code from the given secret value. */
 export function generateTOTP(base32Secret: string, options?: GeneratorOptions): string {
 	const { now = Date.now(), window = 0 } = options ?? {};
-	const counter = Math.floor(now / 30000);
+	const counter = Math.floor(now / 30_000);
 	return generateHOTP(base32Secret, counter + window);
 }
 

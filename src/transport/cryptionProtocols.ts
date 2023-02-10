@@ -13,7 +13,7 @@ export const Protocols = {
 	 */
 	v0: {
 		wordSizeBits: 32,
-		keySizeBits: 8_192, // my first aim was 256 bits, but that was actually WORDS, so this is the number of bits I was doing
+		keySizeBits: 8192, // my first aim was 256 bits, but that was actually WORDS, so this is the number of bits I was doing
 		saltSizeBytes: 32,
 		iterations: 10_000,
 		keyEncoding: "base64",
