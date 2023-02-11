@@ -90,17 +90,17 @@ describe("TOTP", () => {
 	});
 
 	const timesAndTokens = [
-		[1662395669000, "236323"], // before change
+		[1_662_395_669_000, "236323"], // before change
 
-		[1662395670000, "454045"], // after change
-		[1662395680000, "454045"], // middle
-		[1662395699000, "454045"], // before change
+		[1_662_395_670_000, "454045"], // after change
+		[1_662_395_680_000, "454045"], // middle
+		[1_662_395_699_000, "454045"], // before change
 
-		[1662395700000, "533745"], // after change
-		[1662395712000, "533745"], // middle
-		[1662395729000, "533745"], // before change
+		[1_662_395_700_000, "533745"], // after change
+		[1_662_395_712_000, "533745"], // middle
+		[1_662_395_729_000, "533745"], // before change
 
-		[1662395730000, "255632"], // after change
+		[1_662_395_730_000, "255632"], // after change
 	] as const;
 
 	test.each(timesAndTokens)("generates a new 6-digit TOTP every 30 seconds", (now, totp) => {

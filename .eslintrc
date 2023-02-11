@@ -22,7 +22,15 @@
 		"plugin:import/recommended",
 		"plugin:prettier/recommended"
 	],
-	"plugins": ["prettier", "unicorn", "promise", "deprecation", "@typescript-eslint", "import"],
+	"plugins": [
+		"prettier",
+		"unicorn",
+		"promise",
+		"deprecation",
+		"@typescript-eslint",
+		"import",
+		"file-progress"
+	],
 	"parser": "@typescript-eslint/parser",
 	"parserOptions": {
 		"project": "./tsconfig.prod.json",
@@ -41,6 +49,7 @@
 		}
 	},
 	"rules": {
+		"file-progress/activate": 1,
 		"deprecation/deprecation": "warn",
 		"prettier/prettier": "warn",
 		"no-constant-condition": "warn",
@@ -69,7 +78,8 @@
 		"@typescript-eslint/consistent-type-imports": "warn",
 		"@typescript-eslint/no-dynamic-delete": "off",
 		"new-cap": "off", // Many decorators do not follow normal function conventions
-		"unicorn/catch-error-name": ["warn", { "name": "error" }]
+		"unicorn/catch-error-name": ["warn", { "name": "error" }],
+		"unicorn/numeric-separators-style": "warn"
 	},
 
 	"overrides": [

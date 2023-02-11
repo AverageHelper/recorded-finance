@@ -19,7 +19,7 @@ import {
 } from "superstruct";
 
 const NORMAL_MAX_CHARS = 191; // Prisma's `String` default is VARCHAR(191)
-const LARGE_MAX_CHARS = 65535; // When we override to TEXT
+const LARGE_MAX_CHARS = 65_535; // When we override to TEXT
 // const HUGE_MAX_CHARS = 16777215; // When we override to MEDIUMTEXT
 
 // Copied from lodash

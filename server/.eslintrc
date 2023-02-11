@@ -14,13 +14,22 @@
 		"plugin:import/recommended",
 		"plugin:prettier/recommended"
 	],
-	"plugins": ["prettier", "unicorn", "promise", "deprecation", "@typescript-eslint", "import"],
+	"plugins": [
+		"prettier",
+		"unicorn",
+		"promise",
+		"deprecation",
+		"@typescript-eslint",
+		"import",
+		"file-progress"
+	],
 	"parser": "@typescript-eslint/parser",
 	"parserOptions": {
 		"project": "./tsconfig.json",
 		"tsconfigRootDir": "."
 	},
 	"rules": {
+		"file-progress/activate": 1,
 		"prettier/prettier": "warn",
 		"deprecation/deprecation": "warn",
 		"import/extensions": ["error", "never"], // Vercel won't resolve extensions correctly in TS
@@ -52,7 +61,8 @@
 		"@typescript-eslint/no-dynamic-delete": "off",
 		"new-cap": "off", // Many decorators do not follow normal function conventions
 		"unicorn/catch-error-name": ["warn", { "name": "error" }],
-		"unicorn/import-index": ["error", { "ignoreImports": true }]
+		"unicorn/import-index": ["error", { "ignoreImports": true }],
+		"unicorn/numeric-separators-style": "warn"
 	},
 
 	"overrides": [

@@ -54,7 +54,7 @@ const Protocols = {
 		wordSizeBits: 32,
 		keySizeBits: 8192, // my first aim was 256 bits, but that was actually WORDS, so this is the number of bits I was doing
 		saltSizeBytes: 32,
-		iterations: 10000,
+		iterations: 10_000,
 		keyEncoding: EncBase64,
 		dataEncoding: EncUtf8,
 		hasher: CryptoJSCore.algo.SHA512,
