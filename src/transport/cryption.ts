@@ -5,6 +5,8 @@ import { DecryptionError } from "./errors/DecryptionError";
 import { HashStore } from "./HashStore";
 import { isProbablyRawDecryptionError } from "./errors/RawDecryptionError";
 
+// TODO: If the data we're sending to the Worker is over 10 kb, we should probably not.
+
 /**
  * @returns a new Web Worker proxy for working with en/decryption
  */
@@ -24,6 +26,9 @@ export async function hashed(input: string): Promise<string> {
 
 /**
  * Derives a pKey that is unique to the given plaintext `password` and `salt` values.
+ *
+ * @param password The user's plaintext passphrase.
+ * @param salt A salt to make the final key more unique.
  */
 export async function derivePKey(password: string, salt: string): Promise<HashStore> {
 	return HashStore.fromHashed(await worker().derivePKey(password, salt));
@@ -31,6 +36,9 @@ export async function derivePKey(password: string, salt: string): Promise<HashSt
 
 /**
  * Decrypts a DEK from `ciphertext` using the given `pKey`.
+ *
+ * @param pKey The key used to encrypt or decrypt the DEK.
+ * @param ciphertext The encrypted DEK material.
  */
 export async function deriveDEK(pKey: HashStore, ciphertext: string): Promise<HashStore> {
 	try {
@@ -43,6 +51,8 @@ export async function deriveDEK(pKey: HashStore, ciphertext: string): Promise<Ha
 
 /**
  * Creates a unique DEK value that may be used for encrypting data.
+ *
+ * @param password The user's plaintext passphrase.
  */
 export async function newDataEncryptionKeyMaterial(password: string): Promise<KeyMaterial> {
 	// To encrypt data
@@ -50,7 +60,12 @@ export async function newDataEncryptionKeyMaterial(password: string): Promise<Ke
 }
 
 /**
- * Creates a unique pKey from the given plaintext `newPassword` and the key derived from `oldPassword` and `oldKey`.
+ * Creates a unique pKey from the given plaintext `newPassword` and
+ * the key derived from `oldPassword` and `oldKey`.
+ *
+ * @param oldPassword The user's former plaintext passphrase.
+ * @param newPassword The user's new plaintext passphrase.
+ * @param oldKey The user's former pKey.
  */
 export async function newMaterialFromOldKey(
 	oldPassword: string,
@@ -71,7 +86,7 @@ export async function newMaterialFromOldKey(
  * @param data The data to encrypt.
  * @param objectType A string representing the type of object stored.
  * @param dek The data en/decryption key.
- * @returns An object that can be stored in the server.
+ * @returns a promise that resolves with an object that can be stored as-is on a remote server.
  */
 export async function encrypt<T extends string>(
 	data: unknown,
@@ -84,9 +99,9 @@ export async function encrypt<T extends string>(
 /**
  * Deserializes encrypted data.
  *
- * @param pkg The object that was stored in the server.
+ * @param pkg The object that was stored on a remote server.
  * @param dek The data en/decryption key.
- * @returns The original data.
+ * @returns a promise that resolves with the original data.
  */
 export async function decrypt<T extends string>(
 	pkg: Pick<EPackage<T>, "ciphertext">,

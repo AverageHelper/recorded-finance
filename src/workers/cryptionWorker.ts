@@ -122,7 +122,8 @@ function decrypt(
 
 	const dek = HashStore.fromHashed(encodedDek);
 	const { ciphertext, cryption } = pkg;
-	const Cryption = Protocols[cryption ?? "v0"];
+	const protocol = cryption ?? "v0";
+	const Cryption = Protocols[protocol];
 	const plaintext = cipher(Cryption.cipher)
 		.decrypt(ciphertext, dek.value)
 		.toString(encoder(Cryption.dataEncoding));

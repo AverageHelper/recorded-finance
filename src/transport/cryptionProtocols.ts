@@ -7,13 +7,15 @@ import EncUtf8 from "crypto-js/enc-utf8";
 import PBKDF2 from "crypto-js/pbkdf2";
 import WordArray from "crypto-js/lib-typedarrays";
 
+// ** Our supported encryption layouts **
+
 export const Protocols = {
 	/**
 	 * Our proof-of-concept cryption protocol. #TODO: Migrate from this before our 1.0 release.
 	 */
 	v0: {
 		wordSizeBits: 32,
-		keySizeBits: 8192, // my first aim was 256 bits, but that was actually WORDS, so this is the number of bits I was doing
+		keySizeBits: 8192, // my aim was 256 bits, but I accidentally did WORDS instead lol
 		saltSizeBytes: 32,
 		iterations: 10_000,
 		keyEncoding: "base64",
@@ -44,12 +46,6 @@ export const Protocols = {
 };
 
 export type AvailableProtocols = keyof typeof Protocols;
-
-export type Encoding = "base64" | "utf8";
-
-export type Hash = "sha512";
-
-export type Cipher = "aes";
 
 export interface CryptionProtocol {
 	/**
@@ -137,6 +133,14 @@ export interface EPackage<T extends string> {
 	 */
 	cryption?: AvailableProtocols;
 }
+
+// ** Getters for specific protocols and structures **
+
+export type Encoding = "base64" | "utf8";
+
+export type Hash = "sha512";
+
+export type Cipher = "aes";
 
 /**
  * @returns a CryptoJS encoder from the given descriptor.
