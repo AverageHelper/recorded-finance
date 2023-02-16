@@ -1,6 +1,7 @@
 import type { DataItem, Keys } from "./api";
 import type { DocumentData, DocumentWriteBatch } from "./schemas.js";
-import type { EPackage, HashStore } from "./cryption.js";
+import type { EPackage } from "./cryption.js";
+import type { HashStore } from "./HashStore.js";
 import type { Unsubscribe } from "./onSnapshot.js";
 import type { User } from "./auth.js";
 import type { ValueIteratorTypeGuard } from "lodash";

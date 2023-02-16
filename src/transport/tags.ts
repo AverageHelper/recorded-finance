@@ -4,7 +4,8 @@ import type {
 	QueryDocumentSnapshot,
 	WriteBatch,
 } from "./db";
-import type { EPackage, HashStore } from "./cryption";
+import type { EPackage } from "./cryption";
+import type { HashStore } from "./HashStore";
 import type { Tag, TagRecordParams } from "../model/Tag";
 import { encrypt } from "./cryption";
 import { collection, db, doc, recordFromSnapshot, setDoc, deleteDoc } from "./db";

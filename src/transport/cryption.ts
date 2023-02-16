@@ -1,5 +1,6 @@
 import type CryptoJS from "crypto-js";
 import { isString } from "../helpers/isString";
+import { HashStore } from "./HashStore.js";
 import { t } from "../i18n";
 import "crypto-js/sha512"; // to keep SHA512 algo from tree-shaking away
 import AES from "crypto-js/aes";
@@ -71,36 +72,6 @@ const Protocols = {
 const Cryption = Protocols.v0;
 
 export type DEKMaterial = CryptoJS.lib.CipherParams;
-
-export class HashStore {
-	private _hashedValue: string;
-
-	constructor(value: string) {
-		this._hashedValue = btoa(value);
-	}
-
-	get value(): string {
-		return atob(this._hashedValue);
-	}
-
-	/** Overwrites the buffer with random data for _maximum paranoia_ */
-	destroy(): void {
-		const length = this._hashedValue.length;
-		let result = "";
-		const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-		const charactersLength = characters.length;
-		for (let i = 0; i < length; i += 1) {
-			result += characters.charAt(Math.floor(Math.random() * charactersLength));
-		}
-		this._hashedValue = result;
-	}
-
-	toString(): string {
-		return JSON.stringify({
-			_hashedValue: this._hashedValue,
-		});
-	}
-}
 
 /**
  * Makes special potatoes that are unique to the `input`.
