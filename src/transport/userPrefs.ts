@@ -41,7 +41,7 @@ export async function setUserPreferences(
 	const record: UserPreferences = {
 		locationSensitivity: prefs.locationSensitivity ?? "none",
 	};
-	const pkg = encrypt(record, "UserPreferences", dek);
+	const pkg = await encrypt(record, "UserPreferences", dek);
 	await setDoc(userRef(uid), pkg);
 }
 
@@ -49,10 +49,10 @@ export async function deleteUserPreferences(uid: string): Promise<void> {
 	await deleteDoc(userRef(uid));
 }
 
-export function userPreferencesFromSnapshot(
+export async function userPreferencesFromSnapshot(
 	doc: QueryDocumentSnapshot<UserPreferencesRecordPackage>,
 	dek: HashStore
-): UserPreferences {
-	const { record } = recordFromSnapshot(doc, dek, isUserPreferences);
+): Promise<UserPreferences> {
+	const { record } = await recordFromSnapshot(doc, dek, isUserPreferences);
 	return record;
 }

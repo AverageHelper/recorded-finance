@@ -20,11 +20,11 @@ function accountRef(account: Account): DocumentReference<AccountRecordPackage> {
 	return doc<AccountRecordPackage>(db, "accounts", account.id);
 }
 
-export function accountFromSnapshot(
+export async function accountFromSnapshot(
 	doc: QueryDocumentSnapshot<AccountRecordPackage>,
 	dek: HashStore
-): Account {
-	const { id, record } = recordFromSnapshot(doc, dek, isAccountRecord);
+): Promise<Account> {
+	const { id, record } = await recordFromSnapshot(doc, dek, isAccountRecord);
 	return account({
 		createdAt: record.createdAt,
 		notes: record.notes,
@@ -38,7 +38,7 @@ export async function createAccount(
 	dek: HashStore,
 	batch?: WriteBatch
 ): Promise<Account> {
-	const pkg = encrypt(record, "Account", dek);
+	const pkg = await encrypt(record, "Account", dek);
 	const ref = doc(accountsCollection());
 	if (batch) {
 		batch.set(ref, pkg);
@@ -59,7 +59,7 @@ export async function updateAccount(
 	batch?: WriteBatch
 ): Promise<void> {
 	const record = recordFromAccount(account);
-	const pkg = encrypt(record, "Account", dek);
+	const pkg = await encrypt(record, "Account", dek);
 	const ref = accountRef(account);
 	if (batch) {
 		batch.set(ref, pkg);

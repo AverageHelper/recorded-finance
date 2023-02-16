@@ -66,6 +66,7 @@ function isLocaleDescriptor(tbd: unknown): tbd is LocaleDescriptor {
 }
 
 function assertLocaleDescriptor(tbd: unknown): asserts tbd is LocaleDescriptor {
+	// TODO: Use superstruct instead
 	if (!isLocaleDescriptor(tbd))
 		throw new TypeError(`Value is not a LocaleDescriptor: ${JSON.stringify(tbd)}`);
 }

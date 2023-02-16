@@ -20,8 +20,11 @@ function tagRef(tag: Tag): DocumentReference<TagRecordPackage> {
 	return doc<TagRecordPackage>(db, "tags", tag.id);
 }
 
-export function tagFromSnapshot(doc: QueryDocumentSnapshot<TagRecordPackage>, dek: HashStore): Tag {
-	const { id, record } = recordFromSnapshot(doc, dek, isTagRecord);
+export async function tagFromSnapshot(
+	doc: QueryDocumentSnapshot<TagRecordPackage>,
+	dek: HashStore
+): Promise<Tag> {
+	const { id, record } = await recordFromSnapshot(doc, dek, isTagRecord);
 	return tag({
 		colorId: record.colorId,
 		name: record.name,
@@ -34,7 +37,7 @@ export async function createTag(
 	dek: HashStore,
 	batch?: WriteBatch
 ): Promise<Tag> {
-	const pkg = encrypt(record, "Tag", dek);
+	const pkg = await encrypt(record, "Tag", dek);
 	const ref = doc(tagsCollection());
 	if (batch) {
 		batch.set(ref, pkg);
@@ -50,7 +53,7 @@ export async function createTag(
 
 export async function updateTag(tag: Tag, dek: HashStore, batch?: WriteBatch): Promise<void> {
 	const record = recordFromTag(tag);
-	const pkg = encrypt(record, "Tag", dek);
+	const pkg = await encrypt(record, "Tag", dek);
 	const ref = tagRef(tag);
 	if (batch) {
 		batch.set(ref, pkg);

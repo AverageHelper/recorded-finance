@@ -102,11 +102,19 @@ export class HashStore {
 	}
 }
 
-/** Makes special potatoes that are unique to the `input`. */
+/**
+ * Makes special potatoes that are unique to the `input`.
+ */
 export async function hashed(input: string): Promise<string> {
 	return btoa((await derivePKey(input, "salt")).value);
 }
 
+/**
+ * Derives a pKey that is unique to the given plaintext `password` and `salt` values.
+ *
+ * @param password The user's plaintext passphrase.
+ * @param salt A salt to make the final key more unique.
+ */
 export async function derivePKey(password: string, salt: string): Promise<HashStore> {
 	await new Promise(resolve => setTimeout(resolve, 10)); // wait 10 ms for UI
 
@@ -119,8 +127,14 @@ export async function derivePKey(password: string, salt: string): Promise<HashSt
 	);
 }
 
-export function deriveDEK(pKey: HashStore, ciphertext: string): HashStore {
-	const dekObject = decrypt({ ciphertext }, pKey);
+/**
+ * Decrypts a DEK from `ciphertext` using the given `pKey`.
+ *
+ * @param pKey The key used to encrypt or decrypt the DEK.
+ * @param ciphertext The encrypted DEK material.
+ */
+export async function deriveDEK(pKey: HashStore, ciphertext: string): Promise<HashStore> {
+	const dekObject = await decrypt({ ciphertext }, pKey);
 	if (!isString(dekObject)) throw new TypeError(t("error.cryption.malformed-key"));
 
 	return new HashStore(atob(dekObject));
@@ -136,24 +150,37 @@ async function newDataEncryptionKeyMaterialForDEK(
 	// To encrypt the dek
 	const pKey = await derivePKey(password, passSalt);
 	const dekObject = btoa(dek.value);
-	const dekMaterial = encrypt(dekObject, "KeyMaterial", pKey).ciphertext;
+	const dekMaterial = (await encrypt(dekObject, "KeyMaterial", pKey)).ciphertext;
 
 	return { dekMaterial, passSalt };
 }
 
+/**
+ * Creates a unique DEK value that may be used for encrypting data.
+ *
+ * @param password The user's plaintext passphrase.
+ */
 export async function newDataEncryptionKeyMaterial(password: string): Promise<KeyMaterial> {
 	// To encrypt data
 	const dek = new HashStore(Cryption.randomValue(Cryption.keySizeBits / Cryption.wordSizeBits));
 	return await newDataEncryptionKeyMaterialForDEK(password, dek);
 }
 
+/**
+ * Creates a unique pKey from the given plaintext `newPassword` and
+ * the key derived from `oldPassword` and `oldKey`.
+ *
+ * @param oldPassword The user's former plaintext passphrase.
+ * @param newPassword The user's new plaintext passphrase.
+ * @param oldKey The user's former pKey.
+ */
 export async function newMaterialFromOldKey(
 	oldPassword: string,
 	newPassword: string,
 	oldKey: KeyMaterial
 ): Promise<KeyMaterial> {
 	const oldPKey = await derivePKey(oldPassword, oldKey.passSalt);
-	const dek = deriveDEK(oldPKey, oldKey.dekMaterial);
+	const dek = await deriveDEK(oldPKey, oldKey.dekMaterial);
 	const newPKey = await newDataEncryptionKeyMaterialForDEK(newPassword, dek);
 
 	return {
@@ -170,13 +197,15 @@ export async function newMaterialFromOldKey(
  * @param data The data to encrypt.
  * @param objectType A string representing the type of object stored.
  * @param dek The data en/decryption key.
- * @returns An object that can be stored in the server.
+ * @returns a promise that resolves with an object that can be stored as-is on a remote server.
  */
-export function encrypt<T extends string>(
+export async function encrypt<T extends string>(
 	data: unknown,
 	objectType: T,
 	dek: HashStore
-): EPackage<T> {
+): Promise<EPackage<T>> {
+	await new Promise(resolve => setTimeout(resolve)); // give UI a chance to breathe
+
 	const plaintext = JSON.stringify(data);
 	const ciphertext = Cryption.cipher.encrypt(plaintext, dek.value).toString();
 
@@ -211,14 +240,16 @@ class DecryptionError extends Error {
 /**
  * Deserializes encrypted data.
  *
- * @param pkg The object that was stored in the server.
+ * @param pkg The object that was stored on a remote server.
  * @param dek The data en/decryption key.
- * @returns The original data.
+ * @returns a promise that resolves with the original data.
  */
-export function decrypt<T extends string>(
+export async function decrypt<T extends string>(
 	pkg: Pick<EPackage<T>, "ciphertext">,
 	dek: HashStore
-): unknown {
+): Promise<unknown> {
+	await new Promise(resolve => setTimeout(resolve)); // give UI a chance to breathe
+
 	const { ciphertext } = pkg;
 	const plaintext = Cryption.cipher.decrypt(ciphertext, dek.value).toString(Cryption.dataEncoding);
 

@@ -7,6 +7,8 @@ import type { TransactionSchema } from "../model/DatabaseSchema";
 import type { Tag } from "../model/Tag";
 import { add, subtract } from "dinero.js";
 import { allAccounts, currentBalance } from "./accountsStore";
+import { asyncForEach } from "../helpers/asyncForEach";
+import { asyncMap } from "../helpers/asyncMap";
 import { chronologically, reverseChronologically } from "../model/utility/sort";
 import { derived, get, writable } from "svelte/store";
 import { getDekMaterial, pKey } from "./authStore";
@@ -126,7 +128,7 @@ export async function watchTransactions(account: Account, force: boolean = false
 	const key = get(pKey);
 	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 	const { dekMaterial } = await getDekMaterial();
-	const dek = deriveDEK(key, dekMaterial);
+	const dek = await deriveDEK(key, dekMaterial);
 
 	// Watch the collection
 	const collection = transactionsCollection();
@@ -134,7 +136,7 @@ export async function watchTransactions(account: Account, force: boolean = false
 		const copy = { ..._transactionsWatchers };
 		copy[account.id] = watchAllRecords(
 			collection,
-			snap => {
+			async snap => {
 				// Clear derived cache
 				transactionsForAccountByMonth.update(transactionsForAccountByMonth => {
 					const copy = { ...transactionsForAccountByMonth };
@@ -144,7 +146,7 @@ export async function watchTransactions(account: Account, force: boolean = false
 
 				// Update cache
 				const accountTransactions = get(transactionsForAccount)[account.id] ?? {};
-				snap.docChanges().forEach(change => {
+				await asyncForEach(snap.docChanges(), async change => {
 					let balance = get(currentBalance)[account.id] ?? zeroDinero;
 
 					try {
@@ -161,7 +163,7 @@ export async function watchTransactions(account: Account, force: boolean = false
 
 							case "added": {
 								// Add this transaction
-								const transaction = transactionFromSnapshot(change.doc, dek);
+								const transaction = await transactionFromSnapshot(change.doc, dek);
 								if (transaction.accountId !== account.id) break;
 								accountTransactions[change.doc.id] = transaction;
 								// Update the account's balance total
@@ -171,12 +173,12 @@ export async function watchTransactions(account: Account, force: boolean = false
 
 							case "modified": {
 								// Remove this account's balance total
+								const transaction = await transactionFromSnapshot(change.doc, dek);
 								balance = subtract(
 									balance,
 									accountTransactions[change.doc.id]?.amount ?? zeroDinero
 								);
 								// Update this transaction
-								const transaction = transactionFromSnapshot(change.doc, dek);
 								if (transaction.accountId !== account.id) break;
 								accountTransactions[change.doc.id] = transaction;
 								// Update this account's balance total
@@ -251,7 +253,7 @@ export async function getTransactionsForAccount(account: Account): Promise<void>
 	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 
 	const { dekMaterial } = await getDekMaterial();
-	const dek = deriveDEK(key, dekMaterial);
+	const dek = await deriveDEK(key, dekMaterial);
 	const transactions = await _getTransactionsForAccount(account, dek);
 	const totalBalance: Dinero<number> = Object.values(transactions).reduce(
 		(balance, transaction) => {
@@ -334,7 +336,7 @@ export async function createTransaction(
 	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 
 	const { dekMaterial } = await getDekMaterial();
-	const dek = deriveDEK(key, dekMaterial);
+	const dek = await deriveDEK(key, dekMaterial);
 	const transaction = await _createTransaction(record, dek, batch);
 	if (!batch) await updateUserStats();
 	return transaction;
@@ -348,7 +350,7 @@ export async function updateTransaction(
 	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 
 	const { dekMaterial } = await getDekMaterial();
-	const dek = deriveDEK(key, dekMaterial);
+	const dek = await deriveDEK(key, dekMaterial);
 	await _updateTransaction(transaction, dek, batch);
 	if (!batch) await updateUserStats();
 }
@@ -423,12 +425,12 @@ export async function getAllTransactionsAsJson(
 	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 
 	const { dekMaterial } = await getDekMaterial();
-	const dek = deriveDEK(key, dekMaterial);
+	const dek = await deriveDEK(key, dekMaterial);
 
 	const collection = transactionsCollection();
 	const snap = await getDocs<TransactionRecordPackage>(collection);
-	return snap.docs
-		.map(doc => transactionFromSnapshot(doc, dek))
+	const stored = await asyncMap(snap.docs, async doc => await transactionFromSnapshot(doc, dek));
+	return stored
 		.filter(transaction => transaction.accountId === account.id)
 		.map(t => ({ ...recordFromTransaction(t), id: t.id }));
 }
