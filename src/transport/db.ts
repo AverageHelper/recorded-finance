@@ -1,6 +1,7 @@
 import type { DataItem, Keys } from "./api";
 import type { DocumentData, DocumentWriteBatch } from "./schemas.js";
-import type { EPackage, HashStore } from "./cryption.js";
+import type { EPackage } from "./cryption.js";
+import type { HashStore } from "./HashStore.js";
 import type { Unsubscribe } from "./onSnapshot.js";
 import type { User } from "./auth.js";
 import type { ValueIteratorTypeGuard } from "lodash";
@@ -495,13 +496,13 @@ export function watchRecord<T = DocumentData>(
 	};
 }
 
-export function recordFromSnapshot<G, T extends string>(
+export async function recordFromSnapshot<G, T extends string>(
 	doc: QueryDocumentSnapshot<EPackage<T>>,
 	dek: HashStore,
 	typeGuard: ValueIteratorTypeGuard<unknown, G>
-): { id: string; record: G } {
+): Promise<{ id: string; record: G }> {
 	const pkg = doc.data();
-	const record = decrypt(pkg, dek);
+	const record = await decrypt(pkg, dek);
 	if (!typeGuard(record)) {
 		logger.debug(
 			t("error.db.record-does-not-match-guard", { values: { guard: typeGuard.name } }),
