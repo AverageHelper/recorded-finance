@@ -13,8 +13,12 @@ export class HashStore {
 	 * A string value is encoded and stored in the new instance.
 	 * A hash store value is copied.
 	 */
-	constructor(value: string) {
-		this._hashedValue = btoa(value);
+	constructor(value: string | HashStore) {
+		if (typeof value === "string") {
+			this._hashedValue = btoa(value);
+		} else {
+			this._hashedValue = value._hashedValue;
+		}
 	}
 
 	/**
