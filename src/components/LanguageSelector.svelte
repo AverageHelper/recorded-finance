@@ -38,6 +38,7 @@
 		font-size: 16pt;
 		font-family: Helvetica;
 		max-width: 1.13em; // approximate width of a flag emoji
+		max-height: 1.26em; // approximate height of a flag emoji
 		transition: opacity 0.3s;
 		transition-property: opacity, transform;
 
