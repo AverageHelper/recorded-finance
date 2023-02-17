@@ -162,8 +162,8 @@ export async function watchTransactions(account: Account, force: boolean = false
 								break;
 
 							case "added": {
-								const transaction = await transactionFromSnapshot(change.doc, dek);
 								// Add this transaction
+								const transaction = await transactionFromSnapshot(change.doc, dek);
 								if (transaction.accountId !== account.id) break;
 								accountTransactions[change.doc.id] = transaction;
 								// Update the account's balance total
@@ -172,8 +172,8 @@ export async function watchTransactions(account: Account, force: boolean = false
 							}
 
 							case "modified": {
-								const transaction = await transactionFromSnapshot(change.doc, dek);
 								// Remove this account's balance total
+								const transaction = await transactionFromSnapshot(change.doc, dek);
 								balance = subtract(
 									balance,
 									accountTransactions[change.doc.id]?.amount ?? zeroDinero

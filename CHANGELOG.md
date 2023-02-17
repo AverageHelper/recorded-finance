@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - The height of the language selector should now be reasonable on Chromium-based browsers.
 
+## [0.16.4] - 2023-02-17
+### Changed
+- Reorganized some internal en/decryption structures in preparation for better asynchronous handling.
+
 ## [0.16.3] - 2023-01-29
 ### Changed
 - Ok, we'll release with every push for now, until we figure out a consistent way to parse the changelog for this.
@@ -407,7 +411,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial commit
 
-[Unreleased]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.3...HEAD
+[Unreleased]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.4...HEAD
+[0.16.4]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.3...v0.16.4
 [0.16.3]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.2...v0.16.3
 [0.16.2]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.1...v0.16.2
 [0.16.1]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.0...v0.16.1
