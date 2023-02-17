@@ -12,38 +12,6 @@ import EncUtf8 from "crypto-js/enc-utf8";
 import PBKDF2 from "crypto-js/pbkdf2";
 import WordArray from "crypto-js/lib-typedarrays";
 
-/**
- * User-level encryption material that lives on the server.
- * This data is useless without the user's password.
- */
-export interface KeyMaterial {
-	dekMaterial: string;
-	passSalt: string;
-	oldDekMaterial?: string;
-	oldPassSalt?: string;
-}
-
-export interface EPackage<T extends string> {
-	/**
-	 * The encrypted payload. This data should be unreadable without the user's password.
-	 */
-	ciphertext: string;
-
-	/** A string identifying to the application the type of data encoded. */
-	objectType: T;
-
-	/**
-	 * A string identifying the en/decryption protocol to use.
-	 *
-	 * If this value is not set, `"v0"` is assumed.
-	 *
-	 * `"v0"` uses an AES cipher with a 256-word key (with 32-bit words), a 32-bit salt,
-	 * and 10000 iterations of PBKDF2. Keys are encoded in Base64. Hashes are generated
-	 * using SHA-512.
-	 */
-	cryption?: "v0";
-}
-
 const Protocols = {
 	v0: {
 		/**
@@ -70,8 +38,6 @@ const Protocols = {
 } as const;
 
 const Cryption = Protocols.v0;
-
-export type DEKMaterial = CryptoJS.lib.CipherParams;
 
 /**
  * Makes special potatoes that are unique to the `input`.
@@ -234,3 +200,37 @@ export async function decrypt<T extends string>(
 		throw DecryptionError.parseFailed(error, plaintext);
 	}
 }
+
+/**
+ * User-level encryption material that lives on the server.
+ * This data is useless without the user's password.
+ */
+export interface KeyMaterial {
+	dekMaterial: string;
+	passSalt: string;
+	oldDekMaterial?: string;
+	oldPassSalt?: string;
+}
+
+export interface EPackage<T extends string> {
+	/**
+	 * The encrypted payload. This data should be unreadable without the user's password.
+	 */
+	ciphertext: string;
+
+	/** A string identifying to the application the type of data encoded. */
+	objectType: T;
+
+	/**
+	 * A string identifying the en/decryption protocol to use.
+	 *
+	 * If this value is not set, `"v0"` is assumed.
+	 *
+	 * `"v0"` uses an AES cipher with a 256-word key (with 32-bit words), a 32-bit salt,
+	 * and 10000 iterations of PBKDF2. Keys are encoded in Base64. Hashes are generated
+	 * using SHA-512.
+	 */
+	cryption?: "v0";
+}
+
+export type DEKMaterial = CryptoJS.lib.CipherParams;
