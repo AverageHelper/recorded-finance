@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Security
+- Updated vulnerable dependencies.
+
 ## [0.16.5] - 2023-02-17
 ### Added
 - The app now displays a big scary warning message in the devtools console. Nobody should be pasting stuff in there that strangers tell them to paste in, so we make that clear.
@@ -411,6 +415,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial commit
 
+[Unreleased]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.5...HEAD
 [0.16.5]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.4...v0.16.5
 [0.16.4]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.3...v0.16.4
 [0.16.3]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.2...v0.16.3
