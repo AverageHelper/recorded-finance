@@ -193,14 +193,24 @@ export class QuerySnapshot<T> {
 		}
 
 		// diff the snapshots from `prev`
-		const result: Array<DocumentChange<T>> = this.docs.map((doc, newIndex) => {
-			const oldIndex = prev.docs.findIndex(d => d.id === doc.id);
-			if (oldIndex === -1) {
-				return { type: "added", doc, oldIndex, newIndex };
-			}
-			// TODO: Handle the case where the data is unchanged
-			return { type: "modified", doc, oldIndex, newIndex };
-		});
+		const result: Array<DocumentChange<T>> = this.docs
+			.map<DocumentChange<T>>((doc, newIndex) => {
+				const oldIndex = prev.docs.findIndex(d => d.id === doc.id);
+				if (oldIndex === -1) {
+					return { type: "added", doc, oldIndex, newIndex };
+				}
+				return { type: "modified", doc, oldIndex, newIndex };
+			})
+			.filter(change => {
+				if (change.type === "added" || change.type === "removed") return true;
+
+				// Only include if the index or data are changed
+				const oldDoc = prev.docs.find(d => d.id === change.doc.id);
+				const oldData = JSON.stringify(oldDoc?.data());
+				const newData = JSON.stringify(change.doc.data());
+				if (oldData !== newData) logger.info("oldData v newData", oldData, newData);
+				return change.newIndex !== change.oldIndex || oldData !== newData;
+			});
 
 		// add documents that were removed since `prev`
 		const removedDocs: Array<DocumentChange<T>> = prev.docs
@@ -209,7 +219,6 @@ export class QuerySnapshot<T> {
 				if (newIndex === -1) {
 					return { type: "removed", doc, oldIndex, newIndex };
 				}
-				// TODO: Handle the case where the data is unchanged
 				return { type: "modified", doc, oldIndex, newIndex };
 			})
 			.filter(change => change.type === "removed");
@@ -358,8 +367,10 @@ export function onSnapshot<T>(
 				// No need to fetch, the message has all we need:
 				if (!data || !isArray(data))
 					throw new UnexpectedResponseError(t("error.ws.data-not-array"));
-				const snaps: Array<QueryDocumentSnapshot<T>> = data.map(doc => {
+				const snaps: Array<QueryDocumentSnapshot<T>> = data.map(_doc => {
+					const doc = { ..._doc }; // shallow copy
 					const id = doc["_id"];
+					delete doc["_id"];
 					if (!isString(id)) {
 						const err = new TypeError(t("error.server.id-not-string"));
 						onErrorCallback(err);
