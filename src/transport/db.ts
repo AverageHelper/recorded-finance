@@ -1,4 +1,4 @@
-import type { DataItem, Keys } from "./api";
+import type { DataItem, Keys } from "./api.js";
 import type { DocumentData, DocumentWriteBatch } from "./schemas.js";
 import type { EPackage } from "./cryption.js";
 import type { HashStore } from "./HashStore.js";
@@ -6,22 +6,18 @@ import type { Unsubscribe } from "./onSnapshot.js";
 import type { User } from "./auth.js";
 import type { ValueIteratorTypeGuard } from "lodash";
 import { decrypt } from "./cryption.js";
+import { DocumentSnapshot, QueryDocumentSnapshot, QuerySnapshot } from "./snapshots/index.js";
 import { forgetJobQueue, useJobQueue } from "@averagehelper/job-queue";
-import { isArray } from "../helpers/isArray";
+import { isArray } from "../helpers/isArray.js";
 import { isPrimitive } from "./schemas.js";
-import { isString } from "../helpers/isString";
-import { logger } from "../logger";
+import { isString } from "../helpers/isString.js";
+import { logger } from "../logger.js";
+import { onSnapshot } from "./onSnapshot.js";
 import { PlatformError } from "./errors/index.js";
-import { run } from "./apiStruts";
-import { t } from "../i18n";
+import { run } from "./apiStruts.js";
+import { t } from "../i18n.js";
 import { v4 as uuid } from "uuid";
 import PubNub from "pubnub";
-import {
-	DocumentSnapshot,
-	onSnapshot,
-	QueryDocumentSnapshot,
-	QuerySnapshot,
-} from "./onSnapshot.js";
 import {
 	deleteV0DbUsersByUidAndCollDoc,
 	getV0DbUsersByUidAndColl,
@@ -360,7 +356,9 @@ export async function getUserStats(db: PlatformDB): Promise<UserStats> {
  * @returns A Promise resolved with a `DocumentSnapshot` containing the
  * current document contents.
  */
-export async function getDoc<T>(reference: DocumentReference<T>): Promise<DocumentSnapshot<T>> {
+export async function getDoc<T extends NonNullable<unknown>>(
+	reference: DocumentReference<T>
+): Promise<DocumentSnapshot<T>> {
 	const currentUser = reference.db.currentUser;
 	if (!currentUser) throw new PlatformError("database/unauthenticated");
 
@@ -441,7 +439,9 @@ export async function deleteDoc(reference: DocumentReference): Promise<void> {
  *
  * @returns A `Promise` that will be resolved with the results of the query.
  */
-export async function getDocs<T>(query: CollectionReference<T>): Promise<QuerySnapshot<T>> {
+export async function getDocs<T extends NonNullable<unknown>>(
+	query: CollectionReference<T>
+): Promise<QuerySnapshot<T>> {
 	const currentUser = query.db.currentUser;
 	if (!currentUser) throw new PlatformError("database/unauthenticated");
 
@@ -464,7 +464,7 @@ export async function getDocs<T>(query: CollectionReference<T>): Promise<QuerySn
 	);
 }
 
-export function watchAllRecords<T = DocumentData>(
+export function watchAllRecords<T extends NonNullable<unknown> = DocumentData>(
 	collection: CollectionReference<T>,
 	onSnap: (snap: QuerySnapshot<T>) => void | Promise<void>,
 	onError?: ((error: Error) => void) | undefined
@@ -480,7 +480,7 @@ export function watchAllRecords<T = DocumentData>(
 	};
 }
 
-export function watchRecord<T = DocumentData>(
+export function watchRecord<T extends NonNullable<unknown> = DocumentData>(
 	doc: DocumentReference<T>,
 	onSnap: (snap: DocumentSnapshot<T>) => void | Promise<void>,
 	onError?: ((error: Error) => void) | undefined
