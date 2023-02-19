@@ -1,5 +1,5 @@
-import type { CollectionReference, DocumentReference, Query } from "./db.js";
-import type { DocumentData } from "./schemas.js";
+import type { CollectionReference, DocumentReference } from "./db.js";
+import type { DocumentSnapshot } from "./snapshots/index.js";
 import type { Infer } from "superstruct";
 import type { ListenerParameters } from "pubnub";
 import { documentData } from "./schemas.js";
@@ -9,6 +9,7 @@ import { isArray } from "../helpers/isArray.js";
 import { isString } from "../helpers/isString.js";
 import { logger } from "../logger.js";
 import { PlatformError, UnexpectedResponseError, UnreachableCaseError } from "./errors/index.js";
+import { QueryDocumentSnapshot, QuerySnapshot } from "./snapshots/index.js";
 import { t } from "../i18n.js";
 import { WebSocketCode } from "./websockets/WebSocketCode.js";
 import { wsFactory } from "./websockets/websockets.js";
@@ -27,210 +28,22 @@ import {
 	union,
 } from "superstruct";
 
-export class DocumentSnapshot<T = DocumentData> {
-	#data: T | null;
-
-	/**
-	 * The `DocumentReference` for the document included in the `DocumentSnapshot`.
-	 */
-	public readonly ref: DocumentReference<T>;
-
-	constructor(ref: DocumentReference<T>, data: T | null) {
-		this.#data = data;
-		this.ref = ref;
-	}
-
-	/**
-	 * Property of the `DocumentSnapshot` that provides the document's ID.
-	 */
-	get id(): string {
-		return this.ref.id;
-	}
-
-	/**
-	 * Property of the `DocumentSnapshot` that signals whether or not the data
-	 * exists. True if the document exists.
-	 */
-	exists(): this is QueryDocumentSnapshot<T> {
-		return this.#data !== null;
-	}
-
-	/**
-	 * Retrieves all fields in the document as an `Object`. Returns `undefined` if
-	 * the document doesn't exist.
-	 *
-	 * @returns An `Object` containing all fields in the document or `undefined` if
-	 * the document doesn't exist.
-	 */
-	data(): T | undefined {
-		return this.#data ?? undefined;
-	}
-}
-
-export class QueryDocumentSnapshot<T> extends DocumentSnapshot<T> {
-	/**
-	 * Retrieves all fields in the document as an `Object`.
-	 *
-	 * @override
-	 * @returns An `Object` containing all fields in the document.
-	 */
-	data(): T {
-		const result = super.data();
-		if (result === undefined)
-			throw new TypeError(
-				`Data at ref ${this.ref.parent.id}/${this.ref.id} is meant to exist but does not.`
-			);
-		return result;
-	}
-}
-
-export type DocumentChangeType = "added" | "removed" | "modified";
-
-export interface DocumentChange<T> {
-	/** The type of change ('added', 'modified', or 'removed'). */
-	readonly type: DocumentChangeType;
-
-	/** The document affected by this change. */
-	readonly doc: QueryDocumentSnapshot<T>;
-
-	/**
-	 * The index of the changed document in the result set immediately prior to
-	 * this `DocumentChange` (i.e. supposing that all prior `DocumentChange` objects
-	 * have been applied). Is `-1` for 'added' events.
-	 */
-	readonly oldIndex: number;
-
-	/**
-	 * The index of the changed document in the result set immediately after
-	 * this `DocumentChange` (i.e. supposing that all prior `DocumentChange`
-	 * objects and the current `DocumentChange` object have been applied).
-	 * Is -1 for 'removed' events.
-	 */
-	readonly newIndex: number;
-}
-
-export class QuerySnapshot<T> {
-	#previousSnapshot: QuerySnapshot<T> | null;
-
-	/** An array of all the documents in the `QuerySnapshot`. */
-	public readonly docs: ReadonlyArray<QueryDocumentSnapshot<T>>;
-
-	/**
-	 * The query on which you called `get` or `onSnapshot` in order to get this
-	 * `QuerySnapshot`.
-	 */
-	public readonly query: Query<T>;
-
-	/**
-	 * @param prev The previous query snapshot, used for generating the result of the `docChanges` method.
-	 * @param docs The documents in the snapshot.
-	 */
-	constructor(prev: QuerySnapshot<T>, docs: Array<QueryDocumentSnapshot<T>>);
-
-	/**
-	 * @param query The query used to generate the snapshot.
-	 * @param docs The documents in the snapshot.
-	 */
-	// eslint-disable-next-line @typescript-eslint/unified-signatures
-	constructor(query: Query<T>, docs: Array<QueryDocumentSnapshot<T>>);
-
-	/**
-	 * @param queryOrPrev The query used to generate the snapshot, or
-	 * the previous snapshot in the chain.
-	 * @param docs The documents in the snapshot.
-	 */
-	// eslint-disable-next-line @typescript-eslint/unified-signatures
-	constructor(queryOrPrev: Query<T> | QuerySnapshot<T>, docs: Array<QueryDocumentSnapshot<T>>);
-
-	constructor(queryOrPrev: Query<T> | QuerySnapshot<T>, docs: Array<QueryDocumentSnapshot<T>>) {
-		if ("type" in queryOrPrev) {
-			this.#previousSnapshot = null;
-			this.query = queryOrPrev;
-		} else {
-			this.#previousSnapshot = queryOrPrev;
-			this.query = queryOrPrev.query;
-		}
-		this.docs = docs;
-	}
-
-	/** The number of documents in the `QuerySnapshot`. */
-	get size(): number {
-		return this.docs.length;
-	}
-
-	/** True if there are no documents in the `QuerySnapshot`. */
-	get empty(): boolean {
-		return this.size === 0;
-	}
-
-	/**
-	 * Enumerates all of the documents in the `QuerySnapshot`.
-	 *
-	 * @param callback - A callback to be called with a `QueryDocumentSnapshot` for
-	 * each document in the snapshot.
-	 * @param thisArg - The `this` binding for the callback.
-	 */
-	forEach(callback: (result: QueryDocumentSnapshot<T>) => void, thisArg?: unknown): void {
-		this.docs.forEach(callback, thisArg);
-	}
-
-	/**
-	 * Returns an array of the documents changes since the last snapshot. If this
-	 * is the first snapshot, all documents will be in the list as 'added'
-	 * changes.
-	 */
-	docChanges(): Array<DocumentChange<T>> {
-		const prev = this.#previousSnapshot;
-
-		if (!prev) {
-			// add all as "added" changes
-			return this.docs.map((doc, newIndex) => ({
-				type: "added",
-				doc,
-				oldIndex: -1,
-				newIndex,
-			}));
-		}
-
-		// diff the snapshots from `prev`
-		const result: Array<DocumentChange<T>> = this.docs.map((doc, newIndex) => {
-			const oldIndex = prev.docs.findIndex(d => d.id === doc.id);
-			if (oldIndex === -1) {
-				return { type: "added", doc, oldIndex, newIndex };
-			}
-			// TODO: Handle the case where the data is unchanged
-			return { type: "modified", doc, oldIndex, newIndex };
-		});
-
-		// add documents that were removed since `prev`
-		const removedDocs: Array<DocumentChange<T>> = prev.docs
-			.map<DocumentChange<T>>((doc, oldIndex) => {
-				const newIndex = this.docs.findIndex(d => d.id === doc.id);
-				if (newIndex === -1) {
-					return { type: "removed", doc, oldIndex, newIndex };
-				}
-				// TODO: Handle the case where the data is unchanged
-				return { type: "modified", doc, oldIndex, newIndex };
-			})
-			.filter(change => change.type === "removed");
-		result.push(...removedDocs);
-
-		return result;
-	}
-}
-
 export type Unsubscribe = () => void;
 
-export type DocumentSnapshotCallback<T> = (snapshot: DocumentSnapshot<T>) => void;
+export type DocumentSnapshotCallback<T extends NonNullable<unknown>> = (
+	snapshot: DocumentSnapshot<T>
+) => void;
 
-export interface DocumentSnapshotObserver<T> {
+export interface DocumentSnapshotObserver<T extends NonNullable<unknown>> {
 	next?: DocumentSnapshotCallback<T>;
 	error?: (error: Error) => void;
 }
 
-export type QuerySnapshotCallback<T> = (snapshot: QuerySnapshot<T>) => void;
+export type QuerySnapshotCallback<T extends NonNullable<unknown>> = (
+	snapshot: QuerySnapshot<T>
+) => void;
 
-export interface QuerySnapshotObserver<T> {
+export interface QuerySnapshotObserver<T extends NonNullable<unknown>> {
 	next?: QuerySnapshotCallback<T>;
 	error?: (error: Error) => void;
 }
@@ -245,7 +58,7 @@ export interface QuerySnapshotObserver<T> {
  * @returns An unsubscribe function that can be called to cancel
  * the snapshot listener.
  */
-export function onSnapshot<T>(
+export function onSnapshot<T extends NonNullable<unknown>>(
 	reference: DocumentReference<T>,
 	observer: DocumentSnapshotObserver<T>
 ): Unsubscribe;
@@ -263,7 +76,7 @@ export function onSnapshot<T>(
  * @returns An unsubscribe function that can be called to cancel
  * the snapshot listener.
  */
-export function onSnapshot<T>(
+export function onSnapshot<T extends NonNullable<unknown>>(
 	reference: DocumentReference<T>,
 	onNext: DocumentSnapshotCallback<T>,
 	onError?: (error: Error) => void
@@ -280,7 +93,7 @@ export function onSnapshot<T>(
  * @returns An unsubscribe function that can be called to cancel
  * the snapshot listener.
  */
-export function onSnapshot<T>(
+export function onSnapshot<T extends NonNullable<unknown>>(
 	query: CollectionReference<T>,
 	observer: QuerySnapshotObserver<T>
 ): Unsubscribe;
@@ -299,13 +112,13 @@ export function onSnapshot<T>(
  * @returns An unsubscribe function that can be called to cancel
  * the snapshot listener.
  */
-export function onSnapshot<T>(
+export function onSnapshot<T extends NonNullable<unknown>>(
 	query: CollectionReference<T>,
 	onNext: QuerySnapshotCallback<T>,
 	onError?: (error: Error) => void
 ): Unsubscribe;
 
-export function onSnapshot<T>(
+export function onSnapshot<T extends NonNullable<unknown>>(
 	queryOrReference: CollectionReference<T> | DocumentReference<T>,
 	onNextOrObserver:
 		| QuerySnapshotCallback<T>
@@ -358,8 +171,10 @@ export function onSnapshot<T>(
 				// No need to fetch, the message has all we need:
 				if (!data || !isArray(data))
 					throw new UnexpectedResponseError(t("error.ws.data-not-array"));
-				const snaps: Array<QueryDocumentSnapshot<T>> = data.map(doc => {
+				const snaps: Array<QueryDocumentSnapshot<T>> = data.map(_doc => {
+					const doc = { ..._doc }; // shallow copy
 					const id = doc["_id"];
+					delete doc["_id"];
 					if (!isString(id)) {
 						const err = new TypeError(t("error.server.id-not-string"));
 						onErrorCallback(err);
@@ -379,8 +194,10 @@ export function onSnapshot<T>(
 					// We may need to fetch the data directly. PubNub has message size limits
 					try {
 						const allData = await getDoc(queryOrReference);
-						const snap = new QueryDocumentSnapshot<T>(ref, allData.data() ?? null);
-						(onNextCallback as DocumentSnapshotCallback<T>)(snap);
+						if (allData.exists()) {
+							const snap = new QueryDocumentSnapshot(ref, allData.data());
+							(onNextCallback as DocumentSnapshotCallback<T>)(snap);
+						}
 						return;
 					} catch (error) {
 						if (error instanceof Error) {
@@ -394,8 +211,10 @@ export function onSnapshot<T>(
 
 				// No need to fetch, the message has all we need:
 				if (isArray(data)) throw new UnexpectedResponseError(t("error.ws.data-is-array"));
-				const snap = new QueryDocumentSnapshot<T>(ref, data as T | null);
-				(onNextCallback as DocumentSnapshotCallback<T>)(snap);
+				if (data !== null) {
+					const snap = new QueryDocumentSnapshot<T>(ref, data as T);
+					(onNextCallback as DocumentSnapshotCallback<T>)(snap);
+				}
 				return;
 			}
 

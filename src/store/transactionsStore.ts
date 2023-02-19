@@ -146,7 +146,9 @@ export async function watchTransactions(account: Account, force: boolean = false
 
 				// Update cache
 				const accountTransactions = get(transactionsForAccount)[account.id] ?? {};
-				await asyncForEach(snap.docChanges(), async change => {
+				const changes = snap.docChanges();
+				logger.debug("snap.docChanges()", changes);
+				await asyncForEach(changes, async change => {
 					let balance = get(currentBalance)[account.id] ?? zeroDinero;
 
 					try {
