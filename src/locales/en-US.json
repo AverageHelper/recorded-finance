@@ -436,6 +436,11 @@
 			"issue": "open an issue",
 			"github": "GitHub page",
 			"let-me-know": "Let me know if anything needs fixed."
+		},
+		"how-we-work": {
+			"p": "{platform} is a {spa} that encrypts and decrypts your data on your own device. This means that our servers cannot know what's in your wallet. This works entirely in the browser, using modern standard JavaScript APIs. You can {read} if you're curious!",
+			"spa": "single-page application",
+			"read": "check the code yourself"
 		}
 	},
 	"login": {
@@ -590,6 +595,11 @@
 		"database-breach": {
 			"question": "What happens if someone steals the database?",
 			"answer1": "If your passphrase is long and complicated, there's nothing that anyone can do with our database. The server never sees your DEK, your passphrase's KEK, or your passphrase. None of those are in the database."
+		},
+		"report-vuln": {
+			"question": "How do I report a security vulnerability?",
+			"answer": "You can report vulnerabilities privately through GitHub or by email. Everything you need to reach us is in {sec-txt}. We don't do bug bounties (yet), so we're very grateful to you for taking the time to help us out!",
+			"sec-txt": "our security.txt file"
 		}
 	}
 }

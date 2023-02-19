@@ -13,7 +13,7 @@ import {
 	userWithUid,
 } from "../database/read";
 
-function isNotNull<T>(tbd: T): tbd is Exclude<T, null> {
+function isNotNull<T>(tbd: T): tbd is NonNullable<T> {
 	return tbd !== null;
 }
 

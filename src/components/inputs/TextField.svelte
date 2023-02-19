@@ -136,7 +136,7 @@
 	}
 </script>
 
-<div bind:this={root} {disabled} class="text-field">
+<div bind:this={root} class="text-field">
 	<FormGroup floating label={displayLabel}>
 		<Input
 			bind:inner={input}
@@ -144,6 +144,7 @@
 			{type}
 			{size}
 			{maxlength}
+			{disabled}
 			min={min ?? undefined}
 			max={max ?? undefined}
 			{autofocus}

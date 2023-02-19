@@ -75,7 +75,7 @@
 </script>
 
 <ConditionallyExpandingNavbar expand={!isLoggedIn}>
-	<aside class="actions-container">
+	<aside class="actions-container" role="heading" aria-level={1}>
 		{#if !isRoute}
 			<ActionButton kind="plain" on:click={goBack}>
 				<BackIcon />
@@ -83,13 +83,8 @@
 			</ActionButton>
 		{/if}
 		{#if !isLoggedIn}
-			<a
-				href={homeRoute}
-				class="navbar-brand"
-				role="heading"
-				aria-level={1}
-				title={$_("common.platform")}
-				use:link>{$_("common.platform")}</a
+			<a href={homeRoute} class="navbar-brand" title={$_("common.platform")} use:link
+				>{$_("common.platform")}</a
 			>
 		{/if}
 	</aside>
@@ -159,142 +154,3 @@
 		</Nav>
 	</Collapse>
 </ConditionallyExpandingNavbar>
-
-<style lang="scss" global>
-	@use "styles/colors" as *;
-
-	.navbar-brand {
-		display: block;
-		font-weight: bold;
-		font-size: x-large;
-		z-index: 50;
-		margin-left: 16pt;
-		text-decoration: none;
-		border-radius: 4pt;
-		color: color($label);
-		margin-right: auto;
-
-		@media (hover: hover) {
-			&:hover {
-				color: color($label);
-				text-decoration: none;
-			}
-		}
-
-		&:active,
-		&:focus {
-			color: color($label);
-		}
-
-		&:focus-visible {
-			outline: 2pt solid color($link);
-		}
-	}
-
-	:global(.tab-bar) {
-		margin: 0 auto;
-	}
-
-	.navbar {
-		position: sticky;
-		top: 0;
-		z-index: 1000;
-		background-color: color($navbar-background);
-		color: color($label);
-
-		.actions-container {
-			$margin: 0.75em;
-			display: flex;
-			flex-flow: row nowrap;
-			align-items: center;
-			justify-content: space-evenly;
-			height: calc(100% - #{$margin} * 2);
-			min-width: 2.8em;
-			margin: $margin 1em;
-			color: inherit;
-
-			:global(button) {
-				color: color($label);
-			}
-		}
-
-		:global(.tab-bar) {
-			height: 100%;
-		}
-	}
-
-	.navbar-toggler {
-		height: 36pt;
-		width: 44pt;
-		padding: 0 4pt;
-		color: color($label);
-		border-color: color($clear);
-		margin-left: auto;
-		z-index: 100;
-
-		.icon {
-			width: 100%;
-			height: 100%;
-		}
-	}
-
-	ul.navbar-nav {
-		margin-left: 16pt;
-		margin-right: 16pt;
-	}
-
-	li.nav-item {
-		height: fit-content;
-		margin-left: auto;
-
-		> a.nav-link {
-			display: flex;
-			flex-flow: row nowrap;
-			align-items: center;
-			color: color($label);
-
-			&.active {
-				color: color($label);
-				font-weight: bold;
-			}
-
-			&.inactive {
-				color: color($label);
-			}
-
-			.icon {
-				color: color($label);
-				margin-left: 8pt;
-			}
-		}
-	}
-
-	nav.navbar {
-		#navbarNav {
-			z-index: 100;
-			margin-left: auto;
-		}
-
-		ul,
-		.navbar-toggler {
-			margin-left: auto;
-			margin-right: 8pt;
-			z-index: 50;
-		}
-
-		li.nav-item {
-			> .locale {
-				width: fit-content;
-				margin-left: auto;
-			}
-
-			a.nav-link {
-				border-radius: 4pt;
-
-				&:focus-visible {
-					outline: 2pt solid color($link);
-				}
-			}
-		}
-	}
-</style>

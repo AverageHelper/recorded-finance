@@ -14,7 +14,7 @@
 	}
 
 	function onKeyup(event: CustomEvent<KeyboardEvent>, colorId: ColorID) {
-		if (event.detail.key !== " " && event.detail.key !== "Spacebar") return;
+		if (event.detail.key !== " ") return;
 		event.stopPropagation();
 		select(colorId);
 	}

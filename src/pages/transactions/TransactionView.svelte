@@ -222,8 +222,16 @@
 					{:else}
 						<FileListItem
 							{fileId}
+							on:keyup={e => {
+								e.preventDefault();
+								e.detail.preventDefault();
+								if (e.detail.key === " ") {
+									openReferenceFixer(fileId);
+								}
+							}}
 							on:click={e => {
 								e.preventDefault();
+								e.detail.preventDefault();
 								openReferenceFixer(fileId);
 							}}
 						/>

@@ -18,6 +18,7 @@ import * as serverVersion from "./api/v0/version";
 import * as srpVerifier from "./api/v0/srp/verifier/[account]";
 import * as srpVerify from "./api/v0/srp/verify/[account]";
 
+// eslint-disable-next-line unicorn/numeric-separators-style
 const PORT = 40850;
 
 export const app = express()

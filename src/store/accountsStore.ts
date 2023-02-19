@@ -3,6 +3,8 @@ import type { AccountRecordPackage, Unsubscribe, WriteBatch } from "../transport
 import type { AccountSchema } from "../model/DatabaseSchema";
 import type { Dinero } from "dinero.js";
 import { account, recordFromAccount } from "../model/Account";
+import { asyncForEach } from "../helpers/asyncForEach";
+import { asyncMap } from "../helpers/asyncMap";
 import { derived, get, writable } from "svelte/store";
 import { getDekMaterial, pKey } from "./authStore";
 import { logger } from "../logger";
@@ -10,7 +12,6 @@ import { t } from "../i18n";
 import { updateUserStats } from "./uiStore";
 import chunk from "lodash-es/chunk";
 import {
-	asyncMap,
 	createAccount as _createAccount,
 	getDocs,
 	deriveDEK,
@@ -59,15 +60,15 @@ export async function watchAccounts(force: boolean = false): Promise<void> {
 	const key = get(pKey);
 	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 	const { dekMaterial } = await getDekMaterial();
-	const dek = deriveDEK(key, dekMaterial);
+	const dek = await deriveDEK(key, dekMaterial);
 
 	const collection = accountsCollection();
 	accountsLoadError.set(null);
 	accountsWatcher.set(
 		watchAllRecords(
 			collection,
-			snap => {
-				snap.docChanges().forEach(change => {
+			async snap =>
+				await asyncForEach(snap.docChanges(), async change => {
 					switch (change.type) {
 						case "removed":
 							accounts.update(accounts => {
@@ -78,16 +79,17 @@ export async function watchAccounts(force: boolean = false): Promise<void> {
 							break;
 
 						case "added":
-						case "modified":
+						case "modified": {
+							const account = await accountFromSnapshot(change.doc, dek);
 							accounts.update(accounts => {
 								const copy = { ...accounts };
-								copy[change.doc.id] = accountFromSnapshot(change.doc, dek);
+								copy[change.doc.id] = account;
 								return copy;
 							});
 							break;
+						}
 					}
-				});
-			},
+				}),
 			error => {
 				accountsLoadError.set(error);
 				const watcher = get(accountsWatcher);
@@ -107,7 +109,7 @@ export async function createAccount(
 	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 
 	const { dekMaterial } = await getDekMaterial();
-	const dek = deriveDEK(key, dekMaterial);
+	const dek = await deriveDEK(key, dekMaterial);
 	const account = await _createAccount(record, dek, batch);
 	if (!batch) await updateUserStats();
 	return account;
@@ -118,7 +120,7 @@ export async function updateAccount(account: Account, batch?: WriteBatch): Promi
 	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 
 	const { dekMaterial } = await getDekMaterial();
-	const dek = deriveDEK(key, dekMaterial);
+	const dek = await deriveDEK(key, dekMaterial);
 	await _updateAccount(account, dek, batch);
 	if (!batch) await updateUserStats();
 }
@@ -153,11 +155,11 @@ export async function getAllAccountsAsJson(): Promise<Array<AccountSchema>> {
 	const { getAllTransactionsAsJson } = await import("./transactionsStore");
 
 	const { dekMaterial } = await getDekMaterial();
-	const dek = deriveDEK(key, dekMaterial);
+	const dek = await deriveDEK(key, dekMaterial);
 
 	const collection = accountsCollection();
 	const snap = await getDocs<AccountRecordPackage>(collection);
-	const accounts = snap.docs.map(doc => accountFromSnapshot(doc, dek));
+	const accounts = await asyncMap(snap.docs, async doc => await accountFromSnapshot(doc, dek));
 	return await asyncMap(accounts, async acct => {
 		const transactions = await getAllTransactionsAsJson(acct);
 		return { ...recordFromAccount(acct), id: acct.id, transactions };
