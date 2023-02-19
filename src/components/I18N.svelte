@@ -21,7 +21,7 @@
 
 	MyComponent.svelte:
 	```svelte
-	<script>
+	<script lang="ts">
 		import { _ } from "svelte-i18n";
 		import I18N from "path/to/I18N.svelte";
 	</script>

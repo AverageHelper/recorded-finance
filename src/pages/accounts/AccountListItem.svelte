@@ -45,5 +45,6 @@
 	{subtitle}
 	count={remainingBalance ? toCurrency($locale.code, remainingBalance) : "--"}
 	negative={isBalanceNegative}
+	on:keyup
 	on:click
 />

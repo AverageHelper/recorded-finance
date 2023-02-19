@@ -3,7 +3,10 @@
 	import { navigate } from "svelte-navigator";
 	import Chevron from "../icons/Chevron.svelte";
 
-	const dispatch = createEventDispatcher<{ click: MouseEvent }>();
+	const dispatch = createEventDispatcher<{
+		click: MouseEvent;
+		keyup: KeyboardEvent;
+	}>();
 
 	type ListItemKind = "add" | "choose";
 
@@ -16,10 +19,12 @@
 	export let negative: boolean = false;
 	export let kind: ListItemKind = "choose";
 
-	function onClick(event: MouseEvent) {
+	function onClick(event: KeyboardEvent | MouseEvent) {
 		console.debug("onClick", to);
 		if (to) {
 			navigate(to, { replace });
+		} else if ("key" in event) {
+			dispatch("keyup", event);
 		} else {
 			dispatch("click", event);
 		}
@@ -30,6 +35,7 @@
 	this={to === null ? "div" : "a"}
 	class="list-item {kind}"
 	href={to ?? "#"}
+	on:keyup|stopPropagation|preventDefault={onClick}
 	on:click|stopPropagation|preventDefault={onClick}
 >
 	<slot name="icon" />

@@ -173,7 +173,7 @@
 		{#if hasFocus}
 			<List bind:this={recentsList}>
 				{#if newLocationTitle}
-					<li tabindex="0">
+					<li>
 						<LocationListItem location={textLocationPreview} quote />
 					</li>
 				{/if}
@@ -184,7 +184,6 @@
 				{/if}
 				{#each recentLocations as location (location.id)}
 					<li
-						tabindex="0"
 						on:keyup|stopPropagation|preventDefault={e => onLocationSelect(location, e)}
 						on:click|stopPropagation|preventDefault={() => onLocationSelect(location)}
 					>
@@ -207,7 +206,11 @@
 	</div>
 
 	{#if !mayGetLocation}
-		<p class="disclaimer" on:click|stopPropagation|preventDefault>
+		<p
+			class="disclaimer"
+			on:keyup|stopPropagation|preventDefault
+			on:click|stopPropagation|preventDefault
+		>
 			<I18N keypath="input.locations.disclaimer">
 				<!-- settings -->
 				<Link to={settingsRoute}>{$_("app.nav.settings")}</Link>

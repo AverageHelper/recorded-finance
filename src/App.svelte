@@ -34,16 +34,6 @@
 		margin-bottom: 58pt;
 	}
 
-	main.content {
-		padding: 16pt 24pt;
-		overflow-y: scroll;
-		overflow-x: hidden;
-
-		.error {
-			color: color($red);
-		}
-	}
-
 	a {
 		color: color($link);
 

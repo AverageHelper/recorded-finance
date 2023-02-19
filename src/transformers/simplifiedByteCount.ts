@@ -32,7 +32,7 @@ export function simplifiedByteCount(locale: LocaleCode, num: number): string {
 	 */
 	const units = ["byte", "kilobyte", "megabyte", "gigabyte", "terabyte", "petabyte"] as const;
 
-	type Unit = typeof units[number];
+	type Unit = (typeof units)[number];
 
 	// Get the nearest applicable unit
 	const exponent: number =

@@ -101,7 +101,7 @@ export function wsFactory<T extends WebSocketMessages>(
 			ws.ping();
 			logger.debug("sent ping to client");
 			timesNotThere += 1; // this goes away if the client responds
-		}, 10000); // 10 second interval
+		}, 10_000); // 10 second interval
 
 		ws.on("close", () => {
 			clearInterval(pingInterval);

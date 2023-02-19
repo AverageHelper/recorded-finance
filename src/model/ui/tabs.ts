@@ -17,7 +17,7 @@ import {
 
 export const appTabs = ["accounts", "attachments", "locations", "tags"] as const;
 
-export type Tab = typeof appTabs[number];
+export type Tab = (typeof appTabs)[number];
 
 export const APP_ROOTS: ReadonlyArray<string> = appTabs
 	.map(tab => `/${tab}`)

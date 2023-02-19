@@ -5,6 +5,57 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.7] - 2023-02-19
+### Changed
+- Better optimized database snapshots on the front-end, with thorough unit testing around relevant structures.
+
+## [0.16.6] - 2023-02-18
+### Fixed
+- The app no longer redundantly recalculates caches on transaction documents that were unchanged for a given write. This means the transaction list reloads much faster for long transaction history when you make a change, like marking a transaction as "resolved".
+
+### Security
+- Updated vulnerable dependencies.
+
+## [0.16.5] - 2023-02-17
+### Added
+- The app now displays a big scary warning message in the devtools console. Nobody should be pasting stuff in there that strangers tell them to paste in, so we make that clear.
+
+### Fixed
+- The height of the language selector should now be reasonable on Chromium-based browsers.
+
+## [0.16.4] - 2023-02-17
+### Changed
+- Reorganized some internal en/decryption structures in preparation for better asynchronous handling.
+
+## [0.16.3] - 2023-01-29
+### Changed
+- Ok, we'll release with every push for now, until we figure out a consistent way to parse the changelog for this.
+
+## [0.16.2] - 2023-01-29
+### Added
+- [security.txt](https://recorded.finance/.well-known/security.txt) file based on the spec described in [securitytxt.org](https://securitytxt.org).
+
+### Changed
+- Our pipeline now only deploys to production if we've cut a new semver version.
+
+### Removed
+- Got rid of our default Vue favicon.
+
+## [0.16.1] - 2023-01-16
+### Added
+- Improved experience for users who have JavaScript disabled.
+  - If the front-end loads with JavaScript disabled (whether at the browser level, or by an extension such as [NoScript](https://noscript.net)), then the Home page will now appear, and will be very similar in appearance to the way it would render normally in the en-US locale.
+  - This page is hard-coded. It is removed and replaced when JavaScript loads.
+  - Because the page is not dynamically generated, we can only render the Home page, regardless of the URL path at load time. Here is room for future improvement!
+  - Because our locale detection relies on JavaScript, this webpage is _only rendered in English_.
+  - Because our in-app navigation routing relies on JavaScript, internal navigation routes are disabled, and replaced in some areas with hints to enable JavaScript.
+  - This feature helps us have a contentful load much more quickly, and helps out search-engine indexers who don't wanna run potentially-unsafe JavaScript.
+
+## [0.16.0] - 2023-01-15
+### Changed
+- Dropped support for Safari 13, [because Vite](https://vitejs.dev/guide/build.html#browser-compatibility).
+- Enhanced keyboard support in custom controls.
+
 ## [0.15.3] - 2023-01-14
 ### Changed
 - Renamed from 'Accountable' to 'Recorded Finance'. Hopefully we don't have to rename ourselves again soon!
@@ -371,6 +422,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial commit
 
+[0.16.7]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.6...v0.16.7
+[0.16.6]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.5...v0.16.6
+[0.16.5]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.4...v0.16.5
+[0.16.4]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.3...v0.16.4
+[0.16.3]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.2...v0.16.3
+[0.16.2]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.1...v0.16.2
+[0.16.1]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.0...v0.16.1
+[0.16.0]: https://github.com/RecordedFinance/recorded-finance/compare/v0.15.3...v0.16.0
 [0.15.3]: https://github.com/RecordedFinance/recorded-finance/compare/v0.15.2...v0.15.3
 [0.15.2]: https://github.com/RecordedFinance/recorded-finance/compare/v0.15.1...v0.15.2
 [0.15.1]: https://github.com/RecordedFinance/recorded-finance/compare/v0.15.0...v0.15.1

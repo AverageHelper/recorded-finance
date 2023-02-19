@@ -10,8 +10,8 @@
  *  with every array element, or one of the callbacks has rejected, respectively.
  */
 export async function asyncMap<A, B>(
-	array: Array<A>,
-	callback: (value: A, index: number, array: Array<A>) => Promise<B>
+	array: ReadonlyArray<A>,
+	callback: (value: A, index: number, array: ReadonlyArray<A>) => Promise<B>
 ): Promise<Array<B>> {
 	return await Promise.all(array.map(callback));
 }

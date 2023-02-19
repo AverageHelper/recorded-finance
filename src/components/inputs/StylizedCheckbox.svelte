@@ -19,27 +19,21 @@
 		sendValue(checkbox?.checked ?? false);
 	}
 
-	function toggle() {
+	function toggle(event: MouseEvent | KeyboardEvent) {
+		if ("key" in event && event.key !== " ") return;
 		sendValue(!value);
-	}
-
-	function onKeyup(event: KeyboardEvent) {
-		if (event.key !== " " && event.key !== "Spacebar") return;
-		toggle();
 	}
 </script>
 
 <div style="position: relative;">
-	<label
-		class="checkbox {loading ? 'loading' : ''}"
-		tabindex="0"
-		on:keyup|stopPropagation|preventDefault={onKeyup}
-	>
-		<input type="checkbox" checked={value} {disabled} on:change={onChange} />
+	<label class="checkbox {loading ? 'loading' : ''}">
 		<label
-			class="mark {disabled ? 'disabled' : ''}"
+			class="mark {disabled ? 'disabled' : ''} {value ? 'checked' : ''}"
+			on:keyup={toggle}
 			on:click|stopPropagation|preventDefault={toggle}
-		/>
+		>
+			<input type="checkbox" checked={value} {disabled} on:change={onChange} />
+		</label>
 		{#if label}
 			<span class="label {disabled ? 'disabled' : ''}">{label}</span>
 		{/if}
@@ -118,24 +112,24 @@
 			}
 		}
 
+		label.checked {
+			border-color: color($label);
+
+			&:after {
+				opacity: 1;
+			}
+		}
+
+		label.disabled {
+			background: color($secondary-fill);
+			border-color: color($secondary-fill);
+		}
+
 		input {
 			visibility: hidden;
 			position: absolute;
 
-			&:checked + label {
-				border-color: color($label);
-
-				&:after {
-					opacity: 1;
-				}
-			}
-
 			&:checked:disabled {
-				background: color($secondary-fill);
-				border-color: color($secondary-fill);
-			}
-
-			&:disabled + label {
 				background: color($secondary-fill);
 				border-color: color($secondary-fill);
 			}
