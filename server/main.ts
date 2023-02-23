@@ -2,12 +2,12 @@ import "source-map-support/register";
 import { asyncWrapper } from "./asyncWrapper";
 import { auth } from "./auth";
 import { cors } from "./cors";
+import { csrf } from "./helpers/apiHandler";
 import { db } from "./db";
 import { logger } from "./logger";
 import { NotFoundError } from "./errors/NotFoundError";
 import { respondError } from "./responses";
 import { version as appVersion } from "./version";
-// import csurf from "csurf"; // TODO: Might be important later
 import express from "express";
 import expressWs from "express-ws";
 import helmet from "helmet";
@@ -19,15 +19,10 @@ import * as serverVersion from "./api/v0/version";
 // eslint-disable-next-line unicorn/numeric-separators-style
 const PORT = 40850;
 
-// For CSRF
-// 0. Set an HttpOnly and SameSite cookie on client on login with a JWT that contains a new random value (or maybe a simple HMAC?)
-// 1. Send the CSRF value in both a cookie and as a request param
-// 2. Server verifies both match
-// 3. Reject the request (HTTP 400?) if the values do not match or one is missing
-
 export const app = express()
 	.use(helmet()) // also disables 'x-powered-by' header
-	.use(cors());
+	.use(cors())
+	.use(asyncWrapper(csrf));
 
 expressWs(app); // Set up websocket support. This is the reason our endpoint declarations need to be functions and not `const` declarations
 

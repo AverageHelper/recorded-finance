@@ -20,3 +20,5 @@ logger.info(
 	"%cPasting anything in here could give attackers access to your account.",
 	"color: red; font-size: x-large"
 );
+
+// TODO: Get CSRF value from server, much like version

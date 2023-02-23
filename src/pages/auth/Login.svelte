@@ -282,6 +282,7 @@
 
 			<InfoDrawer title={$_("login.cookie-disclaimer-header")}>
 				<p>
+					<!-- TODO: Declare the CSRF cookie(s) too -->
 					<I18N keypath="login.cookie-disclaimer">
 						<!-- more -->
 						<OutLink to={repoReadmeHeading("why-use-cookies")}>{$_("login.cookie-more")}</OutLink>

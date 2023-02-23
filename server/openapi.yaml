@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: Recorded Finance Auth/Storage Server
-  version: 0.8.4
+  version: 0.9.0
   description: This is the Recorded Finance Server. All the server does is store data given to it by the client. The server controls access to the data with basic password-based auth with optional time-based multi-factor auth. The Recorded Finance client does most of the hard work of encrypting the user's data. You can read Recorded Finance's source code on [GitHub](https://github.com/RecordedFinance/recorded-finance).
   license:
     name: GNU General Public License v3.0
@@ -75,6 +75,9 @@ paths:
                   message:
                     type: string
                     example: "Recorded Finance v0.3.0"
+                  csrf:
+                    type: string
+                    description: A JWT string to send with subsequent requests. The value is also set in a cookie.
 
   "/v0/join":
     post:
@@ -172,6 +175,7 @@ paths:
               required:
                 - account
                 - password
+                - csrf
               type: object
               properties:
                 account:
@@ -181,6 +185,9 @@ paths:
                 password:
                   type: string
                   description: A passphrase to access the user's account.
+                csrf:
+                  type: string
+                  description: A JWT string to compare with a previously-set CSRF cookie.
       responses:
         200:
           description: Successfully authenticated with passphrase. Further validation may be needed.
@@ -261,11 +268,15 @@ paths:
             schema:
               required:
                 - token
+                - csrf
               type: object
               properties:
                 token:
                   type: string
                   description: The code to validate. Normally 6 characters long.
+                csrf:
+                  type: string
+                  description: A JWT string to compare with a previously-set CSRF cookie.
       responses:
         200:
           description: Successfully validated the time-based code. The user must now provide a TOTP to validate initial access or any sensitive operations.
@@ -397,6 +408,7 @@ paths:
               required:
                 - password
                 - token
+                - csrf
               type: object
               properties:
                 password:
@@ -405,6 +417,9 @@ paths:
                 token:
                   type: string
                   description: The current TOTP to access the account.
+                csrf:
+                  type: string
+                  description: A JWT string to compare with a previously-set CSRF cookie.
       responses:
         200:
           description: The secret is gone.
@@ -527,6 +542,7 @@ paths:
               required:
                 - account
                 - password
+                - csrf
               type: object
               properties:
                 account:
@@ -539,6 +555,9 @@ paths:
                 token:
                   type: string
                   description: The TOTP token. Required if the user's account requires TOTP 2FA.
+                csrf:
+                  type: string
+                  description: A JWT string to compare with a previously-set CSRF cookie.
       responses:
         200:
           description: Operation succeeded.
@@ -593,6 +612,7 @@ paths:
                 - account
                 - password
                 - newpassword
+                - csrf
               type: object
               properties:
                 account:
@@ -608,6 +628,9 @@ paths:
                 newpassword:
                   type: string
                   description: The new passphrase to access the account from now on.
+                csrf:
+                  type: string
+                  description: A JWT string to compare with a previously-set CSRF cookie.
       responses:
         200:
           description: Operation succeeded.
@@ -662,6 +685,7 @@ paths:
                 - account
                 - newaccount
                 - password
+                - csrf
               type: object
               properties:
                 account:
@@ -677,6 +701,9 @@ paths:
                 token:
                   type: string
                   description: The TOTP token. Required if the user's account requires TOTP 2FA.
+                csrf:
+                  type: string
+                  description: A JWT string to compare with a previously-set CSRF cookie.
       responses:
         200:
           description: Operation succeeded.
@@ -730,50 +757,57 @@ paths:
         content:
           application/json:
             schema:
-              type: array
-              items:
-                oneOf:
-                  - type: object
-                    required:
-                      - type
-                      - ref
-                      - data
-                    properties:
-                      type:
-                        type: string
-                        enum:
-                          - set
-                      ref:
-                        type: object
-                        required:
-                          - collectionId
-                          - documentId
-                        properties:
-                          collectionId:
-                            $ref: "#/components/schemas/CollectionID"
-                          documentId:
-                            type: string
-                      data:
-                        $ref: "#/components/schemas/DataItem"
-                  - type: object
-                    required:
-                      - type
-                      - ref
-                    properties:
-                      type:
-                        type: string
-                        enum:
-                          - delete
-                      ref:
-                        type: object
-                        required:
-                          - collectionId
-                          - documentId
-                        properties:
-                          collectionId:
-                            $ref: "#/components/schemas/CollectionID"
-                          documentId:
-                            type: string
+              required:
+                - items
+                - csrf
+              type: object
+              properties:
+                items:
+                  oneOf:
+                    - type: object
+                      required:
+                        - type
+                        - ref
+                        - data
+                      properties:
+                        type:
+                          type: string
+                          enum:
+                            - set
+                        ref:
+                          type: object
+                          required:
+                            - collectionId
+                            - documentId
+                          properties:
+                            collectionId:
+                              $ref: "#/components/schemas/CollectionID"
+                            documentId:
+                              type: string
+                        data:
+                          $ref: "#/components/schemas/DataItem"
+                    - type: object
+                      required:
+                        - type
+                        - ref
+                      properties:
+                        type:
+                          type: string
+                          enum:
+                            - delete
+                        ref:
+                          type: object
+                          required:
+                            - collectionId
+                            - documentId
+                          properties:
+                            collectionId:
+                              $ref: "#/components/schemas/CollectionID"
+                            documentId:
+                              type: string
+                csrf:
+                  type: string
+                  description: A JWT string to compare with a previously-set CSRF cookie.
       responses:
         200:
           description: All operations successful
@@ -1309,10 +1343,14 @@ paths:
               type: object
               required:
                 - file
+                - csrf
               properties:
                 file:
                   type: string
                   format: binary
+                csrf:
+                  type: string
+                  description: A JWT string to compare with a previously-set CSRF cookie.
       responses:
         200:
           description: Operation successful

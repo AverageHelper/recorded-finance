@@ -2,6 +2,7 @@ import "dotenv/config"; // SIDE-EFFECT: populates `process.env`
 
 export type EnvKey =
 	| "AUTH_SECRET"
+	| "CSRF_SECRET"
 	| "HOST"
 	| "MAX_BYTES"
 	| "MAX_USERS"

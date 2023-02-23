@@ -1,7 +1,7 @@
-import type { JwtPayload, MFAOption, User } from "../database/schemas";
+import type { CsrfJwtPayload, JwtPayload, MFAOption, User } from "../database/schemas";
 import type { SignOptions } from "jsonwebtoken";
 import { addJwtToDatabase } from "../database/write";
-import { assertJwtPayload } from "../database/schemas";
+import { assertCsrfJwtPayload, assertJwtPayload } from "../database/schemas";
 import { env, requireEnv } from "../environment";
 import { generateSecureToken } from "./generators";
 import { jwtExistsInDatabase } from "../database/read";
@@ -16,7 +16,9 @@ const { sign: _signJwt, verify: _verifyJwt } = _jwt;
 
 /** A special secret that only the server should ever know. */
 export const persistentSecret = requireEnv("AUTH_SECRET");
+const CSRF_SECRET = requireEnv("CSRF_SECRET");
 const SESSION_COOKIE_NAME = "sessionToken";
+const CSRF_COOKIE_NAME = "csrf";
 const keys = new Keygrip([persistentSecret]);
 
 /**
@@ -81,7 +83,8 @@ export async function newAccessTokens(
 }
 
 /**
- * Sets the session cookie with the given value, or revokes the cookie if the value is `null`.
+ * Sets the session cookie with the given value, or revokes
+ * the cookie if the value is `null`.
  */
 export function setSession(req: APIRequest, res: APIResponse, value: string | null): void {
 	const cookies = new Cookies(req, res, { keys, secure: true });
@@ -140,8 +143,35 @@ export function killSession(req: APIRequest, res: APIResponse): void {
 }
 
 /**
- * Returns the raw JWT from the request's headers. Does **NOT** verify
- * the integrity of the token. Please call {@link verifyJwt} for that.
+ * Sets the CSRF token as a cookie with the given value, or revokes
+ * the cookie if the value is `null`.
+ */
+export function setCsrfCookie(req: APIRequest, res: APIResponse, value: string): void {
+	const cookies = new Cookies(req, res, { keys, secure: true });
+	const opts: Cookies.SetOption = {
+		path: "/",
+		sameSite: "strict",
+		httpOnly: true,
+		secure: true,
+		signed: true,
+		overwrite: true,
+	};
+
+	if (value === null) {
+		const gibberish = generateSecureToken(5);
+		const twoHrsAgo = new Date(new Date().getTime() - 2 * ONE_HOUR);
+		opts.maxAge = -1;
+		opts.expires = twoHrsAgo;
+		cookies.set(CSRF_COOKIE_NAME, gibberish, opts);
+	} else {
+		cookies.set(CSRF_COOKIE_NAME, value, opts);
+	}
+}
+
+/**
+ * Returns the raw auth JWT from the request's headers. Does **NOT**
+ * verify the integrity of the token. Please call {@link verifyJwt}
+ * for that.
  *
  * Checks the `Cookie` header for the token. If no data is found there,
  * then we check the `Authorization` header for a "Bearer" token.
@@ -164,7 +194,21 @@ export function jwtFromRequest(req: APIRequest, res: APIResponse): string | null
 }
 
 /**
- * Decodes and verifies the given JWT `token` value.
+ * Returns the raw CSRF JWT from the request's headers. Does **NOT**
+ * verify the integrity of the token. Please call {@link verifyCsrfJwt}
+ * for that.
+ */
+export function csrfJwtFromRequest(req: APIRequest, res: APIResponse): string | null {
+	const cookies = new Cookies(req, res, { keys, secure: true });
+	const token = cookies.get(CSRF_COOKIE_NAME, { signed: true }) ?? "";
+	return token || null;
+}
+
+/**
+ * Decodes and verifies the given JWT `token` value, asserting the
+ * value as an auth token.
+ *
+ * @param token The JWT string to verify.
  *
  * @returns A Promise that resolves with an object containing the
  * key-value pairs encoded in the JWT.
@@ -211,6 +255,67 @@ async function createJwt(payload: JwtPayload, options: SignOptions): Promise<str
 				`Failed to create JWT for user ${payload.uid}: Both error and token parameters were empty.`
 			);
 			reject(error);
+		});
+	});
+}
+
+/**
+ * Creates, signs, and returns a JWT with the given payload, for use
+ * as a CSRF token.
+ *
+ * @param payload The CSRF token value.
+ */
+export async function createCsrfJwt(payload: CsrfJwtPayload): Promise<string> {
+	return await new Promise<string>((resolve, reject) => {
+		_signJwt(payload, CSRF_SECRET, {}, (err, token) => {
+			if (err) {
+				reject(err);
+				return;
+			}
+			if (token !== undefined) {
+				resolve(token);
+				return;
+			}
+			const error = new TypeError(
+				"Failed to create CSRF JWT: Both error and token parameters were empty."
+			);
+			reject(error);
+		});
+	});
+}
+
+/**
+ * Decodes and verifies the given JWT `token` value, asserting the
+ * value as a CSRF token.
+ *
+ * @param token The JWT string to verify.
+ *
+ * @returns A Promise that resolves with an object containing the
+ * key-value pairs encoded in the JWT.
+ */
+export async function verifyCsrfJwt(token: string): Promise<CsrfJwtPayload> {
+	return await new Promise<CsrfJwtPayload>((resolve, reject) => {
+		_verifyJwt(token, CSRF_SECRET, (err, payload) => {
+			// Fail if failed i guess
+			if (err) return reject(err);
+
+			// Check payload contents
+			if (payload !== undefined) {
+				try {
+					assertCsrfJwtPayload(payload);
+				} catch (error) {
+					return reject(error);
+				}
+
+				// Parameters are valid!
+				return resolve(payload);
+			}
+
+			// Sanity check. We should never get here.
+			const error = new TypeError(
+				"Failed to verify JWT: Both error and payload parameters were empty."
+			);
+			return reject(error);
 		});
 	});
 }

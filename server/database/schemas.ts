@@ -92,6 +92,16 @@ export function assertJwtPayload(tbd: unknown): asserts tbd is JwtPayload {
 	return assert(tbd, jwtPayload);
 }
 
+export const csrfJwtPayload = type({
+	csrf: nonemptyString,
+});
+
+export type CsrfJwtPayload = Infer<typeof csrfJwtPayload>;
+
+export function assertCsrfJwtPayload(tbd: unknown): asserts tbd is CsrfJwtPayload {
+	return assert(tbd, csrfJwtPayload);
+}
+
 export const user = object({
 	/**
 	 * The user's unique ID. This value never changes for the life

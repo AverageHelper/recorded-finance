@@ -1,7 +1,11 @@
 import { allowedOriginHostnames } from "../constants/allowedOriginHostnames";
 import { assertMethod } from "./assertMethod";
 import { BadMethodError } from "../errors/BadMethodError";
+import { BadRequestError } from "../errors/BadRequestError";
+import { compare, generateSecureToken } from "../auth/generators";
+import { createCsrfJwt, csrfJwtFromRequest, verifyCsrfJwt } from "../auth/jwt";
 import { handleErrors } from "../handleErrors";
+import { is, nonempty, string, type } from "superstruct";
 import { logger } from "../logger";
 import { OriginError } from "../errors/OriginError";
 import { respondError, respondOk } from "../responses";
@@ -68,7 +72,7 @@ export function apiHandler(method: HTTPMethod, cb: APIRequestHandler): APIReques
 		await handleErrors(req, res, async (req, res) => {
 			// TODO: helmet?
 			cors(req, res);
-			// TODO: Handle CSURF
+			await csrf(req, res);
 
 			if (req.method === "OPTIONS") return respondOk(res);
 			assertMethod(req.method, method);
@@ -120,4 +124,43 @@ function cors(req: APIRequest, res: APIResponse): void {
 	res.setHeader("Access-Control-Allow-Credentials", "true");
 
 	// TODO: Also check Referrer header?
+}
+
+/**
+ * Creates and returns a JWT with a random string.
+ */
+export async function newCsrfToken(): Promise<string> {
+	const csrf = generateSecureToken(240);
+	return await createCsrfJwt({ csrf });
+}
+
+export async function csrf(req: APIRequest, res: APIResponse): Promise<void> {
+	// For CSRF (see https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html#double-submit-cookie)
+	// 0. Set an HttpOnly and SameSite cookie on client on login with a JWT that contains a new random value
+
+	// 1. Send the CSRF value as a cookie (in the /version endpoint)
+
+	// 2. Each request, the server verifies the cookie and param match
+	// 3. Reject the request (HTTP 400?) if the values do not match or if one is missing
+	const token = csrfJwtFromRequest(req, res);
+	if (token === null) throw new BadRequestError("CSRF cookie not found");
+	const { csrf } = await verifyCsrfJwt(token);
+	// TODO: The token should also know whose it is, unless we're logging in...
+
+	const reqBody = type({
+		csrf: nonempty(string()),
+	});
+
+	if (!is(req.body, reqBody)) {
+		throw new BadRequestError("CSRF token not found");
+	}
+	const givenCsrf = req.body.csrf;
+
+	// Compare from body and cookie, 400 if failed
+	const isTokenGood = await compare(givenCsrf, csrf);
+	if (!isTokenGood) {
+		throw new BadRequestError("Incorrect CSRF Token");
+	}
+
+	// continue!
 }

@@ -34,7 +34,12 @@ The server supports self-hosting out of the box using Express. If you wish to ho
 
 # A secret value used to sign JWTs and generate TOTP secrets. Keep this safe.
 # Consider generating this value with https://bitwarden.com/password-generator/
-AUTH_SECRET={some random string of characters}
+AUTH_SECRET={some random string of 28 characters}
+# required, example: "wAheb^8v^YV^s6YaeYVW&8tyLa*ce4"
+
+# A secret value used to sign CSRF JWTs. Keep this safe. Should be different from `AUTH_SECRET`.
+# Consider generating this value with https://bitwarden.com/password-generator/
+CSRF_SECRET={some random string of 28 characters}
 # required, example: "wAheb^8v^YV^s6YaeYVW&8tyLa*ce4"
 
 # Where your MySQL server can be accessed
