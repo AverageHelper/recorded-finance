@@ -1,7 +1,8 @@
 import { apiHandler, dispatchRequests } from "../../../helpers/apiHandler";
+import { respondMessage } from "../../../responses";
 
 export const GET = apiHandler("GET", (req, res) => {
-	res.json({ message: "Pong!" });
+	respondMessage(res, "Pong!");
 });
 
 export default dispatchRequests({ GET });

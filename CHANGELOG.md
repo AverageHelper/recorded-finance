@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.8] - 2023-03-01
+### Changed
+- More robust HTTP status codes on the back-end.
+
 ## [0.16.7] - 2023-02-19
 ### Changed
 - Better optimized database snapshots on the front-end, with thorough unit testing around relevant structures.
@@ -422,6 +426,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial commit
 
+[0.16.8]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.7...v0.16.8
 [0.16.7]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.6...v0.16.7
 [0.16.6]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.5...v0.16.6
 [0.16.5]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.4...v0.16.5

@@ -80,9 +80,7 @@ export const DELETE = apiHandler("DELETE", async (req, res) => {
 
 	// Re-validate TOTP
 	const isCodeGood = verifyTOTP(token, secret);
-	if (isCodeGood) {
-		respondSuccess(res);
-	} else {
+	if (!isCodeGood) {
 		throw new UnauthorizedError("wrong-mfa-credentials");
 	}
 

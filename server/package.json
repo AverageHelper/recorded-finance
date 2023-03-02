@@ -1,6 +1,6 @@
 {
 	"name": "recorded-finance-server",
-	"version": "0.8.5",
+	"version": "0.8.6",
 	"scripts": {
 		"start": "./node_modules/.bin/vercel pull && npm run build:client && ./node_modules/.bin/concurrently -s first -kn VERCEL,APP \"npm run vercel:dev -- --color\" \"sleep 3 && npm run dev:client\"",
 		"start:express": "node . | ./node_modules/.bin/bunyan -o short",
