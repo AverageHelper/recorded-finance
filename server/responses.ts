@@ -11,6 +11,7 @@ const CLACKS = ["X-Clacks-Overhead", "GNU Terry Pratchett"] as const;
  * Sends HTTP 200, then ends the connection.
  */
 export function respondOk(res: APIResponse): void {
+	// Only works on HTTP versions older than HTTP/2 (for now).
 	res.statusMessage = describeCode(HttpStatusCode.OK);
 	res
 		.setHeader(...CACHE_CONTROL)
@@ -29,6 +30,7 @@ export function respondMessage(
 	message: string,
 	additionalValues?: Record<string, string | number | null | Array<string | number>>
 ): void {
+	// Only works on HTTP versions older than HTTP/2 (for now).
 	res.statusMessage = describeCode(HttpStatusCode.OK);
 	res
 		.setHeader(...CACHE_CONTROL)
@@ -45,6 +47,7 @@ export function respondSuccess(
 	res: APIResponse,
 	additionalValues?: Record<string, string | number | null | Array<string | number>>
 ): void {
+	// Only works on HTTP versions older than HTTP/2 (for now).
 	res.statusMessage = describeCode(HttpStatusCode.OK);
 	res
 		.setHeader(...CACHE_CONTROL)
@@ -61,13 +64,13 @@ export function respondData<T extends { _id: string } | { uid: string }>(
 	res: APIResponse,
 	data: DocumentData<T> | Array<DocumentData<T>> | null
 ): void {
-	// TODO: Should this go down as a multipart thingthing instead?
+	// Only works on HTTP versions older than HTTP/2 (for now).
 	res.statusMessage = describeCode(HttpStatusCode.OK);
 	res
 		.setHeader(...CACHE_CONTROL)
 		.setHeader(...VARY)
 		.setHeader(...CLACKS)
-		.json({ message: "Success!", data })
+		.json({ message: "Success!", data }) // TODO: Should this go down as a multipart thingthing instead?
 		.end();
 }
 
@@ -75,6 +78,7 @@ export function respondData<T extends { _id: string } | { uid: string }>(
  * Sends an HTTP response as defined by the given error, then ends the connection.
  */
 export function respondError(res: APIResponse, err: InternalError): void {
+	// Only works on HTTP versions older than HTTP/2 (for now).
 	res.statusMessage = describeCode(err.status);
 	res.setHeader(...CACHE_CONTROL);
 	res.setHeader(...VARY);
