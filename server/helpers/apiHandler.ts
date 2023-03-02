@@ -1,6 +1,6 @@
+import { allowedOriginHostnames } from "./allowedOriginHostnames";
 import { assertMethod } from "./assertMethod";
 import { BadMethodError } from "../errors/BadMethodError";
-import { env } from "../environment";
 import { handleErrors } from "../handleErrors";
 import { logger } from "../logger";
 import { OriginError } from "../errors/OriginError";
@@ -74,29 +74,6 @@ export function apiHandler(method: HTTPMethod, cb: APIRequestHandler): APIReques
 		});
 	};
 }
-
-const allowedOriginHostnames = new Set<string>();
-
-// Add typical localhost variants
-allowedOriginHostnames.add("localhost");
-allowedOriginHostnames.add("127.0.0.1");
-allowedOriginHostnames.add("::1");
-
-// Add configured host to list of allowed origins
-let configuredHostUrl = env("HOST") ?? env("VERCEL_URL") ?? null;
-if (configuredHostUrl !== null) {
-	if (!configuredHostUrl.startsWith("http")) {
-		configuredHostUrl = `https://${configuredHostUrl}`;
-	}
-	try {
-		const { hostname } = new URL(configuredHostUrl);
-		allowedOriginHostnames.add(hostname);
-	} catch {
-		logger.error(`Value for env key HOST is not a valid URL: '${configuredHostUrl}'`);
-	}
-}
-
-logger.debug(`allowedOriginHostnames: ${JSON.stringify(Array.from(allowedOriginHostnames))}`);
 
 function cors(req: APIRequest, res: APIResponse): void {
 	res.setHeader(

@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - More robust HTTP status codes on the back-end.
 
+### Fixed
+- Duplicate logging of allowed origin hostnames (back-end).
+
 ## [0.16.7] - 2023-02-19
 ### Changed
 - Better optimized database snapshots on the front-end, with thorough unit testing around relevant structures.
