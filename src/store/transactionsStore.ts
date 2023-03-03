@@ -1,6 +1,7 @@
 import type { Account } from "../model/Account";
 import type { Dinero } from "dinero.js";
 import type { Location } from "../model/Location";
+import type { Month } from "../helpers/monthForTransaction";
 import type { Transaction, TransactionRecordParams } from "../model/Transaction";
 import type { TransactionRecordPackage, Unsubscribe, WriteBatch } from "../transport";
 import type { TransactionSchema } from "../model/DatabaseSchema";
@@ -13,6 +14,7 @@ import { derived, get } from "svelte/store";
 import { getDekMaterial, pKey } from "./authStore";
 import { handleError, updateUserStats } from "./uiStore";
 import { moduleWritable } from "../helpers/moduleWritable";
+import { monthIdForTransaction, monthForTransaction } from "../helpers/monthForTransaction";
 import { logger } from "../logger";
 import { t } from "../i18n";
 import { zeroDinero } from "../helpers/dineroHelpers";
@@ -43,13 +45,8 @@ import {
 	writeBatch,
 } from "../transport";
 
-interface Month {
-	/** The date at which the month begins */
-	start: Date;
-
-	/** The month's short identifier */
-	id: string;
-}
+const [isLoadingTransactions, _isLoadingTransactions] = moduleWritable(true);
+export { isLoadingTransactions };
 
 // Account.id -> Transaction.id -> Transaction
 const [transactionsForAccount, _transactionsForAccount] = moduleWritable<
@@ -58,16 +55,25 @@ const [transactionsForAccount, _transactionsForAccount] = moduleWritable<
 export { transactionsForAccount };
 
 // Account.id -> month -> Transaction[]
-const [transactionsForAccountByMonth, _transactionsForAccountByMonth] = moduleWritable<
-	Record<string, Record<string, Array<Transaction>>>
->({});
-export { transactionsForAccountByMonth };
+export const transactionsForAccountByMonth = derived(
+	transactionsForAccount,
+	$transactionsForAccount => {
+		const result: Record<string, Record<string, Array<Transaction>>> = {};
 
-const [months, _months] = moduleWritable<Record<string, Month>>({});
-export { months };
+		for (const accountId of Object.keys($transactionsForAccount)) {
+			const transactions = $transactionsForAccount[accountId] ?? {};
+			const groupedTransactions = groupBy(transactions, monthIdForTransaction);
 
-const [isLoadingTransactions, _isLoadingTransactions] = moduleWritable(true);
-export { isLoadingTransactions };
+			// Sort each transaction list
+			for (const month of Object.keys(groupedTransactions)) {
+				groupedTransactions[month]?.sort(reverseChronologically);
+			}
+			result[accountId] = groupedTransactions;
+		}
+
+		return result;
+	}
+);
 
 // Transaction.id -> Unsubscribe
 let transactionsWatchers: Record<string, Unsubscribe> = {};
@@ -76,13 +82,25 @@ let transactionsWatchers: Record<string, Unsubscribe> = {};
 export const allTransactions = derived(transactionsForAccount, $transactionsForAccount => {
 	const result: Record<string, Transaction> = {};
 
-	Object.values($transactionsForAccount).forEach(transactions => {
-		Object.values(transactions).forEach(transaction => {
+	for (const transactions of Object.values($transactionsForAccount)) {
+		for (const transaction of Object.values(transactions)) {
 			result[transaction.id] ??= transaction;
-		});
-	});
+		}
+	}
 
-	return Object.values(result); // should be 2486
+	return Object.values(result);
+});
+
+// List of all of the months we care about
+export const months = derived(allTransactions, $allTransactions => {
+	const result: Record<string, Month> = {};
+
+	for (const transaction of $allTransactions) {
+		const monthId = monthIdForTransaction(transaction);
+		result[monthId] ??= monthForTransaction(transaction);
+	}
+
+	return result;
 });
 
 // FIXME: Does not care about accounts
@@ -119,8 +137,6 @@ export function clearTransactionsCache(): void {
 	Object.values(transactionsWatchers).forEach(unsubscribe => unsubscribe());
 	transactionsWatchers = {};
 	_transactionsForAccount.set({});
-	_transactionsForAccountByMonth.set({});
-	_months.set({});
 	logger.debug("transactionsStore: cache cleared");
 }
 
@@ -147,13 +163,7 @@ export async function watchTransactions(account: Account, force: boolean = false
 	transactionsWatchers[account.id] = watchAllRecords(
 		collection,
 		async snap => {
-			// Clear derived cache
 			_isLoadingTransactions.set(true);
-			_transactionsForAccountByMonth.update(transactionsForAccountByMonth => {
-				const copy = { ...transactionsForAccountByMonth };
-				delete copy[account.id];
-				return copy;
-			});
 
 			// Update cache
 			const accountTransactions = get(transactionsForAccount)[account.id] ?? {};
@@ -199,34 +209,6 @@ export async function watchTransactions(account: Account, force: boolean = false
 			_transactionsForAccount.update(transactionsForAccount => {
 				const copy = { ...transactionsForAccount };
 				copy[account.id] = accountTransactions;
-				return copy;
-			});
-
-			// Derive cache
-			const __months: Record<string, Month> = {};
-			const groupedTransactions = groupBy(
-				get(transactionsForAccount)[account.id] ?? {},
-				transaction => {
-					const month: Month = {
-						start: new Date(transaction.createdAt.getFullYear(), transaction.createdAt.getMonth()),
-						// TODO: This code should be based on the user's current locale, or something idk
-						id: transaction.createdAt.toLocaleDateString("en-US", {
-							month: "short",
-							year: "numeric",
-						}),
-					};
-					__months[month.id] = month; // cache the month short ID with its sortable date
-					return month.id;
-				}
-			);
-			for (const month of Object.keys(groupedTransactions)) {
-				// Sort each transaction list
-				groupedTransactions[month]?.sort(reverseChronologically);
-			}
-			_months.set(__months); // save months before we save transactions, so components know how to sort things
-			_transactionsForAccountByMonth.update(transactionsForAccountByMonth => {
-				const copy = { ...transactionsForAccountByMonth };
-				copy[account.id] = groupedTransactions;
 				return copy;
 			});
 			_isLoadingTransactions.set(false);

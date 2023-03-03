@@ -10,6 +10,6 @@ import { derived, writable } from "svelte/store";
  */
 export function moduleWritable<T>(initialValue: T): [Readable<T>, Writable<T>] {
 	const w = writable<T>(initialValue); // storage
-	const r = derived(w, currentValue => currentValue); // read-only view of the storage
+	const r = derived(w, $currentValue => $currentValue); // read-only view of the storage
 	return [r, w];
 }
