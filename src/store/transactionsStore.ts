@@ -147,10 +147,8 @@ export async function watchTransactions(account: Account, force: boolean = false
 				// Update cache
 				const accountTransactions = get(transactionsForAccount)[account.id] ?? {};
 				const changes = snap.docChanges();
-				logger.debug("snap.docChanges()", changes);
+				let balance = get(currentBalance)[account.id] ?? zeroDinero;
 				await asyncForEach(changes, async change => {
-					let balance = get(currentBalance)[account.id] ?? zeroDinero;
-
 					try {
 						switch (change.type) {
 							case "removed":
@@ -188,15 +186,14 @@ export async function watchTransactions(account: Account, force: boolean = false
 								break;
 							}
 						}
-
-						currentBalance.update(currentBalance => {
-							const copy = { ...currentBalance };
-							copy[account.id] = balance;
-							return copy;
-						});
 					} catch (error) {
 						handleError(error);
 					}
+				});
+				currentBalance.update(currentBalance => {
+					const copy = { ...currentBalance };
+					copy[account.id] = balance;
+					return copy;
 				});
 				transactionsForAccount.update(transactionsForAccount => {
 					const copy = { ...transactionsForAccount };
@@ -236,7 +233,9 @@ export async function watchTransactions(account: Account, force: boolean = false
 				});
 			},
 			error => {
-				logger.error(error);
+				handleError(error);
+
+				// Cancel this watcher
 				const watcher = get(transactionsWatchers)[account.id];
 				if (watcher) watcher();
 				transactionsWatchers.update(transactionsWatchers => {
