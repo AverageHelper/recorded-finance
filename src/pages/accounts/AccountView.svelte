@@ -11,13 +11,16 @@
 	import EditButton from "../../components/buttons/EditButton.svelte";
 	import Fuse from "fuse.js";
 	import List from "../../components/List.svelte";
+	import ListItem from "../../components/ListItem.svelte";
 	import SearchBar from "../../components/SearchBar.svelte";
+	import Spinner from "../../components/Spinner.svelte";
 	import TransactionCreateModal from "../transactions/TransactionCreateModal.svelte";
 	import TransactionMonthListItem from "../transactions/TransactionMonthListItem.svelte";
 	import TransactionListItem from "../transactions/TransactionListItem.svelte";
 	import {
 		accounts,
 		currentBalance,
+		isLoadingTransactions,
 		months,
 		transactionsForAccount,
 		transactionsForAccountByMonth,
@@ -134,6 +137,13 @@
 					on:click={startCreatingTransaction}
 				/>
 			</li>
+			{#if $isLoadingTransactions}
+				<li>
+					<ListItem title={$_("common.loading-in-progress")}>
+						<Spinner slot="icon" />
+					</ListItem>
+				</li>
+			{/if}
 			{#each transactionMonths as [month, monthTransactions] (month)}
 				<li>
 					<TransactionMonthListItem

@@ -7,12 +7,15 @@
 	import AddRecordListItem from "./AddRecordListItem.svelte";
 	import ErrorNotice from "../../components/ErrorNotice.svelte";
 	import List from "../../components/List.svelte";
+	import ListItem from "../../components/ListItem.svelte";
 	import Modal from "../../components/Modal.svelte";
 	import NewLoginModal from "../../components/NewLoginModal.svelte";
 	import ReloadIcon from "../../icons/Reload.svelte";
+	import Spinner from "../../components/Spinner.svelte";
 	import {
 		accountsLoadError,
 		allAccounts,
+		isLoadingAccounts,
 		numberOfAccounts,
 		watchAccounts,
 		watchAttachments,
@@ -66,6 +69,13 @@
 					on:click={startCreatingAccount}
 				/>
 			</li>
+			{#if $isLoadingAccounts}
+				<li>
+					<ListItem title={$_("common.loading-in-progress")}>
+						<Spinner slot="icon" />
+					</ListItem>
+				</li>
+			{/if}
 			{#each $allAccounts as account (account.id)}
 				<li>
 					<AccountListItem {account} />

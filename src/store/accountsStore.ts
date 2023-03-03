@@ -32,6 +32,9 @@ export { accounts };
 const [currentBalance, _currentBalance] = moduleWritable<Record<string, Dinero<number>>>({});
 export { currentBalance };
 
+const [isLoadingAccounts, _isLoadingAccounts] = moduleWritable(true);
+export { isLoadingAccounts };
+
 export function updateBalanceForAccount(accountId: string, newBalance: Dinero<number>): void {
 	_currentBalance.update(currentBalance => {
 		const copy = { ...currentBalance };
@@ -89,7 +92,8 @@ export async function watchAccounts(force: boolean = false): Promise<void> {
 	_accountsLoadError.set(null);
 	accountsWatcher = watchAllRecords(
 		collection,
-		async snap =>
+		async snap => {
+			_isLoadingAccounts.set(true);
 			await asyncForEach(snap.docChanges(), async change => {
 				switch (change.type) {
 					case "removed":
@@ -111,7 +115,9 @@ export async function watchAccounts(force: boolean = false): Promise<void> {
 						break;
 					}
 				}
-			}),
+			});
+			_isLoadingAccounts.set(false);
+		},
 		error => {
 			_accountsLoadError.set(error);
 			if (accountsWatcher) accountsWatcher();

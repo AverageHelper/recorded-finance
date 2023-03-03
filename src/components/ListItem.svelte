@@ -33,8 +33,8 @@
 
 <svelte:element
 	this={to === null ? "div" : "a"}
-	class="list-item {kind}"
-	href={to ?? "#"}
+	class="list-item {kind} {to !== null ? 'clickable' : ''}"
+	href={to}
 	on:keyup|stopPropagation|preventDefault={onClick}
 	on:click|stopPropagation|preventDefault={onClick}
 >
@@ -59,7 +59,9 @@
 		</div>
 	</aside>
 
-	<Chevron />
+	{#if to !== null}
+		<Chevron />
+	{/if}
 </svelte:element>
 
 <style lang="scss" global>
@@ -88,7 +90,7 @@
 		}
 
 		@media (hover: hover) {
-			&:hover {
+			&.clickable:hover {
 				background-color: color($secondary-overlay);
 				color: color($label);
 				text-decoration: none;

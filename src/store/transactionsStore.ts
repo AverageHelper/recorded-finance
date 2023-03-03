@@ -66,6 +66,9 @@ export { transactionsForAccountByMonth };
 const [months, _months] = moduleWritable<Record<string, Month>>({});
 export { months };
 
+const [isLoadingTransactions, _isLoadingTransactions] = moduleWritable(true);
+export { isLoadingTransactions };
+
 // Transaction.id -> Unsubscribe
 let transactionsWatchers: Record<string, Unsubscribe> = {};
 
@@ -82,7 +85,7 @@ export const allTransactions = derived(transactionsForAccount, $transactionsForA
 	return Object.values(result); // should be 2486
 });
 
-// WARN: Does not care about accounts
+// FIXME: Does not care about accounts
 const sortedTransactions = derived(allTransactions, $allTransactions => {
 	return $allTransactions //
 		.slice()
@@ -145,6 +148,7 @@ export async function watchTransactions(account: Account, force: boolean = false
 		collection,
 		async snap => {
 			// Clear derived cache
+			_isLoadingTransactions.set(true);
 			_transactionsForAccountByMonth.update(transactionsForAccountByMonth => {
 				const copy = { ...transactionsForAccountByMonth };
 				delete copy[account.id];
@@ -225,6 +229,7 @@ export async function watchTransactions(account: Account, force: boolean = false
 				copy[account.id] = groupedTransactions;
 				return copy;
 			});
+			_isLoadingTransactions.set(false);
 		},
 		error => {
 			handleError(error);
@@ -233,30 +238,36 @@ export async function watchTransactions(account: Account, force: boolean = false
 			const watcher = transactionsWatchers[account.id];
 			if (watcher) watcher();
 			delete transactionsWatchers[account.id];
+			_isLoadingTransactions.set(false);
 		}
 	);
 }
 
 export async function getTransactionsForAccount(account: Account): Promise<void> {
-	const key = get(pKey);
-	if (key === null) throw new Error(t("error.cryption.missing-pek"));
+	try {
+		_isLoadingTransactions.set(true);
+		const key = get(pKey);
+		if (key === null) throw new Error(t("error.cryption.missing-pek"));
 
-	const { dekMaterial } = await getDekMaterial();
-	const dek = await deriveDEK(key, dekMaterial);
-	const transactions = await _getTransactionsForAccount(account, dek);
-	const totalBalance: Dinero<number> = Object.values(transactions).reduce(
-		(balance, transaction) => {
-			return add(balance, transaction.amount);
-		},
-		zeroDinero
-	);
+		const { dekMaterial } = await getDekMaterial();
+		const dek = await deriveDEK(key, dekMaterial);
+		const transactions = await _getTransactionsForAccount(account, dek);
+		const totalBalance: Dinero<number> = Object.values(transactions).reduce(
+			(balance, transaction) => {
+				return add(balance, transaction.amount);
+			},
+			zeroDinero
+		);
 
-	_transactionsForAccount.update(transactionsForAccount => {
-		const copy = { ...transactionsForAccount };
-		copy[account.id] = transactions;
-		return copy;
-	});
-	updateBalanceForAccount(account.id, totalBalance);
+		_transactionsForAccount.update(transactionsForAccount => {
+			const copy = { ...transactionsForAccount };
+			copy[account.id] = transactions;
+			return copy;
+		});
+		updateBalanceForAccount(account.id, totalBalance);
+	} finally {
+		_isLoadingTransactions.set(false);
+	}
 }
 
 export async function getAllTransactions(): Promise<void> {
