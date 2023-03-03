@@ -6,18 +6,24 @@ import type { TransactionRecordPackage, Unsubscribe, WriteBatch } from "../trans
 import type { TransactionSchema } from "../model/DatabaseSchema";
 import type { Tag } from "../model/Tag";
 import { add, subtract } from "dinero.js";
-import { allAccounts, currentBalance } from "./accountsStore";
 import { asyncForEach } from "../helpers/asyncForEach";
 import { asyncMap } from "../helpers/asyncMap";
 import { chronologically, reverseChronologically } from "../model/utility/sort";
-import { derived, get, writable } from "svelte/store";
+import { derived, get } from "svelte/store";
 import { getDekMaterial, pKey } from "./authStore";
 import { handleError, updateUserStats } from "./uiStore";
+import { moduleWritable } from "../helpers/moduleWritable";
 import { logger } from "../logger";
 import { t } from "../i18n";
 import { zeroDinero } from "../helpers/dineroHelpers";
 import chunk from "lodash-es/chunk";
 import groupBy from "lodash-es/groupBy";
+import {
+	allAccounts,
+	currentBalance,
+	forgetBalanceForAccount,
+	updateBalanceForAccount,
+} from "./accountsStore";
 import {
 	recordFromTransaction,
 	removeAttachmentIdFromTransaction,
@@ -45,14 +51,25 @@ interface Month {
 	id: string;
 }
 
-export const transactionsForAccount = writable<Record<string, Record<string, Transaction>>>({}); // Account.id -> Transaction.id -> Transaction
-export const transactionsForAccountByMonth = writable<
-	Record<string, Record<string, Array<Transaction>>>
->({}); // Account.id -> month -> Transaction[]
-export const months = writable<Record<string, Month>>({});
-export const transactionsWatchers = writable<Record<string, Unsubscribe>>({}); // Transaction.id -> Unsubscribe
+// Account.id -> Transaction.id -> Transaction
+const [transactionsForAccount, _transactionsForAccount] = moduleWritable<
+	Record<string, Record<string, Transaction>>
+>({});
+export { transactionsForAccount };
 
-// WARN: Does not care about accounts
+// Account.id -> month -> Transaction[]
+const [transactionsForAccountByMonth, _transactionsForAccountByMonth] = moduleWritable<
+	Record<string, Record<string, Array<Transaction>>>
+>({});
+export { transactionsForAccountByMonth };
+
+const [months, _months] = moduleWritable<Record<string, Month>>({});
+export { months };
+
+// Transaction.id -> Unsubscribe
+let transactionsWatchers: Record<string, Unsubscribe> = {};
+
+// FIXME: Does not care about accounts
 export const allTransactions = derived(transactionsForAccount, $transactionsForAccount => {
 	const result: Record<string, Transaction> = {};
 
@@ -96,33 +113,19 @@ export const allBalances = derived(sortedTransactions, $sortedTransactions => {
 });
 
 export function clearTransactionsCache(): void {
-	Object.values(get(transactionsWatchers)).forEach(unsubscribe => unsubscribe());
-	transactionsWatchers.set({});
-	transactionsForAccount.set({});
-	transactionsForAccountByMonth.set({});
-	months.set({});
+	Object.values(transactionsWatchers).forEach(unsubscribe => unsubscribe());
+	transactionsWatchers = {};
+	_transactionsForAccount.set({});
+	_transactionsForAccountByMonth.set({});
+	_months.set({});
 	logger.debug("transactionsStore: cache cleared");
 }
 
 export async function watchTransactions(account: Account, force: boolean = false): Promise<void> {
-	if (get(transactionsWatchers)[account.id] && !force) return;
-
-	const watcher = get(transactionsWatchers)[account.id];
-	if (watcher) {
-		watcher();
-		transactionsWatchers.update(transactionsWatchers => {
-			const copy = { ...transactionsWatchers };
-			delete copy[account.id];
-			return copy;
-		});
-	}
+	if (transactionsWatchers[account.id] && !force) return;
 
 	// Clear the known balance, the watcher will set it right
-	currentBalance.update(currentBalance => {
-		const copy = { ...currentBalance };
-		delete copy[account.id];
-		return copy;
-	});
+	forgetBalanceForAccount(account.id);
 
 	// Get decryption key ready
 	const key = get(pKey);
@@ -130,123 +133,108 @@ export async function watchTransactions(account: Account, force: boolean = false
 	const { dekMaterial } = await getDekMaterial();
 	const dek = await deriveDEK(key, dekMaterial);
 
+	const watcher = transactionsWatchers[account.id];
+	if (watcher) {
+		watcher();
+		delete transactionsWatchers[account.id];
+	}
+
 	// Watch the collection
 	const collection = transactionsCollection();
-	transactionsWatchers.update(_transactionsWatchers => {
-		const copy = { ..._transactionsWatchers };
-		copy[account.id] = watchAllRecords(
-			collection,
-			async snap => {
-				// Clear derived cache
-				transactionsForAccountByMonth.update(transactionsForAccountByMonth => {
-					const copy = { ...transactionsForAccountByMonth };
-					delete copy[account.id];
-					return copy;
-				});
+	transactionsWatchers[account.id] = watchAllRecords(
+		collection,
+		async snap => {
+			// Clear derived cache
+			_transactionsForAccountByMonth.update(transactionsForAccountByMonth => {
+				const copy = { ...transactionsForAccountByMonth };
+				delete copy[account.id];
+				return copy;
+			});
 
-				// Update cache
-				const accountTransactions = get(transactionsForAccount)[account.id] ?? {};
-				const changes = snap.docChanges();
-				let balance = get(currentBalance)[account.id] ?? zeroDinero;
-				await asyncForEach(changes, async change => {
-					try {
-						switch (change.type) {
-							case "removed":
-								// Update the account's balance total
-								balance = subtract(
-									balance,
-									accountTransactions[change.doc.id]?.amount ?? zeroDinero
-								);
-								// Forget this transaction
-								delete accountTransactions[change.doc.id];
-								break;
+			// Update cache
+			const accountTransactions = get(transactionsForAccount)[account.id] ?? {};
+			const changes = snap.docChanges();
+			let balance = get(currentBalance)[account.id] ?? zeroDinero;
+			await asyncForEach(changes, async change => {
+				try {
+					switch (change.type) {
+						case "removed":
+							// Update the account's balance total
+							balance = subtract(balance, accountTransactions[change.doc.id]?.amount ?? zeroDinero);
+							// Forget this transaction
+							delete accountTransactions[change.doc.id];
+							break;
 
-							case "added": {
-								// Add this transaction
-								const transaction = await transactionFromSnapshot(change.doc, dek);
-								if (transaction.accountId !== account.id) break;
-								accountTransactions[change.doc.id] = transaction;
-								// Update the account's balance total
-								balance = add(balance, accountTransactions[change.doc.id]?.amount ?? zeroDinero);
-								break;
-							}
-
-							case "modified": {
-								// Remove this account's balance total
-								const transaction = await transactionFromSnapshot(change.doc, dek);
-								balance = subtract(
-									balance,
-									accountTransactions[change.doc.id]?.amount ?? zeroDinero
-								);
-								// Update this transaction
-								if (transaction.accountId !== account.id) break;
-								accountTransactions[change.doc.id] = transaction;
-								// Update this account's balance total
-								balance = add(balance, accountTransactions[change.doc.id]?.amount ?? zeroDinero);
-								break;
-							}
+						case "added": {
+							// Add this transaction
+							const transaction = await transactionFromSnapshot(change.doc, dek);
+							if (transaction.accountId !== account.id) break;
+							accountTransactions[change.doc.id] = transaction;
+							// Update the account's balance total
+							balance = add(balance, accountTransactions[change.doc.id]?.amount ?? zeroDinero);
+							break;
 						}
-					} catch (error) {
-						handleError(error);
-					}
-				});
-				currentBalance.update(currentBalance => {
-					const copy = { ...currentBalance };
-					copy[account.id] = balance;
-					return copy;
-				});
-				transactionsForAccount.update(transactionsForAccount => {
-					const copy = { ...transactionsForAccount };
-					copy[account.id] = accountTransactions;
-					return copy;
-				});
 
-				// Derive cache
-				const _months: Record<string, Month> = {};
-				const groupedTransactions = groupBy(
-					get(transactionsForAccount)[account.id] ?? {},
-					transaction => {
-						const month: Month = {
-							start: new Date(
-								transaction.createdAt.getFullYear(),
-								transaction.createdAt.getMonth()
-							),
-							// TODO: This code should be based on the user's current locale, or something idk
-							id: transaction.createdAt.toLocaleDateString("en-US", {
-								month: "short",
-								year: "numeric",
-							}),
-						};
-						_months[month.id] = month; // cache the month short ID with its sortable date
-						return month.id;
+						case "modified": {
+							// Remove this account's balance total
+							const transaction = await transactionFromSnapshot(change.doc, dek);
+							balance = subtract(balance, accountTransactions[change.doc.id]?.amount ?? zeroDinero);
+							// Update this transaction
+							if (transaction.accountId !== account.id) break;
+							accountTransactions[change.doc.id] = transaction;
+							// Update this account's balance total
+							balance = add(balance, accountTransactions[change.doc.id]?.amount ?? zeroDinero);
+							break;
+						}
 					}
-				);
-				for (const month of Object.keys(groupedTransactions)) {
-					// Sort each transaction list
-					groupedTransactions[month]?.sort(reverseChronologically);
+				} catch (error) {
+					handleError(error);
 				}
-				months.set(_months); // save months before we save transactions, so components know how to sort things
-				transactionsForAccountByMonth.update(transactionsForAccountByMonth => {
-					const copy = { ...transactionsForAccountByMonth };
-					copy[account.id] = groupedTransactions;
-					return copy;
-				});
-			},
-			error => {
-				handleError(error);
+			});
+			updateBalanceForAccount(account.id, balance);
+			_transactionsForAccount.update(transactionsForAccount => {
+				const copy = { ...transactionsForAccount };
+				copy[account.id] = accountTransactions;
+				return copy;
+			});
 
-				// Cancel this watcher
-				const watcher = get(transactionsWatchers)[account.id];
-				if (watcher) watcher();
-				transactionsWatchers.update(transactionsWatchers => {
-					const copy = { ...transactionsWatchers };
-					delete copy[account.id];
-					return copy;
-				});
+			// Derive cache
+			const __months: Record<string, Month> = {};
+			const groupedTransactions = groupBy(
+				get(transactionsForAccount)[account.id] ?? {},
+				transaction => {
+					const month: Month = {
+						start: new Date(transaction.createdAt.getFullYear(), transaction.createdAt.getMonth()),
+						// TODO: This code should be based on the user's current locale, or something idk
+						id: transaction.createdAt.toLocaleDateString("en-US", {
+							month: "short",
+							year: "numeric",
+						}),
+					};
+					__months[month.id] = month; // cache the month short ID with its sortable date
+					return month.id;
+				}
+			);
+			for (const month of Object.keys(groupedTransactions)) {
+				// Sort each transaction list
+				groupedTransactions[month]?.sort(reverseChronologically);
 			}
-		);
-		return copy;
-	});
+			_months.set(__months); // save months before we save transactions, so components know how to sort things
+			_transactionsForAccountByMonth.update(transactionsForAccountByMonth => {
+				const copy = { ...transactionsForAccountByMonth };
+				copy[account.id] = groupedTransactions;
+				return copy;
+			});
+		},
+		error => {
+			handleError(error);
+
+			// Cancel this watcher
+			const watcher = transactionsWatchers[account.id];
+			if (watcher) watcher();
+			delete transactionsWatchers[account.id];
+		}
+	);
 }
 
 export async function getTransactionsForAccount(account: Account): Promise<void> {
@@ -263,16 +251,12 @@ export async function getTransactionsForAccount(account: Account): Promise<void>
 		zeroDinero
 	);
 
-	transactionsForAccount.update(transactionsForAccount => {
+	_transactionsForAccount.update(transactionsForAccount => {
 		const copy = { ...transactionsForAccount };
 		copy[account.id] = transactions;
 		return copy;
 	});
-	currentBalance.update(currentBalance => {
-		const copy = { ...currentBalance };
-		copy[account.id] = totalBalance;
-		return copy;
-	});
+	updateBalanceForAccount(account.id, totalBalance);
 }
 
 export async function getAllTransactions(): Promise<void> {

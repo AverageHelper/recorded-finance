@@ -6,8 +6,9 @@ import { asyncForEach } from "../helpers/asyncForEach";
 import { asyncMap } from "../helpers/asyncMap";
 import { attachment, recordFromAttachment } from "../model/Attachment";
 import { BlobWriter } from "@zip.js/zip.js";
-import { derived, get, writable } from "svelte/store";
+import { derived, get } from "svelte/store";
 import { getDekMaterial, pKey, uid } from "./authStore";
+import { moduleWritable } from "../helpers/moduleWritable";
 import { logger } from "../logger";
 import { t } from "../i18n";
 import { updateUserStats } from "./uiStore";
@@ -29,77 +30,80 @@ import {
 	writeBatch,
 } from "../transport";
 
-export const attachments = writable<Record<string, Attachment>>({}); // Attachment.id -> Attachment
-export const files = writable<Record<string, string>>({}); // Attachment.id -> image data URL
-export const attachmentsLoadError = writable<Error | null>(null);
-export const attachmentsWatcher = writable<Unsubscribe | null>(null);
+// Attachment.id -> Attachment
+const [attachments, _attachments] = moduleWritable<Record<string, Attachment>>({});
+export { attachments };
+
+// Attachment.id -> image data URL
+const [files, _files] = moduleWritable<Record<string, string>>({});
+export { files };
+
+const [attachmentsLoadError, _attachmentsLoadError] = moduleWritable<Error | null>(null);
+export { attachmentsLoadError };
+
+let attachmentsWatcher: Unsubscribe | null = null;
 
 export const allAttachments = derived(attachments, $attachments => {
 	return Object.values($attachments);
 });
 
 export function clearAttachmentsCache(): void {
-	const watcher = get(attachmentsWatcher);
-	if (watcher) {
-		watcher();
-		attachmentsWatcher.set(null);
+	if (attachmentsWatcher) {
+		attachmentsWatcher();
+		attachmentsWatcher = null;
 	}
-	files.set({});
-	attachments.set({});
-	attachmentsLoadError.set(null);
+	_files.set({});
+	_attachments.set({});
+	_attachmentsLoadError.set(null);
 	logger.debug("attachmentsStore: cache cleared");
 }
 
 export async function watchAttachments(force: boolean = false): Promise<void> {
-	const watcher = get(attachmentsWatcher);
-	if (watcher && !force) return;
-
-	if (watcher) {
-		watcher();
-		attachmentsWatcher.set(null);
-	}
+	if (!force) return;
 
 	const key = get(pKey);
 	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 	const { dekMaterial } = await getDekMaterial();
 	const dek = await deriveDEK(key, dekMaterial);
 
-	const collection = attachmentsCollection();
-	attachmentsLoadError.set(null);
-	attachmentsWatcher.set(
-		watchAllRecords(
-			collection,
-			async snap =>
-				await asyncForEach(snap.docChanges(), async change => {
-					switch (change.type) {
-						case "removed":
-							attachments.update(attachments => {
-								const copy = { ...attachments };
-								delete copy[change.doc.id];
-								return copy;
-							});
-							break;
+	if (attachmentsWatcher) {
+		attachmentsWatcher();
+		attachmentsWatcher = null;
+	}
 
-						case "added":
-						case "modified": {
-							const attachment = await attachmentFromSnapshot(change.doc, dek);
-							attachments.update(attachments => {
-								const copy = { ...attachments };
-								copy[change.doc.id] = attachment;
-								return copy;
-							});
-							break;
-						}
+	const collection = attachmentsCollection();
+	_attachmentsLoadError.set(null);
+	attachmentsWatcher = watchAllRecords(
+		collection,
+		async snap =>
+			await asyncForEach(snap.docChanges(), async change => {
+				switch (change.type) {
+					case "removed":
+						_attachments.update(attachments => {
+							const copy = { ...attachments };
+							delete copy[change.doc.id];
+							return copy;
+						});
+						break;
+
+					case "added":
+					case "modified": {
+						const attachment = await attachmentFromSnapshot(change.doc, dek);
+						_attachments.update(attachments => {
+							const copy = { ...attachments };
+							copy[change.doc.id] = attachment;
+							return copy;
+						});
+						break;
 					}
-				}),
-			error => {
-				attachmentsLoadError.set(error);
-				const watcher = get(attachmentsWatcher);
-				if (watcher) watcher();
-				attachmentsWatcher.set(null);
-				logger.error(error);
-			}
-		)
+				}
+			}),
+		error => {
+			_attachmentsLoadError.set(error);
+			if (attachmentsWatcher) attachmentsWatcher();
+			attachmentsWatcher = null;
+			logger.error(error);
+		}
 	);
 }
 
@@ -126,7 +130,7 @@ export async function createAttachment(
 	const dek = await deriveDEK(key, dekMaterial);
 	const newAttachment = await _createAttachment(userId, file, record, dek);
 	await updateUserStats();
-	attachments.update(attachments => {
+	_attachments.update(attachments => {
 		const copy = { ...attachments };
 		copy[newAttachment.id] = newAttachment;
 		return copy;
@@ -144,7 +148,7 @@ export async function updateAttachment(attachment: Attachment, file?: File): Pro
 	const dek = await deriveDEK(key, dekMaterial);
 	await _updateAttachment(userId, file ?? null, attachment, dek);
 	await updateUserStats();
-	attachments.update(attachments => {
+	_attachments.update(attachments => {
 		const copy = { ...attachments };
 		copy[attachment.id] = attachment;
 		return copy;
@@ -168,7 +172,7 @@ export async function deleteAttachment(attachment: Attachment, batch?: WriteBatc
 	}
 
 	await _deleteAttachment(userId, attachment, batch);
-	attachments.update(attachments => {
+	_attachments.update(attachments => {
 		const copy = { ...attachments };
 		delete copy[attachment.id];
 		return copy;
@@ -203,7 +207,7 @@ export async function imageDataFromFile(
 
 	if (shouldCache) {
 		// Cache the data URL and its file
-		files.update(files => {
+		_files.update(files => {
 			const copy = { ...files };
 			copy[file.id] = imageData;
 			return copy;

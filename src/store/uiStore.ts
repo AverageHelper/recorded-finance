@@ -1,6 +1,7 @@
-import { derived, get, writable } from "svelte/store";
+import { derived, get } from "svelte/store";
 import { getServerVersion } from "../transport/server.js";
 import { logger } from "../logger.js";
+import { moduleWritable } from "../helpers/moduleWritable.js";
 import { NetworkError, PlatformError } from "../transport/errors/index.js";
 import { StructError } from "superstruct";
 import { t } from "../i18n.js";
@@ -14,11 +15,20 @@ import {
 
 type ColorScheme = "light" | "dark";
 
-export const preferredColorScheme = writable<ColorScheme>("light");
-export const serverVersion = writable<string | Error | null>(null);
-export const bootstrapError = writable<Error | null>(null);
-export const totalSpace = writable<number | null>(null);
-export const usedSpace = writable<number | null>(null);
+const [preferredColorScheme, _preferredColorScheme] = moduleWritable<ColorScheme>("light");
+export { preferredColorScheme };
+
+const [serverVersion, _serverVersion] = moduleWritable<string | Error | null>(null);
+export { serverVersion };
+
+const [bootstrapError, _bootstrapError] = moduleWritable<Error | null>(null);
+export { bootstrapError };
+
+const [totalSpace, _totalSpace] = moduleWritable<number | null>(null);
+export { totalSpace };
+
+const [usedSpace, _usedSpace] = moduleWritable<number | null>(null);
+export { usedSpace };
 
 export const serverLoadingError = derived(serverVersion, $serverVersion => {
 	if ($serverVersion instanceof Error) return $serverVersion;
@@ -47,17 +57,17 @@ export function watchColorScheme(): void {
 }
 
 export function activateDarkMode(): void {
-	preferredColorScheme.set("dark");
+	_preferredColorScheme.set("dark");
 }
 
 export function activateLightMode(): void {
-	preferredColorScheme.set("light");
+	_preferredColorScheme.set("light");
 }
 
 export async function updateUserStats(): Promise<void> {
-	const { usedSpace: _usedSpace, totalSpace: _totalSpace } = await getUserStats(db);
-	usedSpace.set(_usedSpace);
-	totalSpace.set(_totalSpace);
+	const { usedSpace, totalSpace } = await getUserStats(db);
+	_usedSpace.set(usedSpace);
+	_totalSpace.set(totalSpace);
 }
 
 export function bootstrap(): void {
@@ -67,9 +77,9 @@ export function bootstrap(): void {
 		_bootstrap();
 	} catch (error) {
 		if (error instanceof Error) {
-			bootstrapError.set(error);
+			_bootstrapError.set(error);
 		} else {
-			bootstrapError.set(new Error(JSON.stringify(error)));
+			_bootstrapError.set(new Error(JSON.stringify(error)));
 		}
 	}
 }
@@ -79,14 +89,14 @@ export async function loadServerVersion(): Promise<void> {
 	bootstrap();
 
 	try {
-		serverVersion.set("loading");
-		serverVersion.set(await getServerVersion(db));
+		_serverVersion.set("loading");
+		_serverVersion.set(await getServerVersion(db));
 	} catch (error) {
 		logger.error(error);
 		if (error instanceof Error) {
-			serverVersion.set(error);
+			_serverVersion.set(error);
 		} else {
-			serverVersion.set(new Error(JSON.stringify(error)));
+			_serverVersion.set(new Error(JSON.stringify(error)));
 		}
 	}
 }
