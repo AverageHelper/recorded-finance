@@ -7,7 +7,7 @@ import type { TransactionRecordPackage, Unsubscribe, WriteBatch } from "../trans
 import type { TransactionSchema } from "../model/DatabaseSchema";
 import type { Tag } from "../model/Tag";
 import { add, subtract } from "dinero.js";
-import { asyncForEach } from "../helpers/asyncForEach";
+import { allAccounts } from "./accountsStore";
 import { asyncMap } from "../helpers/asyncMap";
 import { chronologically, reverseChronologically } from "../model/utility/sort";
 import { derived, get } from "svelte/store";
@@ -20,12 +20,6 @@ import { t } from "../i18n";
 import { zeroDinero } from "../helpers/dineroHelpers";
 import chunk from "lodash-es/chunk";
 import groupBy from "lodash-es/groupBy";
-import {
-	allAccounts,
-	currentBalance,
-	forgetBalanceForAccount,
-	updateBalanceForAccount,
-} from "./accountsStore";
 import {
 	recordFromTransaction,
 	removeAttachmentIdFromTransaction,
@@ -53,6 +47,37 @@ const [transactionsForAccount, _transactionsForAccount] = moduleWritable<
 	Record<string, Record<string, Transaction>>
 >({});
 export { transactionsForAccount };
+
+function updateTransactionsForAccount(
+	accountId: string,
+	transactions: Record<string, Transaction>
+): void {
+	_transactionsForAccount.update(transactionsForAccount => {
+		const copy = { ...transactionsForAccount };
+		copy[accountId] = transactions;
+		return copy;
+	});
+}
+
+// Account.id -> Dinero
+const [currentBalance, _currentBalance] = moduleWritable<Record<string, Dinero<number>>>({});
+export { currentBalance };
+
+function updateBalanceForAccount(accountId: string, newBalance: Dinero<number>): void {
+	_currentBalance.update(currentBalance => {
+		const copy = { ...currentBalance };
+		copy[accountId] = newBalance;
+		return copy;
+	});
+}
+
+function forgetBalanceForAccount(accountId: string): void {
+	_currentBalance.update(currentBalance => {
+		const copy = { ...currentBalance };
+		delete copy[accountId];
+		return copy;
+	});
+}
 
 // Account.id -> month -> Transaction[]
 export const transactionsForAccountByMonth = derived(
@@ -137,12 +162,17 @@ export function clearTransactionsCache(): void {
 	Object.values(transactionsWatchers).forEach(unsubscribe => unsubscribe());
 	transactionsWatchers = {};
 	_transactionsForAccount.set({});
+	_currentBalance.set({});
+	_isLoadingTransactions.set(true);
 	logger.debug("transactionsStore: cache cleared");
 }
 
 export async function watchTransactions(account: Account, force: boolean = false): Promise<void> {
+	// TODO: Watch all accounts at once, so we don't have to decrypt every transaction each time we switch account views
+	const accountId = account.id;
+
 	// Clear the known balance, the watcher will set it right
-	forgetBalanceForAccount(account.id);
+	forgetBalanceForAccount(accountId);
 
 	// Get decryption key ready
 	const key = get(pKey);
@@ -150,27 +180,36 @@ export async function watchTransactions(account: Account, force: boolean = false
 	const { dekMaterial } = await getDekMaterial();
 	const dek = await deriveDEK(key, dekMaterial);
 
-	const watcher = transactionsWatchers[account.id];
+	const watcher = transactionsWatchers[accountId];
 	if (watcher) {
 		watcher();
-		delete transactionsWatchers[account.id];
+		delete transactionsWatchers[accountId];
 
 		if (!force) return;
 	}
 
 	// Watch the collection
-	const collection = transactionsCollection();
-	transactionsWatchers[account.id] = watchAllRecords(
-		collection,
+	transactionsWatchers[accountId] = watchAllRecords(
+		transactionsCollection(),
 		async snap => {
 			_isLoadingTransactions.set(true);
 
-			// Update cache
-			const accountTransactions = get(transactionsForAccount)[account.id] ?? {};
+			// Update cache (transaction list and balances)
 			const changes = snap.docChanges();
-			let balance = get(currentBalance)[account.id] ?? zeroDinero;
-			await asyncForEach(changes, async change => {
+			logger.debug(`${changes.length} changed transactions`);
+			const accountTransactions = get(transactionsForAccount)[accountId] ?? {};
+			let balance = get(currentBalance)[accountId] ?? zeroDinero;
+			let errorCount = 0;
+			for (const change of changes) {
+				if (errorCount >= 5) {
+					throw new Error(
+						"Got 5 or more errors while parsing transactions changes. Stopping transaction listener"
+					); // TODO: i18n
+				}
 				try {
+					const transaction = await transactionFromSnapshot(change.doc, dek);
+					if (transaction.accountId !== accountId) break; // skip transactions not for this account
+
 					switch (change.type) {
 						case "removed":
 							// Update the account's balance total
@@ -181,8 +220,6 @@ export async function watchTransactions(account: Account, force: boolean = false
 
 						case "added": {
 							// Add this transaction
-							const transaction = await transactionFromSnapshot(change.doc, dek);
-							if (transaction.accountId !== account.id) break;
 							accountTransactions[change.doc.id] = transaction;
 							// Update the account's balance total
 							balance = add(balance, accountTransactions[change.doc.id]?.amount ?? zeroDinero);
@@ -191,10 +228,8 @@ export async function watchTransactions(account: Account, force: boolean = false
 
 						case "modified": {
 							// Remove this account's balance total
-							const transaction = await transactionFromSnapshot(change.doc, dek);
 							balance = subtract(balance, accountTransactions[change.doc.id]?.amount ?? zeroDinero);
 							// Update this transaction
-							if (transaction.accountId !== account.id) break;
 							accountTransactions[change.doc.id] = transaction;
 							// Update this account's balance total
 							balance = add(balance, accountTransactions[change.doc.id]?.amount ?? zeroDinero);
@@ -203,23 +238,20 @@ export async function watchTransactions(account: Account, force: boolean = false
 					}
 				} catch (error) {
 					handleError(error);
+					errorCount += 1;
 				}
-			});
-			updateBalanceForAccount(account.id, balance);
-			_transactionsForAccount.update(transactionsForAccount => {
-				const copy = { ...transactionsForAccount };
-				copy[account.id] = accountTransactions;
-				return copy;
-			});
+			}
+			updateBalanceForAccount(accountId, balance);
+			updateTransactionsForAccount(accountId, accountTransactions);
 			_isLoadingTransactions.set(false);
 		},
 		error => {
 			handleError(error);
 
 			// Cancel this watcher
-			const watcher = transactionsWatchers[account.id];
+			const watcher = transactionsWatchers[accountId];
 			if (watcher) watcher();
-			delete transactionsWatchers[account.id];
+			delete transactionsWatchers[accountId];
 			_isLoadingTransactions.set(false);
 		}
 	);

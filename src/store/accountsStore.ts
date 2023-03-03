@@ -1,9 +1,7 @@
 import type { Account, AccountRecordParams } from "../model/Account";
 import type { AccountRecordPackage, Unsubscribe, WriteBatch } from "../transport";
 import type { AccountSchema } from "../model/DatabaseSchema";
-import type { Dinero } from "dinero.js";
 import { account, recordFromAccount } from "../model/Account";
-import { asyncForEach } from "../helpers/asyncForEach";
 import { asyncMap } from "../helpers/asyncMap";
 import { derived, get } from "svelte/store";
 import { getDekMaterial, pKey } from "./authStore";
@@ -28,28 +26,8 @@ import {
 const [accounts, _accounts] = moduleWritable<Record<string, Account>>({});
 export { accounts };
 
-// Account.id -> Dinero
-const [currentBalance, _currentBalance] = moduleWritable<Record<string, Dinero<number>>>({});
-export { currentBalance };
-
 const [isLoadingAccounts, _isLoadingAccounts] = moduleWritable(true);
 export { isLoadingAccounts };
-
-export function updateBalanceForAccount(accountId: string, newBalance: Dinero<number>): void {
-	_currentBalance.update(currentBalance => {
-		const copy = { ...currentBalance };
-		copy[accountId] = newBalance;
-		return copy;
-	});
-}
-
-export function forgetBalanceForAccount(accountId: string): void {
-	_currentBalance.update(currentBalance => {
-		const copy = { ...currentBalance };
-		delete copy[accountId];
-		return copy;
-	});
-}
 
 const [accountsLoadError, _accountsLoadError] = moduleWritable<Error | null>(null);
 export { accountsLoadError };
@@ -70,8 +48,8 @@ export function clearAccountsCache(): void {
 		accountsWatcher = null;
 	}
 	_accounts.set({});
-	_currentBalance.set({});
 	_accountsLoadError.set(null);
+	_isLoadingAccounts.set(true);
 	logger.debug("accountsStore: cache cleared");
 }
 
@@ -88,13 +66,16 @@ export async function watchAccounts(force: boolean = false): Promise<void> {
 		if (!force) return;
 	}
 
-	const collection = accountsCollection();
 	_accountsLoadError.set(null);
 	accountsWatcher = watchAllRecords(
-		collection,
+		accountsCollection(),
 		async snap => {
 			_isLoadingAccounts.set(true);
-			await asyncForEach(snap.docChanges(), async change => {
+
+			// Update cache
+			const changes = snap.docChanges();
+			logger.debug(`${changes.length} changed accounts`);
+			for (const change of changes) {
 				switch (change.type) {
 					case "removed":
 						_accounts.update(accounts => {
@@ -115,7 +96,7 @@ export async function watchAccounts(force: boolean = false): Promise<void> {
 						break;
 					}
 				}
-			});
+			}
 			_isLoadingAccounts.set(false);
 		},
 		error => {
