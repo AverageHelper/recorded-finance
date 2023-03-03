@@ -59,8 +59,6 @@ export function clearAttachmentsCache(): void {
 }
 
 export async function watchAttachments(force: boolean = false): Promise<void> {
-	if (!force) return;
-
 	const key = get(pKey);
 	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 	const { dekMaterial } = await getDekMaterial();
@@ -69,6 +67,8 @@ export async function watchAttachments(force: boolean = false): Promise<void> {
 	if (attachmentsWatcher) {
 		attachmentsWatcher();
 		attachmentsWatcher = null;
+
+		if (!force) return;
 	}
 
 	const collection = attachmentsCollection();

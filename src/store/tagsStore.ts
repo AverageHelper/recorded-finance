@@ -52,8 +52,6 @@ export function clearTagsCache(): void {
 }
 
 export async function watchTags(force: boolean = false): Promise<void> {
-	if (!force) return;
-
 	const key = get(pKey);
 	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 	const { dekMaterial } = await getDekMaterial();
@@ -62,6 +60,8 @@ export async function watchTags(force: boolean = false): Promise<void> {
 	if (tagsWatcher) {
 		tagsWatcher();
 		tagsWatcher = null;
+
+		if (!force) return;
 	}
 
 	const collection = tagsCollection();

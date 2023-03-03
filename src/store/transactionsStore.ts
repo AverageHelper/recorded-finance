@@ -122,8 +122,6 @@ export function clearTransactionsCache(): void {
 }
 
 export async function watchTransactions(account: Account, force: boolean = false): Promise<void> {
-	if (transactionsWatchers[account.id] && !force) return;
-
 	// Clear the known balance, the watcher will set it right
 	forgetBalanceForAccount(account.id);
 
@@ -137,6 +135,8 @@ export async function watchTransactions(account: Account, force: boolean = false
 	if (watcher) {
 		watcher();
 		delete transactionsWatchers[account.id];
+
+		if (!force) return;
 	}
 
 	// Watch the collection
