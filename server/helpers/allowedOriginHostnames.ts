@@ -1,3 +1,4 @@
+import { concatStrings } from "./concatStrings";
 import { env } from "../environment";
 import { logger } from "../logger";
 import { URL } from "node:url";
@@ -10,7 +11,7 @@ _allowedOriginHostnames.add("127.0.0.1");
 _allowedOriginHostnames.add("::1");
 
 // Add configured host to list of allowed origins
-const configuredHostUrl = env("HOST") ?? env("VERCEL_URL") ?? null;
+const configuredHostUrl = env("HOST") ?? concatStrings("https://", env("VERCEL_URL")) ?? null;
 if (configuredHostUrl !== null) {
 	try {
 		const { hostname } = new URL(configuredHostUrl);

@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.0] - 2023-03-03
+### Added
+- Loading spinners for Account and Transaction lists.
+
+### Changed
+- Greatly simplified transaction storage logic, and found a much more efficient way to count balances. Load times should be considerably faster!
+
+### Fixed
+- The account balance no longer runs around like a slot machine while loading transactions.
+- Months now sort correctly when switching between account views.
+- Fixed data watchers not responding for users with 2FA enabled.
+
 ## [0.16.8] - 2023-03-01
 ### Changed
 - More robust HTTP status codes on the back-end.
@@ -429,6 +441,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial commit
 
+[0.17.0]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.8...v0.17.0
 [0.16.8]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.7...v0.16.8
 [0.16.7]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.6...v0.16.7
 [0.16.6]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.5...v0.16.6
