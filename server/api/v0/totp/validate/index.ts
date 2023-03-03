@@ -2,7 +2,7 @@ import { apiHandler, dispatchRequests } from "../../../../helpers/apiHandler";
 import { BadRequestError } from "../../../../errors/BadRequestError";
 import { ConflictError } from "../../../../errors/ConflictError";
 import { generateSecret, generateTOTPSecretURI, verifyTOTP } from "../../../../auth/totp";
-import { generateAESCipherKey, generateSecureToken } from "../../../../auth/generators";
+import { generateSecureToken } from "../../../../auth/generators";
 import { is, nonempty, string, type } from "superstruct";
 import { metadataFromRequest } from "../../../../auth/requireAuth";
 import { newAccessTokens, setSession } from "../../../../auth/jwt";
@@ -67,7 +67,7 @@ export const POST = apiHandler("POST", async (req, res) => {
 		await upsertUser({
 			currentAccountId: user.currentAccountId,
 			mfaRecoverySeed,
-			pubnubCipherKey: user.pubnubCipherKey ?? (await generateAESCipherKey()),
+			pubnubCipherKey: user.pubnubCipherKey,
 			passwordHash: user.passwordHash,
 			passwordSalt: user.passwordSalt,
 			requiredAddtlAuth: ["totp"], // TODO: Leave other 2FA alone
@@ -76,7 +76,7 @@ export const POST = apiHandler("POST", async (req, res) => {
 		});
 	}
 
-	const pubnub_cipher_key = await generateAESCipherKey();
+	const pubnub_cipher_key = user.pubnubCipherKey;
 	const { access_token, pubnub_token } = await newAccessTokens(user, ["totp"]);
 	const { totalSpace, usedSpace } = await statsForUser(uid);
 

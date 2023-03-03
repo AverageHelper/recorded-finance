@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - The account balance no longer runs around like a slot machine while loading transactions.
 - Months now sort correctly when switching between account views.
+- Fixed data watchers not responding for users with 2FA enabled.
 
 ## [0.16.8] - 2023-03-01
 ### Changed
