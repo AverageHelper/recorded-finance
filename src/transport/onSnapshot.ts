@@ -266,7 +266,9 @@ export function onSnapshot<T extends NonNullable<unknown>>(
 				let data: unknown;
 				try {
 					const rawData: unknown = pubnub.decrypt(event.message as string | object, cipherKey);
-					if (typeof rawData === "string") {
+					if (rawData === null) {
+						throw new TypeError(t("error.cryption.empty-result"));
+					} else if (typeof rawData === "string") {
 						logger.debug("[onSnapshot] Parsing data from message string");
 						data = JSON.parse(rawData) as unknown;
 					} else {
@@ -275,6 +277,13 @@ export function onSnapshot<T extends NonNullable<unknown>>(
 					}
 				} catch (error) {
 					logger.error(`[onSnapshot] Failed to decrypt message:`, error);
+					if (error instanceof Error) {
+						onErrorCallback(error);
+					} else if (typeof error === "string") {
+						onErrorCallback(new Error(error));
+					} else {
+						onErrorCallback(new Error(JSON.stringify(error)));
+					}
 					return;
 				}
 

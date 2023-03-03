@@ -247,11 +247,6 @@ export async function watchTransactions(account: Account, force: boolean = false
 		},
 		error => {
 			handleError(error);
-
-			// Cancel this watcher
-			const watcher = transactionsWatchers[accountId];
-			if (watcher) watcher();
-			delete transactionsWatchers[accountId];
 			_isLoadingTransactions.set(false);
 		}
 	);
