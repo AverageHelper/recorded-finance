@@ -243,10 +243,10 @@ export async function importLocation(
 }
 
 export async function importLocations(data: Array<LocationSchema>): Promise<void> {
-	const { getAllTransactions } = await import("./transactionsStore");
+	const { fetchAllTransactions } = await import("./transactionsStore");
 	// Assume we've imported all transactions,
 	// but don't assume we have them cached yet
-	await getAllTransactions();
+	await fetchAllTransactions();
 	await getAllLocations();
 
 	// Only batch 250 at a time, since each import does up to 2 writes

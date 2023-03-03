@@ -24,7 +24,6 @@
 		months,
 		transactionsForAccount,
 		transactionsForAccountByMonth,
-		watchTransactions,
 	} from "../../store";
 
 	export let accountId: string;
@@ -68,8 +67,6 @@
 
 	$: remainingBalance = $currentBalance[accountId] ?? null;
 	$: isNegative = isDineroNegative(remainingBalance ?? zeroDinero);
-
-	$: account && void watchTransactions(account);
 
 	function goBack() {
 		navigate(-1);

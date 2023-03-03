@@ -265,12 +265,12 @@ export async function importAttachment(
 		};
 		const newAttachment = await createAttachment(params, fileToImport);
 
-		const { allTransactions, getAllTransactions, updateTransaction } = await import(
+		const { allTransactions, fetchAllTransactions, updateTransaction } = await import(
 			"./transactionsStore"
 		);
 		// Assume we've imported all transactions,
 		// but don't assume we have them cached yet
-		await getAllTransactions();
+		await fetchAllTransactions();
 
 		for (const transaction of get(allTransactions)) {
 			if (!transaction.attachmentIds.includes(attachmentToImport.id)) continue;

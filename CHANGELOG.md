@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Loading spinners for Account and Transaction lists.
 
+### Changed
+- Found a much more efficient way to count balances. Load times should be considerably faster!
+
 ### Fixed
 - The account balance no longer runs around like a slot machine while loading transactions.
 - Months now sort correctly when switching between account views.

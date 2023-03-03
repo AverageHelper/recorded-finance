@@ -134,8 +134,8 @@ export async function updateAccount(account: Account, batch?: WriteBatch): Promi
 
 export async function deleteAccount(account: Account, batch?: WriteBatch): Promise<void> {
 	// Don't delete if we have transactions
-	const { getTransactionsForAccount, transactionsForAccount } = await import("./transactionsStore");
-	await getTransactionsForAccount(account);
+	const { fetchAllTransactions, transactionsForAccount } = await import("./transactionsStore");
+	await fetchAllTransactions();
 
 	const accountTransactions = get(transactionsForAccount)[account.id] ?? {};
 	const transactionCount = Object.keys(accountTransactions).length;

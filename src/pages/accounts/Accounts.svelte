@@ -21,6 +21,7 @@
 		watchAttachments,
 		watchLocations,
 		watchTags,
+		watchTransactions,
 	} from "../../store";
 
 	let isCreatingAccount = false;
@@ -32,6 +33,7 @@
 			watchAttachments(),
 			watchLocations(),
 			watchTags(),
+			watchTransactions(),
 		]);
 	}
 
