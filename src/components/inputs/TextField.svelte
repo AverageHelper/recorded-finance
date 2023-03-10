@@ -79,7 +79,6 @@
 	export let maxlength: number = 524288;
 	export let min: number | null = null;
 	export let max: number | null = null;
-	export let autofocus: boolean = false;
 	export let autocomplete: AutocompleteType = "on";
 	export let label: string = "";
 	export let disabled: boolean = false;
@@ -147,7 +146,6 @@
 			{disabled}
 			min={min ?? undefined}
 			max={max ?? undefined}
-			{autofocus}
 			{autocomplete}
 			placeholder={placeholder || (type === "password" ? "********" : "")}
 			{autocapitalize}
