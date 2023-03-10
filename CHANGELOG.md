@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - [Open Graph](https://ogp.me) tags for social media embeds.
+- Autofocus the title field in the Create Transaction screen.
 
 ### Fixed
 - Text fields stealing focus from one another (especially in the Create Transaction screen).

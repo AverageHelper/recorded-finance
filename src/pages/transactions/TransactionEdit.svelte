@@ -53,6 +53,8 @@
 	let amount = zeroDinero;
 	let isReconciled = false;
 
+	let titleField: TextField | undefined;
+
 	let isAskingToDelete = false;
 	$: isExpense = isNegative(amount) || isZero(amount);
 	$: hasAttachments = (ogTransaction?.attachmentIds.length ?? 0) > 0;
@@ -82,6 +84,9 @@
 	$: createdAt.setSeconds(0, 0);
 
 	onMount(() => {
+		// Autofocus title field
+		titleField?.focus();
+
 		// Modal invocations call this. This is good.
 
 		title = ogTransaction?.title ?? title;
@@ -235,6 +240,7 @@
 	<p>Account: {account.title ?? $_("accounts.unknown-title")}</p>
 
 	<TextField
+		bind:this={titleField}
 		value={title}
 		label={$_("transactions.meta.title").toLocaleLowerCase($locale.code)}
 		placeholder={$_("example.income-transaction-title")}
