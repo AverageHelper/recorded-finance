@@ -1,18 +1,12 @@
 <script lang="ts">
 	import type { Coordinate, Location, PendingLocation } from "../../model/Location";
-	import type { IPLocateResult } from "../../transport";
 	import { _ } from "../../i18n";
-	import { allLocations, handleError, locations, preferences } from "../../store";
+	import { allLocations, locations } from "../../store";
 	import { createEventDispatcher, tick } from "svelte";
-	import { fetchLocationData } from "../../transport";
-	import { Link } from "svelte-navigator";
 	import { location as newLocation } from "../../model/Location";
 	import { settingsPath } from "../../router";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
 	import Fuse from "fuse.js";
-	import I18N from "../../components/I18N.svelte";
-	import List from "../../components/List.svelte";
-	import LocationIcon from "../../icons/Location.svelte";
 	import LocationListItem from "./LocationListItem.svelte";
 	import TextField from "../../components/inputs/TextField.svelte";
 
@@ -25,7 +19,6 @@
 	 *
 	 * Actions:
 	 * - Set text as a location
-	 * - Set current location as a location
 	 * - Set a nearby location as a location
 	 * - Clear location
 	 */
@@ -37,11 +30,8 @@
 	export let value: PendingLocation | null = null;
 
 	let titleField: TextField | undefined;
-	let recentsList: List | undefined;
+	let recentsList: HTMLUListElement | undefined;
 	let hasFocus = false;
-
-	$: locationPreference = $preferences.locationSensitivity;
-	$: mayGetLocation = locationPreference !== "none";
 
 	$: searchClient = new Fuse($allLocations, { keys: ["title", "subtitle"] });
 	$: shouldSearch = selectedLocationId === null && newLocationTitle !== "";
@@ -93,30 +83,6 @@
 		hasFocus = false;
 	}
 
-	async function getLocation(event: CustomEvent<MouseEvent>) {
-		event.preventDefault();
-		if (!mayGetLocation) return;
-
-		// We don't yet differentiate between "vague" and "specific" granularity.
-		// Just get what info the user's IP address will tell us. (Might be real accurate if IPv6, not sure)
-		let data: IPLocateResult;
-		try {
-			data = await fetchLocationData();
-		} catch (error) {
-			// CORS errors, and possibly others, throw an empty string. Not sure why.
-			handleError(((error as null | undefined) ?? "") || $_("error.network.unknown"));
-			return;
-		}
-
-		const { city, country, latitude: lat, longitude: lng } = data;
-
-		newLocationTitle = city ?? $_("input.location.unknown");
-		newLocationSubtitle = country ?? "";
-		newLocationCoordinates = lat === null || lng === null ? null : { lat, lng };
-		await tick();
-		updateModelValue();
-	}
-
 	function clear(event: CustomEvent<MouseEvent>) {
 		event.preventDefault();
 		newLocationTitle = "";
@@ -149,9 +115,8 @@
 	}
 </script>
 
-<!-- svelte-ignore a11y-label-has-associated-control -->
 <label on:focusin={updateFocusState} on:focusout={updateFocusState}>
-	<div class="container-d1881526">
+	<div class="container">
 		<div class="fields">
 			<TextField
 				bind:this={titleField}
@@ -171,7 +136,7 @@
 		</div>
 
 		{#if hasFocus}
-			<List bind:this={recentsList}>
+			<ul bind:this={recentsList}>
 				{#if newLocationTitle}
 					<li>
 						<LocationListItem location={textLocationPreview} quote />
@@ -190,7 +155,7 @@
 						<LocationListItem {location} />
 					</li>
 				{/each}
-			</List>
+			</ul>
 		{/if}
 
 		{#if !!selectedLocationId || !!title || !!subtitle || !!coordinate}
@@ -198,41 +163,32 @@
 				<span>X</span>
 			</ActionButton>
 		{/if}
-		{#if mayGetLocation && !selectedLocationId && !title}
-			<ActionButton kind="info" title={$_("actions.location.get-current")} on:click={getLocation}>
-				<LocationIcon />
-			</ActionButton>
-		{/if}
 	</div>
-
-	{#if !mayGetLocation}
-		<p
-			class="disclaimer"
-			on:keyup|stopPropagation|preventDefault
-			on:click|stopPropagation|preventDefault
-		>
-			<I18N keypath="input.locations.disclaimer">
-				<!-- settings -->
-				<Link to={settingsRoute}>{$_("app.nav.settings")}</Link>
-			</I18N>
-		</p>
-	{/if}
 </label>
 
-<style lang="scss" global>
+<style lang="scss">
 	@use "styles/colors" as *;
 
-	.container-d1881526 {
+	label {
+		width: 100%;
+	}
+
+	.container {
 		position: relative;
 		display: flex;
 		flex-flow: row nowrap;
+		padding: 0;
 
 		> .fields {
 			display: flex;
 			flex-flow: column nowrap;
 			width: 100%;
 
-			:global(ul) {
+			ul {
+				list-style: none;
+				padding: 0;
+				max-width: 36em;
+				margin: 0 auto;
 				position: absolute;
 				top: 4.4em;
 				left: 0;
@@ -245,14 +201,14 @@
 					background-color: color($clear);
 					padding: 4pt;
 
-					.icon {
+					:global(.icon) {
 						margin-right: 4pt;
 					}
 
 					&:focus {
 						background-color: color($fill);
 
-						> .location {
+						> :global(.location) {
 							background-color: color($fill);
 						}
 					}
@@ -265,11 +221,5 @@
 			margin-top: 1.8em;
 			height: 100%;
 		}
-	}
-
-	.disclaimer {
-		font-size: small;
-		margin-top: 0;
-		padding-top: 0;
 	}
 </style>
