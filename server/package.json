@@ -1,6 +1,8 @@
 {
 	"name": "recorded-finance-server",
 	"version": "0.8.7",
+	"license": "GPL-3.0",
+	"description": "A simple data storage server. Clients are encouraged to implement E2EE before sending data here.",
 	"scripts": {
 		"start": "./node_modules/.bin/vercel pull && npm run build:client && ./node_modules/.bin/concurrently -s first -kn VERCEL,APP \"npm run vercel:dev -- --color\" \"sleep 3 && npm run dev:client\"",
 		"start:express": "node . | ./node_modules/.bin/bunyan -o short",
