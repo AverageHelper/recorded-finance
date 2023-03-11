@@ -115,55 +115,53 @@
 	}
 </script>
 
-<label on:focusin={updateFocusState} on:focusout={updateFocusState}>
-	<div class="container">
-		<div class="fields">
+<label on:focusin={updateFocusState} on:focusout={updateFocusState} on:blur={updateFocusState}>
+	<div class="fields {hasFocus ? 'open' : ''}">
+		<TextField
+			bind:this={titleField}
+			value={title}
+			label={title ? $_("input.location.title") : $_("input.location.self")}
+			placeholder={$_("example.business-name")}
+			on:input={updateTitle}
+		/>
+		{#if title || subtitle}
 			<TextField
-				bind:this={titleField}
-				value={title}
-				label={title ? $_("input.location.title") : $_("input.location.self")}
-				placeholder={$_("example.business-name")}
-				on:input={updateTitle}
+				value={subtitle}
+				label={$_("input.location.subtitle")}
+				placeholder={$_("example.city-country")}
+				on:input={updateSubtitle}
 			/>
-			{#if title || subtitle}
-				<TextField
-					value={subtitle}
-					label={$_("input.location.subtitle")}
-					placeholder={$_("example.city-country")}
-					on:input={updateSubtitle}
-				/>
-			{/if}
-		</div>
-
-		{#if hasFocus}
-			<ul bind:this={recentsList}>
-				{#if newLocationTitle}
-					<li>
-						<LocationListItem location={textLocationPreview} quote />
-					</li>
-				{/if}
-				{#if recentLocations.length > 0}
-					<li tabindex="-1">
-						<strong>{$_("input.locations.recent")}</strong>
-					</li>
-				{/if}
-				{#each recentLocations as location (location.id)}
-					<li
-						on:keyup|stopPropagation|preventDefault={e => onLocationSelect(location, e)}
-						on:click|stopPropagation|preventDefault={() => onLocationSelect(location)}
-					>
-						<LocationListItem {location} />
-					</li>
-				{/each}
-			</ul>
-		{/if}
-
-		{#if !!selectedLocationId || !!title || !!subtitle || !!coordinate}
-			<ActionButton kind="destructive" title={$_("actions.location.clear")} on:click={clear}>
-				<span>X</span>
-			</ActionButton>
 		{/if}
 	</div>
+
+	{#if hasFocus}
+		<ul bind:this={recentsList}>
+			{#if newLocationTitle}
+				<li>
+					<LocationListItem location={textLocationPreview} quote />
+				</li>
+			{/if}
+			{#if recentLocations.length > 0}
+				<li>
+					<strong>{$_("input.locations.recent")}</strong>
+				</li>
+			{/if}
+			{#each recentLocations as location (location.id)}
+				<li
+					on:keyup|stopPropagation|preventDefault={e => onLocationSelect(location, e)}
+					on:click|stopPropagation|preventDefault={() => onLocationSelect(location)}
+				>
+					<LocationListItem {location} />
+				</li>
+			{/each}
+		</ul>
+	{/if}
+
+	{#if !!selectedLocationId || !!title || !!subtitle || !!coordinate}
+		<ActionButton kind="destructive" title={$_("actions.location.clear")} on:click={clear}>
+			<span>X</span>
+		</ActionButton>
+	{/if}
 </label>
 
 <style lang="scss">
@@ -171,12 +169,8 @@
 
 	label {
 		width: 100%;
-	}
-
-	.container {
-		position: relative;
 		display: flex;
-		flex-flow: row nowrap;
+		flex-flow: row wrap;
 		padding: 0;
 
 		> .fields {
@@ -184,35 +178,25 @@
 			flex-flow: column nowrap;
 			width: 100%;
 
-			ul {
-				list-style: none;
-				padding: 0;
-				max-width: 36em;
-				margin: 0 auto;
-				position: absolute;
-				top: 4.4em;
-				left: 0;
-				z-index: 100;
-				width: calc(100% - 44pt - 8pt);
-				border-radius: 0 0 4pt 4pt;
-				background-color: color($secondary-fill);
+			&.open :global(.text-field:last-of-type input) {
+				border-bottom-left-radius: 0;
+				border-bottom-right-radius: 0;
+			}
+		}
 
-				> li {
-					background-color: color($clear);
-					padding: 4pt;
+		ul {
+			list-style: none;
+			padding: 0;
+			margin-bottom: 8pt;
+			margin-top: -12pt;
+			max-width: initial;
+			width: 100%;
+			z-index: 100;
+			border-radius: 0 0 0.375rem 0.375rem;
+			background-color: color($secondary-fill);
 
-					:global(.icon) {
-						margin-right: 4pt;
-					}
-
-					&:focus {
-						background-color: color($fill);
-
-						> :global(.location) {
-							background-color: color($fill);
-						}
-					}
-				}
+			> li {
+				padding: 4pt;
 			}
 		}
 

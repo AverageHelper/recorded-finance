@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Text fields stealing focus from one another (especially in the Create Transaction screen).
+- The location dropdown is no longer utterly broken.
 
 ## [0.17.0] - 2023-03-03
 ### Added
