@@ -5,7 +5,6 @@
 	import DeleteData from "./DeleteData.svelte";
 	import Exports from "./Exports.svelte";
 	import Import from "./Import.svelte";
-	import LocationPrefForm from "./LocationPrefForm.svelte";
 	import MfaForm from "./MfaForm.svelte";
 </script>
 
@@ -14,8 +13,6 @@
 		<h1>{$_("settings.heading")}</h1>
 	</div>
 
-	<LocationPrefForm />
-	<hr />
 	<MfaForm />
 	<hr />
 	<ChangeAccountIdForm />

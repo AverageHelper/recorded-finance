@@ -130,7 +130,7 @@
 </script>
 
 {#if transaction}
-	<main class="content main-424352d2">
+	<main class="content main">
 		{#if transaction.title || location}
 			<div class="heading">
 				<h1>&quot;{transaction.title ?? location?.title}&quot;</h1>
@@ -242,7 +242,7 @@
 		<FileInput on:input={onFileReceived}>{$_("transactions.attach-file")}</FileInput>
 	</main>
 {:else}
-	<main class="content main-424352d2">
+	<main class="content main">
 		<!-- We should never get here, but in case we do, for debugging: -->
 		<h1>{$_("debug.something-is-wrong")}</h1>
 		<p>{$_("debug.account-but-no-transaction")}</p>
@@ -281,17 +281,30 @@
 	on:no={cancelDeleteFile}
 />
 
-<style lang="scss" global>
+<style lang="scss">
 	@use "styles/colors" as *;
 
-	.content.main-424352d2 {
+	.content.main {
 		max-width: 400pt;
 		margin: 0 auto;
 		margin-bottom: 58pt;
 
-		.heading h1 {
-			margin-left: 0;
-			margin-right: 0;
+		.heading {
+			display: flex;
+			flex-flow: row nowrap;
+			max-width: 36em;
+			margin: 1em auto;
+
+			h1 {
+				margin-left: 0;
+				margin-right: 0;
+			}
+
+			:global(.edit-button) {
+				position: relative;
+				top: 8pt;
+				margin: auto 0;
+			}
 		}
 
 		.amount {

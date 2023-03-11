@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.18.0] - 2023-03-11
+### Added
+- [Open Graph](https://ogp.me) tags for social media embeds.
+- Autofocus the title field in the Create Transaction screen.
+
+### Removed
+- Removed geolocation look-up logic (IPLocate calls, etc.) for now, trying to simplify things. Will re-evaluate how or if to do geolocation stuff later on.
+
+### Fixed
+- Text fields no longer steal focus from one another (especially in the Create Transaction screen).
+- The location dropdown is no longer utterly broken.
+
 ## [0.17.0] - 2023-03-03
 ### Added
 - Loading spinners for Account and Transaction lists.
@@ -441,6 +453,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial commit
 
+[0.18.0]: https://github.com/RecordedFinance/recorded-finance/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.8...v0.17.0
 [0.16.8]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.7...v0.16.8
 [0.16.7]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.6...v0.16.7

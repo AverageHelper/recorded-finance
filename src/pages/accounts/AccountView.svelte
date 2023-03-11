@@ -84,7 +84,7 @@
 
 <main class="content account-view">
 	<div class="heading">
-		<div class="account-title-1dfc4112">
+		<div class="account-title">
 			<h1>{account?.title || $_("accounts.noun")}</h1>
 			<EditButton>
 				<AccountEdit
@@ -162,7 +162,7 @@
 	/>
 {/if}
 
-<style lang="scss" global>
+<style lang="scss">
 	@use "styles/colors" as *;
 
 	.heading {
@@ -172,7 +172,7 @@
 		max-width: 36em;
 		margin: 1em auto;
 
-		> .account-title-1dfc4112 {
+		> .account-title {
 			display: flex;
 			flex-flow: row nowrap;
 			align-items: center;
@@ -190,11 +190,11 @@
 				height: 22pt;
 				min-width: 22pt;
 				width: 22pt;
-				margin-left: 8pt;
+				margin: auto 0;
+			}
 
-				.icon {
-					height: 14pt;
-				}
+			:global(button .icon) {
+				height: 14pt;
 			}
 		}
 
@@ -217,12 +217,10 @@
 	}
 
 	.account-view {
-		:global(ul) {
-			.footer {
-				padding-top: 0.5em;
-				user-select: none;
-				color: color($secondary-label);
-			}
+		:global(ul .footer) {
+			padding-top: 0.5em;
+			user-select: none;
+			color: color($secondary-label);
 		}
 	}
 </style>
