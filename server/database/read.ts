@@ -74,6 +74,7 @@ export async function countFileBlobsForUser(userId: string): Promise<number> {
  * Resolves to `true` if the given token exists in the database.
  */
 export async function jwtExistsInDatabase(token: string): Promise<boolean> {
+	// FIXME: This sometimes throws when Prisma can't reach the database server. We should probs do a retry in that case.
 	const result = await dataSource().expiredJwt.findUnique({
 		where: { token },
 		select: { token: true },

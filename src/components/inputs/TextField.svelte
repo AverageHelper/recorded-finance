@@ -87,6 +87,9 @@
 	export let required: boolean = false;
 	export let showsRequired: boolean = true;
 	export let accentColor: ColorID | "label" = "label";
+	export let invalid: boolean = false;
+	export let valid: boolean = false;
+	export let feedback: string | undefined = undefined;
 
 	let root: HTMLDivElement | undefined;
 	let input: HTMLInputElement | undefined;
@@ -130,6 +133,10 @@
 		input?.focus();
 	}
 
+	export function blur(): void {
+		input?.blur();
+	}
+
 	export function contains(node: Node | null): boolean {
 		return root?.contains(node) ?? false;
 	}
@@ -144,6 +151,9 @@
 			{size}
 			{maxlength}
 			{disabled}
+			{valid}
+			{invalid}
+			{feedback}
 			min={min ?? undefined}
 			max={max ?? undefined}
 			{autocomplete}

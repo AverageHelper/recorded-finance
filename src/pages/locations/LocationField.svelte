@@ -3,25 +3,11 @@
 	import { _ } from "../../i18n";
 	import { allLocations, locations } from "../../store";
 	import { createEventDispatcher, tick } from "svelte";
-	import { location as newLocation } from "../../model/Location";
-	import { settingsPath } from "../../router";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
 	import Fuse from "fuse.js";
-	import LocationListItem from "./LocationListItem.svelte";
+	import LocationIcon from "../../icons/Location.svelte";
 	import TextField from "../../components/inputs/TextField.svelte";
-
-	/*
-	 * Cases:
-	 * - No location (empty text field)
-	 * - Location selected (text in field, with an icon, creates an entry if doesn't exist already, updates transaction)
-	 * - Modifying selection (text in field, with a different icon)
-	 * - Choosing a recent location (hopping through the dropdown)
-	 *
-	 * Actions:
-	 * - Set text as a location
-	 * - Set a nearby location as a location
-	 * - Clear location
-	 */
+	import TextIcon from "../../icons/Text.svelte";
 
 	const dispatch = createEventDispatcher<{
 		change: PendingLocation | null;
@@ -31,7 +17,14 @@
 
 	let titleField: TextField | undefined;
 	let recentsList: HTMLUListElement | undefined;
+	let root: HTMLLabelElement | undefined;
 	let hasFocus = false;
+	let arrowCounter = -1;
+
+	$: {
+		hasFocus; // Changed focus
+		arrowCounter = -1;
+	}
 
 	$: searchClient = new Fuse($allLocations, { keys: ["title", "subtitle"] });
 	$: shouldSearch = selectedLocationId === null && newLocationTitle !== "";
@@ -44,14 +37,6 @@
 	let newLocationSubtitle = "";
 	let newLocationCoordinates: Coordinate | null = null;
 
-	$: textLocationPreview = newLocation({
-		id: "sample",
-		title: newLocationTitle,
-		subtitle: null,
-		coordinate: null,
-		lastUsed: new Date(),
-	});
-
 	$: selectedLocationId = (value?.id ?? "") || null;
 	$: selectedLocation = selectedLocationId !== null ? $locations[selectedLocationId] ?? null : null;
 
@@ -59,28 +44,51 @@
 	$: subtitle = newLocationSubtitle || selectedLocation?.subtitle || "";
 	$: coordinate = newLocationCoordinates ?? selectedLocation?.coordinate ?? null;
 
-	const settingsRoute = settingsPath();
+	function onKeyDown({ detail: event }: CustomEvent<KeyboardEvent>): void {
+		switch (event.code) {
+			case "ArrowDown":
+				if (arrowCounter < recentLocations.length) {
+					arrowCounter += 1;
+				}
+				break;
+			case "ArrowUp":
+				if (arrowCounter > 0) {
+					arrowCounter -= 1;
+				}
+				break;
+			case "Enter": {
+				event.preventDefault();
+				if (arrowCounter === -1) {
+					arrowCounter = 0; // Default to the first item
+				}
+				const location = recentLocations[arrowCounter];
+				if (location) onLocationSelect(location);
+				break;
+			}
+			// case "Escape": // This no work
+			// 	event.preventDefault();
+			// 	event.stopPropagation();
+			// 	hasFocus = false;
+			// 	break;
+		}
+	}
 
 	async function updateFocusState() {
-		await tick(); // Wait until new focus is resolved before we check again
-		hasFocus =
-			(titleField?.contains(document.activeElement) ?? false) ||
-			(recentsList?.contains(document.activeElement) ?? false);
+		await tick(); // Wait until new focus is resolved before we check
+		hasFocus = root?.contains(document.activeElement) ?? false;
 	}
 
 	async function onLocationSelect(location: Location, event?: KeyboardEvent) {
 		// if event is given, make sure space or enter key
-		if (event && event.code !== "Enter" && event.code !== "Space") return;
+		if (event && event.code !== "Enter") return;
 
 		// Inform parent of our selection
 		newLocationTitle = "";
 		newLocationSubtitle = "";
 		newLocationCoordinates = null;
-		await tick();
-		updateModelValue(location);
-
-		// Hide the recents list for now, since we just got this entry from there
+		arrowCounter = -1;
 		hasFocus = false;
+		await updateModelValue(location);
 	}
 
 	function clear(event: CustomEvent<MouseEvent>) {
@@ -88,10 +96,13 @@
 		newLocationTitle = "";
 		newLocationSubtitle = "";
 		newLocationCoordinates = null;
+		hasFocus = false;
+		arrowCounter = -1;
 		dispatch("change", null);
 	}
 
-	function updateModelValue(extantRecord?: Location) {
+	async function updateModelValue(extantRecord?: Location) {
+		await tick();
 		const record: PendingLocation = extantRecord ?? {
 			id: null,
 			title,
@@ -104,25 +115,31 @@
 
 	async function updateTitle(event: CustomEvent<string>) {
 		newLocationTitle = event.detail;
-		await tick();
-		updateModelValue();
+		arrowCounter = -1;
+		await updateModelValue();
 	}
 
 	async function updateSubtitle(event: CustomEvent<string>) {
 		newLocationSubtitle = event.detail;
-		await tick();
-		updateModelValue();
+		arrowCounter = -1;
+		await updateModelValue();
 	}
 </script>
 
-<label on:focusin={updateFocusState} on:focusout={updateFocusState} on:blur={updateFocusState}>
-	<div class="fields {hasFocus ? 'open' : ''}">
+<label
+	bind:this={root}
+	on:focusin={updateFocusState}
+	on:focusout={updateFocusState}
+	on:blur={updateFocusState}
+>
+	<div class="fields{hasFocus ? ' open' : ''}{title || subtitle ? ' plural' : ''}">
 		<TextField
 			bind:this={titleField}
 			value={title}
 			label={title ? $_("input.location.title") : $_("input.location.self")}
 			placeholder={$_("example.business-name")}
 			on:input={updateTitle}
+			on:keydown={onKeyDown}
 		/>
 		{#if title || subtitle}
 			<TextField
@@ -130,35 +147,37 @@
 				label={$_("input.location.subtitle")}
 				placeholder={$_("example.city-country")}
 				on:input={updateSubtitle}
+				on:keydown={onKeyDown}
 			/>
 		{/if}
-	</div>
 
-	{#if hasFocus}
-		<ul bind:this={recentsList}>
-			{#if newLocationTitle}
-				<li>
-					<LocationListItem location={textLocationPreview} quote />
-				</li>
-			{/if}
+		<ul bind:this={recentsList} class={hasFocus ? "" : "hidden"}>
 			{#if recentLocations.length > 0}
-				<li>
+				<li class="heading">
 					<strong>{$_("input.locations.recent")}</strong>
 				</li>
+			{:else if newLocationTitle}
+				<li>{$_("common.no-search-results")}</li>
 			{/if}
-			{#each recentLocations as location (location.id)}
+			{#each recentLocations as location, i (location.id)}
 				<li
-					on:keyup|stopPropagation|preventDefault={e => onLocationSelect(location, e)}
-					on:click|stopPropagation|preventDefault={() => onLocationSelect(location)}
+					class="location{i === arrowCounter ? ' is-active' : ''}"
+					on:click={() => onLocationSelect(location)}
+					on:keydown={e => onLocationSelect(location, e)}
 				>
-					<LocationListItem {location} />
+					{#if location.coordinate}
+						<LocationIcon />
+					{:else}
+						<TextIcon />
+					{/if}
+					<span>{location.title}</span>
 				</li>
 			{/each}
 		</ul>
-	{/if}
+	</div>
 
 	{#if !!selectedLocationId || !!title || !!subtitle || !!coordinate}
-		<ActionButton kind="destructive" title={$_("actions.location.clear")} on:click={clear}>
+		<ActionButton kind="info" title={$_("actions.location.clear")} on:click={clear}>
 			<span>X</span>
 		</ActionButton>
 	{/if}
@@ -170,7 +189,7 @@
 	label {
 		width: 100%;
 		display: flex;
-		flex-flow: row wrap;
+		flex-flow: row nowrap;
 		padding: 0;
 
 		> .fields {
@@ -178,31 +197,75 @@
 			flex-flow: column nowrap;
 			width: 100%;
 
-			&.open :global(.text-field:last-of-type input) {
+			// Remove space between title and subtitle fields
+			&.plural :global(.text-field:first-of-type .form-floating) {
+				margin-bottom: 0 !important; // because Bootstrap also uses !important, we gotta override
+			}
+
+			// Title should not have bottom radius
+			&.plural :global(.text-field:first-of-type input),
+			&.open :global(.text-field:first-of-type input) {
 				border-bottom-left-radius: 0;
 				border-bottom-right-radius: 0;
+			}
+
+			// Subtitle field should not have top radius or top border
+			&.plural :global(.text-field:last-of-type input) {
+				border-top-left-radius: 0;
+				border-top-right-radius: 0;
+				border-top: none;
+			}
+
+			// Subtitle field should not have any radius when sandwiched
+			&.open.plural :global(.text-field:last-of-type input) {
+				border-radius: 0;
 			}
 		}
 
 		ul {
 			list-style: none;
 			padding: 0;
-			margin-bottom: 8pt;
+			margin-bottom: 14pt;
 			margin-top: -12pt;
 			max-width: initial;
 			width: 100%;
 			z-index: 100;
 			border-radius: 0 0 0.375rem 0.375rem;
-			background-color: color($secondary-fill);
+			border: 1pt solid color($separator);
+			border-top: none;
+
+			&.hidden {
+				// Hide the list, but keep interactive, so that click interactions work
+				height: 0;
+				opacity: 0;
+			}
 
 			> li {
-				padding: 4pt;
+				&.heading {
+					padding: 4pt;
+					padding-left: 8pt;
+					padding-top: 8pt;
+				}
+
+				&.location {
+					display: block;
+					padding: 8pt;
+					color: color($label);
+					text-decoration: none;
+					cursor: pointer;
+
+					&.is-active,
+					&:hover {
+						background-color: color($fill);
+					}
+				}
 			}
 		}
 
 		:global(button) {
 			margin: 0 0 8pt 8pt;
-			margin-top: 1.8em;
+			margin-top: 2.3em; // Center between the two fields
+			margin-left: 8pt;
 			height: 100%;
 		}
 	}
