@@ -1,3 +1,4 @@
+import type { UID } from "../database";
 import { NotFoundError } from "../errors/NotFoundError";
 
 /**
@@ -8,8 +9,8 @@ import { NotFoundError } from "../errors/NotFoundError";
  */
 export function pathSegments<K extends string>(
 	req: APIRequest,
-	...keys: Array<K>
-): Record<K, string> {
+	...keys: ReadonlyArray<K>
+): Record<K, string> & { uid?: UID } {
 	const result: Partial<Record<K, string>> = {};
 
 	for (const key of new Set(keys)) {
@@ -17,7 +18,7 @@ export function pathSegments<K extends string>(
 			"params" in req
 				? req.params[key] // Express
 				: req.query[key]; // Vercel
-		if (query === undefined) throw new NotFoundError();
+		if (query === undefined || query === "") throw new NotFoundError();
 		if (Array.isArray(query)) throw new NotFoundError();
 		result[key] = query;
 	}

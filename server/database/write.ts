@@ -1,4 +1,4 @@
-import type { AnyData, DataItem, DataItemKey, User, UserKeys } from "./schemas";
+import type { AnyData, DataItem, DataItemKey, TOTPToken, UID, User, UserKeys } from "./schemas";
 import type { CollectionReference, DocumentReference } from "./references";
 import type { FileData, PrismaPromise, User as DBUser } from "@prisma/client";
 import { assertSchema, isDataItemKey, isNonEmptyArray, user as userSchema } from "./schemas";
@@ -42,7 +42,7 @@ export function upsertFileData(
  *
  * @returns a `Promise` that resolves with the number of bytes deleted.
  */
-export async function destroyFileData(userId: string, fileName: string): Promise<number> {
+export async function destroyFileData(userId: UID, fileName: string): Promise<number> {
 	const file = await dataSource().fileData.delete({
 		where: { userId_fileName: { userId, fileName } },
 		select: { size: true },
@@ -59,7 +59,7 @@ export async function destroyFileData(userId: string, fileName: string): Promise
  * window. Values will be purged sometime after that expiration
  * window elapses.
  */
-export async function addJwtToDatabase(token: string): Promise<void> {
+export async function addJwtToDatabase(token: TOTPToken): Promise<void> {
 	await dataSource().expiredJwt.upsert({
 		where: { token },
 		update: {}, // nop if the value already exists
@@ -91,8 +91,8 @@ export function upsertUser(properties: Required<User>): PrismaPromise<Pick<DBUse
 	});
 }
 
-export async function destroyUser(uid: string): Promise<void> {
-	if (!uid) throw new TypeError("uid was empty");
+export async function destroyUser(uid: UID): Promise<void> {
+	if (uid === "") throw new TypeError("uid was empty");
 
 	await dataSource().dataItem.deleteMany({ where: { userId: uid } });
 	await dataSource().userKeys.deleteMany({ where: { userId: uid } });
@@ -104,7 +104,7 @@ export interface DocUpdate {
 	data: AnyData;
 }
 
-export async function upsertDbDocs(updates: Array<DocUpdate>): Promise<void> {
+export async function upsertDbDocs(updates: ReadonlyArray<DocUpdate>): Promise<void> {
 	if (!isNonEmptyArray(updates)) return;
 
 	// Assert same UID on all refs
@@ -195,7 +195,7 @@ export async function upsertDbDocs(updates: Array<DocUpdate>): Promise<void> {
 	]);
 }
 
-export async function deleteDbDocs(refs: NonEmptyArray<DocumentReference>): Promise<void> {
+export async function deleteDbDocs(refs: ReadonlyNonEmptyArray<DocumentReference>): Promise<void> {
 	// Assert same UID on all refs
 	const uid = refs[0].uid;
 	if (!refs.every(u => u.uid === uid))

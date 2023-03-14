@@ -1,4 +1,17 @@
-import type { AnyData, DataItem, Identified, IdentifiedDataItem, User, UserKeys } from "./schemas";
+import type {
+	AESCipherKey,
+	AnyData,
+	DataItem,
+	Hash,
+	Identified,
+	IdentifiedDataItem,
+	Salt,
+	TOTPSeed,
+	TOTPToken,
+	UID,
+	User,
+	UserKeys,
+} from "./schemas";
 import type { CollectionReference, DocumentReference } from "./references";
 import type { FileData } from "@prisma/client";
 import { computeRequiredAddtlAuth } from "./schemas";
@@ -14,7 +27,7 @@ interface UserStats {
 	usedSpace: number;
 }
 
-export async function statsForUser(uid: string): Promise<UserStats> {
+export async function statsForUser(uid: UID): Promise<UserStats> {
 	const totalSpace = Math.ceil(maxSpacePerUser);
 	const usedSpace = await totalSizeOfFilesForUser(uid);
 
@@ -25,14 +38,15 @@ export async function numberOfUsers(): Promise<number> {
 	return await dataSource().user.count();
 }
 
-export async function listAllUserIds(): Promise<Array<string>> {
+export async function listAllUserIds(): Promise<Array<UID>> {
+	// Can an empty string even be a value for a primary key?
 	const users = await dataSource().user.findMany({ select: { uid: true } });
-	return users.map(({ uid }) => uid);
+	return users.map(({ uid }) => uid as UID).filter(uid => uid);
 }
 
 // MARK: - Pseudo Large-file Storage
 
-export async function fetchFileData(userId: string, fileName: string): Promise<FileData | null> {
+export async function fetchFileData(userId: UID, fileName: string): Promise<FileData | null> {
 	return await dataSource().fileData.findUnique({
 		where: { userId_fileName: { userId, fileName } },
 	});
@@ -41,7 +55,8 @@ export async function fetchFileData(userId: string, fileName: string): Promise<F
 /**
  * Returns the total number of bytes that comprise a given file.
  */
-export async function totalSizeOfFile(userId: string, fileName: string): Promise<number | null> {
+// TODO: Expose this on the API
+export async function totalSizeOfFile(userId: UID, fileName: string): Promise<number | null> {
 	const file = await dataSource().fileData.findUnique({
 		where: { userId_fileName: { userId, fileName } },
 		select: { size: true },
@@ -53,7 +68,7 @@ export async function totalSizeOfFile(userId: string, fileName: string): Promise
 /**
  * Returns the number of bytes of the user's stored files.
  */
-export async function totalSizeOfFilesForUser(userId: string): Promise<number> {
+export async function totalSizeOfFilesForUser(userId: UID): Promise<number> {
 	const files = await dataSource().fileData.findMany({
 		where: { userId },
 		select: { size: true },
@@ -64,7 +79,7 @@ export async function totalSizeOfFilesForUser(userId: string): Promise<number> {
 /**
  * Returns the number of files stored for the user.
  */
-export async function countFileBlobsForUser(userId: string): Promise<number> {
+export async function countFileBlobsForUser(userId: UID): Promise<number> {
 	return await dataSource().fileData.count({ where: { userId } });
 }
 
@@ -73,7 +88,7 @@ export async function countFileBlobsForUser(userId: string): Promise<number> {
 /**
  * Resolves to `true` if the given token exists in the database.
  */
-export async function jwtExistsInDatabase(token: string): Promise<boolean> {
+export async function jwtExistsInDatabase(token: TOTPToken): Promise<boolean> {
 	// FIXME: This sometimes throws when Prisma can't reach the database server. We should probs do a retry in that case.
 	const result = await dataSource().expiredJwt.findUnique({
 		where: { token },
@@ -145,8 +160,9 @@ export async function fetchDbCollection(
 			).map(k => ({
 				...k,
 				_id: k.userId,
+				passSalt: k.passSalt as Salt,
 				oldDekMaterial: k.oldDekMaterial ?? undefined,
-				oldPassSalt: k.oldPassSalt ?? undefined,
+				oldPassSalt: (k.oldPassSalt as Salt | null) ?? undefined,
 			}));
 		default:
 			throw new UnreachableCaseError(ref.id);
@@ -166,7 +182,7 @@ async function findUserWithProperties(
 	if (first === null) return first;
 
 	// Upsert the cipher key if it doesn't exist
-	let pubnubCipherKey = first.pubnubCipherKey;
+	let pubnubCipherKey = first.pubnubCipherKey as AESCipherKey | null;
 	if (pubnubCipherKey === null) {
 		pubnubCipherKey = await generateAESCipherKey();
 		await dataSource().user.update({
@@ -175,11 +191,23 @@ async function findUserWithProperties(
 		});
 	}
 
-	// If the user has no pubnub_cipher_key, upsert one
-	return computeRequiredAddtlAuth({ ...first, pubnubCipherKey });
+	const passwordHash = first.passwordHash as Hash;
+	const passwordSalt = first.passwordSalt as Salt;
+	const mfaRecoverySeed = first.mfaRecoverySeed as TOTPSeed | null;
+	const totpSeed = first.totpSeed as TOTPSeed | null;
+
+	return computeRequiredAddtlAuth({
+		...first,
+		uid: first.uid as UID,
+		passwordHash,
+		passwordSalt,
+		mfaRecoverySeed: mfaRecoverySeed === "" ? null : mfaRecoverySeed,
+		totpSeed: totpSeed === "" ? null : totpSeed,
+		pubnubCipherKey,
+	});
 }
 
-export async function userWithUid(uid: string): Promise<User | null> {
+export async function userWithUid(uid: UID): Promise<User | null> {
 	// Find first user whose UID matches
 	return await findUserWithProperties({ uid });
 }
@@ -243,8 +271,8 @@ export async function fetchDbDoc(ref: DocumentReference): Promise<Snapshot> {
 				_id: result.userId,
 				dekMaterial: result.dekMaterial,
 				oldDekMaterial: result.oldDekMaterial ?? undefined,
-				oldPassSalt: result.oldPassSalt ?? undefined,
-				passSalt: result.passSalt,
+				oldPassSalt: (result.oldPassSalt as Salt | null) ?? undefined,
+				passSalt: result.passSalt as Salt,
 			};
 			logger.debug(`Got document at ${ref.path}`);
 			return { ref, data };
@@ -261,7 +289,7 @@ export async function fetchDbDoc(ref: DocumentReference): Promise<Snapshot> {
  * @returns an array containing the given references and their associated data.
  */
 export async function fetchDbDocs(
-	refs: NonEmptyArray<DocumentReference>
+	refs: ReadonlyNonEmptyArray<DocumentReference>
 ): Promise<NonEmptyArray<Snapshot>> {
 	// Assert same UID on all refs
 	const uid = refs[0].uid;

@@ -12,8 +12,8 @@ import { publishWriteForRef } from "../auth/pubnub";
 
 export type Unsubscribe = () => void;
 
-type SDataChangeCallback = (newData: IdentifiedDataItem | null) => void;
-type PDataChangeCallback = (newData: Array<IdentifiedDataItem>) => void;
+type SDataChangeCallback = (newData: Readonly<IdentifiedDataItem> | null) => void;
+type PDataChangeCallback = (newData: ReadonlyArray<Readonly<IdentifiedDataItem>>) => void;
 
 interface _Watcher {
 	plurality: "single" | "plural";
@@ -104,7 +104,7 @@ export function watchUpdatesToCollection(
 
 async function informWatchersForDocument(
 	ref: DocumentReference,
-	newItem: IdentifiedDataItem | null
+	newItem: Readonly<IdentifiedDataItem> | null
 ): Promise<void> {
 	const docListeners = Array.from(documentWatchers.values()).filter(
 		w => w.id === ref.id && w.collectionId === ref.parent.id
@@ -128,7 +128,7 @@ async function informWatchersForDocument(
 
 async function informWatchersForCollection(
 	ref: CollectionReference,
-	newItems: Array<IdentifiedDataItem>
+	newItems: ReadonlyArray<IdentifiedDataItem>
 ): Promise<void> {
 	const listeners = Array.from(collectionWatchers.values()) //
 		.filter(w => w.id === ref.id);
@@ -142,7 +142,9 @@ async function informWatchersForCollection(
 	await publishWriteForRef(ref, newItems);
 }
 
-export async function deleteDocuments(refs: NonEmptyArray<DocumentReference>): Promise<void> {
+export async function deleteDocuments(
+	refs: ReadonlyNonEmptyArray<DocumentReference>
+): Promise<void> {
 	// Fetch the data
 	const before = await fetchDbDocs(refs);
 
@@ -178,19 +180,13 @@ export async function deleteCollection(ref: CollectionReference): Promise<void> 
 	await informWatchersForCollection(ref, []);
 }
 
-export async function setDocuments(updates: NonEmptyArray<DocUpdate>): Promise<void> {
+export async function setDocuments(updates: ReadonlyNonEmptyArray<DocUpdate>): Promise<void> {
 	await upsertDbDocs(updates);
 
 	// Tell listeners what happened
 	// TODO: Do we need to read a "before" value for these too?
 	for (const { ref, data } of updates) {
-		let identifiedData: IdentifiedDataItem;
-		if ("uid" in data) {
-			identifiedData = data;
-		} else {
-			identifiedData = { ...data, _id: ref.id };
-		}
-		await informWatchersForDocument(ref, identifiedData);
+		await informWatchersForDocument(ref, { ...data, _id: ref.id });
 	}
 }
 

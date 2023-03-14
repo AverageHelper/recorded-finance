@@ -1,7 +1,7 @@
 #!/usr/bin/env ts-node
 
 import "../helpers/assertTsNode";
-import type { CollectionID } from "../database";
+import type { CollectionID, UID } from "../database/schemas";
 import { allCollectionIds, CollectionReference } from "../database";
 import { logger } from "../logger";
 import {
@@ -27,32 +27,32 @@ async function main(): Promise<void> {
 
 	// Compile the results...
 	const users = (await Promise.all(uids.map(userWithUid))).filter(isNotNull);
-	const recordCountsByUser: Record<string, Partial<Record<CollectionID, number>>> = {};
-	const fileCountsByUser: Record<string, number> = {};
+	const recordCountsByUser = new Map<UID, Map<CollectionID, number>>();
+	const fileCountsByUser = new Map<UID, number>();
 
 	for (const user of users) {
 		const uid = user.uid;
-		const counts: Partial<Record<CollectionID, number>> = {};
+		const counts = new Map<CollectionID, number>();
 
 		for (const collectionId of allCollectionIds) {
 			const ref = new CollectionReference(user, collectionId);
-			counts[collectionId] = await countRecordsInCollection(ref);
+			counts.set(collectionId, await countRecordsInCollection(ref));
 		}
 
-		recordCountsByUser[uid] = counts;
+		recordCountsByUser.set(uid, counts);
 
 		const fileCount = await countFileBlobsForUser(uid);
-		fileCountsByUser[uid] = fileCount;
+		fileCountsByUser.set(uid, fileCount);
 	}
 
 	// Print the results...
-	for (const [uid, counts] of Object.entries(recordCountsByUser)) {
+	for (const [uid, counts] of recordCountsByUser) {
 		logger.info(`Stats for user ${uid}:`);
 
-		const fileCount = fileCountsByUser[uid] ?? 0;
+		const fileCount = fileCountsByUser.get(uid) ?? 0;
 		logger.info(`\tFiles:  ${fileCount} record(s)`);
 
-		for (const [collectionId, count] of Object.entries(counts)) {
+		for (const [collectionId, count] of counts) {
 			logger.info(`\t${collectionId}:  ${count} record(s)`);
 		}
 	}

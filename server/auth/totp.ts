@@ -1,3 +1,5 @@
+import type { Opaque } from "type-fest";
+import type { TOTPSeed, TOTPToken } from "../database";
 import { createHmac } from "node:crypto";
 import { persistentSecret } from "./jwt";
 import { URL } from "node:url";
@@ -10,17 +12,17 @@ type Base32Variant = Parameters<typeof _base32Decode>[1];
 const variant: Base32Variant = "RFC3548";
 const algorithm = "SHA1";
 
-export function base32Decode(data: string): ArrayBuffer {
+export function base32Decode(data: TOTPSecretUri): ArrayBuffer {
 	return _base32Decode(data, variant);
 }
 
 export function base32Encode(
 	data: ArrayBuffer | Int8Array | Uint8Array | Uint8ClampedArray
-): string {
-	return _base32Encode(data, variant, { padding: false });
+): TOTPSecretUri {
+	return _base32Encode(data, variant, { padding: false }) as TOTPSecretUri;
 }
 
-function generateHOTP(base32Secret: string, counter: number): string {
+function generateHOTP(base32Secret: TOTPSecretUri, counter: number): TOTPToken {
 	/* eslint-disable no-bitwise */
 	const decodedSecret = base32Decode(base32Secret);
 
@@ -50,7 +52,7 @@ function generateHOTP(base32Secret: string, counter: number): string {
 	/* eslint-enable no-bitwise */
 
 	// Compute an HOTP value
-	return `${code % 10 ** 6}`.padStart(6, "0");
+	return `${code % 10 ** 6}`.padStart(6, "0") as TOTPToken;
 }
 
 interface GeneratorOptions {
@@ -62,7 +64,7 @@ interface GeneratorOptions {
 }
 
 /** Generates a TOTP code from the given secret value. */
-export function generateTOTP(base32Secret: string, options?: GeneratorOptions): string {
+export function generateTOTP(base32Secret: TOTPSecretUri, options?: GeneratorOptions): TOTPToken {
 	const { now = Date.now(), window = 0 } = options ?? {};
 	const counter = Math.floor(now / 30_000);
 	return generateHOTP(base32Secret, counter + window);
@@ -77,11 +79,20 @@ interface VerifierOptions {
 }
 
 /**
+ * A TOTP secret, either a URI or secret string.
+ */
+export type TOTPSecretUri = Opaque<string, "TOTPSecretUri">;
+
+/**
  * Checks that the given token fits the given secret.
  */
-export function verifyTOTP(token: string, secretOrUri: string, options?: VerifierOptions): boolean {
+export function verifyTOTP(
+	token: TOTPToken,
+	secretOrUri: TOTPSecretUri,
+	options?: VerifierOptions
+): boolean {
 	const { now, window = 1 } = options ?? {};
-	let secret: string;
+	let secret: TOTPSecretUri;
 	try {
 		const uri = new URL(secretOrUri); // throws if not a URL
 
@@ -91,7 +102,7 @@ export function verifyTOTP(token: string, secretOrUri: string, options?: Verifie
 		const secretParam = uri.searchParams.get("secret");
 		if (secretParam === null || !secretParam) return false;
 
-		secret = secretParam;
+		secret = secretParam as TOTPSecretUri;
 	} catch {
 		// fallback: not a URI, so use the secret as-is
 		secret = secretOrUri;
@@ -114,7 +125,7 @@ export function verifyTOTP(token: string, secretOrUri: string, options?: Verifie
  * @param seed The value used in combination with the server's `AUTH_SECRET`
  *  to generate the user's TOTP secret.
  */
-export function generateTOTPSecretURI(accountId: string, seed: string): string {
+export function generateTOTPSecretURI(accountId: string, seed: TOTPSeed): TOTPSecretUri {
 	if (!accountId) throw new TypeError("accountId cannot be empty");
 
 	const issuer = "RecordedFinance";
@@ -129,7 +140,7 @@ export function generateTOTPSecretURI(accountId: string, seed: string): string {
 	configUri.searchParams.set("period", `${period}`);
 	configUri.searchParams.set("secret", secret);
 
-	return configUri.href;
+	return configUri.href as TOTPSecretUri;
 }
 
 /**
@@ -140,8 +151,8 @@ export function generateTOTPSecretURI(accountId: string, seed: string): string {
  * @param seed The value used in combination with the server's `AUTH_SECRET`
  *  environment variable to generate the random string.
  */
-export function generateSecret(seed: string): string {
-	if (!seed) throw new TypeError("seed cannot be empty");
+export function generateSecret(seed: TOTPSeed): TOTPSecretUri {
+	if (seed === "") throw new TypeError("seed cannot be empty");
 
 	// Mix the secret and the seed together
 	const hmac = createHmac(algorithm, persistentSecret);
