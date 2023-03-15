@@ -14,50 +14,70 @@ async function main(): Promise<void> {
 	const uids = await Promise.all(await listAllUserIds(null));
 	loadSpinner.succeed();
 
-	const { uid, collectionId } = await inquirer.prompt<{ uid: string; collectionId: CollectionID }>([
-		{
+	uid: while (true) {
+		const { uid } = await inquirer.prompt<{
+			uid: string;
+		}>({
 			type: "list",
 			name: "uid",
 			message: "/database/users/{uid}",
 			choices: uids,
-		},
-		{
-			type: "list",
-			name: "collectionId",
-			message: ({ uid }) => `/database/users/${uid}/{collectionId}`,
-			choices: allCollectionIds.filter(id => id !== "users"),
-		},
-	]);
+		});
 
-	const user = await userWithUid(uid, null);
-	if (!user) return;
-	const ref = new CollectionReference(user, collectionId);
-	const userSpinner = ora(`Reading '/database/${ref.path}'`).start();
+		col: while (true) {
+			const { collectionId } = await inquirer.prompt<{
+				collectionId: CollectionID | "..";
+			}>({
+				type: "list",
+				name: "collectionId",
+				message: `/database/users/${uid}/{collectionId}`,
+				choices: [".."].concat(allCollectionIds.filter(id => id !== "users")),
+			});
 
-	const collection = await fetchDbCollection(ref, null);
+			if (collectionId === "..") {
+				continue uid;
+			}
 
-	if (!isNonEmptyArray(collection)) {
-		userSpinner.succeed("No documents");
-		return;
+			const userSpinner = ora(`Reading '/database/users/${uid}'`).start();
+			const user = await userWithUid(uid, null);
+			if (!user) {
+				userSpinner.fail(`No user found for that UID.`);
+				continue uid;
+			}
+			userSpinner.succeed();
+
+			const ref = new CollectionReference(user, collectionId);
+			const colSpinner = ora(`Reading '/database/${ref.path}'`).start();
+
+			const collection = await fetchDbCollection(ref, null);
+
+			if (!isNonEmptyArray(collection)) {
+				colSpinner.succeed(`Reading '/database/${ref.path}'\nNo documents`);
+				continue;
+			}
+
+			colSpinner.succeed(`Reading '/database/${ref.path}'\n${collection.length} document(s):`);
+			while (true) {
+				const { doc } = await inquirer.prompt<{ doc: IdentifiedDataItem | ".." }>({
+					type: "list",
+					name: "doc",
+					message: `/database/users/${uid}/${collectionId}`,
+					choices: [{ name: ".." }].concat(
+						collection.map(d => ({
+							name: d._id,
+							value: d,
+						}))
+					),
+				});
+
+				if (doc === "..") {
+					continue col;
+				}
+
+				console.info(JSON.stringify(doc, undefined, "\t"));
+			}
+		}
 	}
-
-	if (collection.length === 1) {
-		userSpinner.succeed(`1 document: ${JSON.stringify(collection[0], undefined, "\t")}`);
-		return;
-	}
-
-	userSpinner.succeed(`${collection.length} documents:`);
-	const { doc } = await inquirer.prompt<{ doc: IdentifiedDataItem }>({
-		type: "list",
-		name: "doc",
-		message: `/database/users/${uid}/${collectionId}`,
-		choices: collection.map(d => ({
-			name: d._id,
-			value: d,
-		})),
-	});
-
-	console.info(JSON.stringify(doc, undefined, "\t"));
 }
 
 void main();
