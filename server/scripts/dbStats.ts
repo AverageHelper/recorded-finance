@@ -3,7 +3,6 @@
 import "../helpers/assertTsNode";
 import type { CollectionID } from "../database";
 import { allCollectionIds, CollectionReference } from "../database";
-import { logger } from "../logger";
 import {
 	countFileBlobsForUser,
 	countRecordsInCollection,
@@ -19,14 +18,14 @@ function isNotNull<T>(tbd: T): tbd is NonNullable<T> {
 
 async function main(): Promise<void> {
 	// Read the database, and count up every record
-	const userCount = await numberOfUsers();
-	const jwtCount = await numberOfExpiredJwts();
+	const userCount = await numberOfUsers(null);
+	const jwtCount = await numberOfExpiredJwts(null);
 
-	const uids = await listAllUserIds();
-	logger.info(`We have ${userCount} user(s):`, uids);
+	const uids = await listAllUserIds(null);
+	console.info(`We have ${userCount} user(s):`, uids);
 
 	// Compile the results...
-	const users = (await Promise.all(uids.map(userWithUid))).filter(isNotNull);
+	const users = (await Promise.all(uids.map(uid => userWithUid(uid, null)))).filter(isNotNull);
 	const recordCountsByUser: Record<string, Partial<Record<CollectionID, number>>> = {};
 	const fileCountsByUser: Record<string, number> = {};
 
@@ -36,28 +35,28 @@ async function main(): Promise<void> {
 
 		for (const collectionId of allCollectionIds) {
 			const ref = new CollectionReference(user, collectionId);
-			counts[collectionId] = await countRecordsInCollection(ref);
+			counts[collectionId] = await countRecordsInCollection(ref, null);
 		}
 
 		recordCountsByUser[uid] = counts;
 
-		const fileCount = await countFileBlobsForUser(uid);
+		const fileCount = await countFileBlobsForUser(uid, null);
 		fileCountsByUser[uid] = fileCount;
 	}
 
 	// Print the results...
 	for (const [uid, counts] of Object.entries(recordCountsByUser)) {
-		logger.info(`Stats for user ${uid}:`);
+		console.info(`Stats for user ${uid}:`);
 
 		const fileCount = fileCountsByUser[uid] ?? 0;
-		logger.info(`\tFiles:  ${fileCount} record(s)`);
+		console.info(`\tFiles:  ${fileCount} record(s)`);
 
 		for (const [collectionId, count] of Object.entries(counts)) {
-			logger.info(`\t${collectionId}:  ${count} record(s)`);
+			console.info(`\t${collectionId}:  ${count} record(s)`);
 		}
 	}
 
-	logger.info(`Total expired JWTs:  ${jwtCount}`);
+	console.info(`Total expired JWTs:  ${jwtCount}`);
 }
 
 void main();

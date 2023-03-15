@@ -82,6 +82,12 @@
 				"prettier/prettier": "warn",
 				"max-nested-callbacks": "off" // Unit tests involve a lot of nested callbacks
 			}
+		},
+		{
+			"files": ["scripts/**"],
+			"rules": {
+				"no-console": "off" // These should be able to print directly to the console
+			}
 		}
 	]
 }
