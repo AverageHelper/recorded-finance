@@ -12,6 +12,7 @@ const defaultMaxSpace = 20_000_000_000;
 const totalSpace = Number.parseInt(env("MAX_BYTES") ?? `${defaultMaxSpace}`, 10);
 export const maxSpacePerUser = totalSpace / MAX_USERS;
 
+// TODO: Some way to disable this
 logger.debug(
 	`We have ${simplifiedByteCount(totalSpace)} available. That's ${simplifiedByteCount(
 		maxSpacePerUser
