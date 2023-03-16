@@ -3,7 +3,6 @@
 import "../helpers/assertTsNode";
 import type { CollectionID, UID } from "../database/schemas";
 import { allCollectionIds, CollectionReference } from "../database";
-import { logger } from "../logger";
 import {
 	countFileBlobsForUser,
 	countRecordsInCollection,
@@ -19,14 +18,14 @@ function isNotNull<T>(tbd: T): tbd is NonNullable<T> {
 
 async function main(): Promise<void> {
 	// Read the database, and count up every record
-	const userCount = await numberOfUsers();
-	const jwtCount = await numberOfExpiredJwts();
+	const userCount = await numberOfUsers(null);
+	const jwtCount = await numberOfExpiredJwts(null);
 
-	const uids = await listAllUserIds();
-	logger.info(`We have ${userCount} user(s):`, uids);
+	const uids = await listAllUserIds(null);
+	console.info(`We have ${userCount} user(s):`, uids);
 
 	// Compile the results...
-	const users = (await Promise.all(uids.map(userWithUid))).filter(isNotNull);
+	const users = (await Promise.all(uids.map(uid => userWithUid(uid, null)))).filter(isNotNull);
 	const recordCountsByUser = new Map<UID, Map<CollectionID, number>>();
 	const fileCountsByUser = new Map<UID, number>();
 
@@ -47,17 +46,17 @@ async function main(): Promise<void> {
 
 	// Print the results...
 	for (const [uid, counts] of recordCountsByUser) {
-		logger.info(`Stats for user ${uid}:`);
+		console.info(`Stats for user ${uid}:`);
 
 		const fileCount = fileCountsByUser.get(uid) ?? 0;
-		logger.info(`\tFiles:  ${fileCount} record(s)`);
+		console.info(`\tFiles:  ${fileCount} record(s)`);
 
 		for (const [collectionId, count] of counts) {
-			logger.info(`\t${collectionId}:  ${count} record(s)`);
+			console.info(`\t${collectionId}:  ${count} record(s)`);
 		}
 	}
 
-	logger.info(`Total expired JWTs:  ${jwtCount}`);
+	console.info(`Total expired JWTs:  ${jwtCount}`);
 }
 
 void main();

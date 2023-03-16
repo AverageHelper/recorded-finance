@@ -25,7 +25,7 @@ interface BaseLogger {
 	error: (message?: unknown, ...optionalParams: ReadonlyArray<unknown>) => void;
 }
 
-interface Logger extends BaseLogger {}
+export interface Logger extends BaseLogger {}
 
 const name = "Recorded Finance";
 const baseLogger = bunyan.createLogger({ name, level: "debug" });
