@@ -1,4 +1,5 @@
 import type CryptoJS from "crypto-js";
+import type { Opaque } from "type-fest";
 import { isString } from "../helpers/isString";
 import { HashStore } from "./HashStore.js";
 import { t } from "../i18n";
@@ -11,6 +12,8 @@ import EncBase64 from "crypto-js/enc-base64";
 import EncUtf8 from "crypto-js/enc-utf8";
 import PBKDF2 from "crypto-js/pbkdf2";
 import WordArray from "crypto-js/lib-typedarrays";
+
+type Hashed = Opaque<string, "Hashed">;
 
 const Protocols = {
 	v0: {
@@ -39,11 +42,13 @@ const Protocols = {
 
 const Cryption = Protocols.v0;
 
+type Salt = Opaque<string, "Salt">;
+
 /**
  * Makes special potatoes that are unique to the `input`.
  */
-export async function hashed(input: string): Promise<string> {
-	return btoa((await derivePKey(input, "salt")).value);
+export async function hashed(input: string): Promise<Hashed> {
+	return btoa((await derivePKey(input, "salt" as Salt)).value) as Hashed;
 }
 
 /**
@@ -52,7 +57,7 @@ export async function hashed(input: string): Promise<string> {
  * @param password The user's plaintext passphrase.
  * @param salt A salt to make the final key more unique.
  */
-export async function derivePKey(password: string, salt: string): Promise<HashStore> {
+export async function derivePKey(password: string, salt: Salt): Promise<HashStore> {
 	await new Promise(resolve => setTimeout(resolve, 10)); // wait 10 ms for UI
 
 	return new HashStore(
@@ -82,7 +87,7 @@ async function newDataEncryptionKeyMaterialForDEK(
 	dek: HashStore
 ): Promise<KeyMaterial> {
 	// To make passwords harder to guess
-	const passSalt = btoa(Cryption.randomValue(Cryption.saltSizeBytes));
+	const passSalt = btoa(Cryption.randomValue(Cryption.saltSizeBytes)) as Salt;
 
 	// To encrypt the dek
 	const pKey = await derivePKey(password, passSalt);
@@ -207,9 +212,9 @@ export async function decrypt<T extends string>(
  */
 export interface KeyMaterial {
 	dekMaterial: string;
-	passSalt: string;
+	passSalt: Salt;
 	oldDekMaterial?: string;
-	oldPassSalt?: string;
+	oldPassSalt?: Salt;
 }
 
 export interface EPackage<T extends string> {

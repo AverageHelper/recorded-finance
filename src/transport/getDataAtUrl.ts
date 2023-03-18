@@ -1,25 +1,6 @@
 import { t } from "../i18n";
 import atob from "atob-lite";
 
-export async function getDataAtUrl(url: string, contentType?: string): Promise<string> {
-	return await new Promise((resolve, reject) => {
-		const xhr = new XMLHttpRequest();
-		xhr.responseType = "text";
-		xhr.addEventListener("load", () => {
-			const blob = xhr.response as string;
-			resolve(blob);
-		});
-		xhr.addEventListener("error", () => {
-			reject(xhr.response);
-		});
-		xhr.open("GET", url);
-		if (contentType !== undefined && contentType) {
-			xhr.setRequestHeader("Content-Type", contentType);
-		}
-		xhr.send();
-	});
-}
-
 export function dataUriToBlob(dataUri: string): Blob {
 	// See https://stackoverflow.com/a/12300351
 

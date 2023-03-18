@@ -41,6 +41,7 @@ export async function numberOfUsers(logger: Logger | null = defaultLogger): Prom
 
 export async function listAllUserIds(logger: Logger | null = defaultLogger): Promise<Array<UID>> {
 	const users = await dataSource({ logger }).user.findMany({ select: { uid: true } });
+	// Can an empty string even be a value for a primary key?
 	return users.map(({ uid }) => uid as UID).filter(uid => uid);
 }
 
