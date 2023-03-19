@@ -1,4 +1,5 @@
 import type { UID } from "../database";
+import { is, uidSchema } from "../database";
 import { NotFoundError } from "../errors/NotFoundError";
 
 /**
@@ -18,8 +19,10 @@ export function pathSegments<K extends string>(
 			"params" in req
 				? req.params[key] // Express
 				: req.query[key]; // Vercel
-		if (query === undefined || query === "") throw new NotFoundError();
+		if (query === undefined) throw new NotFoundError();
 		if (Array.isArray(query)) throw new NotFoundError();
+		// TODO: Test that this throws properly for requests to too-long UIDs
+		if (key === "uid" && !is(query, uidSchema)) throw new NotFoundError();
 		result[key] = query;
 	}
 
