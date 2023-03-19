@@ -1,6 +1,7 @@
-import type { AnyData, DataItem, DataItemKey, TOTPToken, UID, User, UserKeys } from "./schemas";
+import type { AnyData, DataItem, DataItemKey, UID, User, UserKeys } from "./schemas";
 import type { CollectionReference, DocumentReference } from "./references";
 import type { FileData, PrismaPromise, User as DBUser } from "@prisma/client";
+import type { JWT } from "../auth/jwt";
 import type { Logger } from "../logger";
 import { assertSchema, isDataItemKey, isNonEmptyArray, user as userSchema } from "./schemas";
 import { dataSource } from "./io";
@@ -66,7 +67,7 @@ export async function destroyFileData(
  * window elapses.
  */
 export async function addJwtToDatabase(
-	token: TOTPToken,
+	token: JWT,
 	logger: Logger | null = defaultLogger
 ): Promise<void> {
 	await dataSource({ logger }).expiredJwt.upsert({

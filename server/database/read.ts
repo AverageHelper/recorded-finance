@@ -7,13 +7,13 @@ import type {
 	IdentifiedDataItem,
 	Salt,
 	TOTPSeed,
-	TOTPToken,
 	UID,
 	User,
 	UserKeys,
 } from "./schemas";
 import type { CollectionReference, DocumentReference } from "./references";
 import type { FileData } from "@prisma/client";
+import type { JWT } from "../auth/jwt";
 import type { Logger } from "../logger";
 import { computeRequiredAddtlAuth } from "./schemas";
 import { dataSource } from "./io";
@@ -104,7 +104,7 @@ export async function countFileBlobsForUser(
  * Resolves to `true` if the given token exists in the database.
  */
 export async function jwtExistsInDatabase(
-	token: TOTPToken,
+	token: JWT,
 	logger: Logger | null = defaultLogger
 ): Promise<boolean> {
 	// FIXME: This sometimes throws when Prisma can't reach the database server. We should probs do a retry in that case.

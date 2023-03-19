@@ -1,8 +1,8 @@
-import type { JwtPayload, MFAOption, PubNubToken, TOTPToken, User } from "../database/schemas";
-import type { ReadonlyDeep } from "type-fest";
+import type { JwtPayload, MFAOption, PubNubToken, User } from "../database/schemas";
+import type { Opaque, ReadonlyDeep } from "type-fest";
 import type { SignOptions } from "jsonwebtoken";
 import { addJwtToDatabase } from "../database/write";
-import { assertJwtPayload, isTotpToken } from "../database/schemas";
+import { assertJwtPayload } from "../database/schemas";
 import { env, requireEnv } from "../environment";
 import { generateSecureToken } from "./generators";
 import { jwtExistsInDatabase } from "../database/read";
@@ -20,18 +20,20 @@ export const persistentSecret = requireEnv("AUTH_SECRET");
 const SESSION_COOKIE_NAME = "sessionToken";
 const keys = new Keygrip([persistentSecret]);
 
+export type JWT = Opaque<string, "JWT">;
+
 /**
  * Ascertains whether the token exists in the blacklist. If so,
  * that token's value should be treated as expired.
  */
-export async function blacklistHasJwt(token: TOTPToken): Promise<boolean> {
+export async function blacklistHasJwt(token: JWT): Promise<boolean> {
 	return await jwtExistsInDatabase(token);
 }
 
 /**
  * Adds the token to a list of tokens to treat as expired.
  */
-export async function addJwtToBlacklist(token: TOTPToken): Promise<void> {
+export async function addJwtToBlacklist(token: JWT): Promise<void> {
 	try {
 		const payload = await verifyJwt(token);
 		await revokePubNubToken(payload.pubnubToken, payload.uid);
@@ -147,26 +149,26 @@ export function killSession(req: APIRequest, res: APIResponse): void {
  * Checks the `Cookie` header for the token. If no data is found there,
  * then we check the `Authorization` header for a "Bearer" token.
  */
-export function jwtFromRequest(req: APIRequest, res: APIResponse): TOTPToken | null {
+export function jwtFromRequest(req: APIRequest, res: APIResponse): JWT | null {
 	// Get session token from cookies, if it exists
 	const cookies = new Cookies(req, res, { keys, secure: true });
 	const token = cookies.get(SESSION_COOKIE_NAME, { signed: true }) ?? "";
-	if (isTotpToken(token)) {
-		return token;
+	if (token) {
+		return token as JWT;
 	}
 
 	// No cookies? Check auth header instead
 	const authHeader = req.headers.authorization;
 	const tokenParts = authHeader?.split(" ") ?? [];
 	if (tokenParts[0] === "Bearer") {
-		const token = tokenParts[1];
-		if (!isTotpToken(token)) return null;
-		return token;
+		const token = tokenParts[1] ?? "";
+		if (token === "") return null;
+		return token as JWT;
 	}
 	return null;
 }
 
-export async function verifyJwt(token: TOTPToken): Promise<JwtPayload> {
+export async function verifyJwt(token: JWT): Promise<JwtPayload> {
 	return await new Promise<JwtPayload>((resolve, reject) => {
 		_verifyJwt(token, persistentSecret, (err, payload) => {
 			// Fail if failed i guess
