@@ -1,6 +1,7 @@
-import type { AnyData, DataItem, DataItemKey, User, UserKeys } from "./schemas";
+import type { AnyData, DataItem, DataItemKey, UID, User, UserKeys } from "./schemas";
 import type { CollectionReference, DocumentReference } from "./references";
 import type { FileData, PrismaPromise, User as DBUser } from "@prisma/client";
+import type { JWT } from "../auth/jwt";
 import type { Logger } from "../logger";
 import { assertSchema, isDataItemKey, isNonEmptyArray, user as userSchema } from "./schemas";
 import { dataSource } from "./io";
@@ -45,7 +46,7 @@ export function upsertFileData(
  * @returns a `Promise` that resolves with the number of bytes deleted.
  */
 export async function destroyFileData(
-	userId: string,
+	userId: UID,
 	fileName: string,
 	logger: Logger | null = defaultLogger
 ): Promise<number> {
@@ -66,7 +67,7 @@ export async function destroyFileData(
  * window elapses.
  */
 export async function addJwtToDatabase(
-	token: string,
+	token: JWT,
 	logger: Logger | null = defaultLogger
 ): Promise<void> {
 	await dataSource({ logger }).expiredJwt.upsert({
@@ -103,11 +104,8 @@ export function upsertUser(
 	});
 }
 
-export async function destroyUser(
-	uid: string,
-	logger: Logger | null = defaultLogger
-): Promise<void> {
-	if (!uid) throw new TypeError("uid was empty");
+export async function destroyUser(uid: UID, logger: Logger | null = defaultLogger): Promise<void> {
+	if (uid === "") throw new TypeError("uid was empty");
 
 	await dataSource({ logger }).dataItem.deleteMany({ where: { userId: uid } });
 	await dataSource({ logger }).userKeys.deleteMany({ where: { userId: uid } });
@@ -120,7 +118,7 @@ export interface DocUpdate {
 }
 
 export async function upsertDbDocs(
-	updates: Array<DocUpdate>,
+	updates: ReadonlyArray<DocUpdate>,
 	logger: Logger | null = defaultLogger
 ): Promise<void> {
 	if (!isNonEmptyArray(updates)) return;
@@ -214,7 +212,7 @@ export async function upsertDbDocs(
 }
 
 export async function deleteDbDocs(
-	refs: NonEmptyArray<DocumentReference>,
+	refs: ReadonlyNonEmptyArray<DocumentReference>,
 	logger: Logger | null = defaultLogger
 ): Promise<void> {
 	// Assert same UID on all refs

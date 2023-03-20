@@ -1,7 +1,7 @@
 #!/usr/bin/env ts-node
 
 import "../helpers/assertTsNode";
-import type { CollectionID, IdentifiedDataItem } from "../database/schemas";
+import type { CollectionID, IdentifiedDataItem, UID } from "../database/schemas";
 import { allCollectionIds, isNonEmptyArray } from "../database/schemas";
 import { fetchDbCollection, listAllUserIds, userWithUid } from "../database/read";
 import { CollectionReference } from "../database/references";
@@ -15,9 +15,7 @@ async function main(): Promise<void> {
 	loadSpinner.succeed();
 
 	uid: while (true) {
-		const { uid } = await inquirer.prompt<{
-			uid: string;
-		}>({
+		const { uid } = await inquirer.prompt<{ uid: UID }>({
 			type: "list",
 			name: "uid",
 			message: "/database/users/{uid}",
@@ -25,9 +23,7 @@ async function main(): Promise<void> {
 		});
 
 		col: while (true) {
-			const { collectionId } = await inquirer.prompt<{
-				collectionId: CollectionID | "..";
-			}>({
+			const { collectionId } = await inquirer.prompt<{ collectionId: CollectionID | ".." }>({
 				type: "list",
 				name: "collectionId",
 				message: `/database/users/${uid}/{collectionId}`,

@@ -1,6 +1,19 @@
-import type { AnyData, DataItem, Identified, IdentifiedDataItem, User, UserKeys } from "./schemas";
+import type {
+	AESCipherKey,
+	AnyData,
+	DataItem,
+	Hash,
+	Identified,
+	IdentifiedDataItem,
+	Salt,
+	TOTPSeed,
+	UID,
+	User,
+	UserKeys,
+} from "./schemas";
 import type { CollectionReference, DocumentReference } from "./references";
 import type { FileData } from "@prisma/client";
+import type { JWT } from "../auth/jwt";
 import type { Logger } from "../logger";
 import { computeRequiredAddtlAuth } from "./schemas";
 import { dataSource } from "./io";
@@ -15,7 +28,7 @@ interface UserStats {
 	usedSpace: number;
 }
 
-export async function statsForUser(uid: string): Promise<UserStats> {
+export async function statsForUser(uid: UID): Promise<UserStats> {
 	const totalSpace = Math.ceil(maxSpacePerUser);
 	const usedSpace = await totalSizeOfFilesForUser(uid);
 
@@ -26,17 +39,16 @@ export async function numberOfUsers(logger: Logger | null = defaultLogger): Prom
 	return await dataSource({ logger }).user.count();
 }
 
-export async function listAllUserIds(
-	logger: Logger | null = defaultLogger
-): Promise<Array<string>> {
+export async function listAllUserIds(logger: Logger | null = defaultLogger): Promise<Array<UID>> {
 	const users = await dataSource({ logger }).user.findMany({ select: { uid: true } });
-	return users.map(({ uid }) => uid);
+	// Can an empty string even be a value for a primary key?
+	return users.map(({ uid }) => uid as UID).filter(uid => uid);
 }
 
 // MARK: - Pseudo Large-file Storage
 
 export async function fetchFileData(
-	userId: string,
+	userId: UID,
 	fileName: string,
 	logger: Logger | null = defaultLogger
 ): Promise<FileData | null> {
@@ -50,7 +62,7 @@ export async function fetchFileData(
  */
 // TODO: Expose this on the API
 export async function totalSizeOfFile(
-	userId: string,
+	userId: UID,
 	fileName: string,
 	logger: Logger | null = defaultLogger
 ): Promise<number | null> {
@@ -66,7 +78,7 @@ export async function totalSizeOfFile(
  * Returns the number of bytes of the user's stored files.
  */
 export async function totalSizeOfFilesForUser(
-	userId: string,
+	userId: UID,
 	logger: Logger | null = defaultLogger
 ): Promise<number> {
 	const files = await dataSource({ logger }).fileData.findMany({
@@ -80,7 +92,7 @@ export async function totalSizeOfFilesForUser(
  * Returns the number of files stored for the user.
  */
 export async function countFileBlobsForUser(
-	userId: string,
+	userId: UID,
 	logger: Logger | null = defaultLogger
 ): Promise<number> {
 	return await dataSource({ logger }).fileData.count({ where: { userId } });
@@ -92,7 +104,7 @@ export async function countFileBlobsForUser(
  * Resolves to `true` if the given token exists in the database.
  */
 export async function jwtExistsInDatabase(
-	token: string,
+	token: JWT,
 	logger: Logger | null = defaultLogger
 ): Promise<boolean> {
 	// FIXME: This sometimes throws when Prisma can't reach the database server. We should probs do a retry in that case.
@@ -170,8 +182,9 @@ export async function fetchDbCollection(
 			).map(k => ({
 				...k,
 				_id: k.userId,
+				passSalt: k.passSalt as Salt,
 				oldDekMaterial: k.oldDekMaterial ?? undefined,
-				oldPassSalt: k.oldPassSalt ?? undefined,
+				oldPassSalt: (k.oldPassSalt as Salt | null) ?? undefined,
 			}));
 		default:
 			throw new UnreachableCaseError(ref.id);
@@ -192,7 +205,7 @@ async function findUserWithProperties(
 	if (first === null) return first;
 
 	// Upsert the cipher key if it doesn't exist
-	let pubnubCipherKey = first.pubnubCipherKey;
+	let pubnubCipherKey = first.pubnubCipherKey as AESCipherKey | null;
 	if (pubnubCipherKey === null) {
 		pubnubCipherKey = await generateAESCipherKey();
 		await dataSource({ logger }).user.update({
@@ -201,12 +214,24 @@ async function findUserWithProperties(
 		});
 	}
 
-	// If the user has no pubnub_cipher_key, upsert one
-	return computeRequiredAddtlAuth({ ...first, pubnubCipherKey });
+	const passwordHash = first.passwordHash as Hash;
+	const passwordSalt = first.passwordSalt as Salt;
+	const mfaRecoverySeed = first.mfaRecoverySeed as TOTPSeed | null;
+	const totpSeed = first.totpSeed as TOTPSeed | null;
+
+	return computeRequiredAddtlAuth({
+		...first,
+		uid: first.uid as UID,
+		passwordHash,
+		passwordSalt,
+		mfaRecoverySeed: mfaRecoverySeed === "" ? null : mfaRecoverySeed,
+		totpSeed: totpSeed === "" ? null : totpSeed,
+		pubnubCipherKey,
+	});
 }
 
 export async function userWithUid(
-	uid: string,
+	uid: UID,
 	logger: Logger | null = defaultLogger
 ): Promise<User | null> {
 	// Find first user whose UID matches
@@ -280,8 +305,8 @@ export async function fetchDbDoc(
 				_id: result.userId,
 				dekMaterial: result.dekMaterial,
 				oldDekMaterial: result.oldDekMaterial ?? undefined,
-				oldPassSalt: result.oldPassSalt ?? undefined,
-				passSalt: result.passSalt,
+				oldPassSalt: (result.oldPassSalt as Salt | null) ?? undefined,
+				passSalt: result.passSalt as Salt,
 			};
 			logger?.debug(`Got document at ${ref.path}`);
 			return { ref, data };
@@ -298,7 +323,7 @@ export async function fetchDbDoc(
  * @returns an array containing the given references and their associated data.
  */
 export async function fetchDbDocs(
-	refs: NonEmptyArray<DocumentReference>,
+	refs: ReadonlyNonEmptyArray<DocumentReference>,
 	logger: Logger | null = defaultLogger
 ): Promise<NonEmptyArray<Snapshot>> {
 	// Assert same UID on all refs

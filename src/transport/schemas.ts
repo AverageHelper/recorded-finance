@@ -1,6 +1,7 @@
 import type { CollectionID } from "./db";
 import type { DataItem } from "./api";
 import type { Infer } from "superstruct";
+import type { Opaque } from "type-fest";
 import { isArray } from "../helpers/isArray";
 import { isObject } from "../helpers/isObject";
 import { t } from "../i18n";
@@ -70,6 +71,14 @@ export const documentData = define<DocumentData>(
 export const mfaValidation = enums(["totp"] as const);
 
 export type MFAValidation = Infer<typeof mfaValidation>;
+
+export type UID = Opaque<string, "UID">;
+const uid = define<UID>("UID", v => is(v, nonempty(string())));
+export { uid as uidSchema };
+
+export function isUid(tbd: unknown): tbd is UID {
+	return is(tbd, uid);
+}
 
 const rawServerResponse = type({
 	_id: optional(string()),

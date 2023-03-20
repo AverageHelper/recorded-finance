@@ -1,5 +1,6 @@
-import type { PlatformDB, DocumentReference } from "./db";
 import type { AttachmentRecordPackage } from "./attachments";
+import type { DocumentReference, PlatformDB } from "./db";
+import type { UID } from "./schemas";
 import { assertFileData } from "./schemas";
 import { PlatformError } from "./errors/index.js";
 import { run } from "./apiStruts";
@@ -22,7 +23,7 @@ export interface StorageReference {
 	/**
 	 * The ID of the user which owns the storage object.
 	 */
-	readonly uid: string;
+	readonly uid: UID;
 
 	/**
 	 * A reference to the document that owns this storage reference.
@@ -45,7 +46,7 @@ export interface StorageReference {
  */
 export function ref(
 	db: PlatformDB,
-	uid: string,
+	uid: UID,
 	docRef: DocumentReference<AttachmentRecordPackage>,
 	name: string
 ): StorageReference {
@@ -62,7 +63,7 @@ export function ref(
  */
 export async function downloadString(ref: StorageReference): Promise<string> {
 	const uid = ref.db.currentUser?.uid;
-	if (uid === undefined || !uid) throw new PlatformError("storage/unauthenticated");
+	if (uid === undefined) throw new PlatformError("storage/unauthenticated");
 	if (ref.docRef.parent.id !== "attachments") throw new PlatformError("storage/invalid-argument");
 
 	const { data } = await run(
@@ -84,7 +85,7 @@ export async function downloadString(ref: StorageReference): Promise<string> {
  */
 export async function uploadString(ref: StorageReference, value: string): Promise<void> {
 	const uid = ref.db.currentUser?.uid;
-	if (uid === undefined || !uid) throw new PlatformError("storage/unauthenticated");
+	if (uid === undefined) throw new PlatformError("storage/unauthenticated");
 
 	const file = new File([value], "file.json", { type: "application/json" });
 
@@ -118,7 +119,7 @@ export async function uploadString(ref: StorageReference, value: string): Promis
  */
 export async function deleteObject(ref: StorageReference): Promise<void> {
 	const uid = ref.db.currentUser?.uid;
-	if (uid === undefined || !uid) throw new PlatformError("storage/unauthenticated");
+	if (uid === undefined) throw new PlatformError("storage/unauthenticated");
 
 	const { usedSpace, totalSpace } = await run(
 		deleteV0DbUsersByUidAttachmentsAndDocBlobKey,

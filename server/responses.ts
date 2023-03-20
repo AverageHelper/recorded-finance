@@ -1,4 +1,4 @@
-import type { DocumentData } from "./database";
+import type { DocumentData, UID } from "./database";
 import { describeCode, HttpStatusCode } from "./helpers/HttpStatusCode";
 import { InternalError } from "./errors/InternalError";
 
@@ -28,7 +28,7 @@ export function respondOk(res: APIResponse): void {
 export function respondMessage(
 	res: APIResponse,
 	message: string,
-	additionalValues?: Record<string, string | number | null | Array<string | number>>
+	additionalValues?: Record<string, string | number | null | ReadonlyArray<string | number>>
 ): void {
 	// Only works on HTTP versions older than HTTP/2 (for now).
 	res.statusMessage = describeCode(HttpStatusCode.OK);
@@ -45,7 +45,7 @@ export function respondMessage(
  */
 export function respondSuccess(
 	res: APIResponse,
-	additionalValues?: Record<string, string | number | null | Array<string | number>>
+	additionalValues?: Record<string, string | number | null | ReadonlyArray<string | number>>
 ): void {
 	// Only works on HTTP versions older than HTTP/2 (for now).
 	res.statusMessage = describeCode(HttpStatusCode.OK);
@@ -60,9 +60,9 @@ export function respondSuccess(
 /**
  * Sends HTTP 200 and a JSON value that contains the given data, then ends the connection.
  */
-export function respondData<T extends { _id: string } | { uid: string }>(
+export function respondData<T extends { _id: string } | { uid: UID }>(
 	res: APIResponse,
-	data: DocumentData<T> | Array<DocumentData<T>> | null
+	data: DocumentData<T> | ReadonlyArray<DocumentData<T>> | null
 ): void {
 	// Only works on HTTP versions older than HTTP/2 (for now).
 	res.statusMessage = describeCode(HttpStatusCode.OK);

@@ -87,7 +87,7 @@ export async function requireAuth(
 
 	if (assertCallerIsOwner) {
 		const { uid } = pathSegments(req, "uid");
-		if (!uid || !safeCompare(uid, user.uid)) {
+		if (!safeCompare(uid, user.uid)) {
 			throw new UnauthorizedError("not-owner");
 		}
 	}

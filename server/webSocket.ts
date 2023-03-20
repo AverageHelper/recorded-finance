@@ -1,4 +1,5 @@
 import type { Infer } from "superstruct";
+import type { ReadonlyDeep } from "type-fest";
 import type { Unsubscribe, User } from "./database";
 import type { WebsocketRequestHandler } from "express-ws";
 import { array, enums, nullable, object, optional, union } from "superstruct";
@@ -9,8 +10,9 @@ import { ws } from "./networking/websockets";
 import {
 	allCollectionIds,
 	identifiedDataItem,
-	isValidForSchema,
+	is,
 	nonemptyString,
+	uidSchema,
 } from "./database/schemas";
 import {
 	CollectionReference,
@@ -33,13 +35,13 @@ export const webSocket: WebsocketRequestHandler = ws(
 		stop(tbd): tbd is "STOP" {
 			return tbd === "STOP";
 		},
-		data(tbd): tbd is WatcherData {
-			return isValidForSchema(tbd, watcherData);
+		data(tbd): tbd is ReadonlyDeep<WatcherData> {
+			return is(tbd, watcherData);
 		},
 	},
 	// params
 	object({
-		uid: nonemptyString,
+		uid: uidSchema,
 		collectionId: enums(allCollectionIds),
 		documentId: optional(nullable(nonemptyString)),
 	}),
