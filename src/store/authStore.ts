@@ -1,7 +1,6 @@
 import type { AttachmentSchema, DatabaseSchema } from "../model/DatabaseSchema.js";
 import type { Attachment } from "../model/Attachment.js";
-import type { HashStore, Unsubscribe, UserPreferences } from "../transport/index.js";
-import type { KeyMaterial } from "../transport/cryptionProtocols";
+import type { HashStore, KeyMaterial, Unsubscribe, UserPreferences } from "../transport/index.js";
 import type { User } from "../transport/auth.js";
 import { asyncMap } from "../helpers/asyncMap.js";
 import { attachment as newAttachment } from "../model/Attachment.js";
