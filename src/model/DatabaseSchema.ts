@@ -1,6 +1,6 @@
 import type { Infer } from "superstruct";
 import { allColors } from "./Color";
-import { locationPrefs } from "../transport";
+import { locationPrefs } from "../transport/locations";
 import {
 	array,
 	boolean,

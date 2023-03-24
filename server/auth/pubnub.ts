@@ -1,4 +1,5 @@
-import type { CollectionReference, DocumentReference, IdentifiedDataItem, User } from "../database";
+import type { CollectionReference, DocumentReference } from "../database/references";
+import type { IdentifiedDataItem, PubNubToken, UID, User } from "../database/schemas";
 import { logger } from "../logger";
 import { requireEnv } from "../environment";
 import { userWithUid } from "../database/read";
@@ -12,7 +13,7 @@ import PubNub from "pubnub";
  */
 export async function publishWriteForRef(
 	ref: CollectionReference,
-	newData: Array<IdentifiedDataItem>
+	newData: ReadonlyArray<IdentifiedDataItem>
 ): Promise<void>;
 
 /**
@@ -28,7 +29,7 @@ export async function publishWriteForRef(
 
 export async function publishWriteForRef(
 	ref: CollectionReference | DocumentReference,
-	newData: Array<IdentifiedDataItem> | IdentifiedDataItem | null
+	newData: ReadonlyArray<IdentifiedDataItem> | IdentifiedDataItem | null
 ): Promise<void> {
 	// TODO: This should be a no-op when we're in Express
 
@@ -77,28 +78,30 @@ function pubNubChannelNameForRef(ref: CollectionReference | DocumentReference): 
  * last as long as the session does, and should be revoked when the
  * session ends.
  */
-export async function newPubNubTokenForUser(user: User): Promise<string> {
+export async function newPubNubTokenForUser(user: User): Promise<PubNubToken> {
 	const uid = user.uid;
-	return await pubnubForUser(user, pubnub =>
-		// Grant permission to the UID to use PubNub for this document
-		pubnub.grantToken({
-			ttl: 60, // 1 hour
-			authorized_uuid: uid,
-			patterns: {
-				channels: {
-					// Only the user's own documents.
-					// Channels should be named `[uid]/[channelId]`
-					// or `[uid]/[channelId]/[documentId]`
-					[`^${uid}/[a-z]+/?[A-Za-z0-9]+$`]: { read: true },
+	return await pubnubForUser(
+		user,
+		pubnub =>
+			// Grant permission to the UID to use PubNub for this document
+			pubnub.grantToken({
+				ttl: 60, // 1 hour
+				authorized_uuid: uid,
+				patterns: {
+					channels: {
+						// Only the user's own documents.
+						// Channels should be named `[uid]/[channelId]`
+						// or `[uid]/[channelId]/[documentId]`
+						[`^${uid}/[a-z]+/?[A-Za-z0-9]+$`]: { read: true },
+					},
 				},
-			},
-			resources: {
-				uuids: {
-					// Only the user's own metadata
-					[uid]: { read: true },
+				resources: {
+					uuids: {
+						// Only the user's own metadata
+						[uid]: { read: true },
+					},
 				},
-			},
-		})
+			}) as Promise<PubNubToken>
 	);
 }
 
@@ -106,7 +109,7 @@ export async function newPubNubTokenForUser(user: User): Promise<string> {
  * Revokes the given PubNub access token. Once the token has been revoked,
  * it cannot be re-enabled or re-used to establish future connections.
  */
-export async function revokePubNubToken(token: string, uid: string): Promise<void> {
+export async function revokePubNubToken(token: PubNubToken, uid: UID): Promise<void> {
 	await pubnubForUser(uid, async pubnub => {
 		try {
 			pubnub.parseToken(token);
@@ -130,7 +133,7 @@ export async function revokePubNubToken(token: string, uid: string): Promise<voi
  * @returns The value returned by the callback.
  */
 async function pubnubForUser<T>(
-	userOrUid: string | User,
+	userOrUid: User | UID,
 	cb: (pubnub: PubNub, cipherKey: string) => T | Promise<T>
 ): Promise<T> {
 	const user = typeof userOrUid === "string" ? await userWithUid(userOrUid) : userOrUid;

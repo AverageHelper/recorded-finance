@@ -2,9 +2,8 @@
 	import type { Account } from "../../model/Account";
 	import { _, locale } from "../../i18n";
 	import { accountPath } from "../../router";
-	import { currentBalance, getTransactionsForAccount, transactionsForAccount } from "../../store";
+	import { currentBalance, transactionsForAccount } from "../../store";
 	import { isNegative as isDineroNegative } from "dinero.js";
-	import { onMount } from "svelte";
 	import { toCurrency } from "../../transformers";
 	import ListItem from "../../components/ListItem.svelte";
 
@@ -33,10 +32,6 @@
 		: numberOfTransactions === null
 		? notes
 		: `${countString} - ${notes}`;
-
-	onMount(async () => {
-		await getTransactionsForAccount(account);
-	});
 </script>
 
 <ListItem

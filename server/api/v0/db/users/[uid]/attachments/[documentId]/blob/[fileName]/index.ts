@@ -1,4 +1,5 @@
 import type { Params } from "./Params";
+import type { UID } from "../../../../../../../../../database/schemas";
 import type {
 	Request as ExpressRequest,
 	RequestHandler,
@@ -28,6 +29,10 @@ import multer, { memoryStorage } from "multer";
  * @throws a {@link BadRequestError} if `value` is not a valid file path segment.
  * @returns the given `value`
  */
+function assertPathSegment(value: string, name: "uid"): UID;
+
+function assertPathSegment(value: string, name: string): string;
+
 function assertPathSegment(value: string, name: string): string {
 	// Make sure value doesn't contain a path separator
 	if (value.includes(pathSeparator) || value.includes(".."))

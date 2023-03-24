@@ -5,6 +5,7 @@ import { destroyUser } from "../../../database/write";
 import { generateTOTPSecretURI, verifyTOTP } from "../../../auth/totp";
 import { is, nonempty, optional, string, type } from "superstruct";
 import { respondSuccess } from "../../../responses";
+import { totpToken } from "../../../database/schemas";
 import { UnauthorizedError } from "../../../errors/UnauthorizedError";
 import { userWithAccountId } from "../../../database/read";
 
@@ -12,7 +13,7 @@ export const POST = apiHandler("POST", async (req, res) => {
 	const reqBody = type({
 		account: nonempty(string()),
 		password: nonempty(string()),
-		token: optional(nonempty(string())),
+		token: optional(totpToken),
 	});
 
 	if (!is(req.body, reqBody)) {

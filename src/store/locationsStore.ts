@@ -3,10 +3,11 @@ import type { LocationRecordPackage, Unsubscribe, WriteBatch } from "../transpor
 import type { LocationSchema } from "../model/DatabaseSchema";
 import { asyncForEach } from "../helpers/asyncForEach";
 import { asyncMap } from "../helpers/asyncMap";
-import { derived, get, writable } from "svelte/store";
+import { derived, get } from "svelte/store";
 import { getDekMaterial, pKey, uid } from "./authStore";
 import { location, recordFromLocation } from "../model/Location";
 import { logger } from "../logger";
+import { moduleWritable } from "../helpers/moduleWritable";
 import { t } from "../i18n";
 import { transaction } from "../model/Transaction";
 import { updateUserStats } from "./uiStore";
@@ -23,75 +24,75 @@ import {
 	writeBatch,
 } from "../transport";
 
-export const locations = writable<Record<string, Location>>({}); // Location.id -> Location
-export const locationsLoadError = writable<Error | null>(null);
-export const locationsWatcher = writable<Unsubscribe | null>(null);
+// Location.id -> Location
+const [locations, _locations] = moduleWritable<Record<string, Location>>({});
+export { locations };
+
+const [locationsLoadError, _locationsLoadError] = moduleWritable<Error | null>(null);
+export { locationsLoadError };
+
+let locationsWatcher: Unsubscribe | null = null;
 
 export const allLocations = derived(locations, $locations => {
 	return Object.values($locations);
 });
 
 export function clearLocationsCache(): void {
-	const watcher = get(locationsWatcher);
-	if (watcher) {
-		watcher();
-		locationsWatcher.set(null);
+	if (locationsWatcher) {
+		locationsWatcher();
+		locationsWatcher = null;
 	}
-	locations.set({});
-	locationsLoadError.set(null);
+	_locations.set({});
+	_locationsLoadError.set(null);
 	logger.debug("locationsStore: cache cleared");
 }
 
 export async function watchLocations(force: boolean = false): Promise<void> {
-	const watcher = get(locationsWatcher);
-	if (watcher && !force) return;
-
-	if (watcher) {
-		watcher();
-		locationsWatcher.set(null);
-	}
-
 	const key = get(pKey);
 	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 	const { dekMaterial } = await getDekMaterial();
 	const dek = await deriveDEK(key, dekMaterial);
 
-	const collection = locationsCollection();
-	locationsLoadError.set(null);
-	locationsWatcher.set(
-		watchAllRecords(
-			collection,
-			async snap =>
-				await asyncForEach(snap.docChanges(), async change => {
-					switch (change.type) {
-						case "removed":
-							locations.update(locations => {
-								const copy = { ...locations };
-								delete copy[change.doc.id];
-								return copy;
-							});
-							break;
+	if (locationsWatcher) {
+		locationsWatcher();
+		locationsWatcher = null;
 
-						case "added":
-						case "modified": {
-							const location = await locationFromSnapshot(change.doc, dek);
-							locations.update(locations => {
-								const copy = { ...locations };
-								copy[change.doc.id] = location;
-								return copy;
-							});
-							break;
-						}
+		if (!force) return;
+	}
+
+	const collection = locationsCollection();
+	_locationsLoadError.set(null);
+	locationsWatcher = watchAllRecords(
+		collection,
+		async snap =>
+			await asyncForEach(snap.docChanges(), async change => {
+				switch (change.type) {
+					case "removed":
+						_locations.update(locations => {
+							const copy = { ...locations };
+							delete copy[change.doc.id];
+							return copy;
+						});
+						break;
+
+					case "added":
+					case "modified": {
+						const location = await locationFromSnapshot(change.doc, dek);
+						_locations.update(locations => {
+							const copy = { ...locations };
+							copy[change.doc.id] = location;
+							return copy;
+						});
+						break;
 					}
-				}),
-			error => {
-				locationsLoadError.set(error);
-				const watcher = get(locationsWatcher);
-				if (watcher) watcher();
-				locationsWatcher.set(null);
-				logger.error(error);
-			}
-		)
+				}
+			}),
+		error => {
+			_locationsLoadError.set(error);
+			if (locationsWatcher) locationsWatcher();
+			locationsWatcher = null;
+			logger.error(error);
+		}
 	);
 }
 
@@ -122,7 +123,7 @@ export async function createLocation(
 	const newLocation = extantLocation ?? (await _createLocation(userId, record, dek, batch));
 	if (!batch) await updateUserStats();
 
-	locations.update(locations => {
+	_locations.update(locations => {
 		const copy = { ...locations };
 		copy[newLocation.id] = newLocation;
 		return copy;
@@ -140,7 +141,7 @@ export async function updateLocation(location: Location, batch?: WriteBatch): Pr
 	const dek = await deriveDEK(key, dekMaterial);
 	await _updateLocation(location, dek, batch);
 	if (!batch) await updateUserStats();
-	locations.update(locations => {
+	_locations.update(locations => {
 		const copy = { ...locations };
 		copy[location.id] = location;
 		return copy;
@@ -160,7 +161,7 @@ export async function deleteLocation(location: Location, batch?: WriteBatch): Pr
 	// case where their linked location does not exist
 
 	await _deleteLocation(location, batch);
-	locations.update(locations => {
+	_locations.update(locations => {
 		const copy = { ...locations };
 		delete copy[location.id];
 		return copy;
@@ -179,7 +180,7 @@ export async function getAllLocations(): Promise<void> {
 	const snap = await getDocs<LocationRecordPackage>(collection);
 	const stored = await asyncMap(snap.docs, async doc => await locationFromSnapshot(doc, dek));
 	for (const l of stored) {
-		locations.update(locations => {
+		_locations.update(locations => {
 			const copy = { ...locations };
 			copy[l.id] = l;
 			return copy;
@@ -242,10 +243,10 @@ export async function importLocation(
 }
 
 export async function importLocations(data: Array<LocationSchema>): Promise<void> {
-	const { getAllTransactions } = await import("./transactionsStore");
+	const { fetchAllTransactions } = await import("./transactionsStore");
 	// Assume we've imported all transactions,
 	// but don't assume we have them cached yet
-	await getAllTransactions();
+	await fetchAllTransactions();
 	await getAllLocations();
 
 	// Only batch 250 at a time, since each import does up to 2 writes

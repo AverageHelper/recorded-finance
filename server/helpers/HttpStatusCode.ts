@@ -391,5 +391,134 @@ export enum HttpStatusCode {
  * Returns a brief textual description of the status code.
  */
 export function describeCode(code: HttpStatusCode): string {
-	return HttpStatusCode[code] ?? `HTTP_${code}`;
+	// Based on https://equestria.social/@edchdx/109942817018398027
+	// This will be annoying to anyone who inspects the HTTP responses.
+	switch (code) {
+		case HttpStatusCode.CONTINUE:
+			return "Pony Continue";
+		case HttpStatusCode.SWITCHING_PROTOCOLS:
+			return "Switching Ponies";
+		case HttpStatusCode.PROCESSING:
+			return "Pony Processing";
+		case HttpStatusCode.OK:
+			return "Pony";
+		case HttpStatusCode.CREATED:
+			return "New Pony";
+		case HttpStatusCode.ACCEPTED:
+			return "Good Pony";
+		case HttpStatusCode.NON_AUTHORITATIVE_INFORMATION:
+			return "Alt Pony";
+		case HttpStatusCode.NO_CONTENT:
+			return "No Pony";
+		case HttpStatusCode.RESET_CONTENT:
+			return "Return Pony";
+		case HttpStatusCode.PARTIAL_CONTENT:
+			return "Part Pony";
+		case HttpStatusCode.MULTI_STATUS:
+			return "Many Ponies";
+		case HttpStatusCode.ALREADY_REPORTED:
+			return "Many Ponies Again";
+		case HttpStatusCode.IM_USED:
+			return "Working Pony";
+		case HttpStatusCode.MULTIPLE_CHOICES:
+			return "Multi Pony";
+		case HttpStatusCode.MOVED_PERMANENTLY:
+			return "Wrong Pony";
+		case HttpStatusCode.FOUND:
+			return "Moved Pony";
+		case HttpStatusCode.SEE_OTHER:
+			return "Other Pony";
+		case HttpStatusCode.NOT_MODIFIED:
+			return "Same Pony";
+		case HttpStatusCode.USE_PROXY:
+			return "Pony Proxy Please";
+		case HttpStatusCode.SWITCH_PROXY:
+			return "Switch Pony Proxy";
+		case HttpStatusCode.TEMPORARY_REDIRECT:
+			return "Temporary Pony";
+		case HttpStatusCode.PERMANENT_REDIRECT:
+			return "Permanent Pony";
+		case HttpStatusCode.BAD_REQUEST:
+			return "Bad Pony";
+		case HttpStatusCode.UNAUTHORIZED:
+			return "Unauthorized Pony";
+		case HttpStatusCode.PAYMENT_REQUIRED:
+			return "Bits Needed";
+		case HttpStatusCode.FORBIDDEN:
+			return "Banned Pony";
+		case HttpStatusCode.NOT_FOUND:
+			return "No Pony Found";
+		case HttpStatusCode.METHOD_NOT_ALLOWED:
+			return "Not the Pony Way";
+		case HttpStatusCode.NOT_ACCEPTABLE:
+			return "Unacceptable Pony";
+		case HttpStatusCode.PROXY_AUTHENTICATION_REQUIRED:
+			return "Pony Proxy Needs Authentication";
+		case HttpStatusCode.REQUEST_TIMEOUT:
+			return "Pony Was Too Late";
+		case HttpStatusCode.CONFLICT:
+			return "Pony Conflict";
+		case HttpStatusCode.GONE:
+			return "Pony Gone";
+		case HttpStatusCode.LENGTH_REQUIRED:
+			return "Mane Length Required";
+		case HttpStatusCode.PRECONDITION_FAILED:
+			return "Pony Condition Failed";
+		case HttpStatusCode.PAYLOAD_TOO_LARGE:
+			return "Pony Too Large";
+		case HttpStatusCode.URI_TOO_LONG:
+			return "Mane Too Long";
+		case HttpStatusCode.UNSUPPORTED_MEDIA_TYPE:
+			return "No Singing Allowed";
+		case HttpStatusCode.RANGE_NOT_SATISFIABLE:
+			return "Pony Not Large Enough";
+		case HttpStatusCode.EXPECTATION_FAILED:
+			return "Pony Expectation Failed";
+		case HttpStatusCode.I_AM_A_TEAPOT:
+			return "I'm a Pony";
+		case HttpStatusCode.MISDIRECTED_REQUEST:
+			return "Misdirected Pony";
+		case HttpStatusCode.UNPROCESSABLE_ENTITY:
+			return "Unprocessable Pony";
+		case HttpStatusCode.LOCKED:
+			return "Pony Was Locked";
+		case HttpStatusCode.FAILED_DEPENDENCY:
+			return "Friendship Failed";
+		case HttpStatusCode.TOO_EARLY:
+			return "Pony Was Too Early";
+		case HttpStatusCode.UPGRADE_REQUIRED:
+			return "New Friend Needed";
+		case HttpStatusCode.PRECONDITION_REQUIRED:
+			return "Some Friend Needed";
+		case HttpStatusCode.TOO_MANY_REQUESTS:
+			return "Too Many Ponies";
+		case HttpStatusCode.REQUEST_HEADER_FIELDS_TOO_LARGE:
+			return "Ears Too Large";
+		case HttpStatusCode.UNAVAILABLE_FOR_LEGAL_REASONS:
+			return "Pony Unavailable For Legal Reasons";
+		case HttpStatusCode.INTERNAL_SERVER_ERROR:
+			return "Castle Errors";
+		case HttpStatusCode.NOT_IMPLEMENTED:
+			return "Castle Under Construction";
+		case HttpStatusCode.BAD_GATEWAY:
+			return "Bad Castle";
+		case HttpStatusCode.SERVICE_UNAVAILABLE:
+			return "Castle Unavailable";
+		case HttpStatusCode.GATEWAY_TIMEOUT:
+			return "Castle Timeout";
+		case HttpStatusCode.HTTP_VERSION_NOT_SUPPORTED:
+			return "Parchment Not Supported";
+		case HttpStatusCode.VARIANT_ALSO_NEGOTIATES:
+			return "Double-crossing Friend";
+		case HttpStatusCode.INSUFFICIENT_STORAGE:
+			return "Not Enough Stables";
+		case HttpStatusCode.LOOP_DETECTED:
+			return "Lost Pony";
+		case HttpStatusCode.NOT_EXTENDED:
+			return "Confused Pony";
+		case HttpStatusCode.NETWORK_AUTHENTICATION_REQUIRED:
+			return "Need To Buy Quills and Ink";
+		default:
+			return `HTTP ${code as number}`; // need to assert `number` here, otherwise the type is `never`
+	}
 }

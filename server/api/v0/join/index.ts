@@ -1,4 +1,4 @@
-import type { User } from "../../../database/schemas";
+import type { UID, User } from "../../../database/schemas";
 import { apiHandler, dispatchRequests } from "../../../helpers/apiHandler";
 import { BadRequestError } from "../../../errors/BadRequestError";
 import { DuplicateAccountError } from "../../../errors/DuplicateAccountError";
@@ -16,9 +16,9 @@ import { v4 as uuid } from "uuid";
  * Returns a fresh document ID that is virtually guaranteed
  * not to have been used before.
  */
-function newDocumentId(): string {
+function newDocumentId(): UID {
 	// TODO: Use the database's own UUID or CUID implementation
-	return uuid().replace(/-/gu, ""); // remove hyphens
+	return uuid().replace(/-/gu, "") as UID; // remove hyphens
 }
 
 export const POST = apiHandler("POST", async (req, res) => {

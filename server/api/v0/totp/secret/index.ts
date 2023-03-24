@@ -6,6 +6,7 @@ import { generateTOTPSecretURI, verifyTOTP } from "../../../../auth/totp";
 import { is, nonempty, string, type } from "superstruct";
 import { metadataFromRequest } from "../../../../auth/requireAuth";
 import { respondSuccess } from "../../../../responses";
+import { totpToken } from "../../../../database/schemas";
 import { UnauthorizedError } from "../../../../errors/UnauthorizedError";
 import { upsertUser } from "../../../../database/write";
 
@@ -50,7 +51,7 @@ export const GET = apiHandler("GET", async (req, res) => {
 export const DELETE = apiHandler("DELETE", async (req, res) => {
 	const reqBody = type({
 		password: nonempty(string()),
-		token: nonempty(string()),
+		token: totpToken,
 	});
 	if (!is(req.body, reqBody)) {
 		throw new BadRequestError("Improper parameter types");
@@ -66,7 +67,7 @@ export const DELETE = apiHandler("DELETE", async (req, res) => {
 	const token = req.body.token;
 
 	// If the user has no secret, treat the secret as deleted and return 200
-	if (user.totpSeed === null || user.totpSeed === undefined || !user.totpSeed) {
+	if (user.totpSeed === null || user.totpSeed === undefined) {
 		respondSuccess(res);
 		return;
 	}
@@ -80,9 +81,7 @@ export const DELETE = apiHandler("DELETE", async (req, res) => {
 
 	// Re-validate TOTP
 	const isCodeGood = verifyTOTP(token, secret);
-	if (isCodeGood) {
-		respondSuccess(res);
-	} else {
+	if (!isCodeGood) {
 		throw new UnauthorizedError("wrong-mfa-credentials");
 	}
 

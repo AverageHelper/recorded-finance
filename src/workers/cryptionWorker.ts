@@ -1,4 +1,6 @@
-import type { EPackage, KeyMaterial } from "../transport/cryptionProtocols";
+import type { EPackage, KeyMaterial, Salt } from "../transport/cryptionProtocols";
+import type { Obfuscated } from "../transport/HashStore";
+import type { Opaque } from "type-fest";
 import * as Comlink from "comlink";
 import { cipher, encoder, hasher, Protocols } from "../transport/cryptionProtocols";
 import { HashStore } from "../transport/HashStore";
@@ -6,10 +8,12 @@ import { logger } from "../logger";
 import { RawDecryptionError } from "../transport/errors/RawDecryptionError";
 import btoa from "btoa-lite";
 
+export type Hashed = Opaque<string, "Hashed">;
+
 // Vite rolls this into a single module on build, but uses modules at dev time.
 // FIXME: Firefox only supports module workers in FF 111. Meantime, test under Chromium.
 
-function derivePKey(password: string, salt: string): string {
+function derivePKey(password: string, salt: Salt): Obfuscated {
 	logger.debug("derivePKey started...");
 
 	const Cryption = Protocols.v0;
@@ -25,38 +29,38 @@ function derivePKey(password: string, salt: string): string {
 	return result.hashedValue;
 }
 
-function hashed(input: string): string {
+function hashed(input: string): Hashed {
 	logger.debug("hashed started...");
-	const result = HashStore.fromHashed(derivePKey(input, "salt")).hashedValue;
+	const result = HashStore.fromHashed(derivePKey(input, "salt" as Salt)).hashedValue;
 
 	logger.debug("hashed finished");
-	return result;
+	return result as string as Hashed;
 }
 
-function deriveDEK(encodedPKey: string, ciphertext: string): string {
+function deriveDEK(encodedPKey: Obfuscated, ciphertext: string): Obfuscated {
 	logger.debug("deriveDEK started...");
 
 	const dekObject = decrypt({ ciphertext }, encodedPKey);
 	if (typeof dekObject !== "string") throw RawDecryptionError.malformedKey();
 
-	const result = HashStore.fromHashed(dekObject);
+	const result = HashStore.fromHashed(dekObject as Obfuscated);
 
 	logger.debug("deriveDEK finished");
 	return result.hashedValue;
 }
 
-function newDataEncryptionKeyMaterialForDEK(password: string, encodedDek: string): KeyMaterial {
+function newDataEncryptionKeyMaterialForDEK(password: string, encodedDek: Obfuscated): KeyMaterial {
 	logger.debug("newDataEncryptionKeyMaterialForDEK started...");
 
 	// To make passwords harder to guess
 	const dek = HashStore.fromHashed(encodedDek);
 	const Cryption = Protocols.v0;
-	const passSalt = btoa(Cryption.randomValue(Cryption.saltSizeBytes));
+	const passSalt = btoa(Cryption.randomValue(Cryption.saltSizeBytes)) as Salt;
 
 	// To encrypt the dek
 	const pKey = derivePKey(password, passSalt);
 	const dekObject = btoa(dek.value);
-	const dekMaterial = encrypt(dekObject, "KeyMaterial", pKey).ciphertext;
+	const dekMaterial = encrypt(dekObject, "KeyMaterial", pKey).ciphertext as Obfuscated;
 
 	logger.debug("newDataEncryptionKeyMaterialForDEK finished");
 	return { dekMaterial, passSalt };
@@ -95,7 +99,11 @@ function newMaterialFromOldKey(
 	};
 }
 
-function encrypt<T extends string>(data: unknown, objectType: T, encodedDek: string): EPackage<T> {
+function encrypt<T extends string>(
+	data: unknown,
+	objectType: T,
+	encodedDek: Obfuscated
+): EPackage<T> {
 	logger.debug("encrypt started...");
 
 	const dek = HashStore.fromHashed(encodedDek);
@@ -116,7 +124,7 @@ function encrypt<T extends string>(data: unknown, objectType: T, encodedDek: str
  */
 function decrypt(
 	pkg: Pick<EPackage<string>, "ciphertext" | "cryption">,
-	encodedDek: string
+	encodedDek: Obfuscated
 ): unknown {
 	logger.debug("decrypt started...");
 

@@ -1,7 +1,8 @@
 import type { PlatformDB, DocumentReference } from "./db";
 import type { KeyMaterial } from "./cryptionProtocols";
-import type { MFAValidation } from "./schemas";
+import type { MFAValidation, UID } from "./schemas";
 import { doc, db, getDoc, setDoc, deleteDoc } from "./db";
+import { isUid } from "./schemas";
 import { PlatformError } from "./errors";
 import { run } from "./apiStruts";
 import { t } from "../i18n";
@@ -18,20 +19,20 @@ import {
 	postV0Updatepassword,
 } from "./api";
 
-function authRef(uid: string): DocumentReference<KeyMaterial> {
+function authRef(uid: UID): DocumentReference<KeyMaterial> {
 	return doc<KeyMaterial>(db, "keys", uid);
 }
 
-export async function getAuthMaterial(uid: string): Promise<KeyMaterial | null> {
+export async function getAuthMaterial(uid: UID): Promise<KeyMaterial | null> {
 	const snap = await getDoc(authRef(uid));
 	return snap.data() ?? null;
 }
 
-export async function setAuthMaterial(uid: string, data: KeyMaterial): Promise<void> {
+export async function setAuthMaterial(uid: UID, data: KeyMaterial): Promise<void> {
 	await setDoc(authRef(uid), data);
 }
 
-export async function deleteAuthMaterial(uid: string): Promise<void> {
+export async function deleteAuthMaterial(uid: UID): Promise<void> {
 	await deleteDoc(authRef(uid));
 }
 
@@ -40,7 +41,7 @@ export interface User {
 	readonly accountId: string;
 
 	/** The user's unique ID. Not alterable without creating a new account. */
-	readonly uid: string;
+	readonly uid: UID;
 
 	/** The user's registered 2FA methods. */
 	readonly mfa: ReadonlyArray<MFAValidation>;
@@ -87,7 +88,7 @@ export async function createUserWithAccountIdAndPassword(
 		usedSpace,
 		totalSpace,
 	} = await run(postV0Join, db, { account, password });
-	if (pubnub_token === undefined || pubnub_cipher_key === undefined || uid === undefined)
+	if (pubnub_token === undefined || pubnub_cipher_key === undefined || !isUid(uid))
 		throw new TypeError(t("error.server.missing-access-token"));
 
 	if (usedSpace !== undefined && totalSpace !== undefined) {
@@ -146,7 +147,7 @@ export async function signInWithAccountIdAndPassword(
 		totalSpace,
 		validate,
 	} = await run(postV0Login, db, { account, password });
-	if (pubnub_token === undefined || pubnub_cipher_key === undefined || uid === undefined)
+	if (pubnub_token === undefined || pubnub_cipher_key === undefined || !isUid(uid))
 		throw new TypeError(t("error.server.missing-access-token"));
 
 	db.clearUser(); // clear the previous user
@@ -257,7 +258,7 @@ export async function refreshSession(db: PlatformDB): Promise<UserCredential> {
 		account === undefined ||
 		pubnub_token === undefined ||
 		pubnub_cipher_key === undefined ||
-		uid === undefined
+		!isUid(uid)
 	)
 		throw new TypeError(t("error.server.missing-access-token"));
 

@@ -1,3 +1,5 @@
+import type { Obfuscated } from "./HashStore";
+import type { Opaque } from "type-fest";
 import { UnreachableCaseError } from "../transport/errors";
 import "crypto-js/sha512"; // to keep SHA512 algo from tree-shaking away
 import AES from "crypto-js/aes";
@@ -84,7 +86,7 @@ export interface CryptionProtocol {
 	/**
 	 * The function used to create one-way hash values.
 	 */
-	hasher: Hash;
+	hasher: HashAlg;
 
 	/**
 	 * The cipher function to use.
@@ -100,15 +102,17 @@ export interface CryptionProtocol {
 	randomValue(byteCount: number): string;
 }
 
+export type Salt = Opaque<string, "Salt">;
+
 /**
  * User-level encryption material that lives on the server.
  * This data is useless without the user's password.
  */
 export interface KeyMaterial {
-	dekMaterial: string;
-	passSalt: string;
-	oldDekMaterial?: string;
-	oldPassSalt?: string;
+	dekMaterial: Obfuscated;
+	passSalt: Salt;
+	oldDekMaterial?: Obfuscated;
+	oldPassSalt?: Salt;
 }
 
 export interface EPackage<T extends string> {
@@ -138,7 +142,7 @@ export interface EPackage<T extends string> {
 
 export type Encoding = "base64" | "utf8";
 
-export type Hash = "sha512";
+export type HashAlg = "sha512";
 
 export type Cipher = "aes";
 
@@ -159,7 +163,7 @@ export function encoder(type: Encoding): typeof EncBase64 {
 /**
  * @returns a CryptoJS hasher from the given descriptor.
  */
-export function hasher(type: Hash): typeof CryptoJSCore.algo.SHA512 {
+export function hasher(type: HashAlg): typeof CryptoJSCore.algo.SHA512 {
 	switch (type) {
 		case "sha512":
 			return CryptoJSCore.algo.SHA512;

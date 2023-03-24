@@ -7,8 +7,9 @@ import { asyncMap } from "../helpers/asyncMap.js";
 import { attachment as newAttachment } from "../model/Attachment.js";
 import { BlobReader, Data64URIWriter, TextReader, ZipWriter } from "@zip.js/zip.js";
 import { bootstrap, updateUserStats } from "./uiStore.js";
-import { derived, get, writable } from "svelte/store";
+import { derived, get } from "svelte/store";
 import { logger } from "../logger.js";
+import { moduleWritable } from "../helpers/moduleWritable.js";
 import { NetworkError, PlatformError } from "../transport/errors/index.js";
 import { t } from "../i18n.js";
 import { v4 as uuid } from "uuid";
@@ -48,64 +49,72 @@ import {
 
 type LoginProcessState = "AUTHENTICATING" | "GENERATING_KEYS" | "FETCHING_KEYS" | "DERIVING_PKEY";
 
-export const isNewLogin = writable(false);
-export const currentUser = writable<User | null>(null);
+const [isNewLogin, _isNewLogin] = moduleWritable(false);
+export { isNewLogin };
+
+const [currentUser, _currentUser] = moduleWritable<User | null>(null);
+export { currentUser };
+
 export const accountId = derived(currentUser, u => u?.accountId ?? null);
+
 export const uid = derived(currentUser, u => u?.uid ?? null);
-export const pKey = writable<HashStore | null>(null);
-export const loginProcessState = writable<LoginProcessState | null>(null);
-export const preferences = writable(defaultPrefs());
-export const userPrefsWatcher = writable<Unsubscribe | null>(null);
+
+const [pKey, _pKey] = moduleWritable<HashStore | null>(null);
+export { pKey };
+
+const [loginProcessState, _loginProcessState] = moduleWritable<LoginProcessState | null>(null);
+export { loginProcessState };
+
+const [preferences, _preferences] = moduleWritable(defaultPrefs());
+export { preferences };
+
+let userPrefsWatcher: Unsubscribe | null = null;
 
 export const isSignupEnabled = import.meta.env.VITE_ENABLE_SIGNUP === "true";
 export const isLoginEnabled = import.meta.env.VITE_ENABLE_LOGIN === "true";
 
 export function clearAuthCache(): void {
-	const watcher = get(userPrefsWatcher);
-	if (watcher) watcher(); // needs to die before auth watcher
-	userPrefsWatcher.set(null);
+	if (userPrefsWatcher) userPrefsWatcher(); // needs to die before auth watcher
+	userPrefsWatcher = null;
 	get(pKey)?.destroy();
-	pKey.set(null);
-	loginProcessState.set(null);
-	currentUser.set(null);
-	isNewLogin.set(false);
-	preferences.set(defaultPrefs());
+	_pKey.set(null);
+	_loginProcessState.set(null);
+	_currentUser.set(null);
+	_isNewLogin.set(false);
+	_preferences.set(defaultPrefs());
 	logger.debug("authStore: cache cleared");
 }
 
 export function lockVault(): void {
 	get(pKey)?.destroy();
-	pKey.set(null);
-	isNewLogin.set(false);
-	loginProcessState.set(null);
+	_pKey.set(null);
+	_isNewLogin.set(false);
+	_loginProcessState.set(null);
 	logger.debug("authStore: keys forgotten, vault locked");
 }
 
 export function onSignedIn(user: User): void {
-	currentUser.set(user);
+	_currentUser.set(user);
 
-	const watcher = get(userPrefsWatcher);
-	if (watcher) {
-		watcher();
-		userPrefsWatcher.set(null);
+	if (userPrefsWatcher) {
+		userPrefsWatcher();
+		userPrefsWatcher = null;
 	}
 
 	const key = get(pKey);
 	if (key === null) return; // No decryption key
 
 	const userDoc = userRef(user.uid);
-	userPrefsWatcher.set(
-		watchRecord(userDoc, async snap => {
-			const { dekMaterial } = await getDekMaterial();
-			const dek = await deriveDEK(key, dekMaterial);
-			if (snap.exists()) {
-				const prefs = await userPreferencesFromSnapshot(snap, dek);
-				preferences.set(prefs);
-			} else {
-				preferences.set(defaultPrefs());
-			}
-		})
-	);
+	userPrefsWatcher = watchRecord(userDoc, async snap => {
+		const { dekMaterial } = await getDekMaterial();
+		const dek = await deriveDEK(key, dekMaterial);
+		if (snap.exists()) {
+			const prefs = await userPreferencesFromSnapshot(snap, dek);
+			_preferences.set(prefs);
+		} else {
+			_preferences.set(defaultPrefs());
+		}
+	});
 }
 
 export async function onSignedOut(): Promise<void> {
@@ -126,7 +135,7 @@ export async function onSignedOut(): Promise<void> {
 export async function fetchSession(): Promise<void> {
 	bootstrap();
 	try {
-		loginProcessState.set("AUTHENTICATING");
+		_loginProcessState.set("AUTHENTICATING");
 		// Salt using the user's account ID
 		const { user } = await refreshSession(auth);
 		await updateUserStats();
@@ -138,7 +147,7 @@ export async function fetchSession(): Promise<void> {
 		}
 	} finally {
 		// In any event, error or not:
-		loginProcessState.set(null);
+		_loginProcessState.set(null);
 	}
 }
 
@@ -155,18 +164,18 @@ async function finalizeLogin(password: string, user: User): Promise<void> {
 	await updateUserStats();
 
 	// Get the salt and dek material from server
-	loginProcessState.set("FETCHING_KEYS");
+	_loginProcessState.set("FETCHING_KEYS");
 	const material = await getDekMaterial();
 
 	// Derive a pKey from the password, and remember it
-	loginProcessState.set("DERIVING_PKEY");
-	pKey.set(await derivePKey(password, material.passSalt));
+	_loginProcessState.set("DERIVING_PKEY");
+	_pKey.set(await derivePKey(password, material.passSalt));
 	onSignedIn(user);
 }
 
 export async function login(accountId: string, password: string): Promise<void> {
 	try {
-		loginProcessState.set("AUTHENTICATING");
+		_loginProcessState.set("AUTHENTICATING");
 		// TODO: Also salt the password hash
 		// Salt using the user's account ID
 		const { user } = await signInWithAccountIdAndPassword(
@@ -178,7 +187,7 @@ export async function login(accountId: string, password: string): Promise<void> 
 		await finalizeLogin(password, user);
 	} finally {
 		// In any event, error or not:
-		loginProcessState.set(null);
+		_loginProcessState.set(null);
 	}
 }
 
@@ -188,11 +197,11 @@ export async function login(accountId: string, password: string): Promise<void> 
  */
 export async function loginWithTotp(password: string, token: string): Promise<void> {
 	try {
-		loginProcessState.set("AUTHENTICATING");
+		_loginProcessState.set("AUTHENTICATING");
 		const [, { user }] = await verifySessionWithTOTP(auth, token);
 		await finalizeLogin(password, user);
 	} finally {
-		loginProcessState.set(null);
+		_loginProcessState.set(null);
 	}
 }
 
@@ -255,30 +264,30 @@ export function createAccountId(): string {
 
 export async function createVault(accountId: string, password: string): Promise<void> {
 	try {
-		loginProcessState.set("AUTHENTICATING");
+		_loginProcessState.set("AUTHENTICATING");
 		const { user } = await createUserWithAccountIdAndPassword(
 			auth,
 			accountId,
 			await hashed(password)
 		);
 
-		loginProcessState.set("GENERATING_KEYS");
+		_loginProcessState.set("GENERATING_KEYS");
 		const material = await newDataEncryptionKeyMaterial(password);
 		await setAuthMaterial(user.uid, material);
 		await updateUserStats();
 
-		loginProcessState.set("DERIVING_PKEY");
-		pKey.set(await derivePKey(password, material.passSalt));
-		isNewLogin.set(true);
+		_loginProcessState.set("DERIVING_PKEY");
+		_pKey.set(await derivePKey(password, material.passSalt));
+		_isNewLogin.set(true);
 		onSignedIn(user);
 	} finally {
 		// In any event, error or not:
-		loginProcessState.set(null);
+		_loginProcessState.set(null);
 	}
 }
 
 export function clearNewLoginStatus(): void {
-	isNewLogin.set(false);
+	_isNewLogin.set(false);
 }
 
 export async function destroyVault(password: string): Promise<void> {
@@ -324,7 +333,7 @@ export async function regenerateAccountId(currentPassword: string): Promise<void
 	const newAccountId = createAccountId();
 	await updateAccountId(user, newAccountId, await hashed(currentPassword));
 	await fetchSession(); // updates the stored account ID
-	isNewLogin.set(true);
+	_isNewLogin.set(true);
 }
 
 export async function updatePassword(oldPassword: string, newPassword: string): Promise<void> {
@@ -344,7 +353,7 @@ export async function updatePassword(oldPassword: string, newPassword: string): 
 
 	// Store new pKey
 	await setAuthMaterial(user.uid, newMaterial);
-	pKey.set(await derivePKey(newPassword, newMaterial.passSalt));
+	_pKey.set(await derivePKey(newPassword, newMaterial.passSalt));
 	delete newMaterial.oldDekMaterial;
 	delete newMaterial.oldPassSalt;
 
@@ -354,7 +363,7 @@ export async function updatePassword(oldPassword: string, newPassword: string): 
 	} catch (error) {
 		// Overwrite the new key with the old key, and have user try again
 		await setAuthMaterial(user.uid, oldMaterial);
-		pKey.set(await derivePKey(oldPassword, oldMaterial.passSalt));
+		_pKey.set(await derivePKey(oldPassword, oldMaterial.passSalt));
 		throw error;
 	}
 

@@ -1,4 +1,5 @@
 import type { UnauthorizedErrorCode } from "./UnauthorizedError";
+import { HttpStatusCode } from "../helpers/HttpStatusCode";
 
 export type ErrorCode =
 	| UnauthorizedErrorCode
@@ -14,7 +15,7 @@ export type ErrorCode =
 
 export class InternalError extends Error {
 	/** The HTTP status that should be reported to the caller. */
-	public readonly status: number;
+	public readonly status: HttpStatusCode;
 
 	/** `false` if we should log the error internally. */
 	public readonly harmless: boolean;
@@ -27,7 +28,7 @@ export class InternalError extends Error {
 
 	constructor({
 		message,
-		status = 500,
+		status = HttpStatusCode.INTERNAL_SERVER_ERROR,
 		code = "unknown",
 		headers = new Map(),
 		harmless = false,

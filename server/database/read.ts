@@ -1,10 +1,24 @@
-import type { AnyData, DataItem, Identified, IdentifiedDataItem, User, UserKeys } from "./schemas";
+import type {
+	AESCipherKey,
+	AnyData,
+	DataItem,
+	Hash,
+	Identified,
+	IdentifiedDataItem,
+	Salt,
+	TOTPSeed,
+	UID,
+	User,
+	UserKeys,
+} from "./schemas";
 import type { CollectionReference, DocumentReference } from "./references";
 import type { FileData } from "@prisma/client";
+import type { JWT } from "../auth/jwt";
+import type { Logger } from "../logger";
 import { computeRequiredAddtlAuth } from "./schemas";
 import { dataSource } from "./io";
 import { generateAESCipherKey } from "../auth/generators";
-import { logger } from "../logger";
+import { logger as defaultLogger } from "../logger";
 import { maxSpacePerUser } from "../auth/limits";
 import { NotFoundError } from "../errors/NotFoundError";
 import { UnreachableCaseError } from "../errors/UnreachableCaseError";
@@ -14,26 +28,31 @@ interface UserStats {
 	usedSpace: number;
 }
 
-export async function statsForUser(uid: string): Promise<UserStats> {
+export async function statsForUser(uid: UID): Promise<UserStats> {
 	const totalSpace = Math.ceil(maxSpacePerUser);
 	const usedSpace = await totalSizeOfFilesForUser(uid);
 
 	return { totalSpace, usedSpace };
 }
 
-export async function numberOfUsers(): Promise<number> {
-	return await dataSource().user.count();
+export async function numberOfUsers(logger: Logger | null = defaultLogger): Promise<number> {
+	return await dataSource({ logger }).user.count();
 }
 
-export async function listAllUserIds(): Promise<Array<string>> {
-	const users = await dataSource().user.findMany({ select: { uid: true } });
-	return users.map(({ uid }) => uid);
+export async function listAllUserIds(logger: Logger | null = defaultLogger): Promise<Array<UID>> {
+	const users = await dataSource({ logger }).user.findMany({ select: { uid: true } });
+	// Can an empty string even be a value for a primary key?
+	return users.map(({ uid }) => uid as UID).filter(uid => uid);
 }
 
 // MARK: - Pseudo Large-file Storage
 
-export async function fetchFileData(userId: string, fileName: string): Promise<FileData | null> {
-	return await dataSource().fileData.findUnique({
+export async function fetchFileData(
+	userId: UID,
+	fileName: string,
+	logger: Logger | null = defaultLogger
+): Promise<FileData | null> {
+	return await dataSource({ logger }).fileData.findUnique({
 		where: { userId_fileName: { userId, fileName } },
 	});
 }
@@ -41,8 +60,13 @@ export async function fetchFileData(userId: string, fileName: string): Promise<F
 /**
  * Returns the total number of bytes that comprise a given file.
  */
-export async function totalSizeOfFile(userId: string, fileName: string): Promise<number | null> {
-	const file = await dataSource().fileData.findUnique({
+// TODO: Expose this on the API
+export async function totalSizeOfFile(
+	userId: UID,
+	fileName: string,
+	logger: Logger | null = defaultLogger
+): Promise<number | null> {
+	const file = await dataSource({ logger }).fileData.findUnique({
 		where: { userId_fileName: { userId, fileName } },
 		select: { size: true },
 	});
@@ -53,8 +77,11 @@ export async function totalSizeOfFile(userId: string, fileName: string): Promise
 /**
  * Returns the number of bytes of the user's stored files.
  */
-export async function totalSizeOfFilesForUser(userId: string): Promise<number> {
-	const files = await dataSource().fileData.findMany({
+export async function totalSizeOfFilesForUser(
+	userId: UID,
+	logger: Logger | null = defaultLogger
+): Promise<number> {
+	const files = await dataSource({ logger }).fileData.findMany({
 		where: { userId },
 		select: { size: true },
 	});
@@ -64,8 +91,11 @@ export async function totalSizeOfFilesForUser(userId: string): Promise<number> {
 /**
  * Returns the number of files stored for the user.
  */
-export async function countFileBlobsForUser(userId: string): Promise<number> {
-	return await dataSource().fileData.count({ where: { userId } });
+export async function countFileBlobsForUser(
+	userId: UID,
+	logger: Logger | null = defaultLogger
+): Promise<number> {
+	return await dataSource({ logger }).fileData.count({ where: { userId } });
 }
 
 // MARK: - Database
@@ -73,19 +103,26 @@ export async function countFileBlobsForUser(userId: string): Promise<number> {
 /**
  * Resolves to `true` if the given token exists in the database.
  */
-export async function jwtExistsInDatabase(token: string): Promise<boolean> {
-	const result = await dataSource().expiredJwt.findUnique({
+export async function jwtExistsInDatabase(
+	token: JWT,
+	logger: Logger | null = defaultLogger
+): Promise<boolean> {
+	// FIXME: This sometimes throws when Prisma can't reach the database server. We should probs do a retry in that case.
+	const result = await dataSource({ logger }).expiredJwt.findUnique({
 		where: { token },
 		select: { token: true },
 	});
 	return result !== null;
 }
 
-export async function numberOfExpiredJwts(): Promise<number> {
-	return await dataSource().expiredJwt.count();
+export async function numberOfExpiredJwts(logger: Logger | null = defaultLogger): Promise<number> {
+	return await dataSource({ logger }).expiredJwt.count();
 }
 
-export async function countRecordsInCollection(ref: CollectionReference): Promise<number> {
+export async function countRecordsInCollection(
+	ref: CollectionReference,
+	logger: Logger | null = defaultLogger
+): Promise<number> {
 	switch (ref.id) {
 		case "accounts":
 		case "attachments":
@@ -93,21 +130,22 @@ export async function countRecordsInCollection(ref: CollectionReference): Promis
 		case "tags":
 		case "transactions":
 		case "users":
-			return await dataSource().dataItem.count({
+			return await dataSource({ logger }).dataItem.count({
 				where: {
 					userId: ref.uid,
 					collectionId: ref.id,
 				},
 			});
 		case "keys":
-			return await dataSource().userKeys.count({
+			return await dataSource({ logger }).userKeys.count({
 				where: { userId: ref.uid },
 			});
 	}
 }
 
 export async function fetchDbCollection(
-	ref: CollectionReference
+	ref: CollectionReference,
+	logger: Logger | null = defaultLogger
 ): Promise<Array<IdentifiedDataItem>> {
 	const uid = ref.uid;
 
@@ -119,7 +157,7 @@ export async function fetchDbCollection(
 		case "transactions":
 		case "users":
 			return (
-				await dataSource().dataItem.findMany({
+				await dataSource({ logger }).dataItem.findMany({
 					where: { userId: uid, collectionId: ref.id },
 					select: {
 						ciphertext: true,
@@ -131,7 +169,7 @@ export async function fetchDbCollection(
 			).map(v => ({ ...v, _id: v.docId }));
 		case "keys":
 			return (
-				await dataSource().userKeys.findMany({
+				await dataSource({ logger }).userKeys.findMany({
 					where: { userId: uid },
 					select: {
 						dekMaterial: true,
@@ -144,8 +182,9 @@ export async function fetchDbCollection(
 			).map(k => ({
 				...k,
 				_id: k.userId,
+				passSalt: k.passSalt as Salt,
 				oldDekMaterial: k.oldDekMaterial ?? undefined,
-				oldPassSalt: k.oldPassSalt ?? undefined,
+				oldPassSalt: (k.oldPassSalt as Salt | null) ?? undefined,
 			}));
 		default:
 			throw new UnreachableCaseError(ref.id);
@@ -153,10 +192,11 @@ export async function fetchDbCollection(
 }
 
 async function findUserWithProperties(
-	query: Partial<Pick<User, "uid" | "currentAccountId">>
+	query: Partial<Pick<User, "uid" | "currentAccountId">>,
+	logger: Logger | null = defaultLogger
 ): Promise<User | null> {
 	if (Object.keys(query).length === 0) return null; // Fail gracefully for an empty query
-	const first = await dataSource().user.findFirst({
+	const first = await dataSource({ logger }).user.findFirst({
 		where: {
 			uid: query.uid,
 			currentAccountId: query.currentAccountId,
@@ -165,27 +205,45 @@ async function findUserWithProperties(
 	if (first === null) return first;
 
 	// Upsert the cipher key if it doesn't exist
-	let pubnubCipherKey = first.pubnubCipherKey;
+	let pubnubCipherKey = first.pubnubCipherKey as AESCipherKey | null;
 	if (pubnubCipherKey === null) {
 		pubnubCipherKey = await generateAESCipherKey();
-		await dataSource().user.update({
+		await dataSource({ logger }).user.update({
 			where: { uid: first.uid },
 			data: { pubnubCipherKey },
 		});
 	}
 
-	// If the user has no pubnub_cipher_key, upsert one
-	return computeRequiredAddtlAuth({ ...first, pubnubCipherKey });
+	const passwordHash = first.passwordHash as Hash;
+	const passwordSalt = first.passwordSalt as Salt;
+	const mfaRecoverySeed = first.mfaRecoverySeed as TOTPSeed | null;
+	const totpSeed = first.totpSeed as TOTPSeed | null;
+
+	return computeRequiredAddtlAuth({
+		...first,
+		uid: first.uid as UID,
+		passwordHash,
+		passwordSalt,
+		mfaRecoverySeed: mfaRecoverySeed === "" ? null : mfaRecoverySeed,
+		totpSeed: totpSeed === "" ? null : totpSeed,
+		pubnubCipherKey,
+	});
 }
 
-export async function userWithUid(uid: string): Promise<User | null> {
+export async function userWithUid(
+	uid: UID,
+	logger: Logger | null = defaultLogger
+): Promise<User | null> {
 	// Find first user whose UID matches
-	return await findUserWithProperties({ uid });
+	return await findUserWithProperties({ uid }, logger);
 }
 
-export async function userWithAccountId(accountId: string): Promise<User | null> {
+export async function userWithAccountId(
+	accountId: string,
+	logger: Logger | null = defaultLogger
+): Promise<User | null> {
 	// Find first user whose account ID matches
-	return await findUserWithProperties({ currentAccountId: accountId });
+	return await findUserWithProperties({ currentAccountId: accountId }, logger);
 }
 
 /** A view of database data. */
@@ -203,8 +261,11 @@ interface Snapshot {
  * @param ref A document reference.
  * @returns a view of database data.
  */
-export async function fetchDbDoc(ref: DocumentReference): Promise<Snapshot> {
-	logger.debug(`Retrieving document at ${ref.path}...`);
+export async function fetchDbDoc(
+	ref: DocumentReference,
+	logger: Logger | null = defaultLogger
+): Promise<Snapshot> {
+	logger?.debug(`Retrieving document at ${ref.path}...`);
 	const collectionId = ref.parent.id;
 	const docId = ref.id;
 	switch (collectionId) {
@@ -214,11 +275,11 @@ export async function fetchDbDoc(ref: DocumentReference): Promise<Snapshot> {
 		case "tags":
 		case "transactions":
 		case "users": {
-			const result = await dataSource().dataItem.findFirst({
+			const result = await dataSource({ logger }).dataItem.findFirst({
 				where: { docId, collectionId },
 			});
 			if (result === null) {
-				logger.debug(`Got nothing at ${ref.path}`);
+				logger?.debug(`Got nothing at ${ref.path}`);
 				return { ref, data: null };
 			}
 
@@ -228,13 +289,15 @@ export async function fetchDbDoc(ref: DocumentReference): Promise<Snapshot> {
 				ciphertext: result.ciphertext,
 				cryption: result.cryption ?? "v0",
 			};
-			logger.debug(`Got document at ${ref.path}`);
+			logger?.debug(`Got document at ${ref.path}`);
 			return { ref, data };
 		}
 		case "keys": {
-			const result = await dataSource().userKeys.findUnique({ where: { userId: docId } });
+			const result = await dataSource({ logger }).userKeys.findUnique({
+				where: { userId: docId },
+			});
 			if (result === null) {
-				logger.debug(`Got nothing at ${ref.path}`);
+				logger?.debug(`Got nothing at ${ref.path}`);
 				return { ref, data: null };
 			}
 
@@ -242,10 +305,10 @@ export async function fetchDbDoc(ref: DocumentReference): Promise<Snapshot> {
 				_id: result.userId,
 				dekMaterial: result.dekMaterial,
 				oldDekMaterial: result.oldDekMaterial ?? undefined,
-				oldPassSalt: result.oldPassSalt ?? undefined,
-				passSalt: result.passSalt,
+				oldPassSalt: (result.oldPassSalt as Salt | null) ?? undefined,
+				passSalt: result.passSalt as Salt,
 			};
-			logger.debug(`Got document at ${ref.path}`);
+			logger?.debug(`Got document at ${ref.path}`);
 			return { ref, data };
 		}
 		default:
@@ -260,7 +323,8 @@ export async function fetchDbDoc(ref: DocumentReference): Promise<Snapshot> {
  * @returns an array containing the given references and their associated data.
  */
 export async function fetchDbDocs(
-	refs: NonEmptyArray<DocumentReference>
+	refs: ReadonlyNonEmptyArray<DocumentReference>,
+	logger: Logger | null = defaultLogger
 ): Promise<NonEmptyArray<Snapshot>> {
 	// Assert same UID on all refs
 	const uid = refs[0].uid;
@@ -269,5 +333,5 @@ export async function fetchDbDocs(
 
 	// Fetch the data
 	// TODO: Use findMany or a transaction instead
-	return (await Promise.all(refs.map(fetchDbDoc))) as NonEmptyArray<Snapshot>;
+	return (await Promise.all(refs.map(doc => fetchDbDoc(doc, logger)))) as NonEmptyArray<Snapshot>;
 }

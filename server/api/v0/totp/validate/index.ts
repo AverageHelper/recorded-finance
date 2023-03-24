@@ -1,20 +1,22 @@
+import type { TOTPSecretUri } from "../../../../auth/totp";
 import { apiHandler, dispatchRequests } from "../../../../helpers/apiHandler";
 import { BadRequestError } from "../../../../errors/BadRequestError";
 import { ConflictError } from "../../../../errors/ConflictError";
 import { generateSecret, generateTOTPSecretURI, verifyTOTP } from "../../../../auth/totp";
-import { generateAESCipherKey, generateSecureToken } from "../../../../auth/generators";
-import { is, nonempty, string, type } from "superstruct";
+import { generateSecureToken } from "../../../../auth/generators";
+import { is, type } from "superstruct";
 import { metadataFromRequest } from "../../../../auth/requireAuth";
 import { newAccessTokens, setSession } from "../../../../auth/jwt";
 import { respondSuccess } from "../../../../responses";
 import { statsForUser } from "../../../../database/read";
+import { totpToken } from "../../../../database/schemas";
 import { UnauthorizedError } from "../../../../errors/UnauthorizedError";
 import { upsertUser } from "../../../../database/write";
 import safeCompare from "safe-compare";
 
 export const POST = apiHandler("POST", async (req, res) => {
 	const reqBody = type({
-		token: nonempty(string()),
+		token: totpToken,
 	});
 
 	// ** Check that the given TOTP is valid for the user. If valid, but the user hasn't yet enabled a 2FA requirement, enable it
@@ -29,7 +31,7 @@ export const POST = apiHandler("POST", async (req, res) => {
 	const token = req.body.token;
 
 	// If the user doesn't have a secret stored, return 409
-	if (user.totpSeed === null || user.totpSeed === undefined || !user.totpSeed) {
+	if (user.totpSeed === null || user.totpSeed === undefined) {
 		throw new ConflictError(
 			"totp-secret-missing",
 			"You do not have a TOTP secret to validate against"
@@ -60,14 +62,14 @@ export const POST = apiHandler("POST", async (req, res) => {
 	}
 
 	// If there's a pending secret for the user, and the user hasn't enabled a requirement, enable it
-	let recovery_token: string | null = null;
+	let recovery_token: TOTPSecretUri | null = null;
 	if (user.requiredAddtlAuth?.includes("totp") !== true) {
 		const mfaRecoverySeed = generateSecureToken(15);
 		recovery_token = generateSecret(mfaRecoverySeed);
 		await upsertUser({
 			currentAccountId: user.currentAccountId,
 			mfaRecoverySeed,
-			pubnubCipherKey: user.pubnubCipherKey ?? (await generateAESCipherKey()),
+			pubnubCipherKey: user.pubnubCipherKey,
 			passwordHash: user.passwordHash,
 			passwordSalt: user.passwordSalt,
 			requiredAddtlAuth: ["totp"], // TODO: Leave other 2FA alone
@@ -76,7 +78,7 @@ export const POST = apiHandler("POST", async (req, res) => {
 		});
 	}
 
-	const pubnub_cipher_key = await generateAESCipherKey();
+	const pubnub_cipher_key = user.pubnubCipherKey;
 	const { access_token, pubnub_token } = await newAccessTokens(user, ["totp"]);
 	const { totalSpace, usedSpace } = await statsForUser(uid);
 

@@ -1,4 +1,6 @@
+import type { UID } from "../../../../../../../database";
+
 export interface Params {
-	uid: string;
+	uid: UID;
 	documentId: string;
 }

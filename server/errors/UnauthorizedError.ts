@@ -1,3 +1,4 @@
+import { HttpStatusCode } from "../helpers/HttpStatusCode";
 import { InternalError } from "./InternalError";
 
 export type UnauthorizedErrorCode =
@@ -30,7 +31,7 @@ function defaultMessageFromCode(code: UnauthorizedErrorCode): string {
 export class UnauthorizedError extends InternalError {
 	constructor(code: UnauthorizedErrorCode) {
 		const message = defaultMessageFromCode(code);
-		super({ status: 403, code, message, harmless: true });
+		super({ status: HttpStatusCode.FORBIDDEN, code, message, harmless: true });
 		this.name = "UnauthorizedError";
 	}
 }

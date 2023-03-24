@@ -1,6 +1,7 @@
 import type { EPackage } from "./cryptionProtocols";
 import type { HashStore } from "./HashStore";
 import type { Location, LocationRecordParams } from "../model/Location";
+import type { UID } from "./schemas";
 import { collection, db, doc, recordFromSnapshot, setDoc, deleteDoc } from "./db";
 import { encrypt } from "./cryption";
 import { isLocationRecord, location, recordFromLocation } from "../model/Location";
@@ -45,7 +46,7 @@ export async function locationFromSnapshot(
 }
 
 export async function createLocation(
-	uid: string,
+	uid: UID,
 	record: LocationRecordParams,
 	dek: HashStore,
 	batch?: WriteBatch

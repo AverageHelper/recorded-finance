@@ -2,6 +2,7 @@ import type { DocumentReference, QueryDocumentSnapshot } from "./db";
 import type { EPackage } from "./cryptionProtocols";
 import type { HashStore } from "./HashStore";
 import type { LocationPref } from "./locations";
+import type { UID } from "./schemas";
 import { db, doc, recordFromSnapshot, setDoc, deleteDoc } from "./db";
 import { encrypt } from "./cryption";
 import { locationPrefs } from "./locations";
@@ -30,12 +31,12 @@ function isUserPreferences(tbd: unknown): tbd is UserPreferences {
 	);
 }
 
-export function userRef(uid: string): DocumentReference<UserPreferencesRecordPackage> {
+export function userRef(uid: UID): DocumentReference<UserPreferencesRecordPackage> {
 	return doc<UserPreferencesRecordPackage>(db, "users", uid);
 }
 
 export async function setUserPreferences(
-	uid: string,
+	uid: UID,
 	prefs: Partial<UserPreferences>,
 	dek: HashStore
 ): Promise<void> {
@@ -46,7 +47,7 @@ export async function setUserPreferences(
 	await setDoc(userRef(uid), pkg);
 }
 
-export async function deleteUserPreferences(uid: string): Promise<void> {
+export async function deleteUserPreferences(uid: UID): Promise<void> {
 	await deleteDoc(userRef(uid));
 }
 

@@ -13,6 +13,7 @@ const messages = {
 	"en-US": enUS,
 	"pt-BR": ptBR,
 } as const;
+// Be sure to update the `og:locale:alternate` list in `/index.html` too
 
 export type LocaleCode = keyof typeof messages;
 

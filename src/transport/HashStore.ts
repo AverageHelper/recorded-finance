@@ -1,12 +1,15 @@
+import type { Opaque } from "type-fest";
 import atob from "atob-lite";
 import btoa from "btoa-lite";
+
+export type Obfuscated = Opaque<string, "Obfuscated">;
 
 /**
  * An object that stores a string value in base-64. Useful for
  * keeping secret values hard to read in plaintext memory.
  */
 export class HashStore {
-	private _hashedValue: string;
+	private _hashedValue: Obfuscated;
 
 	/**
 	 * Constructs a new hash store using the given value.
@@ -15,7 +18,7 @@ export class HashStore {
 	 */
 	constructor(value: string | HashStore) {
 		if (typeof value === "string") {
-			this._hashedValue = btoa(value);
+			this._hashedValue = btoa(value) as Obfuscated;
 		} else {
 			this._hashedValue = value._hashedValue;
 		}
@@ -24,7 +27,7 @@ export class HashStore {
 	/**
 	 * Constructs a new hash store that contains the given encoded value.
 	 */
-	static fromHashed(hashedValue: string): HashStore {
+	static fromHashed(hashedValue: Obfuscated): HashStore {
 		return new HashStore(atob(hashedValue));
 	}
 
@@ -38,7 +41,7 @@ export class HashStore {
 	/**
 	 * Returns the encoded internal value.
 	 */
-	get hashedValue(): string {
+	get hashedValue(): Obfuscated {
 		return this._hashedValue;
 	}
 
@@ -53,7 +56,7 @@ export class HashStore {
 		for (let i = 0; i < length; i += 1) {
 			result += characters.charAt(Math.floor(Math.random() * charactersLength));
 		}
-		this._hashedValue = result;
+		this._hashedValue = result as Obfuscated;
 	}
 
 	toString(): string {

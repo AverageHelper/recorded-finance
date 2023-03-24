@@ -1,11 +1,15 @@
-import type { EPackage, KeyMaterial } from "./cryptionProtocols";
-import type { CryptionWorker } from "../workers/cryptionWorker";
+// TODO: If the data we're sending to the Worker is over 10 kb, we should probably not.
+
+import type { CryptionWorker, Hashed } from "../workers/cryptionWorker";
+import type { EPackage, KeyMaterial, Salt } from "./cryptionProtocols";
+import type { Obfuscated } from "./HashStore";
+import type CryptoJS from "crypto-js";
 import * as Comlink from "comlink";
 import { DecryptionError } from "./errors/DecryptionError";
 import { HashStore } from "./HashStore";
 import { isProbablyRawDecryptionError } from "./errors/RawDecryptionError";
-
-// TODO: If the data we're sending to the Worker is over 10 kb, we should probably not.
+import { isString } from "../helpers/isString";
+import { t } from "../i18n";
 
 /**
  * @returns a new Web Worker proxy for working with en/decryption
@@ -20,7 +24,7 @@ function worker(): Comlink.Remote<CryptionWorker> {
 /**
  * Makes special potatoes that are unique to the `input`.
  */
-export async function hashed(input: string): Promise<string> {
+export async function hashed(input: string): Promise<Hashed> {
 	return await worker().hashed(input);
 }
 
@@ -30,7 +34,7 @@ export async function hashed(input: string): Promise<string> {
  * @param password The user's plaintext passphrase.
  * @param salt A salt to make the final key more unique.
  */
-export async function derivePKey(password: string, salt: string): Promise<HashStore> {
+export async function derivePKey(password: string, salt: Salt): Promise<HashStore> {
 	return HashStore.fromHashed(await worker().derivePKey(password, salt));
 }
 
@@ -40,13 +44,11 @@ export async function derivePKey(password: string, salt: string): Promise<HashSt
  * @param pKey The key used to encrypt or decrypt the DEK.
  * @param ciphertext The encrypted DEK material.
  */
-export async function deriveDEK(pKey: HashStore, ciphertext: string): Promise<HashStore> {
-	try {
-		return HashStore.fromHashed(await worker().deriveDEK(pKey.hashedValue, ciphertext));
-	} catch (error) {
-		if (!isProbablyRawDecryptionError(error)) throw error;
-		throw new DecryptionError(error);
-	}
+export async function deriveDEK(pKey: HashStore, ciphertext: Obfuscated): Promise<HashStore> {
+	const dekObject = await decrypt({ ciphertext }, pKey);
+	if (!isString(dekObject)) throw new TypeError(t("error.cryption.malformed-key"));
+
+	return new HashStore(atob(dekObject));
 }
 
 /**

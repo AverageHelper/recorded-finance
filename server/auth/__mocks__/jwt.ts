@@ -1,3 +1,4 @@
+import type { PubNubToken } from "../../database/schemas";
 import type {
 	blacklistHasJwt as _blacklistHasJwt,
 	addJwtToBlacklist as _addJwtToBlacklist,
@@ -17,7 +18,7 @@ export const addJwtToBlacklist = jest.fn<typeof _addJwtToBlacklist>().mockResolv
 
 export const newAccessTokens = jest
 	.fn<typeof _newAccessTokens>()
-	.mockResolvedValue({ access_token: "deft", pubnub_token: "move" });
+	.mockResolvedValue({ access_token: "deft", pubnub_token: "move" as PubNubToken });
 
 export const setSession = jest.fn<typeof _setSession>();
 
