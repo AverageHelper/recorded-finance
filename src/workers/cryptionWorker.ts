@@ -1,3 +1,6 @@
+// Vite rolls this into a single module on build.
+// Note: Firefox only supports module workers in FF 111 with `dom.workers.modules.enabled` set to `true`. Do this for dev time. Firefox works by default after build.
+
 import type { EPackage, KeyMaterial, Salt } from "../transport/cryptionProtocols";
 import type { Obfuscated } from "../transport/HashStore";
 import type { Opaque } from "type-fest";
@@ -9,9 +12,6 @@ import { RawDecryptionError } from "../transport/errors/RawDecryptionError";
 import btoa from "btoa-lite";
 
 export type Hashed = Opaque<string, "Hashed">;
-
-// Vite rolls this into a single module on build, but uses modules at dev time.
-// FIXME: Firefox only supports module workers in FF 111. Meantime, test under Chromium.
 
 function derivePKey(password: string, salt: Salt): Obfuscated {
 	logger.debug("derivePKey started...");
