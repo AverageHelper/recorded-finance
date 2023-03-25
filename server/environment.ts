@@ -5,6 +5,7 @@ export type EnvKey =
 	| "HOST"
 	| "MAX_BYTES"
 	| "MAX_USERS"
+	| "NODE_ENV"
 	| "PUBNUB_PUBLISH_KEY"
 	| "PUBNUB_SUBSCRIBE_KEY"
 	| "PUBNUB_SECRET_KEY"

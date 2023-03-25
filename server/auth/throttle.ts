@@ -1,5 +1,6 @@
 import type { RequestHandler } from "express";
 import { asyncWrapper } from "../asyncWrapper";
+import { env } from "../environment";
 import { RateLimiterMemory, RateLimiterRes } from "rate-limiter-flexible";
 import { ThrottledError } from "../errors/ThrottledError";
 
@@ -10,7 +11,7 @@ import { ThrottledError } from "../errors/ThrottledError";
  * The second is number of failed attempts from an IP address over some long period of time. * or example, block an IP address if it makes 100 failed attempts in one day.
  */
 
-const points = 15; // 15 tries
+const points = 10; // 10 tries
 const duration = 10 * 60; // per 10 minutes
 const blockDuration = 10 * 60; // block for 10 mins after points run out
 
@@ -23,6 +24,12 @@ const rateLimiter = new RateLimiterMemory({ points, duration, blockDuration });
  */
 export function throttle(): RequestHandler {
 	return asyncWrapper(async (req, res, next) => {
+		if (env("NODE_ENV") === "test") {
+			// Test mode. Skip throttle
+			next();
+			return;
+		}
+
 		const remoteIp = req.ip;
 		try {
 			await rateLimiter.consume(remoteIp);
