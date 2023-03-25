@@ -249,8 +249,7 @@ describe("Routes", () => {
 			expect(mockGenerators.generateSalt).toHaveBeenCalledOnce();
 			expect(mockGenerators.generateHash).toHaveBeenCalledOnce();
 			expect(mockGenerators.generateAESCipherKey).toHaveBeenCalledOnce();
-			expect(mockWrite.upsertUser).toHaveBeenCalledOnce(); // TODO: Use `toHaveBeenCalledOnceWith`
-			expect(mockWrite.upsertUser).toHaveBeenCalledWith({
+			expect(mockWrite.upsertUser).toHaveBeenCalledOnceWith({
 				uid: expect.toBeString() as UID,
 				currentAccountId: account,
 				passwordHash: mockGenerators.DEFAULT_MOCK_HASH,
@@ -583,8 +582,7 @@ describe("Routes", () => {
 					usedSpace: 0,
 					message: "Success!",
 				});
-			expect(mockWrite.upsertUser).toHaveBeenCalledOnce(); // TODO: Use `toHaveBeenCalledOnceWith`
-			expect(mockWrite.upsertUser).toHaveBeenCalledWith({
+			expect(mockWrite.upsertUser).toHaveBeenCalledOnceWith({
 				...user,
 				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN, // FIXME: This is weird. Shouldn't the seed != the token?
 				requiredAddtlAuth: ["totp"],
@@ -626,8 +624,7 @@ describe("Routes", () => {
 					usedSpace: 0,
 					message: "Success!",
 				});
-			expect(mockWrite.upsertUser).toHaveBeenCalledOnce();
-			expect(mockWrite.upsertUser).toHaveBeenCalledWith({
+			expect(mockWrite.upsertUser).toHaveBeenCalledOnceWith({
 				...user,
 				mfaRecoverySeed: null,
 			});
