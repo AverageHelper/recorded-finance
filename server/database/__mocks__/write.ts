@@ -9,6 +9,11 @@ import type {
 	deleteDbDocs as _deleteDbDocs,
 	deleteDbDoc as _deleteDbDoc,
 	deleteDbCollection as _deleteDbCollection,
+	deleteDocuments as _deleteDocuments,
+	deleteDocument as _deleteDocument,
+	deleteCollection as _deleteCollection,
+	setDocuments as _setDocuments,
+	setDocument as _setDocument,
 } from "../write";
 import { jest } from "@jest/globals";
 
@@ -33,3 +38,13 @@ export const deleteDbDoc = jest.fn<typeof _deleteDbDoc>().mockResolvedValue(unde
 export const deleteDbCollection = jest
 	.fn<typeof _deleteDbCollection>()
 	.mockResolvedValue(undefined);
+
+export const deleteDocuments = jest.fn<typeof _deleteDocuments>().mockResolvedValue(undefined);
+
+export const deleteDocument = jest.fn<typeof _deleteDocument>().mockResolvedValue(undefined);
+
+export const deleteCollection = jest.fn<typeof _deleteCollection>().mockResolvedValue(undefined);
+
+export const setDocuments = jest.fn<typeof _setDocuments>().mockResolvedValue(undefined);
+
+export const setDocument = jest.fn<typeof _setDocument>().mockResolvedValue(undefined);

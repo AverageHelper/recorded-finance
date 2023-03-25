@@ -10,10 +10,14 @@ import type {
 	numberOfExpiredJwts as _numberOfExpiredJwts,
 	countRecordsInCollection as _countRecordsInCollection,
 	fetchDbCollection as _fetchDbCollection,
-	fetchDbDoc as _fetchDbDoc,
-	fetchDbDocs as _fetchDbDocs,
 	userWithUid as _userWithUid,
 	userWithAccountId as _userWithAccountId,
+	fetchDbDoc as _fetchDbDoc,
+	fetchDbDocs as _fetchDbDocs,
+	watchUpdatesToDocument as _watchUpdatesToDocument,
+	watchUpdatesToCollection as _watchUpdatesToCollection,
+	informWatchersForDocument as _informWatchersForDocument,
+	informWatchersForCollection as _informWatchersForCollection,
 } from "../read";
 import { jest } from "@jest/globals";
 
@@ -56,3 +60,19 @@ export const fetchDbDoc = jest
 export const fetchDbDocs = jest
 	.fn<typeof _fetchDbDocs>()
 	.mockRejectedValue(new EvalError("This is a test"));
+
+export const watchUpdatesToDocument = jest
+	.fn<typeof _watchUpdatesToDocument>()
+	.mockReturnValue(() => undefined);
+
+export const watchUpdatesToCollection = jest
+	.fn<typeof _watchUpdatesToCollection>()
+	.mockReturnValue(() => undefined);
+
+export const informWatchersForDocument = jest
+	.fn<typeof _informWatchersForDocument>()
+	.mockResolvedValue(undefined);
+
+export const informWatchersForCollection = jest
+	.fn<typeof _informWatchersForCollection>()
+	.mockResolvedValue(undefined);

@@ -1,5 +1,5 @@
-import type { UID } from "../database";
-import { is, uidSchema } from "../database";
+import type { UID } from "../database/schemas";
+import { is, uidSchema } from "../database/schemas";
 import { NotFoundError } from "../errors/NotFoundError";
 
 /**

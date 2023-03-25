@@ -1,4 +1,4 @@
-import type { Hash, Salt, TOTPSeed, UID, User } from "./database";
+import type { Hash, Salt, TOTPSeed, UID, User } from "./database/schemas";
 import type { JWT } from "./auth/jwt";
 import "jest-extended";
 import { jest } from "@jest/globals";
@@ -11,6 +11,7 @@ import * as mockEnvironment from "./__mocks__/environment";
 import * as mockGenerators from "./auth/__mocks__/generators";
 import * as mockJwt from "./auth/__mocks__/jwt";
 import * as mockPubnub from "./auth/__mocks__/pubnub";
+import * as mockTotp from "./auth/__mocks__/totp";
 import * as mockRead from "./database/__mocks__/read";
 import * as mockWrite from "./database/__mocks__/write";
 /* eslint-enable jest/no-mocks-import */
@@ -20,12 +21,23 @@ jest.unstable_mockModule("./environment", () => mockEnvironment);
 jest.unstable_mockModule("./auth/generators", () => mockGenerators);
 jest.unstable_mockModule("./auth/jwt", () => mockJwt);
 jest.unstable_mockModule("./auth/pubnub", () => mockPubnub);
+jest.unstable_mockModule("./auth/totp", () => mockTotp);
 jest.unstable_mockModule("./database/read", () => mockRead);
 jest.unstable_mockModule("./database/write", () => mockWrite);
 
 const { app } = await import("./main");
 
 describe("Routes", () => {
+	describe("unknown path", () => {
+		const BadMethods = ["HEAD", "GET", "POST", "PUT", "DELETE", "PATCH"] as const;
+		test.each(BadMethods)("%s answers 404", async m => {
+			const method = m.toLowerCase() as Lowercase<typeof m>;
+			await request(app) //
+				[method]("/nop")
+				.expect(404);
+		});
+	});
+
 	describe("/v0/", () => {
 		const PATH = "/v0/";
 
@@ -398,7 +410,229 @@ describe("Routes", () => {
 		});
 	});
 
-	// TODO: /v0/totp/validate (POST)
+	describe("/v0/totp/validate", () => {
+		const PATH = "/v0/totp/validate";
+
+		const BadMethods = ["HEAD", "GET", "PUT", "DELETE", "PATCH"] as const;
+		test.each(BadMethods)("%s answers 405", async m => {
+			const method = m.toLowerCase() as Lowercase<typeof m>;
+			await request(app) //
+				[method](PATH)
+				.expect(405);
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("POST answers 400 to missing 'token'", async () => {
+			await request(app)
+				.post(PATH)
+				.expect(400)
+				.expect({ message: "Improper parameter types", code: "unknown" });
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("POST answers 400 to empty 'token'", async () => {
+			await request(app)
+				.post(PATH)
+				.send({ token: "" })
+				.expect(400)
+				.expect({ message: "Improper parameter types", code: "unknown" });
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("POST answers 403 to sessionless request", async () => {
+			await request(app)
+				.post(PATH)
+				.send({ token: "123456" })
+				.expect(403)
+				.expect({ message: "Unauthorized", code: "missing-token" });
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("POST answers 409 if the user does not have TOTP 2FA configured", async () => {
+			const Authorization = "let-me-in-1234" as JWT;
+			const account = "test-user";
+			const uid = "test-user-123" as UID;
+			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
+			mockJwt.verifyJwt.mockResolvedValueOnce({
+				uid,
+				validatedWithMfa: [],
+				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
+			});
+			mockRead.userWithUid.mockResolvedValueOnce({
+				currentAccountId: account,
+				passwordHash: "nonempty-hashed" as Hash,
+				passwordSalt: "nonempty-salt" as Salt,
+				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
+				uid,
+			});
+			await request(app)
+				.post(PATH)
+				.set("Authorization", `Bearer ${Authorization}`)
+				.send({ token: "123456" })
+				.expect(409)
+				.expect({
+					message: "You do not have a TOTP secret to validate against",
+					code: "totp-secret-missing",
+				});
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("POST answers 403 if the token does not match", async () => {
+			const Authorization = "let-me-in-1234" as JWT;
+			const account = "test-user";
+			const uid = "test-user-123" as UID;
+			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
+			mockJwt.verifyJwt.mockResolvedValueOnce({
+				uid,
+				validatedWithMfa: [],
+				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
+			});
+			mockRead.userWithUid.mockResolvedValueOnce({
+				currentAccountId: account,
+				passwordHash: "nonempty-hashed" as Hash,
+				passwordSalt: "nonempty-salt" as Salt,
+				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
+				uid,
+				totpSeed: "seed" as TOTPSeed,
+				mfaRecoverySeed: "other-seed" as TOTPSeed,
+				requiredAddtlAuth: ["totp"],
+			});
+			await request(app)
+				.post(PATH)
+				.set("Authorization", `Bearer ${Authorization}`)
+				.send({ token: "123456" })
+				.expect(403)
+				.expect({
+					message: "That code is invalid",
+					code: "wrong-mfa-credentials",
+				});
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("POST answers 200 if the token matches", async () => {
+			const Authorization = "let-me-in-1234" as JWT;
+			const account = "test-user";
+			const uid = "test-user-123" as UID;
+			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
+			mockJwt.verifyJwt.mockResolvedValueOnce({
+				uid,
+				validatedWithMfa: [],
+				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
+			});
+			mockRead.userWithUid.mockResolvedValueOnce({
+				currentAccountId: account,
+				passwordHash: "nonempty-hashed" as Hash,
+				passwordSalt: "nonempty-salt" as Salt,
+				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
+				uid,
+				totpSeed: "seed" as TOTPSeed,
+				mfaRecoverySeed: "other-seed" as TOTPSeed,
+				requiredAddtlAuth: ["totp"],
+			});
+			await request(app)
+				.post(PATH)
+				.set("Authorization", `Bearer ${Authorization}`)
+				.send({ token: mockTotp.DEFAULT_MOCK_TOTP_CODE })
+				.expect(200)
+				.expect({
+					access_token: mockJwt.DEFAULT_MOCK_ACCESS_TOKEN,
+					pubnub_cipher_key: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
+					pubnub_token: mockJwt.DEFAULT_MOCK_PUBNUB_TOKEN,
+					// recovery_token is not included
+					uid,
+					totalSpace: 0,
+					usedSpace: 0,
+					message: "Success!",
+				});
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("POST answers 200 and the user's recovery token if the user is finishing TOTP setup", async () => {
+			const Authorization = "let-me-in-1234" as JWT;
+			const account = "test-user";
+			const uid = "test-user-123" as UID;
+			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
+			mockJwt.verifyJwt.mockResolvedValueOnce({
+				uid,
+				validatedWithMfa: [],
+				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
+			});
+			const user: User = {
+				currentAccountId: account,
+				passwordHash: "nonempty-hashed" as Hash,
+				passwordSalt: "nonempty-salt" as Salt,
+				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
+				uid,
+				totpSeed: "seed" as TOTPSeed,
+				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
+				requiredAddtlAuth: [], // TOTP not yet set up
+			};
+			mockRead.userWithUid.mockResolvedValueOnce(user);
+			await request(app)
+				.post(PATH)
+				.set("Authorization", `Bearer ${Authorization}`)
+				.send({ token: mockTotp.DEFAULT_MOCK_TOTP_CODE })
+				.expect(200)
+				.expect({
+					access_token: mockJwt.DEFAULT_MOCK_ACCESS_TOKEN,
+					pubnub_cipher_key: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
+					pubnub_token: mockJwt.DEFAULT_MOCK_PUBNUB_TOKEN,
+					recovery_token: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN, // fresh token!
+					uid,
+					totalSpace: 0,
+					usedSpace: 0,
+					message: "Success!",
+				});
+			expect(mockWrite.upsertUser).toHaveBeenCalledOnce(); // TODO: Use `toHaveBeenCalledOnceWith`
+			expect(mockWrite.upsertUser).toHaveBeenCalledWith({
+				...user,
+				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN, // FIXME: This is weird. Shouldn't the seed != the token?
+				requiredAddtlAuth: ["totp"],
+			});
+		});
+
+		test("POST answers 200 if the user used their recovery token", async () => {
+			const Authorization = "let-me-in-1234" as JWT;
+			const account = "test-user";
+			const uid = "test-user-123" as UID;
+			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
+			mockJwt.verifyJwt.mockResolvedValueOnce({
+				uid,
+				validatedWithMfa: [],
+				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
+			});
+			const user: User = {
+				currentAccountId: account,
+				passwordHash: "nonempty-hashed" as Hash,
+				passwordSalt: "nonempty-salt" as Salt,
+				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
+				uid,
+				totpSeed: "seed" as TOTPSeed,
+				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
+				requiredAddtlAuth: ["totp"],
+			};
+			mockRead.userWithUid.mockResolvedValueOnce(user);
+			await request(app)
+				.post(PATH)
+				.set("Authorization", `Bearer ${Authorization}`)
+				.send({ token: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN }) // recovery token
+				.expect(200)
+				.expect({
+					access_token: mockJwt.DEFAULT_MOCK_ACCESS_TOKEN,
+					pubnub_cipher_key: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
+					pubnub_token: mockJwt.DEFAULT_MOCK_PUBNUB_TOKEN,
+					uid,
+					totalSpace: 0,
+					usedSpace: 0,
+					message: "Success!",
+				});
+			expect(mockWrite.upsertUser).toHaveBeenCalledOnce();
+			expect(mockWrite.upsertUser).toHaveBeenCalledWith({
+				...user,
+				mfaRecoverySeed: null,
+			});
+		});
+	});
 
 	// TODO: /v0/totp/secret (GET, DELETE)
 

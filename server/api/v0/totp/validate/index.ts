@@ -19,16 +19,16 @@ export const POST = apiHandler("POST", async (req, res) => {
 		token: totpToken,
 	});
 
+	if (!is(req.body, reqBody)) {
+		throw new BadRequestError("Improper parameter types");
+	}
+	const token = req.body.token;
+
 	// ** Check that the given TOTP is valid for the user. If valid, but the user hasn't yet enabled a 2FA requirement, enable it
 
 	// Get credentials
 	const { user } = await metadataFromRequest(req, res);
 	const uid = user.uid;
-
-	if (!is(req.body, reqBody)) {
-		throw new BadRequestError("Improper parameter types");
-	}
-	const token = req.body.token;
 
 	// If the user doesn't have a secret stored, return 409
 	if (user.totpSeed === null || user.totpSeed === undefined) {
@@ -41,6 +41,7 @@ export const POST = apiHandler("POST", async (req, res) => {
 
 	// Check the TOTP is valid
 	const isValid = verifyTOTP(token, secret);
+	// FIXME: This considers TOTP to always be valid if there is no recovery seed (like when the seed has been previously used). Change the API response such that TOTP is not even requested on login if there is no recovery seed.
 	if (!isValid && typeof user.mfaRecoverySeed === "string") {
 		// Check that the value is the user's recovery token
 		const mfaRecoveryToken = generateSecret(user.mfaRecoverySeed);

@@ -1,22 +1,15 @@
 import type { User } from "../../../../../../../database/schemas";
 import { apiHandler, dispatchRequests } from "../../../../../../../helpers/apiHandler";
 import { BadRequestError } from "../../../../../../../errors/BadRequestError";
+import { CollectionReference, DocumentReference } from "../../../../../../../database/references";
+import { deleteDocument, setDocument } from "../../../../../../../database/write";
+import { fetchDbDoc as getDocument, statsForUser } from "../../../../../../../database/read";
+import { isCollectionId, isDataItem, isUserKeys } from "../../../../../../../database/schemas";
 import { logger } from "../../../../../../../logger";
 import { NotFoundError } from "../../../../../../../errors/NotFoundError";
 import { pathSegments } from "../../../../../../../helpers/pathSegments";
 import { requireAuth } from "../../../../../../../auth/requireAuth";
 import { respondData, respondSuccess } from "../../../../../../../responses";
-import { statsForUser } from "../../../../../../../database/read";
-import {
-	CollectionReference,
-	DocumentReference,
-	deleteDocument,
-	getDocument,
-	isCollectionId,
-	isDataItem,
-	isUserKeys,
-	setDocument,
-} from "../../../../../../../database";
 
 function collectionRef(user: User, req: APIRequest): CollectionReference | null {
 	const { collectionId } = pathSegments(req, "collectionId");

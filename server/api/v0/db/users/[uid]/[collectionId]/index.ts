@@ -1,17 +1,14 @@
 import type { User } from "../../../../../../database/schemas";
+import { isCollectionId } from "../../../../../../database/schemas";
+import { CollectionReference } from "../../../../../../database/references";
 import { apiHandler, dispatchRequests } from "../../../../../../helpers/apiHandler";
+import { deleteCollection } from "../../../../../../database/write";
+import { fetchDbCollection as getCollection, statsForUser } from "../../../../../../database/read";
 import { logger } from "../../../../../../logger";
 import { NotFoundError } from "../../../../../../errors/NotFoundError";
 import { pathSegments } from "../../../../../../helpers/pathSegments";
 import { requireAuth } from "../../../../../../auth/requireAuth";
 import { respondData, respondSuccess } from "../../../../../../responses";
-import { statsForUser } from "../../../../../../database/read";
-import {
-	CollectionReference,
-	deleteCollection,
-	getCollection,
-	isCollectionId,
-} from "../../../../../../database";
 
 function collectionRef(user: User, req: APIRequest): CollectionReference | null {
 	const { collectionId } = pathSegments(req, "collectionId");

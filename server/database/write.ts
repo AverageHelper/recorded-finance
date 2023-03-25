@@ -8,6 +8,12 @@ import { dataSource } from "./io";
 import { logger as defaultLogger } from "../logger";
 import { ONE_HOUR } from "../constants/time";
 import { UnreachableCaseError } from "../errors/UnreachableCaseError";
+import {
+	fetchDbDoc,
+	fetchDbDocs,
+	informWatchersForCollection,
+	informWatchersForDocument,
+} from "./read";
 
 // MARK: - Pseudo Large-file Storage
 
@@ -295,4 +301,56 @@ export async function deleteDbCollection(
 		default:
 			throw new UnreachableCaseError(ref.id);
 	}
+}
+
+export async function deleteDocuments(
+	refs: ReadonlyNonEmptyArray<DocumentReference>
+): Promise<void> {
+	// Fetch the data
+	const before = await fetchDbDocs(refs);
+
+	// Delete the stored data
+	await deleteDbDocs(refs);
+
+	// Tell listeners what happened
+	for (const { ref, data } of before) {
+		// Only call listeners about deletion if it wasn't gone in the first place
+		if (!data) continue;
+		await informWatchersForDocument(ref, null);
+	}
+}
+
+export async function deleteDocument(ref: DocumentReference): Promise<void> {
+	// Fetch the data
+	const { data: oldData } = await fetchDbDoc(ref);
+
+	// Delete the stored data
+	await deleteDbDoc(ref);
+
+	// Tell listeners what happened
+	if (oldData) {
+		// Only call listeners about deletion if it wasn't gone in the first place
+		await informWatchersForDocument(ref, null);
+	}
+}
+
+export async function deleteCollection(ref: CollectionReference): Promise<void> {
+	await deleteDbCollection(ref);
+
+	// Tell listeners what happened
+	await informWatchersForCollection(ref, []);
+}
+
+export async function setDocuments(updates: ReadonlyNonEmptyArray<DocUpdate>): Promise<void> {
+	await upsertDbDocs(updates);
+
+	// Tell listeners what happened
+	// TODO: Do we need to read a "before" value for these too?
+	for (const { ref, data } of updates) {
+		await informWatchersForDocument(ref, { ...data, _id: ref.id });
+	}
+}
+
+export async function setDocument(ref: DocumentReference, data: AnyData): Promise<void> {
+	await setDocuments([{ ref, data }]);
 }

@@ -1,18 +1,12 @@
 import type { DocUpdate } from "../../../../../database/write";
 import { apiHandler, dispatchRequests } from "../../../../../helpers/apiHandler";
 import { BadRequestError } from "../../../../../errors/BadRequestError";
+import { CollectionReference, DocumentReference } from "../../../../../database/references";
+import { deleteDocuments, setDocuments } from "../../../../../database/write";
+import { isArrayOf, isDocumentWriteBatch, isNonEmptyArray } from "../../../../../database/schemas";
 import { statsForUser } from "../../../../../database/read";
 import { requireAuth } from "../../../../../auth/requireAuth";
 import { respondSuccess } from "../../../../../responses";
-import {
-	CollectionReference,
-	DocumentReference,
-	deleteDocuments,
-	isArrayOf,
-	isDocumentWriteBatch,
-	isNonEmptyArray,
-	setDocuments,
-} from "../../../../../database";
 
 export const POST = apiHandler("POST", async (req, res) => {
 	const user = await requireAuth(req, res, true);
