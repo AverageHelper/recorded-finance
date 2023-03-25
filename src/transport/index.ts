@@ -2,6 +2,7 @@ export * from "./accounts";
 export * from "./attachments";
 export * from "./auth";
 export * from "./cryption";
+export * from "./cryptionProtocols";
 export * from "./db";
 export * from "./getDataAtUrl";
 export * from "./HashStore";

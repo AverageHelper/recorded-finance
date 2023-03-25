@@ -5,7 +5,7 @@ import type {
 	WriteBatch,
 } from "./db";
 import type { Account, AccountRecordParams } from "../model/Account";
-import type { EPackage } from "./cryption";
+import type { EPackage } from "./cryptionProtocols";
 import type { HashStore } from "./HashStore";
 import { account, isAccountRecord, recordFromAccount } from "../model/Account";
 import { encrypt } from "./cryption";

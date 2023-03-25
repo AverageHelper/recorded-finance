@@ -1,5 +1,5 @@
 import type { DocumentReference, QueryDocumentSnapshot } from "./db";
-import type { EPackage } from "./cryption";
+import type { EPackage } from "./cryptionProtocols";
 import type { HashStore } from "./HashStore";
 import type { LocationPref } from "./locations";
 import type { UID } from "./schemas";

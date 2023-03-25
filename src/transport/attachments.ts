@@ -6,7 +6,7 @@ import type {
 } from "./db";
 import type { Attachment, AttachmentRecordParams } from "../model/Attachment";
 import type { StorageReference } from "./storage.js";
-import type { EPackage } from "./cryption";
+import type { EPackage } from "./cryptionProtocols";
 import type { HashStore } from "./HashStore";
 import type { UID } from "./schemas";
 import { attachment, isAttachmentRecord, recordFromAttachment } from "../model/Attachment";

@@ -2,7 +2,7 @@ import type { Opaque } from "type-fest";
 import atob from "atob-lite";
 import btoa from "btoa-lite";
 
-type Obfuscated = Opaque<string, "Obfuscated">;
+export type Obfuscated = Opaque<string, "Obfuscated">;
 
 /**
  * An object that stores a string value in base-64. Useful for
