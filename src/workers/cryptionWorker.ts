@@ -9,9 +9,6 @@ import btoa from "btoa-lite";
 
 export type Hashed = Opaque<string, "Hashed">;
 
-// Vite rolls this into a single module on build, but uses modules at dev time.
-// FIXME: Firefox only supports module workers in FF 111. Meantime, test under Chromium.
-
 function derivePKey(password: string, salt: Salt): Obfuscated {
 	logger.debug("derivePKey started...");
 
