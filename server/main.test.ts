@@ -3,8 +3,8 @@ import type { JWT } from "./auth/jwt";
 import "jest-extended";
 import { jest } from "@jest/globals";
 import { version } from "./version";
+import _request from "supertest";
 import jsonwebtoken from "jsonwebtoken";
-import request from "supertest";
 
 /* eslint-disable jest/no-mocks-import */
 import * as mockEnvironment from "./__mocks__/environment";
@@ -27,12 +27,27 @@ jest.unstable_mockModule("./database/write", () => mockWrite);
 
 const { app } = await import("./main");
 
+type HTTPMethod = "HEAD" | "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS";
+
+// eslint-disable-next-line @typescript-eslint/promise-function-async
+function request(method: HTTPMethod, path: string): _request.Test {
+	const AllowedHeaders =
+		"X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version";
+	const m = method.toLowerCase() as Lowercase<typeof method>;
+
+	// eslint-disable-next-line @typescript-eslint/return-await
+	return _request(app)
+		[m](path)
+		.expect("Access-Control-Allow-Headers", AllowedHeaders)
+		.expect("Access-Control-Allow-Credentials", "true");
+}
+
 describe("Routes", () => {
 	describe("unknown path", () => {
 		const BadMethods = ["HEAD", "GET", "POST", "PUT", "DELETE", "PATCH"] as const;
 		test.each(BadMethods)("%s answers 404", async m => {
 			const method = m.toLowerCase() as Lowercase<typeof m>;
-			await request(app) //
+			await _request(app) //
 				[method]("/nop")
 				.expect(404);
 		});
@@ -44,16 +59,12 @@ describe("Routes", () => {
 		// Since all CORS behaviors are the same regardless of path, we'll test them at the root only (for now).
 
 		test("OPTIONS answers CORS headers for request without origin", async () => {
-			await request(app)
-				.options(PATH)
-				.expect("Access-Control-Allow-Headers", /Accept/u)
-				.expect("Access-Control-Allow-Credentials", "true")
-				.expect(204);
+			await request("OPTIONS", PATH).expect(204);
 		});
 
 		test("OPTIONS answers 502 for an invalid origin", async () => {
 			const Origin = "bad";
-			await request(app) //
+			await _request(app) //
 				.options(PATH)
 				.set("Origin", Origin)
 				.expect(502);
@@ -62,7 +73,7 @@ describe("Routes", () => {
 
 		test("OPTIONS answers 502 for an unknown origin", async () => {
 			const Origin = "https://www.example.com";
-			await request(app) //
+			await _request(app) //
 				.options(PATH)
 				.set("Origin", Origin)
 				.expect(502);
@@ -71,30 +82,22 @@ describe("Routes", () => {
 
 		test("OPTIONS answers CORS headers for valid origin", async () => {
 			const Origin = "http://localhost";
-			await request(app)
-				.options(PATH)
+			await request("OPTIONS", PATH)
 				.set("Origin", Origin)
-				.expect("Access-Control-Allow-Headers", /Accept/u)
-				.expect("Access-Control-Allow-Credentials", "true")
 				.expect("Access-Control-Allow-Origin", Origin)
 				.expect(204);
 		});
 
 		test("GET answers 200 and sample json", async () => {
-			await request(app)
-				.get(PATH)
+			await request("GET", PATH)
 				.expect("Content-Type", /json/u)
-				.expect("Access-Control-Allow-Headers", /Accept/u)
 				.expect(200)
 				.expect({ message: "lol" });
 		});
 
 		const BadMethods = ["HEAD", "POST", "PUT", "DELETE", "PATCH"] as const;
-		test.each(BadMethods)("%s answers 405", async m => {
-			const method = m.toLowerCase() as Lowercase<typeof m>;
-			await request(app) //
-				[method](PATH)
-				.expect(405);
+		test.each(BadMethods)("%s answers 405", async method => {
+			await request(method, PATH).expect(405);
 		});
 	});
 
@@ -102,20 +105,15 @@ describe("Routes", () => {
 		const PATH = "/v0/ping";
 
 		test("GET answers 200", async () => {
-			await request(app)
-				.get(PATH)
+			await request("GET", PATH)
 				.expect("Content-Type", /json/u)
-				.expect("Access-Control-Allow-Headers", /Accept/u)
 				.expect(200)
 				.expect({ message: "Pong!" });
 		});
 
 		const BadMethods = ["HEAD", "POST", "PUT", "DELETE", "PATCH"] as const;
-		test.each(BadMethods)("%s answers 405", async m => {
-			const method = m.toLowerCase() as Lowercase<typeof m>;
-			await request(app) //
-				[method](PATH)
-				.expect(405);
+		test.each(BadMethods)("%s answers 405", async method => {
+			await request(method, PATH).expect(405);
 		});
 	});
 
@@ -123,20 +121,15 @@ describe("Routes", () => {
 		const PATH = "/v0/version";
 
 		test("GET answers 200 and the app version", async () => {
-			await request(app)
-				.get(PATH)
+			await request("GET", PATH)
 				.expect("Content-Type", /json/u)
-				.expect("Access-Control-Allow-Headers", /Accept/u)
 				.expect(200)
 				.expect({ message: `Recorded Finance v${version}`, version });
 		});
 
 		const BadMethods = ["HEAD", "POST", "PUT", "DELETE", "PATCH"] as const;
-		test.each(BadMethods)("%s answers 405", async m => {
-			const method = m.toLowerCase() as Lowercase<typeof m>;
-			await request(app) //
-				[method](PATH)
-				.expect(405);
+		test.each(BadMethods)("%s answers 405", async method => {
+			await request(method, PATH).expect(405);
 		});
 	});
 
@@ -151,25 +144,20 @@ describe("Routes", () => {
 		}
 
 		const BadMethods = ["HEAD", "GET", "PUT", "DELETE", "PATCH"] as const;
-		test.each(BadMethods)("%s answers 405", async m => {
-			const method = m.toLowerCase() as Lowercase<typeof m>;
-			await request(app) //
-				[method](PATH)
-				.expect(405);
+		test.each(BadMethods)("%s answers 405", async method => {
+			await request(method, PATH).expect(405);
 			expectInaction();
 		});
 
 		test("answers 400 to missing 'account' and 'password' fields", async () => {
-			await request(app)
-				.post(PATH)
+			await request("POST", PATH)
 				.expect(400)
 				.expect({ message: "Improper parameter types", code: "unknown" });
 			expectInaction();
 		});
 
 		test("answers 400 to missing 'account'", async () => {
-			await request(app)
-				.post(PATH)
+			await request("POST", PATH)
 				.send({ password: "nonempty" })
 				.expect(400)
 				.expect({ message: "Improper parameter types", code: "unknown" });
@@ -177,8 +165,7 @@ describe("Routes", () => {
 		});
 
 		test("answers 400 to missing 'password'", async () => {
-			await request(app)
-				.post(PATH)
+			await request("POST", PATH)
 				.send({ account: "nonempty" })
 				.expect(400)
 				.expect({ message: "Improper parameter types", code: "unknown" });
@@ -186,8 +173,7 @@ describe("Routes", () => {
 		});
 
 		test("answers 400 to empty 'account'", async () => {
-			await request(app)
-				.post(PATH)
+			await request("POST", PATH)
 				.send({ account: "", password: "nonempty" })
 				.expect(400)
 				.expect({ message: "Improper parameter types", code: "unknown" });
@@ -195,8 +181,7 @@ describe("Routes", () => {
 		});
 
 		test("answers 400 to empty 'password'", async () => {
-			await request(app)
-				.post(PATH)
+			await request("POST", PATH)
 				.send({ account: "nonempty", password: "" })
 				.expect(400)
 				.expect({ message: "Improper parameter types", code: "unknown" });
@@ -205,8 +190,7 @@ describe("Routes", () => {
 
 		test("answers 507 if the server is cannot accept new users", async () => {
 			mockRead.numberOfUsers.mockResolvedValueOnce(Number.POSITIVE_INFINITY);
-			await request(app)
-				.post(PATH)
+			await request("POST", PATH)
 				.send({ account: "nonempty", password: "nonempty" })
 				.expect(507)
 				.expect({ message: "We're full at the moment. Try again later!", code: "unknown" });
@@ -222,8 +206,7 @@ describe("Routes", () => {
 				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
 				uid: "test-user-123" as UID,
 			});
-			await request(app)
-				.post(PATH)
+			await request("POST", PATH)
 				.send({ account, password: "nonempty" })
 				.expect(409)
 				.expect({ message: "An account with that ID already exists", code: "account-conflict" });
@@ -232,8 +215,7 @@ describe("Routes", () => {
 
 		test("answers 200 for new account", async () => {
 			const account = "test-user";
-			const response = await request(app)
-				.post(PATH)
+			const response = await request("POST", PATH)
 				.send({ account, password: "nonempty" })
 				// .expect("Set-Cookie", /sessionToken/u) // TODO: Separate `setSession` enough that we can check that a cookie was set
 				.expect(200);
@@ -271,24 +253,19 @@ describe("Routes", () => {
 		}
 
 		const BadMethods = ["HEAD", "GET", "PUT", "DELETE", "PATCH"] as const;
-		test.each(BadMethods)("%s answers 405", async m => {
-			const method = m.toLowerCase() as Lowercase<typeof m>;
-			await request(app) //
-				[method](PATH)
-				.expect(405);
+		test.each(BadMethods)("%s answers 405", async method => {
+			await request(method, PATH).expect(405);
 		});
 
 		test("answers 400 to missing 'account' and 'password' fields", async () => {
-			await request(app)
-				.post(PATH)
+			await request("POST", PATH)
 				.expect(400)
 				.expect({ message: "Improper parameter types", code: "unknown" });
 			expectInaction();
 		});
 
 		test("answers 400 to missing 'account'", async () => {
-			await request(app)
-				.post(PATH)
+			await request("POST", PATH)
 				.send({ password: "nonempty" })
 				.expect(400)
 				.expect({ message: "Improper parameter types", code: "unknown" });
@@ -296,8 +273,7 @@ describe("Routes", () => {
 		});
 
 		test("answers 400 to missing 'password'", async () => {
-			await request(app)
-				.post(PATH)
+			await request("POST", PATH)
 				.send({ account: "nonempty" })
 				.expect(400)
 				.expect({ message: "Improper parameter types", code: "unknown" });
@@ -305,8 +281,7 @@ describe("Routes", () => {
 		});
 
 		test("answers 400 to empty 'account'", async () => {
-			await request(app)
-				.post(PATH)
+			await request("POST", PATH)
 				.send({ account: "", password: "nonempty" })
 				.expect(400)
 				.expect({ message: "Improper parameter types", code: "unknown" });
@@ -314,8 +289,7 @@ describe("Routes", () => {
 		});
 
 		test("answers 400 to empty 'password'", async () => {
-			await request(app)
-				.post(PATH)
+			await request("POST", PATH)
 				.send({ account: "nonempty", password: "" })
 				.expect(400)
 				.expect({ message: "Improper parameter types", code: "unknown" });
@@ -324,8 +298,7 @@ describe("Routes", () => {
 
 		// Same as wrong password
 		test("answers 403 when account is not known", async () => {
-			await request(app)
-				.post(PATH)
+			await request("POST", PATH)
 				.send({ account: "nonempty", password: "nonempty" })
 				.expect(403)
 				.expect({ message: "Incorrect account ID or passphrase", code: "wrong-credentials" });
@@ -343,8 +316,7 @@ describe("Routes", () => {
 				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
 				uid: "test-user-123" as UID,
 			});
-			await request(app)
-				.post(PATH)
+			await request("POST", PATH)
 				.send({ account, password: "nonempty" })
 				.expect(403)
 				.expect({ message: "Incorrect account ID or passphrase", code: "wrong-credentials" });
@@ -365,8 +337,7 @@ describe("Routes", () => {
 				requiredAddtlAuth: ["totp"],
 			});
 			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true));
-			await request(app) //
-				.post(PATH)
+			await request("POST", PATH) //
 				.send({ account, password: "nonempty" })
 				.expect(200)
 				.expect({
@@ -392,8 +363,7 @@ describe("Routes", () => {
 				uid,
 			});
 			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true));
-			await request(app) //
-				.post(PATH)
+			await request("POST", PATH) //
 				.send({ account, password: "nonempty" })
 				.expect(200)
 				.expect({
@@ -413,25 +383,20 @@ describe("Routes", () => {
 		const PATH = "/v0/totp/validate";
 
 		const BadMethods = ["HEAD", "GET", "PUT", "DELETE", "PATCH"] as const;
-		test.each(BadMethods)("%s answers 405", async m => {
-			const method = m.toLowerCase() as Lowercase<typeof m>;
-			await request(app) //
-				[method](PATH)
-				.expect(405);
+		test.each(BadMethods)("%s answers 405", async method => {
+			await request(method, PATH).expect(405);
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
 		test("POST answers 400 to missing 'token'", async () => {
-			await request(app)
-				.post(PATH)
+			await request("POST", PATH)
 				.expect(400)
 				.expect({ message: "Improper parameter types", code: "unknown" });
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
 		test("POST answers 400 to empty 'token'", async () => {
-			await request(app)
-				.post(PATH)
+			await request("POST", PATH)
 				.send({ token: "" })
 				.expect(400)
 				.expect({ message: "Improper parameter types", code: "unknown" });
@@ -439,8 +404,7 @@ describe("Routes", () => {
 		});
 
 		test("POST answers 403 to sessionless request", async () => {
-			await request(app)
-				.post(PATH)
+			await request("POST", PATH)
 				.send({ token: "123456" })
 				.expect(403)
 				.expect({ message: "Unauthorized", code: "missing-token" });
@@ -464,8 +428,7 @@ describe("Routes", () => {
 				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
 				uid,
 			});
-			await request(app)
-				.post(PATH)
+			await request("POST", PATH)
 				.set("Authorization", `Bearer ${Authorization}`)
 				.send({ token: "123456" })
 				.expect(409)
@@ -496,8 +459,7 @@ describe("Routes", () => {
 				mfaRecoverySeed: "other-seed" as TOTPSeed,
 				requiredAddtlAuth: ["totp"],
 			});
-			await request(app)
-				.post(PATH)
+			await request("POST", PATH)
 				.set("Authorization", `Bearer ${Authorization}`)
 				.send({ token: "123456" })
 				.expect(403)
@@ -528,8 +490,7 @@ describe("Routes", () => {
 				mfaRecoverySeed: "other-seed" as TOTPSeed,
 				requiredAddtlAuth: ["totp"],
 			});
-			await request(app)
-				.post(PATH)
+			await request("POST", PATH)
 				.set("Authorization", `Bearer ${Authorization}`)
 				.send({ token: mockTotp.DEFAULT_MOCK_TOTP_CODE })
 				.expect(200)
@@ -567,8 +528,7 @@ describe("Routes", () => {
 				requiredAddtlAuth: [], // TOTP not yet set up
 			};
 			mockRead.userWithUid.mockResolvedValueOnce(user);
-			await request(app)
-				.post(PATH)
+			await request("POST", PATH)
 				.set("Authorization", `Bearer ${Authorization}`)
 				.send({ token: mockTotp.DEFAULT_MOCK_TOTP_CODE })
 				.expect(200)
@@ -610,8 +570,7 @@ describe("Routes", () => {
 				requiredAddtlAuth: ["totp"],
 			};
 			mockRead.userWithUid.mockResolvedValueOnce(user);
-			await request(app)
-				.post(PATH)
+			await request("POST", PATH)
 				.set("Authorization", `Bearer ${Authorization}`)
 				.send({ token: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN }) // recovery token
 				.expect(200)
@@ -637,18 +596,13 @@ describe("Routes", () => {
 		const PATH = "/v0/session";
 
 		const BadMethods = ["HEAD", "POST", "PUT", "DELETE", "PATCH"] as const;
-		test.each(BadMethods)("%s answers 405", async m => {
-			const method = m.toLowerCase() as Lowercase<typeof m>;
-			await request(app) //
-				[method](PATH)
-				.expect(405);
+		test.each(BadMethods)("%s answers 405", async method => {
+			await request(method, PATH).expect(405);
 		});
 
 		test("GET answers 403 without Cookie or Authorization", async () => {
-			await request(app)
-				.get(PATH)
+			await request("GET", PATH)
 				.expect("Content-Type", /json/u)
-				.expect("Access-Control-Allow-Headers", /Accept/u)
 				.expect(403)
 				.expect({ message: "Unauthorized", code: "missing-token" });
 			expect(mockRead.jwtExistsInDatabase).not.toHaveBeenCalled();
@@ -672,11 +626,9 @@ describe("Routes", () => {
 			mockJwt.verifyJwt.mockRejectedValueOnce(new jsonwebtoken.JsonWebTokenError("This is a test"));
 			mockRead.jwtExistsInDatabase.mockResolvedValueOnce(true);
 			mockRead.userWithUid.mockResolvedValueOnce(user);
-			await request(app)
-				.get(PATH)
+			await request("GET", PATH)
 				.set("Authorization", `Bearer ${Authorization}`)
 				.expect("Content-Type", /json/u)
-				.expect("Access-Control-Allow-Headers", /Accept/u)
 				.expect(403)
 				.expect({ message: "You must sign in again in order to proceed", code: "expired-token" });
 			expect(mockRead.jwtExistsInDatabase).not.toHaveBeenCalled();
@@ -702,11 +654,9 @@ describe("Routes", () => {
 			});
 			mockRead.jwtExistsInDatabase.mockResolvedValueOnce(true);
 			mockRead.userWithUid.mockResolvedValueOnce(user);
-			await request(app)
-				.get(PATH)
+			await request("GET", PATH)
 				.set("Authorization", Authorization)
 				.expect("Content-Type", /json/u)
-				.expect("Access-Control-Allow-Headers", /Accept/u)
 				.expect(200)
 				.expect({
 					account: user.currentAccountId,

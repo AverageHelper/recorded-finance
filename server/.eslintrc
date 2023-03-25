@@ -79,7 +79,17 @@
 				"jest": true
 			},
 			"rules": {
-				"jest/expect-expect": ["warn", { "assertFunctionNames": ["expect", "request.**.expect"] }],
+				"jest/expect-expect": [
+					"warn",
+					{
+						"assertFunctionNames": [
+							"expect",
+							"request**.expect",
+							"request.**.expect",
+							"_request.**.expect"
+						]
+					}
+				],
 				"prettier/prettier": "warn",
 				"max-nested-callbacks": "off" // Unit tests involve a lot of nested callbacks
 			}
