@@ -1,4 +1,4 @@
-import type { AESCipherKey, Hash, Salt, UID, User } from "./database";
+import type { Hash, Salt, TOTPSeed, UID, User } from "./database";
 import type { JWT } from "./auth/jwt";
 import "jest-extended";
 import { jest } from "@jest/globals";
@@ -207,7 +207,7 @@ describe("Routes", () => {
 				currentAccountId: account,
 				passwordHash: "nonempty-hashed" as Hash,
 				passwordSalt: "nonempty-salt" as Salt,
-				pubnubCipherKey: "cipher-123" as AESCipherKey,
+				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
 				uid: "test-user-123" as UID,
 			});
 			await request(app)
@@ -251,8 +251,155 @@ describe("Routes", () => {
 		});
 	});
 
-	// TODO: /v0/login (POST)
+	describe("/v0/login", () => {
+		const PATH = "/v0/login";
+
+		function expectInaction(): void {
+			expect(mockJwt.newAccessTokens).not.toHaveBeenCalled();
+			expect(mockRead.statsForUser).not.toHaveBeenCalled();
+		}
+
+		const BadMethods = ["HEAD", "GET", "PUT", "DELETE", "PATCH"] as const;
+		test.each(BadMethods)("%s answers 405", async m => {
+			const method = m.toLowerCase() as Lowercase<typeof m>;
+			await request(app) //
+				[method](PATH)
+				.expect(405);
+		});
+
+		test("answers 400 to missing 'account' and 'password' fields", async () => {
+			await request(app)
+				.post(PATH)
+				.expect(400)
+				.expect({ message: "Improper parameter types", code: "unknown" });
+			expectInaction();
+		});
+
+		test("answers 400 to missing 'account'", async () => {
+			await request(app)
+				.post(PATH)
+				.send({ password: "nonempty" })
+				.expect(400)
+				.expect({ message: "Improper parameter types", code: "unknown" });
+			expectInaction();
+		});
+
+		test("answers 400 to missing 'password'", async () => {
+			await request(app)
+				.post(PATH)
+				.send({ account: "nonempty" })
+				.expect(400)
+				.expect({ message: "Improper parameter types", code: "unknown" });
+			expectInaction();
+		});
+
+		test("answers 400 to empty 'account'", async () => {
+			await request(app)
+				.post(PATH)
+				.send({ account: "", password: "nonempty" })
+				.expect(400)
+				.expect({ message: "Improper parameter types", code: "unknown" });
+			expectInaction();
+		});
+
+		test("answers 400 to empty 'password'", async () => {
+			await request(app)
+				.post(PATH)
+				.send({ account: "nonempty", password: "" })
+				.expect(400)
+				.expect({ message: "Improper parameter types", code: "unknown" });
+			expectInaction();
+		});
+
+		// Same as wrong password
+		test("answers 403 when account is not known", async () => {
+			await request(app)
+				.post(PATH)
+				.send({ account: "nonempty", password: "nonempty" })
+				.expect(403)
+				.expect({ message: "Incorrect account ID or passphrase", code: "wrong-credentials" });
+			expectInaction();
+			expect(mockGenerators.compare).not.toHaveBeenCalled();
+		});
+
+		// Same as account doesn't exist
+		test("answers 403 when password is not correct", async () => {
+			const account = "test-user";
+			mockRead.userWithAccountId.mockResolvedValueOnce({
+				currentAccountId: account,
+				passwordHash: "nonempty-hashed" as Hash,
+				passwordSalt: "nonempty-salt" as Salt,
+				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
+				uid: "test-user-123" as UID,
+			});
+			await request(app)
+				.post(PATH)
+				.send({ account, password: "nonempty" })
+				.expect(403)
+				.expect({ message: "Incorrect account ID or passphrase", code: "wrong-credentials" });
+			expectInaction();
+			expect(mockGenerators.compare).toHaveBeenCalledOnce();
+		});
+
+		test("answers 200 when password is correct and TOTP is needed", async () => {
+			const account = "test-user";
+			const uid = "test-user-123" as UID;
+			mockRead.userWithAccountId.mockResolvedValueOnce({
+				currentAccountId: account,
+				passwordHash: "nonempty-hashed" as Hash,
+				passwordSalt: "nonempty-salt" as Salt,
+				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
+				uid,
+				totpSeed: "seed" as TOTPSeed,
+				requiredAddtlAuth: ["totp"],
+			});
+			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true));
+			await request(app) //
+				.post(PATH)
+				.send({ account, password: "nonempty" })
+				.expect(200)
+				.expect({
+					access_token: mockJwt.DEFAULT_MOCK_ACCESS_TOKEN,
+					pubnub_cipher_key: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
+					pubnub_token: mockJwt.DEFAULT_MOCK_PUBNUB_TOKEN,
+					validate: "totp",
+					uid,
+					totalSpace: 0,
+					usedSpace: 0,
+					message: "Success!",
+				});
+		});
+
+		test("answers 200 when password is correct and TOTP is not needed", async () => {
+			const account = "test-user";
+			const uid = "test-user-123" as UID;
+			mockRead.userWithAccountId.mockResolvedValueOnce({
+				currentAccountId: account,
+				passwordHash: "nonempty-hashed" as Hash,
+				passwordSalt: "nonempty-salt" as Salt,
+				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
+				uid,
+			});
+			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true));
+			await request(app) //
+				.post(PATH)
+				.send({ account, password: "nonempty" })
+				.expect(200)
+				.expect({
+					access_token: mockJwt.DEFAULT_MOCK_ACCESS_TOKEN,
+					pubnub_cipher_key: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
+					pubnub_token: mockJwt.DEFAULT_MOCK_PUBNUB_TOKEN,
+					validate: "none",
+					uid,
+					totalSpace: 0,
+					usedSpace: 0,
+					message: "Success!",
+				});
+		});
+	});
+
 	// TODO: /v0/totp/validate (POST)
+
 	// TODO: /v0/totp/secret (GET, DELETE)
 
 	describe("/v0/session", () => {
@@ -346,11 +493,18 @@ describe("Routes", () => {
 	});
 
 	// TODO: /v0/logout (POST)
+
 	// TODO: /v0/leave (POST)
+
 	// TODO: /v0/updatepassword (POST)
+
 	// TODO: /v0/updateaccountid (POST)
+
 	// TODO: /v0/db/users/{uid} (POST)
+
 	// TODO: /v0/db/users/{uid}/{coll} (GET, DELETE)
+
 	// TODO: /v0/db/users/{uid}/{coll}/{doc} (GET, POST, DELETE)
+
 	// TODO: /v0/db/users/{uid}/attachments/{doc}/blob/{key} (GET, POST, DELETE)
 });
