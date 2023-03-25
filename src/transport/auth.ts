@@ -1,5 +1,5 @@
 import type { PlatformDB, DocumentReference } from "./db";
-import type { KeyMaterial } from "./cryption";
+import type { KeyMaterial } from "./cryptionProtocols";
 import type { MFAValidation, UID } from "./schemas";
 import { doc, db, getDoc, setDoc, deleteDoc } from "./db";
 import { isUid } from "./schemas";

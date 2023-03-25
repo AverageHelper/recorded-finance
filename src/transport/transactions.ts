@@ -1,4 +1,4 @@
-import type { EPackage } from "./cryption";
+import type { EPackage } from "./cryptionProtocols";
 import type { HashStore } from "./HashStore";
 import type { Transaction, TransactionRecordParams } from "../model/Transaction";
 import type {
