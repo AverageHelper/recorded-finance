@@ -972,7 +972,31 @@ describe("Routes", () => {
 		});
 	});
 
-	// TODO: /v0/logout (POST)
+	describe("/v0/logout", () => {
+		const PATH = "/v0/logout";
+
+		const BadMethods = ["HEAD", "GET", "PUT", "DELETE", "PATCH"] as const;
+		test.each(BadMethods)("%s answers 405", async method => {
+			await request(method, PATH).expect(405);
+			expect(mockJwt.addJwtToBlacklist).not.toHaveBeenCalled();
+			expect(mockJwt.killSession).not.toHaveBeenCalled();
+		});
+
+		test("POST responds 200 with no session", async () => {
+			// `jwtFromRequest` mock returns null by default
+			await request("POST", PATH).expect(200).expect({ message: "Success!" });
+			expect(mockJwt.addJwtToBlacklist).not.toHaveBeenCalled();
+			expect(mockJwt.killSession).toHaveBeenCalledOnce();
+		});
+
+		test("POST respods 200 and blacklists the JWT", async () => {
+			const token = "auth-token-12345" as JWT;
+			mockJwt.jwtFromRequest.mockReturnValueOnce(token);
+			await request("POST", PATH).expect(200).expect({ message: "Success!" });
+			expect(mockJwt.addJwtToBlacklist).toHaveBeenCalledOnceWith(token);
+			expect(mockJwt.killSession).toHaveBeenCalledOnce();
+		});
+	});
 
 	// TODO: /v0/leave (POST)
 
