@@ -590,7 +590,306 @@ describe("Routes", () => {
 		});
 	});
 
-	// TODO: /v0/totp/secret (GET, DELETE)
+	describe("/v0/totp/secret", () => {
+		const PATH = "/v0/totp/secret";
+
+		const BadMethods = ["HEAD", "POST", "PUT", "PATCH"] as const;
+		test.each(BadMethods)("%s answers 405", async method => {
+			await request(method, PATH).expect(405);
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("GET answers 403 if no session", async () => {
+			await request("GET", PATH).expect(403);
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("GET answers 409 if the user already used TOTP this session (they know their secret)", async () => {
+			const Authorization = "let-me-in-1234" as JWT;
+			const account = "test-user";
+			const uid = "test-user-123" as UID;
+			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
+			mockJwt.verifyJwt.mockResolvedValueOnce({
+				uid,
+				validatedWithMfa: ["totp"],
+				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
+			});
+			const user: User = {
+				currentAccountId: account,
+				passwordHash: "nonempty-hashed" as Hash,
+				passwordSalt: "nonempty-salt" as Salt,
+				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
+				uid,
+				totpSeed: "seed" as TOTPSeed,
+				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
+				requiredAddtlAuth: ["totp"],
+			};
+			mockRead.userWithUid.mockResolvedValueOnce(user);
+			await request("GET", PATH)
+				.set("Authorization", `Bearer ${Authorization}`)
+				.expect(409)
+				.expect({ message: "You already have TOTP authentication enabled", code: "totp-conflict" });
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("GET answers 409 if TOTP already required (they should know the secret)", async () => {
+			const Authorization = "let-me-in-1234" as JWT;
+			const account = "test-user";
+			const uid = "test-user-123" as UID;
+			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
+			mockJwt.verifyJwt.mockResolvedValueOnce({
+				uid,
+				validatedWithMfa: [],
+				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
+			});
+			const user: User = {
+				currentAccountId: account,
+				passwordHash: "nonempty-hashed" as Hash,
+				passwordSalt: "nonempty-salt" as Salt,
+				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
+				uid,
+				totpSeed: "seed" as TOTPSeed,
+				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
+				requiredAddtlAuth: ["totp"],
+			};
+			mockRead.userWithUid.mockResolvedValueOnce(user);
+			await request("GET", PATH)
+				.set("Authorization", `Bearer ${Authorization}`)
+				.expect(409)
+				.expect({ message: "You already have TOTP authentication enabled", code: "totp-conflict" });
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("GET answers 200, upserts the user with totpSeed, and sends the plaintext secret", async () => {
+			const Authorization = "let-me-in-1234" as JWT;
+			const account = "test-user";
+			const uid = "test-user-123" as UID;
+			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
+			mockJwt.verifyJwt.mockResolvedValueOnce({
+				uid,
+				validatedWithMfa: [],
+				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
+			});
+			const user: User = {
+				currentAccountId: account,
+				passwordHash: "nonempty-hashed" as Hash,
+				passwordSalt: "nonempty-salt" as Salt,
+				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
+				uid,
+				totpSeed: null, // no secret set yet
+				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
+				requiredAddtlAuth: [],
+			};
+			mockRead.userWithUid.mockResolvedValueOnce(user);
+			await request("GET", PATH)
+				.set("Authorization", `Bearer ${Authorization}`)
+				.expect(200)
+				.expect({ secret: mockTotp.DEFAULT_MOCK_OTP_SECUET_URI, message: "Success!" });
+			expect(mockWrite.upsertUser).toHaveBeenCalledOnceWith({
+				...user,
+				totpSeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
+			});
+		});
+
+		test("DELETE answers 400 without 'password' and 'token'", async () => {
+			await request("DELETE", PATH)
+				.expect(400)
+				.expect({ message: "Improper parameter types", code: "unknown" });
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("DELETE answers 400 without 'password'", async () => {
+			await request("DELETE", PATH)
+				.send({ token: "nonempty" })
+				.expect(400)
+				.expect({ message: "Improper parameter types", code: "unknown" });
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("DELETE answers 400 without 'token'", async () => {
+			await request("DELETE", PATH)
+				.send({ password: "nonempty" })
+				.expect(400)
+				.expect({ message: "Improper parameter types", code: "unknown" });
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("DELETE answers 400 with empty 'token'", async () => {
+			await request("DELETE", PATH)
+				.send({ password: "nonempty", token: "" })
+				.expect(400)
+				.expect({ message: "Improper parameter types", code: "unknown" });
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("DELETE answers 400 with empty 'password'", async () => {
+			await request("DELETE", PATH)
+				.send({ password: "", token: "nonempty" })
+				.expect(400)
+				.expect({ message: "Improper parameter types", code: "unknown" });
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("DELETE answers 403 without session", async () => {
+			await request("DELETE", PATH)
+				.send({ password: "nonempty", token: "nonempty" })
+				.expect(403)
+				.expect({ message: "Unauthorized", code: "missing-token" });
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("DELETE answers 403 with bad password", async () => {
+			const Authorization = "let-me-in-1234" as JWT;
+			const account = "test-user";
+			const uid = "test-user-123" as UID;
+			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
+			mockJwt.verifyJwt.mockResolvedValueOnce({
+				uid,
+				validatedWithMfa: [],
+				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
+			});
+			const user: User = {
+				currentAccountId: account,
+				passwordHash: "nonempty-hashed" as Hash,
+				passwordSalt: "nonempty-salt" as Salt,
+				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
+				uid,
+				totpSeed: "seed" as TOTPSeed,
+				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
+				requiredAddtlAuth: [],
+			};
+			mockRead.userWithUid.mockResolvedValueOnce(user);
+			await request("DELETE", PATH)
+				.send({ password: "nonempty", token: "nonempty" })
+				.expect(403)
+				.expect({ message: "Incorrect account ID or passphrase", code: "wrong-credentials" });
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("DELETE answers 403 with bad token", async () => {
+			const Authorization = "let-me-in-1234" as JWT;
+			const account = "test-user";
+			const uid = "test-user-123" as UID;
+			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
+			mockJwt.verifyJwt.mockResolvedValueOnce({
+				uid,
+				validatedWithMfa: [],
+				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
+			});
+			const user: User = {
+				currentAccountId: account,
+				passwordHash: "nonempty-hashed" as Hash,
+				passwordSalt: "nonempty-salt" as Salt,
+				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
+				uid,
+				totpSeed: "seed" as TOTPSeed,
+				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
+				requiredAddtlAuth: [],
+			};
+			mockRead.userWithUid.mockResolvedValueOnce(user);
+			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // password succeeds
+			await request("DELETE", PATH)
+				.send({ password: "nonempty", token: "nonempty" })
+				.expect(403)
+				.expect({ message: "That code is invalid", code: "wrong-mfa-credentials" });
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		// TODO: Test that recovery token does not work for this
+
+		test("DELETE answers 200 and deletes the user's mfaRecoverySeed and totpSeed, and disables TOTP", async () => {
+			const Authorization = "let-me-in-1234" as JWT;
+			const account = "test-user";
+			const uid = "test-user-123" as UID;
+			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
+			mockJwt.verifyJwt.mockResolvedValueOnce({
+				uid,
+				validatedWithMfa: ["totp"],
+				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
+			});
+			const user: User = {
+				currentAccountId: account,
+				passwordHash: "nonempty-hashed" as Hash,
+				passwordSalt: "nonempty-salt" as Salt,
+				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
+				uid,
+				totpSeed: "seed" as TOTPSeed,
+				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
+				requiredAddtlAuth: ["totp"],
+			};
+			mockRead.userWithUid.mockResolvedValueOnce(user);
+			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // password succeeds
+			mockTotp.verifyTOTP.mockReturnValueOnce(true); // TOTP succeeds
+			await request("DELETE", PATH)
+				.send({ password: "nonempty", token: "nonempty" })
+				.expect(200)
+				.expect({ message: "Success!" });
+			expect(mockWrite.upsertUser).toHaveBeenCalledOnceWith({
+				...user,
+				totpSeed: null,
+				mfaRecoverySeed: null,
+				requiredAddtlAuth: [], // disables 2FA
+			});
+		});
+
+		test("DELETE answers 403 with bad password, even if the user has no TOTP", async () => {
+			const Authorization = "let-me-in-1234" as JWT;
+			const account = "test-user";
+			const uid = "test-user-123" as UID;
+			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
+			mockJwt.verifyJwt.mockResolvedValueOnce({
+				uid,
+				validatedWithMfa: [],
+				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
+			});
+			const user: User = {
+				currentAccountId: account,
+				passwordHash: "nonempty-hashed" as Hash,
+				passwordSalt: "nonempty-salt" as Salt,
+				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
+				uid,
+				totpSeed: null, // no secret set
+				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
+				requiredAddtlAuth: [],
+			};
+			mockRead.userWithUid.mockResolvedValueOnce(user);
+			await request("DELETE", PATH)
+				.send({ password: "nonempty", token: "nonempty" })
+				.expect(403)
+				.expect({ message: "Incorrect account ID or passphrase", code: "wrong-credentials" });
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("DELETE answers 200 and does nothing if the user has no TOTP", async () => {
+			const Authorization = "let-me-in-1234" as JWT;
+			const account = "test-user";
+			const uid = "test-user-123" as UID;
+			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
+			mockJwt.verifyJwt.mockResolvedValueOnce({
+				uid,
+				validatedWithMfa: [],
+				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
+			});
+			const user: User = {
+				currentAccountId: account,
+				passwordHash: "nonempty-hashed" as Hash,
+				passwordSalt: "nonempty-salt" as Salt,
+				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
+				uid,
+				totpSeed: null, // no secret set
+				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
+				requiredAddtlAuth: [],
+			};
+			mockRead.userWithUid.mockResolvedValueOnce(user);
+			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // password succeeds
+			// Doesn't need TOTP, since, you know, the user doesn't even have TOTP lol
+			await request("DELETE", PATH)
+				.send({ password: "nonempty", token: "nonempty" })
+				.expect(200)
+				.expect({ message: "Success!" });
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+	});
 
 	describe("/v0/session", () => {
 		const PATH = "/v0/session";

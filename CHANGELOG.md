@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Our Express environment now sends the `Access-Control-Allow-Headers` header with each request, as our Vercel environment does.
 - Our Express environment no longer sends HTTP 404 when making a request to a valid endpoint using the wrong method. We now, correctly, send HTTP 405, as our Vercel environment does.
 
+### Security
+- `DELETE /v0/totp/secret` now sends HTTP 403 when the password is incorrect, even when the user does not have TOTP enabled. Before, this endpoint would ignore the password field and send HTTP 200 if the user does not have TOTP enabled. This was't _much_ of a security issue, since that endpoint and method requires a valid session anyway, but since a password is a required field to do a delete, it makes sense to not respond HTTP 200 unless the password is correct.
+
 ## [0.18.1] - 2023-03-24
 ### Added
 - A management UI for viewing database contents. (These should be encrypted client-side, so there's no user data to see here. I just don't wanna have to write a query string every time I need to read other parts of the database.)

@@ -25,7 +25,7 @@ export function auth(): Router {
 	return Router()
 		.all("/join", throttle(), asyncWrapper(join.POST))
 		.all("/login", throttle(), asyncWrapper(login.POST))
-		.all("/totp/secret", /* throttle(), */ asyncWrapper(totpSecret.GET))
+		.get("/totp/secret", /* throttle(), */ asyncWrapper(totpSecret.GET))
 		.all("/totp/secret", throttle(), asyncWrapper(totpSecret.DELETE))
 		.all("/totp/validate", throttle(), asyncWrapper(totpValidate.POST))
 		.all("/session", /* throttle(), */ asyncWrapper(session.GET))
