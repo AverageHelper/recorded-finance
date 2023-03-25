@@ -73,7 +73,7 @@ export const POST = apiHandler("POST", async (req, res) => {
 			pubnubCipherKey: user.pubnubCipherKey,
 			passwordHash: user.passwordHash,
 			passwordSalt: user.passwordSalt,
-			requiredAddtlAuth: ["totp"], // TODO: Leave other 2FA alone
+			requiredAddtlAuth: user.requiredAddtlAuth?.concat("totp") ?? [],
 			totpSeed: user.totpSeed,
 			uid,
 		});
