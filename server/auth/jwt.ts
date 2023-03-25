@@ -172,7 +172,7 @@ export async function verifyJwt(token: JWT): Promise<JwtPayload> {
 	return await new Promise<JwtPayload>((resolve, reject) => {
 		_verifyJwt(token, persistentSecret, (err, payload) => {
 			// Fail if failed i guess
-			if (err) return reject(err);
+			if (err) return reject(err); // TODO: Something safer than a `reject`, since we always know what kind of error this is
 
 			// Check payload contents
 			if (payload !== undefined) {

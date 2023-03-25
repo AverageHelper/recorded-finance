@@ -16,13 +16,18 @@ export const blacklistHasJwt = jest.fn<typeof _blacklistHasJwt>().mockResolvedVa
 
 export const addJwtToBlacklist = jest.fn<typeof _addJwtToBlacklist>().mockResolvedValue(undefined);
 
-export const newAccessTokens = jest
-	.fn<typeof _newAccessTokens>()
-	.mockResolvedValue({ access_token: "deft", pubnub_token: "move" as PubNubToken });
+export const DEFAULT_MOCK_ACCESS_TOKEN: string = "deft";
 
-export const setSession = jest.fn<typeof _setSession>();
+export const DEFAULT_MOCK_PUBNUB_TOKEN = "move" as PubNubToken;
 
-export const killSession = jest.fn<typeof _killSession>();
+export const newAccessTokens = jest.fn<typeof _newAccessTokens>().mockResolvedValue({
+	access_token: DEFAULT_MOCK_ACCESS_TOKEN,
+	pubnub_token: DEFAULT_MOCK_PUBNUB_TOKEN,
+});
+
+export const setSession = jest.fn<typeof _setSession>().mockReturnValue(undefined);
+
+export const killSession = jest.fn<typeof _killSession>().mockReturnValue(undefined);
 
 export const jwtFromRequest = jest.fn<typeof _jwtFromRequest>().mockReturnValue(null);
 

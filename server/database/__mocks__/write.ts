@@ -1,4 +1,8 @@
 import type {
+	upsertFileData as _upsertFileData,
+	destroyFileData as _destroyFileData,
+	addJwtToDatabase as _addJwtToDatabase,
+	purgeExpiredJwts as _purgeExpiredJwts,
 	upsertUser as _upsertUser,
 	destroyUser as _destroyUser,
 	upsertDbDocs as _upsertDbDocs,
@@ -7,6 +11,14 @@ import type {
 	deleteDbCollection as _deleteDbCollection,
 } from "../write";
 import { jest } from "@jest/globals";
+
+export const upsertFileData = jest.fn<typeof _upsertFileData>().mockResolvedValue({ size: 0 });
+
+export const destroyFileData = jest.fn<typeof _destroyFileData>().mockResolvedValue(0);
+
+export const addJwtToDatabase = jest.fn<typeof _addJwtToDatabase>().mockResolvedValue(undefined);
+
+export const purgeExpiredJwts = jest.fn<typeof _purgeExpiredJwts>().mockResolvedValue(undefined);
 
 export const upsertUser = jest.fn<typeof _upsertUser>().mockResolvedValue({ uid: "test_user_123" });
 

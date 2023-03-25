@@ -7,6 +7,8 @@ import _cors from "cors";
 
 const corsOptions: CorsOptions = {
 	credentials: true,
+	allowedHeaders:
+		"X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
 	origin: (origin, callback) => {
 		// Allow requests with no origin (mobile apps, curl, etc.)
 		if (origin === undefined || !origin) {
