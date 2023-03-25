@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Fixed
 - Our Express environment now sends the `Access-Control-Allow-Headers` header with each request, as our Vercel environment does.
+- Our Express environment no longer sends HTTP 404 when making a request to a valid endpoint using the wrong method. We now, correctly, send HTTP 405, as our Vercel environment does.
 
 ## [0.18.1] - 2023-03-24
 ### Added

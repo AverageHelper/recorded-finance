@@ -77,17 +77,11 @@ describe("Routes", () => {
 				.expect({ message: "lol" });
 		});
 
-		const BadMethods = ["POST", "PUT", "DELETE", "PATCH"] as const;
+		const BadMethods = ["HEAD", "POST", "PUT", "DELETE", "PATCH"] as const;
 		test.each(BadMethods)("%s answers 405", async m => {
 			const method = m.toLowerCase() as Lowercase<typeof m>;
 			await request(app) //
 				[method](PATH)
-				.expect(404); // FIXME: Express responds 404 to unhandled methods on the route. Should be 405 instead?
-		});
-
-		test("HEAD answers 405", async () => {
-			await request(app) //
-				.head(PATH)
 				.expect(405);
 		});
 	});
@@ -104,17 +98,11 @@ describe("Routes", () => {
 				.expect({ message: "Pong!" });
 		});
 
-		const BadMethods = ["POST", "PUT", "DELETE", "PATCH"] as const;
+		const BadMethods = ["HEAD", "POST", "PUT", "DELETE", "PATCH"] as const;
 		test.each(BadMethods)("%s answers 405", async m => {
 			const method = m.toLowerCase() as Lowercase<typeof m>;
 			await request(app) //
 				[method](PATH)
-				.expect(404); // FIXME: Express responds 404 to unhandled methods on the route. Should be 405 instead?
-		});
-
-		test("HEAD answers 405", async () => {
-			await request(app) //
-				.head(PATH)
 				.expect(405);
 		});
 	});
@@ -131,17 +119,11 @@ describe("Routes", () => {
 				.expect({ message: `Recorded Finance v${version}`, version });
 		});
 
-		const BadMethods = ["POST", "PUT", "DELETE", "PATCH"] as const;
+		const BadMethods = ["HEAD", "POST", "PUT", "DELETE", "PATCH"] as const;
 		test.each(BadMethods)("%s answers 405", async m => {
 			const method = m.toLowerCase() as Lowercase<typeof m>;
 			await request(app) //
 				[method](PATH)
-				.expect(404); // FIXME: Express responds 404 to unhandled methods on the route. Should be 405 instead?
-		});
-
-		test("HEAD answers 405", async () => {
-			await request(app) //
-				.head(PATH)
 				.expect(405);
 		});
 	});
@@ -149,7 +131,7 @@ describe("Routes", () => {
 	describe("/v0/join", () => {
 		const PATH = "/v0/join";
 
-		function expectNonaction(): void {
+		function expectInaction(): void {
 			expect(mockGenerators.generateSalt).not.toHaveBeenCalled();
 			expect(mockGenerators.generateHash).not.toHaveBeenCalled();
 			expect(mockGenerators.generateAESCipherKey).not.toHaveBeenCalled();
@@ -161,8 +143,8 @@ describe("Routes", () => {
 			const method = m.toLowerCase() as Lowercase<typeof m>;
 			await request(app) //
 				[method](PATH)
-				.expect(404); // FIXME: Express responds 404 to unhandled methods on the route. Should be 405 instead?
-			expectNonaction();
+				.expect(405);
+			expectInaction();
 		});
 
 		test("answers 400 to missing 'account' and 'password' fields", async () => {
@@ -170,7 +152,7 @@ describe("Routes", () => {
 				.post(PATH)
 				.expect(400)
 				.expect({ message: "Improper parameter types", code: "unknown" });
-			expectNonaction();
+			expectInaction();
 		});
 
 		test("answers 400 to missing 'account'", async () => {
@@ -179,7 +161,7 @@ describe("Routes", () => {
 				.send({ password: "nonempty" })
 				.expect(400)
 				.expect({ message: "Improper parameter types", code: "unknown" });
-			expectNonaction();
+			expectInaction();
 		});
 
 		test("answers 400 to missing 'password'", async () => {
@@ -188,7 +170,7 @@ describe("Routes", () => {
 				.send({ account: "nonempty" })
 				.expect(400)
 				.expect({ message: "Improper parameter types", code: "unknown" });
-			expectNonaction();
+			expectInaction();
 		});
 
 		test("answers 400 to empty 'account'", async () => {
@@ -197,7 +179,7 @@ describe("Routes", () => {
 				.send({ account: "", password: "nonempty" })
 				.expect(400)
 				.expect({ message: "Improper parameter types", code: "unknown" });
-			expectNonaction();
+			expectInaction();
 		});
 
 		test("answers 400 to empty 'password'", async () => {
@@ -206,7 +188,7 @@ describe("Routes", () => {
 				.send({ account: "nonempty", password: "" })
 				.expect(400)
 				.expect({ message: "Improper parameter types", code: "unknown" });
-			expectNonaction();
+			expectInaction();
 		});
 
 		test("answers 507 if the server is cannot accept new users", async () => {
@@ -216,7 +198,7 @@ describe("Routes", () => {
 				.send({ account: "nonempty", password: "nonempty" })
 				.expect(507)
 				.expect({ message: "We're full at the moment. Try again later!", code: "unknown" });
-			expectNonaction();
+			expectInaction();
 		});
 
 		test("answers 409 if an account already exists by that name", async () => {
@@ -233,7 +215,7 @@ describe("Routes", () => {
 				.send({ account, password: "nonempty" })
 				.expect(409)
 				.expect({ message: "An account with that ID already exists", code: "account-conflict" });
-			expectNonaction();
+			expectInaction();
 		});
 
 		test("answers 200 for new account", async () => {
@@ -276,17 +258,11 @@ describe("Routes", () => {
 	describe("/v0/session", () => {
 		const PATH = "/v0/session";
 
-		const BadMethods = ["POST", "PUT", "DELETE", "PATCH"] as const;
+		const BadMethods = ["HEAD", "POST", "PUT", "DELETE", "PATCH"] as const;
 		test.each(BadMethods)("%s answers 405", async m => {
 			const method = m.toLowerCase() as Lowercase<typeof m>;
 			await request(app) //
 				[method](PATH)
-				.expect(404); // FIXME: Express responds 404 to unhandled methods on the route. Should be 405 instead?
-		});
-
-		test("HEAD answers 405", async () => {
-			await request(app) //
-				.head(PATH)
 				.expect(405);
 		});
 

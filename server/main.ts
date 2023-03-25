@@ -26,9 +26,9 @@ export const app = express()
 expressWs(app); // Set up websocket support. This is the reason our endpoint declarations need to be functions and not `const` declarations
 
 app
-	.get("/v0/", asyncWrapper(lol.GET))
-	.get("/v0/ping", asyncWrapper(ping.GET))
-	.get("/v0/version", asyncWrapper(serverVersion.GET))
+	.all("/v0/", asyncWrapper(lol.GET))
+	.all("/v0/ping", asyncWrapper(ping.GET))
+	.all("/v0/version", asyncWrapper(serverVersion.GET))
 	.set("trust proxy", 1) // trust first proxy
 	.use(express.json({ limit: "5mb" }))
 	.use(express.urlencoded({ limit: "5mb", extended: true }))
