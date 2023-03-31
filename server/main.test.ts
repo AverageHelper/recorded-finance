@@ -998,7 +998,188 @@ describe("Routes", () => {
 		});
 	});
 
-	// TODO: /v0/leave (POST)
+	describe("/v0/leave", () => {
+		const PATH = "/v0/leave";
+
+		const BadMethods = ["HEAD", "GET", "PUT", "DELETE", "PATCH"] as const;
+		test.each(BadMethods)("%s answers 405", async method => {
+			await request(method, PATH).expect(405);
+			expect(mockWrite.destroyUser).not.toHaveBeenCalled();
+		});
+
+		test("POST responds 400 without 'account' or 'password'", async () => {
+			await request("POST", PATH)
+				.expect(400)
+				.expect({ message: "Improper parameter types", code: "unknown" });
+			expect(mockWrite.destroyUser).not.toHaveBeenCalled();
+		});
+
+		test("POST responds 400 without 'account'", async () => {
+			await request("POST", PATH)
+				.send({ password: "nonempty" })
+				.expect(400)
+				.expect({ message: "Improper parameter types", code: "unknown" });
+			expect(mockWrite.destroyUser).not.toHaveBeenCalled();
+		});
+
+		test("POST responds 400 without 'password'", async () => {
+			await request("POST", PATH)
+				.send({ account: "nonempty" })
+				.expect(400)
+				.expect({ message: "Improper parameter types", code: "unknown" });
+			expect(mockWrite.destroyUser).not.toHaveBeenCalled();
+		});
+
+		test("POST responds 400 with empty 'account'", async () => {
+			await request("POST", PATH)
+				.send({ account: "", password: "nonempty" })
+				.expect(400)
+				.expect({ message: "Improper parameter types", code: "unknown" });
+			expect(mockWrite.destroyUser).not.toHaveBeenCalled();
+		});
+
+		test("POST responds 400 with empty 'password'", async () => {
+			await request("POST", PATH)
+				.send({ account: "nonempty", password: "" })
+				.expect(400)
+				.expect({ message: "Improper parameter types", code: "unknown" });
+			expect(mockWrite.destroyUser).not.toHaveBeenCalled();
+		});
+
+		test("POST responds 403 without Cookie or Authorization", async () => {
+			await request("POST", PATH)
+				.send({ account: "nonempty", password: "nonempty" })
+				.expect(403)
+				.expect({ message: "Incorrect account ID or passphrase", code: "wrong-credentials" });
+			expect(mockWrite.destroyUser).not.toHaveBeenCalled();
+		});
+
+		test("POST responds 403 with bad password", async () => {
+			const user: User = {
+				uid: "test-user-123" as UID,
+				currentAccountId: "test-account",
+				passwordHash: mockGenerators.DEFAULT_MOCK_HASH,
+				passwordSalt: mockGenerators.DEFAULT_MOCK_SALT,
+				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
+				mfaRecoverySeed: null,
+				requiredAddtlAuth: [],
+				totpSeed: null,
+			};
+			mockRead.userWithAccountId.mockResolvedValueOnce(user);
+
+			await request("POST", PATH)
+				.send({ account: "nonempty", password: "nonempty" })
+				.expect(403)
+				.expect({ message: "Incorrect account ID or passphrase", code: "wrong-credentials" });
+			expect(mockWrite.destroyUser).not.toHaveBeenCalled();
+		});
+
+		test("POST responds 200 and destroys the user", async () => {
+			const user: User = {
+				uid: "test-user-123" as UID,
+				currentAccountId: "test-account",
+				passwordHash: mockGenerators.DEFAULT_MOCK_HASH,
+				passwordSalt: mockGenerators.DEFAULT_MOCK_SALT,
+				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
+				mfaRecoverySeed: null,
+				requiredAddtlAuth: [],
+				totpSeed: null,
+			};
+			mockRead.userWithAccountId.mockResolvedValueOnce(user);
+			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // password good
+
+			await request("POST", PATH)
+				.send({ account: "nonempty", password: "nonempty" })
+				.expect(200)
+				.expect({ message: "Success!" });
+			expect(mockWrite.destroyUser).toHaveBeenCalledOnceWith(user.uid);
+		});
+
+		test("POST responds 403 if TOTP is required and not provided", async () => {
+			const user: User = {
+				uid: "test-user-123" as UID,
+				currentAccountId: "test-account",
+				passwordHash: mockGenerators.DEFAULT_MOCK_HASH,
+				passwordSalt: mockGenerators.DEFAULT_MOCK_SALT,
+				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
+				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
+				requiredAddtlAuth: ["totp"],
+				totpSeed: "seed" as TOTPSeed,
+			};
+			mockRead.userWithAccountId.mockResolvedValueOnce(user);
+			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // password good
+
+			await request("POST", PATH)
+				.send({ account: "nonempty", password: "nonempty" })
+				.expect(403)
+				.expect({ message: "You must provide a TOTP code", code: "missing-mfa-credentials" });
+			expect(mockWrite.destroyUser).not.toHaveBeenCalled();
+		});
+
+		test("POST responds 400 if TOTP is required but value is empty", async () => {
+			const user: User = {
+				uid: "test-user-123" as UID,
+				currentAccountId: "test-account",
+				passwordHash: mockGenerators.DEFAULT_MOCK_HASH,
+				passwordSalt: mockGenerators.DEFAULT_MOCK_SALT,
+				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
+				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
+				requiredAddtlAuth: ["totp"],
+				totpSeed: "seed" as TOTPSeed,
+			};
+			mockRead.userWithAccountId.mockResolvedValueOnce(user);
+			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // password good
+
+			await request("POST", PATH)
+				.send({ account: "nonempty", password: "nonempty", token: "" })
+				.expect(400)
+				.expect({ message: "Improper parameter types", code: "unknown" });
+			expect(mockWrite.destroyUser).not.toHaveBeenCalled();
+		});
+
+		test("POST responds 403 if TOTP does not match", async () => {
+			const user: User = {
+				uid: "test-user-123" as UID,
+				currentAccountId: "test-account",
+				passwordHash: mockGenerators.DEFAULT_MOCK_HASH,
+				passwordSalt: mockGenerators.DEFAULT_MOCK_SALT,
+				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
+				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
+				requiredAddtlAuth: ["totp"],
+				totpSeed: "seed" as TOTPSeed,
+			};
+			mockRead.userWithAccountId.mockResolvedValueOnce(user);
+			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // password good
+
+			await request("POST", PATH)
+				.send({ account: "nonempty", password: "nonempty", token: "123456" })
+				.expect(403)
+				.expect({ message: "That code is invalid", code: "wrong-mfa-credentials" });
+			expect(mockWrite.destroyUser).not.toHaveBeenCalled();
+		});
+
+		test("POST responds 200 with valid TOTP and destroys the user", async () => {
+			const user: User = {
+				uid: "test-user-123" as UID,
+				currentAccountId: "test-account",
+				passwordHash: mockGenerators.DEFAULT_MOCK_HASH,
+				passwordSalt: mockGenerators.DEFAULT_MOCK_SALT,
+				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
+				mfaRecoverySeed: null,
+				requiredAddtlAuth: [],
+				totpSeed: null,
+			};
+			mockRead.userWithAccountId.mockResolvedValueOnce(user);
+			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // password good
+			mockTotp.verifyTOTP.mockReturnValueOnce(true); // TOTP good
+
+			await request("POST", PATH)
+				.send({ account: "nonempty", password: "nonempty", token: "123456" })
+				.expect(200)
+				.expect({ message: "Success!" });
+			expect(mockWrite.destroyUser).toHaveBeenCalledOnceWith(user.uid);
+		});
+	});
 
 	// TODO: /v0/updatepassword (POST)
 
