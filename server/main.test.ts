@@ -1,7 +1,8 @@
-import type { Hash, Salt, TOTPSeed, UID, User } from "./database/schemas";
 import type { JWT } from "./auth/jwt";
+import type { UID } from "./database/schemas";
 import "jest-extended";
 import { jest } from "@jest/globals";
+import { userWithTotp, userWithoutTotp } from "./test/userMocks";
 import { version } from "./version";
 import _request from "supertest";
 import jsonwebtoken from "jsonwebtoken";
@@ -198,14 +199,8 @@ describe("Routes", () => {
 		});
 
 		test("answers 409 if an account already exists by that name", async () => {
-			const account = "test-user";
-			mockRead.userWithAccountId.mockResolvedValueOnce({
-				currentAccountId: account,
-				passwordHash: "nonempty-hashed" as Hash,
-				passwordSalt: "nonempty-salt" as Salt,
-				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
-				uid: "test-user-123" as UID,
-			});
+			const account = userWithTotp.currentAccountId;
+			mockRead.userWithAccountId.mockResolvedValueOnce(userWithoutTotp);
 			await request("POST", PATH)
 				.send({ account, password: "nonempty" })
 				.expect(409)
@@ -214,7 +209,7 @@ describe("Routes", () => {
 		});
 
 		test("answers 200 for new account", async () => {
-			const account = "test-user";
+			const account = userWithTotp.currentAccountId;
 			const response = await request("POST", PATH)
 				.send({ account, password: "nonempty" })
 				// .expect("Set-Cookie", /sessionToken/u) // TODO: Separate `setSession` enough that we can check that a cookie was set
@@ -308,16 +303,10 @@ describe("Routes", () => {
 
 		// Same as account doesn't exist
 		test("answers 403 when password is not correct", async () => {
-			const account = "test-user";
-			mockRead.userWithAccountId.mockResolvedValueOnce({
-				currentAccountId: account,
-				passwordHash: "nonempty-hashed" as Hash,
-				passwordSalt: "nonempty-salt" as Salt,
-				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
-				uid: "test-user-123" as UID,
-			});
+			const user = userWithoutTotp;
+			mockRead.userWithAccountId.mockResolvedValueOnce(user);
 			await request("POST", PATH)
-				.send({ account, password: "nonempty" })
+				.send({ account: user.currentAccountId, password: "nonempty" })
 				.expect(403)
 				.expect({ message: "Incorrect account ID or passphrase", code: "wrong-credentials" });
 			expectInaction();
@@ -325,27 +314,18 @@ describe("Routes", () => {
 		});
 
 		test("answers 200 when password is correct and TOTP is needed", async () => {
-			const account = "test-user";
-			const uid = "test-user-123" as UID;
-			mockRead.userWithAccountId.mockResolvedValueOnce({
-				currentAccountId: account,
-				passwordHash: "nonempty-hashed" as Hash,
-				passwordSalt: "nonempty-salt" as Salt,
-				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
-				uid,
-				totpSeed: "seed" as TOTPSeed,
-				requiredAddtlAuth: ["totp"],
-			});
+			const user = userWithTotp;
+			mockRead.userWithAccountId.mockResolvedValueOnce(user);
 			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true));
 			await request("POST", PATH) //
-				.send({ account, password: "nonempty" })
+				.send({ account: user.currentAccountId, password: "nonempty" })
 				.expect(200)
 				.expect({
 					access_token: mockJwt.DEFAULT_MOCK_ACCESS_TOKEN,
 					pubnub_cipher_key: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
 					pubnub_token: mockJwt.DEFAULT_MOCK_PUBNUB_TOKEN,
 					validate: "totp",
-					uid,
+					uid: user.uid,
 					totalSpace: 0,
 					usedSpace: 0,
 					message: "Success!",
@@ -353,25 +333,18 @@ describe("Routes", () => {
 		});
 
 		test("answers 200 when password is correct and TOTP is not needed", async () => {
-			const account = "test-user";
-			const uid = "test-user-123" as UID;
-			mockRead.userWithAccountId.mockResolvedValueOnce({
-				currentAccountId: account,
-				passwordHash: "nonempty-hashed" as Hash,
-				passwordSalt: "nonempty-salt" as Salt,
-				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
-				uid,
-			});
+			const user = userWithoutTotp;
+			mockRead.userWithAccountId.mockResolvedValueOnce(user);
 			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true));
 			await request("POST", PATH) //
-				.send({ account, password: "nonempty" })
+				.send({ account: user.currentAccountId, password: "nonempty" })
 				.expect(200)
 				.expect({
 					access_token: mockJwt.DEFAULT_MOCK_ACCESS_TOKEN,
 					pubnub_cipher_key: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
 					pubnub_token: mockJwt.DEFAULT_MOCK_PUBNUB_TOKEN,
 					validate: "none",
-					uid,
+					uid: user.uid,
 					totalSpace: 0,
 					usedSpace: 0,
 					message: "Success!",
@@ -413,21 +386,14 @@ describe("Routes", () => {
 
 		test("POST answers 409 if the user does not have TOTP 2FA configured", async () => {
 			const Authorization = "let-me-in-1234" as JWT;
-			const account = "test-user";
-			const uid = "test-user-123" as UID;
+			const user = userWithoutTotp;
 			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
 			mockJwt.verifyJwt.mockResolvedValueOnce({
-				uid,
+				uid: user.uid,
 				validatedWithMfa: [],
 				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
 			});
-			mockRead.userWithUid.mockResolvedValueOnce({
-				currentAccountId: account,
-				passwordHash: "nonempty-hashed" as Hash,
-				passwordSalt: "nonempty-salt" as Salt,
-				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
-				uid,
-			});
+			mockRead.userWithUid.mockResolvedValueOnce(user);
 			await request("POST", PATH)
 				.set("Authorization", `Bearer ${Authorization}`)
 				.send({ token: "123456" })
@@ -441,24 +407,14 @@ describe("Routes", () => {
 
 		test("POST answers 403 if the token does not match", async () => {
 			const Authorization = "let-me-in-1234" as JWT;
-			const account = "test-user";
-			const uid = "test-user-123" as UID;
+			const user = userWithTotp;
 			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
 			mockJwt.verifyJwt.mockResolvedValueOnce({
-				uid,
+				uid: user.uid,
 				validatedWithMfa: [],
 				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
 			});
-			mockRead.userWithUid.mockResolvedValueOnce({
-				currentAccountId: account,
-				passwordHash: "nonempty-hashed" as Hash,
-				passwordSalt: "nonempty-salt" as Salt,
-				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
-				uid,
-				totpSeed: "seed" as TOTPSeed,
-				mfaRecoverySeed: "other-seed" as TOTPSeed,
-				requiredAddtlAuth: ["totp"],
-			});
+			mockRead.userWithUid.mockResolvedValueOnce(user);
 			await request("POST", PATH)
 				.set("Authorization", `Bearer ${Authorization}`)
 				.send({ token: "123456" })
@@ -472,24 +428,14 @@ describe("Routes", () => {
 
 		test("POST answers 200 if the token matches", async () => {
 			const Authorization = "let-me-in-1234" as JWT;
-			const account = "test-user";
-			const uid = "test-user-123" as UID;
+			const user = userWithTotp;
 			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
 			mockJwt.verifyJwt.mockResolvedValueOnce({
-				uid,
+				uid: user.uid,
 				validatedWithMfa: [],
 				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
 			});
-			mockRead.userWithUid.mockResolvedValueOnce({
-				currentAccountId: account,
-				passwordHash: "nonempty-hashed" as Hash,
-				passwordSalt: "nonempty-salt" as Salt,
-				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
-				uid,
-				totpSeed: "seed" as TOTPSeed,
-				mfaRecoverySeed: "other-seed" as TOTPSeed,
-				requiredAddtlAuth: ["totp"],
-			});
+			mockRead.userWithUid.mockResolvedValueOnce(user);
 			await request("POST", PATH)
 				.set("Authorization", `Bearer ${Authorization}`)
 				.send({ token: mockTotp.DEFAULT_MOCK_TOTP_CODE })
@@ -499,7 +445,7 @@ describe("Routes", () => {
 					pubnub_cipher_key: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
 					pubnub_token: mockJwt.DEFAULT_MOCK_PUBNUB_TOKEN,
 					// recovery_token is not included
-					uid,
+					uid: user.uid,
 					totalSpace: 0,
 					usedSpace: 0,
 					message: "Success!",
@@ -509,24 +455,16 @@ describe("Routes", () => {
 
 		test("POST answers 200 and the user's recovery token if the user is finishing TOTP setup", async () => {
 			const Authorization = "let-me-in-1234" as JWT;
-			const account = "test-user";
-			const uid = "test-user-123" as UID;
+			const user = {
+				...userWithTotp,
+				requiredAddtlAuth: [], // TOTP not yet set up
+			};
 			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
 			mockJwt.verifyJwt.mockResolvedValueOnce({
-				uid,
+				uid: user.uid,
 				validatedWithMfa: [],
 				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
 			});
-			const user: User = {
-				currentAccountId: account,
-				passwordHash: "nonempty-hashed" as Hash,
-				passwordSalt: "nonempty-salt" as Salt,
-				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
-				uid,
-				totpSeed: "seed" as TOTPSeed,
-				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
-				requiredAddtlAuth: [], // TOTP not yet set up
-			};
 			mockRead.userWithUid.mockResolvedValueOnce(user);
 			await request("POST", PATH)
 				.set("Authorization", `Bearer ${Authorization}`)
@@ -537,7 +475,7 @@ describe("Routes", () => {
 					pubnub_cipher_key: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
 					pubnub_token: mockJwt.DEFAULT_MOCK_PUBNUB_TOKEN,
 					recovery_token: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN, // fresh token!
-					uid,
+					uid: user.uid,
 					totalSpace: 0,
 					usedSpace: 0,
 					message: "Success!",
@@ -551,24 +489,13 @@ describe("Routes", () => {
 
 		test("POST answers 200 if the user used their recovery token", async () => {
 			const Authorization = "let-me-in-1234" as JWT;
-			const account = "test-user";
-			const uid = "test-user-123" as UID;
+			const user = userWithTotp;
 			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
 			mockJwt.verifyJwt.mockResolvedValueOnce({
-				uid,
+				uid: user.uid,
 				validatedWithMfa: [],
 				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
 			});
-			const user: User = {
-				currentAccountId: account,
-				passwordHash: "nonempty-hashed" as Hash,
-				passwordSalt: "nonempty-salt" as Salt,
-				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
-				uid,
-				totpSeed: "seed" as TOTPSeed,
-				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
-				requiredAddtlAuth: ["totp"],
-			};
 			mockRead.userWithUid.mockResolvedValueOnce(user);
 			await request("POST", PATH)
 				.set("Authorization", `Bearer ${Authorization}`)
@@ -578,7 +505,7 @@ describe("Routes", () => {
 					access_token: mockJwt.DEFAULT_MOCK_ACCESS_TOKEN,
 					pubnub_cipher_key: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
 					pubnub_token: mockJwt.DEFAULT_MOCK_PUBNUB_TOKEN,
-					uid,
+					uid: user.uid,
 					totalSpace: 0,
 					usedSpace: 0,
 					message: "Success!",
@@ -606,24 +533,13 @@ describe("Routes", () => {
 
 		test("GET answers 409 if the user already used TOTP this session (they know their secret)", async () => {
 			const Authorization = "let-me-in-1234" as JWT;
-			const account = "test-user";
-			const uid = "test-user-123" as UID;
+			const user = userWithTotp;
 			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
 			mockJwt.verifyJwt.mockResolvedValueOnce({
-				uid,
+				uid: user.uid,
 				validatedWithMfa: ["totp"],
 				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
 			});
-			const user: User = {
-				currentAccountId: account,
-				passwordHash: "nonempty-hashed" as Hash,
-				passwordSalt: "nonempty-salt" as Salt,
-				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
-				uid,
-				totpSeed: "seed" as TOTPSeed,
-				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
-				requiredAddtlAuth: ["totp"],
-			};
 			mockRead.userWithUid.mockResolvedValueOnce(user);
 			await request("GET", PATH)
 				.set("Authorization", `Bearer ${Authorization}`)
@@ -634,24 +550,13 @@ describe("Routes", () => {
 
 		test("GET answers 409 if TOTP already required (they should know the secret)", async () => {
 			const Authorization = "let-me-in-1234" as JWT;
-			const account = "test-user";
-			const uid = "test-user-123" as UID;
+			const user = userWithTotp;
 			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
 			mockJwt.verifyJwt.mockResolvedValueOnce({
-				uid,
+				uid: user.uid,
 				validatedWithMfa: [],
 				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
 			});
-			const user: User = {
-				currentAccountId: account,
-				passwordHash: "nonempty-hashed" as Hash,
-				passwordSalt: "nonempty-salt" as Salt,
-				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
-				uid,
-				totpSeed: "seed" as TOTPSeed,
-				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
-				requiredAddtlAuth: ["totp"],
-			};
 			mockRead.userWithUid.mockResolvedValueOnce(user);
 			await request("GET", PATH)
 				.set("Authorization", `Bearer ${Authorization}`)
@@ -662,24 +567,16 @@ describe("Routes", () => {
 
 		test("GET answers 200, upserts the user with totpSeed, and sends the plaintext secret", async () => {
 			const Authorization = "let-me-in-1234" as JWT;
-			const account = "test-user";
-			const uid = "test-user-123" as UID;
+			const user = {
+				...userWithoutTotp,
+				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
+			};
 			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
 			mockJwt.verifyJwt.mockResolvedValueOnce({
-				uid,
+				uid: user.uid,
 				validatedWithMfa: [],
 				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
 			});
-			const user: User = {
-				currentAccountId: account,
-				passwordHash: "nonempty-hashed" as Hash,
-				passwordSalt: "nonempty-salt" as Salt,
-				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
-				uid,
-				totpSeed: null, // no secret set yet
-				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
-				requiredAddtlAuth: [],
-			};
 			mockRead.userWithUid.mockResolvedValueOnce(user);
 			await request("GET", PATH)
 				.set("Authorization", `Bearer ${Authorization}`)
@@ -740,24 +637,16 @@ describe("Routes", () => {
 
 		test("DELETE answers 403 with bad password", async () => {
 			const Authorization = "let-me-in-1234" as JWT;
-			const account = "test-user";
-			const uid = "test-user-123" as UID;
+			const user = {
+				...userWithTotp,
+				requiredAddtlAuth: [],
+			};
 			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
 			mockJwt.verifyJwt.mockResolvedValueOnce({
-				uid,
+				uid: user.uid,
 				validatedWithMfa: [],
 				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
 			});
-			const user: User = {
-				currentAccountId: account,
-				passwordHash: "nonempty-hashed" as Hash,
-				passwordSalt: "nonempty-salt" as Salt,
-				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
-				uid,
-				totpSeed: "seed" as TOTPSeed,
-				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
-				requiredAddtlAuth: [],
-			};
 			mockRead.userWithUid.mockResolvedValueOnce(user);
 			await request("DELETE", PATH)
 				.send({ password: "nonempty", token: "nonempty" })
@@ -768,24 +657,16 @@ describe("Routes", () => {
 
 		test("DELETE answers 403 with bad token", async () => {
 			const Authorization = "let-me-in-1234" as JWT;
-			const account = "test-user";
-			const uid = "test-user-123" as UID;
+			const user = {
+				...userWithTotp,
+				requiredAddtlAuth: [],
+			};
 			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
 			mockJwt.verifyJwt.mockResolvedValueOnce({
-				uid,
+				uid: user.uid,
 				validatedWithMfa: [],
 				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
 			});
-			const user: User = {
-				currentAccountId: account,
-				passwordHash: "nonempty-hashed" as Hash,
-				passwordSalt: "nonempty-salt" as Salt,
-				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
-				uid,
-				totpSeed: "seed" as TOTPSeed,
-				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
-				requiredAddtlAuth: [],
-			};
 			mockRead.userWithUid.mockResolvedValueOnce(user);
 			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // password succeeds
 			await request("DELETE", PATH)
@@ -799,24 +680,13 @@ describe("Routes", () => {
 
 		test("DELETE answers 200 and deletes the user's mfaRecoverySeed and totpSeed, and disables TOTP", async () => {
 			const Authorization = "let-me-in-1234" as JWT;
-			const account = "test-user";
-			const uid = "test-user-123" as UID;
+			const user = userWithTotp;
 			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
 			mockJwt.verifyJwt.mockResolvedValueOnce({
-				uid,
+				uid: user.uid,
 				validatedWithMfa: ["totp"],
 				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
 			});
-			const user: User = {
-				currentAccountId: account,
-				passwordHash: "nonempty-hashed" as Hash,
-				passwordSalt: "nonempty-salt" as Salt,
-				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
-				uid,
-				totpSeed: "seed" as TOTPSeed,
-				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
-				requiredAddtlAuth: ["totp"],
-			};
 			mockRead.userWithUid.mockResolvedValueOnce(user);
 			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // password succeeds
 			mockTotp.verifyTOTP.mockReturnValueOnce(true); // TOTP succeeds
@@ -834,24 +704,16 @@ describe("Routes", () => {
 
 		test("DELETE answers 403 with bad password, even if the user has no TOTP", async () => {
 			const Authorization = "let-me-in-1234" as JWT;
-			const account = "test-user";
-			const uid = "test-user-123" as UID;
+			const user = {
+				...userWithoutTotp,
+				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
+			};
 			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
 			mockJwt.verifyJwt.mockResolvedValueOnce({
-				uid,
+				uid: user.uid,
 				validatedWithMfa: [],
 				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
 			});
-			const user: User = {
-				currentAccountId: account,
-				passwordHash: "nonempty-hashed" as Hash,
-				passwordSalt: "nonempty-salt" as Salt,
-				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
-				uid,
-				totpSeed: null, // no secret set
-				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
-				requiredAddtlAuth: [],
-			};
 			mockRead.userWithUid.mockResolvedValueOnce(user);
 			await request("DELETE", PATH)
 				.send({ password: "nonempty", token: "nonempty" })
@@ -862,24 +724,16 @@ describe("Routes", () => {
 
 		test("DELETE answers 200 and does nothing if the user has no TOTP", async () => {
 			const Authorization = "let-me-in-1234" as JWT;
-			const account = "test-user";
-			const uid = "test-user-123" as UID;
+			const user = {
+				...userWithoutTotp,
+				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
+			};
 			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
 			mockJwt.verifyJwt.mockResolvedValueOnce({
-				uid,
+				uid: user.uid,
 				validatedWithMfa: [],
 				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
 			});
-			const user: User = {
-				currentAccountId: account,
-				passwordHash: "nonempty-hashed" as Hash,
-				passwordSalt: "nonempty-salt" as Salt,
-				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
-				uid,
-				totpSeed: null, // no secret set
-				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
-				requiredAddtlAuth: [],
-			};
 			mockRead.userWithUid.mockResolvedValueOnce(user);
 			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // password succeeds
 			// Doesn't need TOTP, since, you know, the user doesn't even have TOTP lol
@@ -911,16 +765,7 @@ describe("Routes", () => {
 
 		test("GET answers 403 with expired Bearer token", async () => {
 			const Authorization = "TEST_EXP" as JWT;
-			const user: User = {
-				uid: "test-user-123" as UID,
-				currentAccountId: "test-account",
-				passwordHash: mockGenerators.DEFAULT_MOCK_HASH,
-				passwordSalt: mockGenerators.DEFAULT_MOCK_SALT,
-				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
-				mfaRecoverySeed: null,
-				requiredAddtlAuth: [],
-				totpSeed: null,
-			};
+			const user = userWithoutTotp;
 			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
 			mockJwt.verifyJwt.mockRejectedValueOnce(new jsonwebtoken.JsonWebTokenError("This is a test"));
 			mockRead.jwtExistsInDatabase.mockResolvedValueOnce(true);
@@ -935,16 +780,7 @@ describe("Routes", () => {
 
 		test("GET answers 200 with valid Bearer token", async () => {
 			const Authorization = "Bearer TEST_GOOD" as JWT;
-			const user: User = {
-				uid: "test-user-123" as UID,
-				currentAccountId: "test-account",
-				passwordHash: mockGenerators.DEFAULT_MOCK_HASH,
-				passwordSalt: mockGenerators.DEFAULT_MOCK_SALT,
-				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
-				mfaRecoverySeed: null,
-				requiredAddtlAuth: [],
-				totpSeed: null,
-			};
+			const user = userWithoutTotp;
 			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
 			mockJwt.verifyJwt.mockResolvedValueOnce({
 				uid: user.uid,
@@ -1055,16 +891,7 @@ describe("Routes", () => {
 		});
 
 		test("POST responds 403 with bad password", async () => {
-			const user: User = {
-				uid: "test-user-123" as UID,
-				currentAccountId: "test-account",
-				passwordHash: mockGenerators.DEFAULT_MOCK_HASH,
-				passwordSalt: mockGenerators.DEFAULT_MOCK_SALT,
-				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
-				mfaRecoverySeed: null,
-				requiredAddtlAuth: [],
-				totpSeed: null,
-			};
+			const user = userWithoutTotp;
 			mockRead.userWithAccountId.mockResolvedValueOnce(user);
 
 			await request("POST", PATH)
@@ -1075,16 +902,7 @@ describe("Routes", () => {
 		});
 
 		test("POST responds 200 and destroys the user", async () => {
-			const user: User = {
-				uid: "test-user-123" as UID,
-				currentAccountId: "test-account",
-				passwordHash: mockGenerators.DEFAULT_MOCK_HASH,
-				passwordSalt: mockGenerators.DEFAULT_MOCK_SALT,
-				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
-				mfaRecoverySeed: null,
-				requiredAddtlAuth: [],
-				totpSeed: null,
-			};
+			const user = userWithoutTotp;
 			mockRead.userWithAccountId.mockResolvedValueOnce(user);
 			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // password good
 
@@ -1096,16 +914,7 @@ describe("Routes", () => {
 		});
 
 		test("POST responds 403 if TOTP is required and not provided", async () => {
-			const user: User = {
-				uid: "test-user-123" as UID,
-				currentAccountId: "test-account",
-				passwordHash: mockGenerators.DEFAULT_MOCK_HASH,
-				passwordSalt: mockGenerators.DEFAULT_MOCK_SALT,
-				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
-				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
-				requiredAddtlAuth: ["totp"],
-				totpSeed: "seed" as TOTPSeed,
-			};
+			const user = userWithTotp;
 			mockRead.userWithAccountId.mockResolvedValueOnce(user);
 			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // password good
 
@@ -1117,16 +926,7 @@ describe("Routes", () => {
 		});
 
 		test("POST responds 400 if TOTP is required but value is empty", async () => {
-			const user: User = {
-				uid: "test-user-123" as UID,
-				currentAccountId: "test-account",
-				passwordHash: mockGenerators.DEFAULT_MOCK_HASH,
-				passwordSalt: mockGenerators.DEFAULT_MOCK_SALT,
-				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
-				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
-				requiredAddtlAuth: ["totp"],
-				totpSeed: "seed" as TOTPSeed,
-			};
+			const user = userWithTotp;
 			mockRead.userWithAccountId.mockResolvedValueOnce(user);
 			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // password good
 
@@ -1138,16 +938,7 @@ describe("Routes", () => {
 		});
 
 		test("POST responds 403 if TOTP does not match", async () => {
-			const user: User = {
-				uid: "test-user-123" as UID,
-				currentAccountId: "test-account",
-				passwordHash: mockGenerators.DEFAULT_MOCK_HASH,
-				passwordSalt: mockGenerators.DEFAULT_MOCK_SALT,
-				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
-				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
-				requiredAddtlAuth: ["totp"],
-				totpSeed: "seed" as TOTPSeed,
-			};
+			const user = userWithTotp;
 			mockRead.userWithAccountId.mockResolvedValueOnce(user);
 			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // password good
 
@@ -1159,16 +950,7 @@ describe("Routes", () => {
 		});
 
 		test("POST responds 200 with valid TOTP and destroys the user", async () => {
-			const user: User = {
-				uid: "test-user-123" as UID,
-				currentAccountId: "test-account",
-				passwordHash: mockGenerators.DEFAULT_MOCK_HASH,
-				passwordSalt: mockGenerators.DEFAULT_MOCK_SALT,
-				pubnubCipherKey: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
-				mfaRecoverySeed: null,
-				requiredAddtlAuth: [],
-				totpSeed: null,
-			};
+			const user = userWithoutTotp;
 			mockRead.userWithAccountId.mockResolvedValueOnce(user);
 			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // password good
 			mockTotp.verifyTOTP.mockReturnValueOnce(true); // TOTP good
