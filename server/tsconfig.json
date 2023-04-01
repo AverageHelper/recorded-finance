@@ -28,6 +28,7 @@
 	"exclude": [
 		"**/*.test.ts",
 		"**/__mocks__/**/*.ts",
+		"./test/**/*.ts",
 		"./package*.json",
 		"./tsconfig.json",
 		"coverage",

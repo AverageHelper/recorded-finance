@@ -67,7 +67,7 @@
 
 	"overrides": [
 		{
-			"files": ["**/*.test.ts", "**/__mocks__/**/*.ts"],
+			"files": ["**/*.test.ts", "**/__mocks__/**/*.ts", "./test/**/*.ts"],
 			"extends": ["plugin:prettier/recommended"],
 			"plugins": ["prettier", "@typescript-eslint"],
 			"parser": "@typescript-eslint/parser",

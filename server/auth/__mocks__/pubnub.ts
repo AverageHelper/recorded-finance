@@ -6,14 +6,16 @@ import type {
 } from "../pubnub";
 import { jest } from "@jest/globals";
 
-export const publishWriteForRef = jest
-	.fn<typeof _publishWriteForRef>()
-	.mockResolvedValue(undefined);
+export const publishWriteForRef = jest.fn<typeof _publishWriteForRef>();
 
 export const DEFAULT_MOCK_NEW_TOKEN = "INSECURE_TOKEN" as PubNubToken;
 
-export const newPubNubTokenForUser = jest
-	.fn<typeof _newPubNubTokenForUser>()
-	.mockResolvedValue(DEFAULT_MOCK_NEW_TOKEN);
+export const newPubNubTokenForUser = jest.fn<typeof _newPubNubTokenForUser>();
 
-export const revokePubNubToken = jest.fn<typeof _revokePubNubToken>().mockResolvedValue(undefined);
+export const revokePubNubToken = jest.fn<typeof _revokePubNubToken>();
+
+beforeEach(() => {
+	publishWriteForRef.mockResolvedValue(undefined);
+	newPubNubTokenForUser.mockResolvedValue(DEFAULT_MOCK_NEW_TOKEN);
+	revokePubNubToken.mockResolvedValue(undefined);
+});

@@ -17,34 +17,50 @@ import type {
 } from "../write";
 import { jest } from "@jest/globals";
 
-export const upsertFileData = jest.fn<typeof _upsertFileData>().mockResolvedValue({ size: 0 });
+export const upsertFileData = jest.fn<typeof _upsertFileData>();
 
-export const destroyFileData = jest.fn<typeof _destroyFileData>().mockResolvedValue(0);
+export const destroyFileData = jest.fn<typeof _destroyFileData>();
 
-export const addJwtToDatabase = jest.fn<typeof _addJwtToDatabase>().mockResolvedValue(undefined);
+export const addJwtToDatabase = jest.fn<typeof _addJwtToDatabase>();
 
-export const purgeExpiredJwts = jest.fn<typeof _purgeExpiredJwts>().mockResolvedValue(undefined);
+export const purgeExpiredJwts = jest.fn<typeof _purgeExpiredJwts>();
 
-export const upsertUser = jest.fn<typeof _upsertUser>().mockResolvedValue({ uid: "test_user_123" });
+export const upsertUser = jest.fn<typeof _upsertUser>();
 
-export const destroyUser = jest.fn<typeof _destroyUser>().mockResolvedValue(undefined);
+export const destroyUser = jest.fn<typeof _destroyUser>();
 
-export const upsertDbDocs = jest.fn<typeof _upsertDbDocs>().mockResolvedValue(undefined);
+export const upsertDbDocs = jest.fn<typeof _upsertDbDocs>();
 
-export const deleteDbDocs = jest.fn<typeof _deleteDbDocs>().mockResolvedValue(undefined);
+export const deleteDbDocs = jest.fn<typeof _deleteDbDocs>();
 
-export const deleteDbDoc = jest.fn<typeof _deleteDbDoc>().mockResolvedValue(undefined);
+export const deleteDbDoc = jest.fn<typeof _deleteDbDoc>();
 
-export const deleteDbCollection = jest
-	.fn<typeof _deleteDbCollection>()
-	.mockResolvedValue(undefined);
+export const deleteDbCollection = jest.fn<typeof _deleteDbCollection>();
 
-export const deleteDocuments = jest.fn<typeof _deleteDocuments>().mockResolvedValue(undefined);
+export const deleteDocuments = jest.fn<typeof _deleteDocuments>();
 
-export const deleteDocument = jest.fn<typeof _deleteDocument>().mockResolvedValue(undefined);
+export const deleteDocument = jest.fn<typeof _deleteDocument>();
 
-export const deleteCollection = jest.fn<typeof _deleteCollection>().mockResolvedValue(undefined);
+export const deleteCollection = jest.fn<typeof _deleteCollection>();
 
-export const setDocuments = jest.fn<typeof _setDocuments>().mockResolvedValue(undefined);
+export const setDocuments = jest.fn<typeof _setDocuments>();
 
-export const setDocument = jest.fn<typeof _setDocument>().mockResolvedValue(undefined);
+export const setDocument = jest.fn<typeof _setDocument>();
+
+beforeEach(() => {
+	upsertFileData.mockResolvedValue({ size: 0 });
+	destroyFileData.mockResolvedValue(0);
+	addJwtToDatabase.mockResolvedValue(undefined);
+	purgeExpiredJwts.mockResolvedValue(undefined);
+	upsertUser.mockResolvedValue({ uid: "test_user_123" });
+	destroyUser.mockResolvedValue(undefined);
+	upsertDbDocs.mockResolvedValue(undefined);
+	deleteDbDocs.mockResolvedValue(undefined);
+	deleteDbDoc.mockResolvedValue(undefined);
+	deleteDbCollection.mockResolvedValue(undefined);
+	deleteDocuments.mockResolvedValue(undefined);
+	deleteDocument.mockResolvedValue(undefined);
+	deleteCollection.mockResolvedValue(undefined);
+	setDocuments.mockResolvedValue(undefined);
+	setDocument.mockResolvedValue(undefined);
+});
