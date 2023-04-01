@@ -1161,7 +1161,181 @@ describe("Routes", () => {
 		});
 	});
 
-	// TODO: /v0/updateaccountid (POST)
+	describe("/v0/updateaccountid", () => {
+		const PATH = "/v0/updateaccountid";
+
+		const BadMethods = ["HEAD", "GET", "PUT", "DELETE", "PATCH"] as const;
+		test.each(BadMethods)("%s answers 405", async method => {
+			await request(method, PATH).expect(405);
+			expect(mockWrite.destroyUser).not.toHaveBeenCalled();
+		});
+
+		test("POST responds 400 without 'account', 'newaccount', or 'password'", async () => {
+			await request("POST", PATH)
+				.expect(400)
+				.expect({ message: "Improper parameter types", code: "unknown" });
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("POST responds 400 without 'newaccount' or 'password'", async () => {
+			await request("POST", PATH)
+				.send({ account: "nonempty" })
+				.expect(400)
+				.expect({ message: "Improper parameter types", code: "unknown" });
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("POST responds 400 without 'account' or 'newaccount'", async () => {
+			await request("POST", PATH)
+				.send({ password: "nonempty" })
+				.expect(400)
+				.expect({ message: "Improper parameter types", code: "unknown" });
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("POST responds 400 without 'account' or 'password'", async () => {
+			await request("POST", PATH)
+				.send({ newaccount: "nonempty" })
+				.expect(400)
+				.expect({ message: "Improper parameter types", code: "unknown" });
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("POST responds 400 without 'account'", async () => {
+			await request("POST", PATH)
+				.send({ newaccount: "nonempty", password: "nonempty" })
+				.expect(400)
+				.expect({ message: "Improper parameter types", code: "unknown" });
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("POST responds 400 without 'newaccount'", async () => {
+			await request("POST", PATH)
+				.send({ account: "nonempty", password: "nonempty" })
+				.expect(400)
+				.expect({ message: "Improper parameter types", code: "unknown" });
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("POST responds 400 without 'password'", async () => {
+			await request("POST", PATH)
+				.send({ account: "nonempty", newaccount: "nonempty" })
+				.expect(400)
+				.expect({ message: "Improper parameter types", code: "unknown" });
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("POST responds 400 with empty 'account'", async () => {
+			await request("POST", PATH)
+				.send({ account: "", newaccount: "nonempty", password: "nonempty" })
+				.expect(400)
+				.expect({ message: "Improper parameter types", code: "unknown" });
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("POST responds 400 with empty 'newaccount'", async () => {
+			await request("POST", PATH)
+				.send({ account: "nonempty", newaccount: "", password: "nonempty" })
+				.expect(400)
+				.expect({ message: "Improper parameter types", code: "unknown" });
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("POST responds 400 with empty 'password'", async () => {
+			await request("POST", PATH)
+				.send({ account: "nonempty", newaccount: "nonempty", password: "" })
+				.expect(400)
+				.expect({ message: "Improper parameter types", code: "unknown" });
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		// Same as wrong password
+		test("POST responds 403 when account is not known", async () => {
+			mockRead.userWithAccountId.mockResolvedValueOnce(null);
+			await request("POST", PATH)
+				.send({ account: "nonempty", newaccount: "nonempty-again", password: "nonempty" })
+				.expect(403)
+				.expect({ message: "Incorrect account ID or passphrase", code: "wrong-credentials" });
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		// Same as wrong account
+		test("POST responds 403 when password is incorrect", async () => {
+			mockRead.userWithAccountId.mockResolvedValueOnce(userWithoutTotp);
+			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(false)); // bad password
+			await request("POST", PATH)
+				.send({ account: "nonempty", newaccount: "nonempty-again", password: "nonempty" })
+				.expect(403)
+				.expect({ message: "Incorrect account ID or passphrase", code: "wrong-credentials" });
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("POST responds 200 and changes the account ID", async () => {
+			const user = userWithoutTotp;
+			mockRead.userWithAccountId.mockResolvedValueOnce(user);
+			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // good password
+
+			const newaccount = "nonempty-again";
+			await request("POST", PATH)
+				.send({ account: "nonempty", newaccount, password: "nonempty" })
+				.expect(200)
+				.expect({ message: "Success!" });
+			expect(mockWrite.upsertUser).toHaveBeenCalledOnceWith({
+				...user,
+				currentAccountId: newaccount,
+			});
+		});
+
+		test("POST responds 403 if token is required but not provided", async () => {
+			const user = userWithTotp;
+			mockRead.userWithAccountId.mockResolvedValueOnce(user);
+			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // good password
+			await request("POST", PATH)
+				.send({ account: "nonempty", newaccount: "nonempty-again", password: "nonempty" })
+				.expect(403)
+				.expect({ message: "You must provide a TOTP code", code: "missing-mfa-credentials" });
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("POST responds 403 if token does not match", async () => {
+			const user = userWithTotp;
+			mockRead.userWithAccountId.mockResolvedValueOnce(user);
+			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // good password
+			mockTotp.verifyTOTP.mockReturnValueOnce(false); // TOTP fails
+			await request("POST", PATH)
+				.send({
+					account: "nonempty",
+					newaccount: "nonempty-again",
+					password: "nonempty",
+					token: "123456",
+				})
+				.expect(403)
+				.expect({ message: "That code is invalid", code: "wrong-mfa-credentials" });
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("POST responds 200 and changes the password hash and salt if token is given and valid", async () => {
+			const user = userWithoutTotp;
+			mockRead.userWithAccountId.mockResolvedValueOnce(user);
+			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // good password
+			mockTotp.verifyTOTP.mockReturnValueOnce(true); // TOTP succeeds
+
+			const newaccount = "nonempty-again";
+			await request("POST", PATH)
+				.send({
+					account: "nonempty",
+					newaccount,
+					password: "nonempty",
+					token: "123456",
+				})
+				.expect(200)
+				.expect({ message: "Success!" });
+			expect(mockWrite.upsertUser).toHaveBeenCalledOnceWith({
+				...user,
+				currentAccountId: newaccount,
+			});
+		});
+	});
 
 	// TODO: /v0/db/users/{uid} (POST)
 
