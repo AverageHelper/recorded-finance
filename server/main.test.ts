@@ -1337,11 +1337,11 @@ describe("Routes", () => {
 		});
 	});
 
-	// TODO: /v0/db/users/{uid} (POST)
+	// TODO: /v0/db/users/[uid] (POST)
 
-	// TODO: /v0/db/users/{uid}/{coll} (GET, DELETE)
+	// TODO: /v0/db/users/[uid]/[coll] (GET, DELETE)
 
-	// TODO: /v0/db/users/{uid}/{coll}/{doc} (GET, POST, DELETE)
+	// TODO: /v0/db/users/[uid]/[coll]/[doc] (GET, POST, DELETE)
 
-	// TODO: /v0/db/users/{uid}/attachments/{doc}/blob/{key} (GET, POST, DELETE)
+	// TODO: /v0/db/users/[uid]/attachments/[doc]/blob/[key] (GET, POST, DELETE)
 });

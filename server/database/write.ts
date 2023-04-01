@@ -1,6 +1,6 @@
 import type { AnyData, DataItem, DataItemKey, UID, User, UserKeys } from "./schemas";
 import type { CollectionReference, DocumentReference } from "./references";
-import type { FileData, PrismaPromise, User as DBUser } from "@prisma/client";
+import type { FileData, PrismaPromise, RawUser } from "./io";
 import type { JWT } from "../auth/jwt";
 import type { Logger } from "../logger";
 import { assertSchema, isDataItemKey, isNonEmptyArray, user as userSchema } from "./schemas";
@@ -98,7 +98,7 @@ export async function purgeExpiredJwts(logger: Logger | null = defaultLogger): P
 export function upsertUser(
 	properties: Required<User>,
 	logger: Logger | null = defaultLogger
-): PrismaPromise<Pick<DBUser, "uid">> {
+): PrismaPromise<Pick<RawUser, "uid">> {
 	assertSchema(properties, userSchema); // assures nonempty fields
 	const uid = properties.uid;
 

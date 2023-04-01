@@ -12,7 +12,7 @@ import type {
 	UserKeys,
 } from "./schemas";
 import type { CollectionReference, DocumentReference } from "./references";
-import type { FileData } from "@prisma/client";
+import type { FileData } from "./io";
 import type { JWT } from "../auth/jwt";
 import type { Logger } from "../logger";
 import { computeRequiredAddtlAuth } from "./schemas";
