@@ -4,13 +4,13 @@ import { BadRequestError } from "../../../../../errors/BadRequestError";
 import { CollectionReference, DocumentReference } from "../../../../../database/references";
 import { deleteDocuments, setDocuments } from "../../../../../database/write";
 import { isArrayOf, isDocumentWriteBatch, isNonEmptyArray } from "../../../../../database/schemas";
-import { statsForUser } from "../../../../../database/read";
 import { requireAuth } from "../../../../../auth/requireAuth";
 import { respondSuccess } from "../../../../../responses";
+import { statsForUser } from "../../../../../database/read";
 
 export const POST = apiHandler("POST", async (req, res) => {
 	const user = await requireAuth(req, res, true);
-	const uid = user.uid;
+	const uid = user.uid; // `requireAuth` ensures this is the same value as the `uid` path param
 
 	// ** Batched writes
 	const providedData = req.body as unknown;
@@ -22,7 +22,7 @@ export const POST = apiHandler("POST", async (req, res) => {
 		return respondSuccess(res, { totalSpace, usedSpace });
 	}
 
-	if (Array.isArray(providedData) && providedData.length > 500)
+	if (providedData.length > 500)
 		throw new BadRequestError("Batch operations cannot contain more than 500 documents");
 
 	// Separate delete and set operations
@@ -41,6 +41,8 @@ export const POST = apiHandler("POST", async (req, res) => {
 				break;
 		}
 	}
+
+	// TODO: Make this a proper batch or transaction query
 
 	// Run sets
 	if (isNonEmptyArray(setOperations)) {

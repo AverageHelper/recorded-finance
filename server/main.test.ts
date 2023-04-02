@@ -1,8 +1,10 @@
-import type { Hash, Salt, UID } from "./database/schemas";
+import type { DocumentWriteBatch, Hash, Salt, UID } from "./database/schemas";
+import type { DocUpdate } from "./database/write";
 import type { JWT } from "./auth/jwt";
 import "jest-extended";
+import { CollectionReference, DocumentReference } from "./database/references";
 import { jest } from "@jest/globals";
-import { userWithTotp, userWithoutTotp } from "./test/userMocks";
+import { setAuth, userWithTotp, userWithoutTotp } from "./test/userMocks";
 import { version } from "./version";
 import _request from "supertest";
 import jsonwebtoken from "jsonwebtoken";
@@ -385,17 +387,8 @@ describe("Routes", () => {
 		});
 
 		test("POST answers 409 if the user does not have TOTP 2FA configured", async () => {
-			const Authorization = "let-me-in-1234" as JWT;
-			const user = userWithoutTotp;
-			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
-			mockJwt.verifyJwt.mockResolvedValueOnce({
-				uid: user.uid,
-				validatedWithMfa: [],
-				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
-			});
-			mockRead.userWithUid.mockResolvedValueOnce(user);
-			await request("POST", PATH)
-				.set("Authorization", `Bearer ${Authorization}`)
+			setAuth(userWithoutTotp);
+			await request("POST", PATH) //
 				.send({ token: "123456" })
 				.expect(409)
 				.expect({
@@ -406,17 +399,8 @@ describe("Routes", () => {
 		});
 
 		test("POST answers 403 if the token does not match", async () => {
-			const Authorization = "let-me-in-1234" as JWT;
-			const user = userWithTotp;
-			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
-			mockJwt.verifyJwt.mockResolvedValueOnce({
-				uid: user.uid,
-				validatedWithMfa: [],
-				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
-			});
-			mockRead.userWithUid.mockResolvedValueOnce(user);
-			await request("POST", PATH)
-				.set("Authorization", `Bearer ${Authorization}`)
+			setAuth(userWithTotp);
+			await request("POST", PATH) //
 				.send({ token: "123456" })
 				.expect(403)
 				.expect({
@@ -427,17 +411,8 @@ describe("Routes", () => {
 		});
 
 		test("POST answers 200 if the token matches", async () => {
-			const Authorization = "let-me-in-1234" as JWT;
-			const user = userWithTotp;
-			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
-			mockJwt.verifyJwt.mockResolvedValueOnce({
-				uid: user.uid,
-				validatedWithMfa: [],
-				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
-			});
-			mockRead.userWithUid.mockResolvedValueOnce(user);
+			const user = setAuth(userWithTotp);
 			await request("POST", PATH)
-				.set("Authorization", `Bearer ${Authorization}`)
 				.send({ token: mockTotp.DEFAULT_MOCK_TOTP_CODE })
 				.expect(200)
 				.expect({
@@ -454,20 +429,12 @@ describe("Routes", () => {
 		});
 
 		test("POST answers 200 and the user's recovery token if the user is finishing TOTP setup", async () => {
-			const Authorization = "let-me-in-1234" as JWT;
 			const user = {
 				...userWithTotp,
 				requiredAddtlAuth: [], // TOTP not yet set up
 			};
-			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
-			mockJwt.verifyJwt.mockResolvedValueOnce({
-				uid: user.uid,
-				validatedWithMfa: [],
-				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
-			});
-			mockRead.userWithUid.mockResolvedValueOnce(user);
+			setAuth(user);
 			await request("POST", PATH)
-				.set("Authorization", `Bearer ${Authorization}`)
 				.send({ token: mockTotp.DEFAULT_MOCK_TOTP_CODE })
 				.expect(200)
 				.expect({
@@ -488,17 +455,8 @@ describe("Routes", () => {
 		});
 
 		test("POST answers 200 if the user used their recovery token", async () => {
-			const Authorization = "let-me-in-1234" as JWT;
-			const user = userWithTotp;
-			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
-			mockJwt.verifyJwt.mockResolvedValueOnce({
-				uid: user.uid,
-				validatedWithMfa: [],
-				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
-			});
-			mockRead.userWithUid.mockResolvedValueOnce(user);
+			const user = setAuth(userWithTotp);
 			await request("POST", PATH)
-				.set("Authorization", `Bearer ${Authorization}`)
 				.send({ token: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN }) // recovery token
 				.expect(200)
 				.expect({
@@ -532,54 +490,28 @@ describe("Routes", () => {
 		});
 
 		test("GET answers 409 if the user already used TOTP this session (they know their secret)", async () => {
-			const Authorization = "let-me-in-1234" as JWT;
-			const user = userWithTotp;
-			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
-			mockJwt.verifyJwt.mockResolvedValueOnce({
-				uid: user.uid,
-				validatedWithMfa: ["totp"],
-				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
-			});
-			mockRead.userWithUid.mockResolvedValueOnce(user);
+			setAuth(userWithTotp);
 			await request("GET", PATH)
-				.set("Authorization", `Bearer ${Authorization}`)
 				.expect(409)
 				.expect({ message: "You already have TOTP authentication enabled", code: "totp-conflict" });
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
 		test("GET answers 409 if TOTP already required (they should know the secret)", async () => {
-			const Authorization = "let-me-in-1234" as JWT;
-			const user = userWithTotp;
-			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
-			mockJwt.verifyJwt.mockResolvedValueOnce({
-				uid: user.uid,
-				validatedWithMfa: [],
-				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
-			});
-			mockRead.userWithUid.mockResolvedValueOnce(user);
+			setAuth(userWithTotp);
 			await request("GET", PATH)
-				.set("Authorization", `Bearer ${Authorization}`)
 				.expect(409)
 				.expect({ message: "You already have TOTP authentication enabled", code: "totp-conflict" });
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
 		test("GET answers 200, upserts the user with totpSeed, and sends the plaintext secret", async () => {
-			const Authorization = "let-me-in-1234" as JWT;
 			const user = {
 				...userWithoutTotp,
 				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
 			};
-			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
-			mockJwt.verifyJwt.mockResolvedValueOnce({
-				uid: user.uid,
-				validatedWithMfa: [],
-				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
-			});
-			mockRead.userWithUid.mockResolvedValueOnce(user);
+			setAuth(user);
 			await request("GET", PATH)
-				.set("Authorization", `Bearer ${Authorization}`)
 				.expect(200)
 				.expect({ secret: mockTotp.DEFAULT_MOCK_OTP_SECUET_URI, message: "Success!" });
 			expect(mockWrite.upsertUser).toHaveBeenCalledOnceWith({
@@ -636,18 +568,11 @@ describe("Routes", () => {
 		});
 
 		test("DELETE answers 403 with bad password", async () => {
-			const Authorization = "let-me-in-1234" as JWT;
 			const user = {
 				...userWithTotp,
 				requiredAddtlAuth: [],
 			};
-			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
-			mockJwt.verifyJwt.mockResolvedValueOnce({
-				uid: user.uid,
-				validatedWithMfa: [],
-				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
-			});
-			mockRead.userWithUid.mockResolvedValueOnce(user);
+			setAuth(user);
 			await request("DELETE", PATH)
 				.send({ password: "nonempty", token: "nonempty" })
 				.expect(403)
@@ -656,18 +581,11 @@ describe("Routes", () => {
 		});
 
 		test("DELETE answers 403 with bad token", async () => {
-			const Authorization = "let-me-in-1234" as JWT;
 			const user = {
 				...userWithTotp,
 				requiredAddtlAuth: [],
 			};
-			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
-			mockJwt.verifyJwt.mockResolvedValueOnce({
-				uid: user.uid,
-				validatedWithMfa: [],
-				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
-			});
-			mockRead.userWithUid.mockResolvedValueOnce(user);
+			setAuth(user);
 			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // password succeeds
 			await request("DELETE", PATH)
 				.send({ password: "nonempty", token: "nonempty" })
@@ -679,15 +597,7 @@ describe("Routes", () => {
 		// TODO: Test that recovery token does not work for this
 
 		test("DELETE answers 200 and deletes the user's mfaRecoverySeed and totpSeed, and disables TOTP", async () => {
-			const Authorization = "let-me-in-1234" as JWT;
-			const user = userWithTotp;
-			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
-			mockJwt.verifyJwt.mockResolvedValueOnce({
-				uid: user.uid,
-				validatedWithMfa: ["totp"],
-				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
-			});
-			mockRead.userWithUid.mockResolvedValueOnce(user);
+			const user = setAuth(userWithTotp, ["totp"]);
 			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // password succeeds
 			mockTotp.verifyTOTP.mockReturnValueOnce(true); // TOTP succeeds
 			await request("DELETE", PATH)
@@ -703,18 +613,11 @@ describe("Routes", () => {
 		});
 
 		test("DELETE answers 403 with bad password, even if the user has no TOTP", async () => {
-			const Authorization = "let-me-in-1234" as JWT;
 			const user = {
 				...userWithoutTotp,
 				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
 			};
-			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
-			mockJwt.verifyJwt.mockResolvedValueOnce({
-				uid: user.uid,
-				validatedWithMfa: [],
-				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
-			});
-			mockRead.userWithUid.mockResolvedValueOnce(user);
+			setAuth(user);
 			await request("DELETE", PATH)
 				.send({ password: "nonempty", token: "nonempty" })
 				.expect(403)
@@ -723,18 +626,11 @@ describe("Routes", () => {
 		});
 
 		test("DELETE answers 200 and does nothing if the user has no TOTP", async () => {
-			const Authorization = "let-me-in-1234" as JWT;
 			const user = {
 				...userWithoutTotp,
 				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
 			};
-			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
-			mockJwt.verifyJwt.mockResolvedValueOnce({
-				uid: user.uid,
-				validatedWithMfa: [],
-				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
-			});
-			mockRead.userWithUid.mockResolvedValueOnce(user);
+			setAuth(user);
 			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // password succeeds
 			// Doesn't need TOTP, since, you know, the user doesn't even have TOTP lol
 			await request("DELETE", PATH)
@@ -779,18 +675,9 @@ describe("Routes", () => {
 		});
 
 		test("GET answers 200 with valid Bearer token", async () => {
-			const Authorization = "Bearer TEST_GOOD" as JWT;
 			const user = userWithoutTotp;
-			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
-			mockJwt.verifyJwt.mockResolvedValueOnce({
-				uid: user.uid,
-				validatedWithMfa: [],
-				pubnubToken: mockPubnub.DEFAULT_MOCK_NEW_TOKEN,
-			});
-			mockRead.jwtExistsInDatabase.mockResolvedValueOnce(true);
-			mockRead.userWithUid.mockResolvedValueOnce(user);
-			await request("GET", PATH)
-				.set("Authorization", Authorization)
+			setAuth(userWithoutTotp);
+			await request("GET", PATH) //
 				.expect("Content-Type", /json/u)
 				.expect(200)
 				.expect({
@@ -818,14 +705,14 @@ describe("Routes", () => {
 			expect(mockJwt.killSession).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 200 with no session", async () => {
+		test("POST answers 200 with no session", async () => {
 			// `jwtFromRequest` mock returns null by default
 			await request("POST", PATH).expect(200).expect({ message: "Success!" });
 			expect(mockJwt.addJwtToBlacklist).not.toHaveBeenCalled();
 			expect(mockJwt.killSession).toHaveBeenCalledOnce();
 		});
 
-		test("POST respods 200 and blacklists the JWT", async () => {
+		test("POST answers 200 and blacklists the JWT", async () => {
 			const token = "auth-token-12345" as JWT;
 			mockJwt.jwtFromRequest.mockReturnValueOnce(token);
 			await request("POST", PATH).expect(200).expect({ message: "Success!" });
@@ -843,14 +730,14 @@ describe("Routes", () => {
 			expect(mockWrite.destroyUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 400 without 'account' or 'password'", async () => {
+		test("POST answers 400 without 'account' or 'password'", async () => {
 			await request("POST", PATH)
 				.expect(400)
 				.expect({ message: "Improper parameter types", code: "unknown" });
 			expect(mockWrite.destroyUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 400 without 'account'", async () => {
+		test("POST answers 400 without 'account'", async () => {
 			await request("POST", PATH)
 				.send({ password: "nonempty" })
 				.expect(400)
@@ -858,7 +745,7 @@ describe("Routes", () => {
 			expect(mockWrite.destroyUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 400 without 'password'", async () => {
+		test("POST answers 400 without 'password'", async () => {
 			await request("POST", PATH)
 				.send({ account: "nonempty" })
 				.expect(400)
@@ -866,7 +753,7 @@ describe("Routes", () => {
 			expect(mockWrite.destroyUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 400 with empty 'account'", async () => {
+		test("POST answers 400 with empty 'account'", async () => {
 			await request("POST", PATH)
 				.send({ account: "", password: "nonempty" })
 				.expect(400)
@@ -874,7 +761,7 @@ describe("Routes", () => {
 			expect(mockWrite.destroyUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 400 with empty 'password'", async () => {
+		test("POST answers 400 with empty 'password'", async () => {
 			await request("POST", PATH)
 				.send({ account: "nonempty", password: "" })
 				.expect(400)
@@ -882,7 +769,7 @@ describe("Routes", () => {
 			expect(mockWrite.destroyUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 403 without Cookie or Authorization", async () => {
+		test("POST answers 403 without Cookie or Authorization", async () => {
 			await request("POST", PATH)
 				.send({ account: "nonempty", password: "nonempty" })
 				.expect(403)
@@ -890,7 +777,7 @@ describe("Routes", () => {
 			expect(mockWrite.destroyUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 403 with bad password", async () => {
+		test("POST answers 403 with bad password", async () => {
 			const user = userWithoutTotp;
 			mockRead.userWithAccountId.mockResolvedValueOnce(user);
 
@@ -901,7 +788,7 @@ describe("Routes", () => {
 			expect(mockWrite.destroyUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 200 and destroys the user", async () => {
+		test("POST answers 200 and destroys the user", async () => {
 			const user = userWithoutTotp;
 			mockRead.userWithAccountId.mockResolvedValueOnce(user);
 			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // password good
@@ -913,7 +800,7 @@ describe("Routes", () => {
 			expect(mockWrite.destroyUser).toHaveBeenCalledOnceWith(user.uid);
 		});
 
-		test("POST responds 403 if TOTP is required and not provided", async () => {
+		test("POST answers 403 if TOTP is required and not provided", async () => {
 			const user = userWithTotp;
 			mockRead.userWithAccountId.mockResolvedValueOnce(user);
 			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // password good
@@ -925,7 +812,7 @@ describe("Routes", () => {
 			expect(mockWrite.destroyUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 400 if TOTP is required but value is empty", async () => {
+		test("POST answers 400 if TOTP is required but value is empty", async () => {
 			const user = userWithTotp;
 			mockRead.userWithAccountId.mockResolvedValueOnce(user);
 			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // password good
@@ -937,7 +824,7 @@ describe("Routes", () => {
 			expect(mockWrite.destroyUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 403 if TOTP does not match", async () => {
+		test("POST answers 403 if TOTP does not match", async () => {
 			const user = userWithTotp;
 			mockRead.userWithAccountId.mockResolvedValueOnce(user);
 			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // password good
@@ -949,7 +836,7 @@ describe("Routes", () => {
 			expect(mockWrite.destroyUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 200 with valid TOTP and destroys the user", async () => {
+		test("POST answers 200 with valid TOTP and destroys the user", async () => {
 			const user = userWithoutTotp;
 			mockRead.userWithAccountId.mockResolvedValueOnce(user);
 			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // password good
@@ -972,14 +859,14 @@ describe("Routes", () => {
 			expect(mockWrite.destroyUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 400 without 'account', 'password', or 'newpassword'", async () => {
+		test("POST answers 400 without 'account', 'password', or 'newpassword'", async () => {
 			await request("POST", PATH)
 				.expect(400)
 				.expect({ message: "Improper parameter types", code: "unknown" });
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 400 without 'password' or 'newpassword'", async () => {
+		test("POST answers 400 without 'password' or 'newpassword'", async () => {
 			await request("POST", PATH)
 				.send({ account: "nonempty" })
 				.expect(400)
@@ -987,7 +874,7 @@ describe("Routes", () => {
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 400 without 'account' or 'newpassword'", async () => {
+		test("POST answers 400 without 'account' or 'newpassword'", async () => {
 			await request("POST", PATH)
 				.send({ password: "nonempty" })
 				.expect(400)
@@ -995,7 +882,7 @@ describe("Routes", () => {
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 400 without 'account' or 'password'", async () => {
+		test("POST answers 400 without 'account' or 'password'", async () => {
 			await request("POST", PATH)
 				.send({ newpassword: "nonempty" })
 				.expect(400)
@@ -1003,7 +890,7 @@ describe("Routes", () => {
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 400 without 'account'", async () => {
+		test("POST answers 400 without 'account'", async () => {
 			await request("POST", PATH)
 				.send({ password: "nonempty", newpassword: "nonempty" })
 				.expect(400)
@@ -1011,7 +898,7 @@ describe("Routes", () => {
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 400 without 'password'", async () => {
+		test("POST answers 400 without 'password'", async () => {
 			await request("POST", PATH)
 				.send({ account: "nonempty", newpassword: "nonempty" })
 				.expect(400)
@@ -1019,7 +906,7 @@ describe("Routes", () => {
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 400 without 'newpassword'", async () => {
+		test("POST answers 400 without 'newpassword'", async () => {
 			await request("POST", PATH)
 				.send({ account: "nonempty", password: "nonempty" })
 				.expect(400)
@@ -1027,7 +914,7 @@ describe("Routes", () => {
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 400 with empty 'account'", async () => {
+		test("POST answers 400 with empty 'account'", async () => {
 			await request("POST", PATH)
 				.send({ account: "", password: "nonempty", newpassword: "nonempty" })
 				.expect(400)
@@ -1035,7 +922,7 @@ describe("Routes", () => {
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 400 with empty 'password'", async () => {
+		test("POST answers 400 with empty 'password'", async () => {
 			await request("POST", PATH)
 				.send({ account: "nonempty", password: "", newpassword: "nonempty" })
 				.expect(400)
@@ -1043,7 +930,7 @@ describe("Routes", () => {
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 400 with empty 'newpassword'", async () => {
+		test("POST answers 400 with empty 'newpassword'", async () => {
 			await request("POST", PATH)
 				.send({ account: "nonempty", password: "nonempty", newpassword: "" })
 				.expect(400)
@@ -1052,7 +939,7 @@ describe("Routes", () => {
 		});
 
 		// Same as wrong password
-		test("POST responds 403 when account is not known", async () => {
+		test("POST answers 403 when account is not known", async () => {
 			mockRead.userWithAccountId.mockResolvedValueOnce(null);
 			await request("POST", PATH)
 				.send({ account: "nonempty", password: "nonempty", newpassword: "nonempty-again" })
@@ -1062,7 +949,7 @@ describe("Routes", () => {
 		});
 
 		// Same as wrong account
-		test("POST responds 403 when password is incorrect", async () => {
+		test("POST answers 403 when password is incorrect", async () => {
 			mockRead.userWithAccountId.mockResolvedValueOnce(userWithoutTotp);
 			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(false)); // bad password
 			await request("POST", PATH)
@@ -1072,7 +959,7 @@ describe("Routes", () => {
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 200 and changes the password hash and salt", async () => {
+		test("POST answers 200 and changes the password hash and salt", async () => {
 			const user = userWithoutTotp;
 			mockRead.userWithAccountId.mockResolvedValueOnce(user);
 			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // good password
@@ -1093,7 +980,7 @@ describe("Routes", () => {
 			});
 		});
 
-		test("POST responds 400 if token is empty", async () => {
+		test("POST answers 400 if token is empty", async () => {
 			await request("POST", PATH)
 				.send({ account: "nonempty", password: "nonempty", newpassword: "nonempty", token: "" })
 				.expect(400)
@@ -1101,7 +988,7 @@ describe("Routes", () => {
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 403 if token is required but not provided", async () => {
+		test("POST answers 403 if token is required but not provided", async () => {
 			const user = userWithTotp;
 			mockRead.userWithAccountId.mockResolvedValueOnce(user);
 			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // good password
@@ -1116,7 +1003,7 @@ describe("Routes", () => {
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 403 if token does not match", async () => {
+		test("POST answers 403 if token does not match", async () => {
 			const user = userWithTotp;
 			mockRead.userWithAccountId.mockResolvedValueOnce(user);
 			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // good password
@@ -1133,7 +1020,7 @@ describe("Routes", () => {
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 200 and changes the password hash and salt if token is given and valid", async () => {
+		test("POST answers 200 and changes the password hash and salt if token is given and valid", async () => {
 			const user = userWithoutTotp;
 			mockRead.userWithAccountId.mockResolvedValueOnce(user);
 			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // good password
@@ -1170,14 +1057,14 @@ describe("Routes", () => {
 			expect(mockWrite.destroyUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 400 without 'account', 'newaccount', or 'password'", async () => {
+		test("POST answers 400 without 'account', 'newaccount', or 'password'", async () => {
 			await request("POST", PATH)
 				.expect(400)
 				.expect({ message: "Improper parameter types", code: "unknown" });
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 400 without 'newaccount' or 'password'", async () => {
+		test("POST answers 400 without 'newaccount' or 'password'", async () => {
 			await request("POST", PATH)
 				.send({ account: "nonempty" })
 				.expect(400)
@@ -1185,7 +1072,7 @@ describe("Routes", () => {
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 400 without 'account' or 'newaccount'", async () => {
+		test("POST answers 400 without 'account' or 'newaccount'", async () => {
 			await request("POST", PATH)
 				.send({ password: "nonempty" })
 				.expect(400)
@@ -1193,7 +1080,7 @@ describe("Routes", () => {
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 400 without 'account' or 'password'", async () => {
+		test("POST answers 400 without 'account' or 'password'", async () => {
 			await request("POST", PATH)
 				.send({ newaccount: "nonempty" })
 				.expect(400)
@@ -1201,7 +1088,7 @@ describe("Routes", () => {
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 400 without 'account'", async () => {
+		test("POST answers 400 without 'account'", async () => {
 			await request("POST", PATH)
 				.send({ newaccount: "nonempty", password: "nonempty" })
 				.expect(400)
@@ -1209,7 +1096,7 @@ describe("Routes", () => {
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 400 without 'newaccount'", async () => {
+		test("POST answers 400 without 'newaccount'", async () => {
 			await request("POST", PATH)
 				.send({ account: "nonempty", password: "nonempty" })
 				.expect(400)
@@ -1217,7 +1104,7 @@ describe("Routes", () => {
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 400 without 'password'", async () => {
+		test("POST answers 400 without 'password'", async () => {
 			await request("POST", PATH)
 				.send({ account: "nonempty", newaccount: "nonempty" })
 				.expect(400)
@@ -1225,7 +1112,7 @@ describe("Routes", () => {
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 400 with empty 'account'", async () => {
+		test("POST answers 400 with empty 'account'", async () => {
 			await request("POST", PATH)
 				.send({ account: "", newaccount: "nonempty", password: "nonempty" })
 				.expect(400)
@@ -1233,7 +1120,7 @@ describe("Routes", () => {
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 400 with empty 'newaccount'", async () => {
+		test("POST answers 400 with empty 'newaccount'", async () => {
 			await request("POST", PATH)
 				.send({ account: "nonempty", newaccount: "", password: "nonempty" })
 				.expect(400)
@@ -1241,7 +1128,7 @@ describe("Routes", () => {
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 400 with empty 'password'", async () => {
+		test("POST answers 400 with empty 'password'", async () => {
 			await request("POST", PATH)
 				.send({ account: "nonempty", newaccount: "nonempty", password: "" })
 				.expect(400)
@@ -1250,7 +1137,7 @@ describe("Routes", () => {
 		});
 
 		// Same as wrong password
-		test("POST responds 403 when account is not known", async () => {
+		test("POST answers 403 when account is not known", async () => {
 			mockRead.userWithAccountId.mockResolvedValueOnce(null);
 			await request("POST", PATH)
 				.send({ account: "nonempty", newaccount: "nonempty-again", password: "nonempty" })
@@ -1260,7 +1147,7 @@ describe("Routes", () => {
 		});
 
 		// Same as wrong account
-		test("POST responds 403 when password is incorrect", async () => {
+		test("POST answers 403 when password is incorrect", async () => {
 			mockRead.userWithAccountId.mockResolvedValueOnce(userWithoutTotp);
 			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(false)); // bad password
 			await request("POST", PATH)
@@ -1270,7 +1157,7 @@ describe("Routes", () => {
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 200 and changes the account ID", async () => {
+		test("POST answers 200 and changes the account ID", async () => {
 			const user = userWithoutTotp;
 			mockRead.userWithAccountId.mockResolvedValueOnce(user);
 			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // good password
@@ -1286,7 +1173,7 @@ describe("Routes", () => {
 			});
 		});
 
-		test("POST responds 403 if token is required but not provided", async () => {
+		test("POST answers 403 if token is required but not provided", async () => {
 			const user = userWithTotp;
 			mockRead.userWithAccountId.mockResolvedValueOnce(user);
 			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // good password
@@ -1297,7 +1184,7 @@ describe("Routes", () => {
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 403 if token does not match", async () => {
+		test("POST answers 403 if token does not match", async () => {
 			const user = userWithTotp;
 			mockRead.userWithAccountId.mockResolvedValueOnce(user);
 			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // good password
@@ -1314,7 +1201,7 @@ describe("Routes", () => {
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
-		test("POST responds 200 and changes the password hash and salt if token is given and valid", async () => {
+		test("POST answers 200 and changes the password hash and salt if token is given and valid", async () => {
 			const user = userWithoutTotp;
 			mockRead.userWithAccountId.mockResolvedValueOnce(user);
 			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // good password
@@ -1337,7 +1224,205 @@ describe("Routes", () => {
 		});
 	});
 
-	// TODO: /v0/db/users/[uid] (POST)
+	describe("/v0/db/users/[uid]", () => {
+		function pathForUid(uid: string): string {
+			return `/v0/db/users/${uid}`;
+		}
+
+		const user = userWithoutTotp;
+		const PATH = pathForUid(user.uid);
+
+		const BadMethods = ["HEAD", "GET", "PUT", "DELETE", "PATCH"] as const;
+		test.each(BadMethods)("%s answers 405", async method => {
+			await request(method, PATH).expect(405);
+			expect(mockWrite.deleteDocuments).not.toHaveBeenCalled();
+			expect(mockWrite.setDocuments).not.toHaveBeenCalled();
+		});
+
+		test("POST answers 403 if the user is not authenticated", async () => {
+			await request("POST", PATH)
+				.expect(403)
+				.expect({ message: "Unauthorized", code: "missing-token" });
+			expect(mockWrite.deleteDocuments).not.toHaveBeenCalled();
+			expect(mockWrite.setDocuments).not.toHaveBeenCalled();
+		});
+
+		test("POST answers 403 if the UID path doesn't match the authenticated user", async () => {
+			setAuth(userWithoutTotp);
+			const PATH = pathForUid("someone-else");
+			await request("POST", PATH)
+				.expect(403)
+				.expect({ message: "Unauthorized", code: "not-owner" });
+			expect(mockWrite.deleteDocuments).not.toHaveBeenCalled();
+			expect(mockWrite.setDocuments).not.toHaveBeenCalled();
+		});
+
+		test("POST answers 400 if the body is not an array of write batches", async () => {
+			setAuth(userWithoutTotp);
+			await request("POST", PATH).send("").expect(400);
+			await request("POST", PATH).send('""').expect(400);
+			await request("POST", PATH).send("0").expect(400);
+			await request("POST", PATH).send("42").expect(400);
+			await request("POST", PATH).send({}).expect(400);
+			expect(mockWrite.deleteDocuments).not.toHaveBeenCalled();
+			expect(mockWrite.setDocuments).not.toHaveBeenCalled();
+		});
+
+		test("POST answers 200 if the batch is empty", async () => {
+			setAuth(userWithoutTotp);
+			await request("POST", PATH).send([]).expect(200);
+			expect(mockWrite.deleteDocuments).not.toHaveBeenCalled();
+			expect(mockWrite.setDocuments).not.toHaveBeenCalled();
+		});
+
+		test("POST answers 400 if the batch contains more than 500 ops", async () => {
+			setAuth(userWithoutTotp);
+			const op: DocumentWriteBatch = {
+				type: "delete",
+				ref: {
+					collectionId: "tags",
+					documentId: "tag-1234",
+				},
+			};
+			const batch = new Array<DocumentWriteBatch>(501).fill(op);
+			await request("POST", PATH) //
+				.send(batch)
+				.expect(400)
+				.expect({
+					message: "Batch operations cannot contain more than 500 documents",
+					code: "unknown",
+				});
+			expect(mockWrite.deleteDocuments).not.toHaveBeenCalled();
+			expect(mockWrite.setDocuments).not.toHaveBeenCalled();
+		});
+
+		const counts = [1, 2, 5, 250, 499, 500] as const;
+		test.each(counts)("POST answers 200 for a batch of %d 'set' operations", async count => {
+			const user = setAuth(userWithoutTotp);
+			const data = {
+				ciphertext: "lol",
+				objectType: "lol",
+			};
+			const ref = new DocumentReference(new CollectionReference(user, "tags"), "tag-1234");
+			const updates = new Array<DocUpdate>(count).fill({ data, ref });
+			const batch = updates.map<DocumentWriteBatch>(({ ref }) => {
+				return {
+					type: "set",
+					ref: {
+						collectionId: ref.parent.id,
+						documentId: ref.id,
+					},
+					data,
+				};
+			});
+			await request("POST", PATH).send(batch).expect(200);
+			expect(mockWrite.deleteDocuments).not.toHaveBeenCalled();
+			expect(mockWrite.setDocuments).toHaveBeenCalledOnceWith(updates);
+		});
+
+		test.each(counts)("POST answers 200 for a batch of %d 'delete' operations", async count => {
+			const user = setAuth(userWithoutTotp);
+			const ref = new DocumentReference(new CollectionReference(user, "tags"), "tag-1234");
+			const refs = new Array<DocumentReference>(count).fill(ref);
+			const batch = refs.map<DocumentWriteBatch>(u => {
+				return {
+					type: "delete",
+					ref: {
+						collectionId: u.parent.id,
+						documentId: u.id,
+					},
+				};
+			});
+			await request("POST", PATH).send(batch).expect(200);
+			expect(mockWrite.deleteDocuments).toHaveBeenCalledOnceWith(refs);
+			expect(mockWrite.setDocuments).not.toHaveBeenCalled();
+		});
+
+		test("POST answers 200 for a batch of %d mixed operations", async () => {
+			setAuth(userWithoutTotp);
+			const data = {
+				ciphertext: "lol",
+				objectType: "lol",
+			};
+			const batch: Array<DocumentWriteBatch> = [
+				{
+					type: "delete",
+					ref: {
+						collectionId: "tags",
+						documentId: "tag-1234",
+					},
+				},
+				{
+					type: "set",
+					ref: {
+						collectionId: "tags",
+						documentId: "tag-3412",
+					},
+					data,
+				},
+				{
+					type: "delete",
+					ref: {
+						collectionId: "tags",
+						documentId: "tag-5678",
+					},
+				},
+				{
+					type: "set",
+					ref: {
+						collectionId: "tags",
+						documentId: "tag-7856",
+					},
+					data,
+				},
+			];
+			await request("POST", PATH).send(batch).expect(200);
+			expect(mockWrite.deleteDocuments).toHaveBeenCalledOnce();
+			expect(mockWrite.setDocuments).toHaveBeenCalledOnce();
+		});
+
+		test.each(counts)(
+			"POST answers 403 to a batch of %d 'delete' ops if the user has TOTP set up but hasn't used it this session",
+			async count => {
+				const user = setAuth(userWithTotp);
+				const ref = new DocumentReference(new CollectionReference(user, "tags"), "tag-1234");
+				const refs = new Array<DocumentReference>(count).fill(ref);
+				const batch = refs.map<DocumentWriteBatch>(u => {
+					return {
+						type: "delete",
+						ref: {
+							collectionId: u.parent.id,
+							documentId: u.id,
+						},
+					};
+				});
+				await request("POST", PATH).send(batch).expect(403);
+				expect(mockWrite.deleteDocuments).not.toHaveBeenCalled();
+				expect(mockWrite.setDocuments).not.toHaveBeenCalled();
+			}
+		);
+
+		test.each(counts)(
+			"POST answers 200 to a batch of %d 'delete' ops if TOTP was provided",
+			async count => {
+				const user = setAuth(userWithTotp, ["totp"]);
+				const ref = new DocumentReference(new CollectionReference(user, "tags"), "tag-1234");
+				const refs = new Array<DocumentReference>(count).fill(ref);
+				const batch = refs.map<DocumentWriteBatch>(u => {
+					return {
+						type: "delete",
+						ref: {
+							collectionId: u.parent.id,
+							documentId: u.id,
+						},
+					};
+				});
+				await request("POST", PATH).send(batch).expect(200);
+				expect(mockWrite.deleteDocuments).toHaveBeenCalledOnceWith(refs);
+				expect(mockWrite.setDocuments).not.toHaveBeenCalled();
+			}
+		);
+	});
 
 	// TODO: /v0/db/users/[uid]/[coll] (GET, DELETE)
 
