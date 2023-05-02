@@ -10,4 +10,4 @@ Policy: https://github.com/RecordedFinance/recorded-finance/security/policy
 
 Canonical: https://recorded.finance/.well-known/security.txt
 
-Expires: 2023-06-01T06:00:00.000Z
+Expires: 2024-06-01T06:00:00.000Z
