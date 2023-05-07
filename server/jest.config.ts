@@ -7,6 +7,7 @@ const config: Config.InitialOptions = {
 	setupFilesAfterEnv: ["jest-extended/all"],
 	testEnvironment: "node",
 	moduleNameMapper: {
+		"^@/(.*)": "<rootDir>/$1",
 		"^(\\.{1,2}/.*)\\.js$": "$1",
 	},
 	testRegex: [".*\\.test\\.(t|j)s$"],

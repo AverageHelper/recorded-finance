@@ -13,15 +13,15 @@ import type {
 } from "./schemas";
 import type { CollectionReference, DocumentReference } from "./references";
 import type { FileData } from "@prisma/client";
-import type { JWT } from "../auth/jwt";
-import type { Logger } from "../logger";
+import type { JWT } from "@/auth/jwt";
+import type { Logger } from "@/logger";
 import { computeRequiredAddtlAuth } from "./schemas";
 import { dataSource } from "./io";
-import { generateAESCipherKey } from "../auth/generators";
-import { logger as defaultLogger } from "../logger";
-import { maxSpacePerUser } from "../auth/limits";
-import { NotFoundError } from "../errors/NotFoundError";
-import { UnreachableCaseError } from "../errors/UnreachableCaseError";
+import { generateAESCipherKey } from "@/auth/generators";
+import { logger as defaultLogger } from "@/logger";
+import { maxSpacePerUser } from "@/auth/limits";
+import { NotFoundError } from "@/errors/NotFoundError";
+import { UnreachableCaseError } from "@/errors/UnreachableCaseError";
 
 interface UserStats {
 	totalSpace: number;

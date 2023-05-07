@@ -1,8 +1,8 @@
-import type { CollectionReference, DocumentReference } from "../database/references";
-import type { IdentifiedDataItem, PubNubToken, UID, User } from "../database/schemas";
-import { logger } from "../logger";
-import { requireEnv } from "../environment";
-import { userWithUid } from "../database/read";
+import type { CollectionReference, DocumentReference } from "@/database/references";
+import type { IdentifiedDataItem, PubNubToken, UID, User } from "@/database/schemas";
+import { logger } from "@/logger";
+import { requireEnv } from "@/environment";
+import { userWithUid } from "@/database/read";
 import PubNub from "pubnub";
 
 /**

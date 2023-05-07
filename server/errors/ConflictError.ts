@@ -1,5 +1,5 @@
 import type { ErrorCode } from "./InternalError";
-import { HttpStatusCode } from "../helpers/HttpStatusCode";
+import { HttpStatusCode } from "@/helpers/HttpStatusCode";
 import { InternalError } from "./InternalError";
 
 export class ConflictError extends InternalError {

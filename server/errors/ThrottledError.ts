@@ -1,5 +1,5 @@
 import type { RateLimiterRes } from "rate-limiter-flexible";
-import { HttpStatusCode } from "../helpers/HttpStatusCode";
+import { HttpStatusCode } from "@/helpers/HttpStatusCode";
 import { InternalError } from "./InternalError";
 
 export class ThrottledError extends InternalError {

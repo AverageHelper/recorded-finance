@@ -1,13 +1,13 @@
-import type { MFAOption } from "../../../database/schemas";
-import { apiHandler, dispatchRequests } from "../../../helpers/apiHandler";
-import { BadRequestError } from "../../../errors/BadRequestError";
-import { compare } from "../../../auth/generators";
+import type { MFAOption } from "@/database/schemas";
+import { apiHandler, dispatchRequests } from "@/helpers/apiHandler";
+import { BadRequestError } from "@/errors/BadRequestError";
+import { compare } from "@/auth/generators";
 import { is, nonempty, string, type } from "superstruct";
-import { logger } from "../../../logger";
-import { newAccessTokens, setSession } from "../../../auth/jwt";
-import { respondSuccess } from "../../../responses";
-import { statsForUser, userWithAccountId } from "../../../database/read";
-import { UnauthorizedError } from "../../../errors/UnauthorizedError";
+import { logger } from "@/logger";
+import { newAccessTokens, setSession } from "@/auth/jwt";
+import { respondSuccess } from "@/responses";
+import { statsForUser, userWithAccountId } from "@/database/read";
+import { UnauthorizedError } from "@/errors/UnauthorizedError";
 
 export const POST = apiHandler("POST", async (req, res) => {
 	const reqBody = type({

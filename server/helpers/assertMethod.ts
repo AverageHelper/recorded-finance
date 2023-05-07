@@ -1,4 +1,4 @@
-import { BadMethodError } from "../errors/BadMethodError";
+import { BadMethodError } from "@/errors/BadMethodError";
 
 type HTTPMethod = "GET" | "POST" | "DELETE";
 

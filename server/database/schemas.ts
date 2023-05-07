@@ -2,7 +2,7 @@
 import type { Infer, Struct, StructError } from "superstruct";
 import type { Opaque } from "type-fest";
 import type { Prisma } from "@prisma/client";
-import { UnreachableCaseError } from "../errors/UnreachableCaseError";
+import { UnreachableCaseError } from "@/errors/UnreachableCaseError";
 import {
 	array,
 	assert,

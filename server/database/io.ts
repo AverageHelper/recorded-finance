@@ -1,7 +1,7 @@
-import type { Logger } from "../logger";
+import type { Logger } from "@/logger";
 import type { Prisma } from "@prisma/client";
 import type { URL } from "node:url";
-import { logger as defaultLogger } from "../logger";
+import { logger as defaultLogger } from "@/logger";
 import { PrismaClient } from "@prisma/client";
 
 const dataSources = new Map<URL | "default", DatabaseClient>();

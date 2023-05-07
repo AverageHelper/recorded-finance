@@ -1,10 +1,10 @@
 import { allowedOriginHostnames } from "./allowedOriginHostnames";
 import { assertMethod } from "./assertMethod";
-import { BadMethodError } from "../errors/BadMethodError";
-import { handleErrors } from "../handleErrors";
-import { logger } from "../logger";
-import { OriginError } from "../errors/OriginError";
-import { respondError, respondOk } from "../responses";
+import { BadMethodError } from "@/errors/BadMethodError";
+import { handleErrors } from "@/handleErrors";
+import { logger } from "@/logger";
+import { OriginError } from "@/errors/OriginError";
+import { respondError, respondOk } from "@/responses";
 import { URL } from "node:url";
 
 // Only the methods we care about

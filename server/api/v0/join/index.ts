@@ -1,15 +1,15 @@
-import type { UID, User } from "../../../database/schemas";
-import { apiHandler, dispatchRequests } from "../../../helpers/apiHandler";
-import { BadRequestError } from "../../../errors/BadRequestError";
-import { DuplicateAccountError } from "../../../errors/DuplicateAccountError";
-import { generateAESCipherKey, generateHash, generateSalt } from "../../../auth/generators";
+import type { UID, User } from "@/database/schemas";
+import { apiHandler, dispatchRequests } from "@/helpers/apiHandler";
+import { BadRequestError } from "@/errors/BadRequestError";
+import { DuplicateAccountError } from "@/errors/DuplicateAccountError";
+import { generateAESCipherKey, generateHash, generateSalt } from "@/auth/generators";
 import { is, nonempty, string, type } from "superstruct";
-import { MAX_USERS } from "../../../auth/limits";
-import { newAccessTokens, setSession } from "../../../auth/jwt";
-import { NotEnoughRoomError } from "../../../errors/NotEnoughRoomError";
-import { numberOfUsers, statsForUser, userWithAccountId } from "../../../database/read";
-import { respondSuccess } from "../../../responses";
-import { upsertUser } from "../../../database/write";
+import { MAX_USERS } from "@/auth/limits";
+import { newAccessTokens, setSession } from "@/auth/jwt";
+import { NotEnoughRoomError } from "@/errors/NotEnoughRoomError";
+import { numberOfUsers, statsForUser, userWithAccountId } from "@/database/read";
+import { respondSuccess } from "@/responses";
+import { upsertUser } from "@/database/write";
 import { v4 as uuid } from "uuid";
 
 /**

@@ -1,4 +1,4 @@
-import type { UID } from "../../../../../../../database";
+import type { UID } from "@/database";
 
 export interface Params {
 	uid: UID;

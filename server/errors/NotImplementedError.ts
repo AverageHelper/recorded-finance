@@ -1,4 +1,4 @@
-import { HttpStatusCode } from "../helpers/HttpStatusCode";
+import { HttpStatusCode } from "@/helpers/HttpStatusCode";
 import { InternalError } from "./InternalError";
 
 export class NotImplementedError extends InternalError {

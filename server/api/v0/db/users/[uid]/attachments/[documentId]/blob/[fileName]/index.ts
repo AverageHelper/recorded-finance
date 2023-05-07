@@ -1,23 +1,23 @@
 import type { Params } from "./Params";
-import type { UID } from "../../../../../../../../../database/schemas";
+import type { UID } from "@/database/schemas";
 import type {
 	Request as ExpressRequest,
 	RequestHandler,
 	Response as ExpressResponse,
 } from "express";
-import { apiHandler, dispatchRequests } from "../../../../../../../../../helpers/apiHandler";
-import { BadRequestError } from "../../../../../../../../../errors/BadRequestError";
-import { destroyFileData, upsertFileData } from "../../../../../../../../../database/write";
-import { fetchFileData, statsForUser } from "../../../../../../../../../database/read";
-import { logger } from "../../../../../../../../../logger";
-import { maxSpacePerUser, MAX_FILE_BYTES } from "../../../../../../../../../auth/limits";
-import { NotEnoughRoomError } from "../../../../../../../../../errors/NotEnoughRoomError";
-import { NotFoundError } from "../../../../../../../../../errors/NotFoundError";
-import { pathSegments } from "../../../../../../../../../helpers/pathSegments";
-import { requireAuth } from "../../../../../../../../../auth/requireAuth";
-import { respondData, respondSuccess } from "../../../../../../../../../responses";
+import { apiHandler, dispatchRequests } from "@/helpers/apiHandler";
+import { BadRequestError } from "@/errors/BadRequestError";
+import { destroyFileData, upsertFileData } from "@/database/write";
+import { fetchFileData, statsForUser } from "@/database/read";
+import { logger } from "@/logger";
+import { maxSpacePerUser, MAX_FILE_BYTES } from "@/auth/limits";
+import { NotEnoughRoomError } from "@/errors/NotEnoughRoomError";
+import { NotFoundError } from "@/errors/NotFoundError";
+import { pathSegments } from "@/helpers/pathSegments";
+import { requireAuth } from "@/auth/requireAuth";
+import { respondData, respondSuccess } from "@/responses";
 import { sep as pathSeparator } from "node:path";
-import { simplifiedByteCount } from "../../../../../../../../../transformers/simplifiedByteCount";
+import { simplifiedByteCount } from "@/transformers/simplifiedByteCount";
 import multer, { memoryStorage } from "multer";
 
 /**

@@ -1,6 +1,6 @@
-import { env } from "../environment";
-import { logger } from "../logger";
-import { simplifiedByteCount } from "../transformers";
+import { env } from "@/environment";
+import { logger } from "@/logger";
+import { simplifiedByteCount } from "@/transformers";
 
 export const MAX_FILE_BYTES = 4_404_019; // 4.4 MB, to not exceed Vercel's 4.5 MB limit
 

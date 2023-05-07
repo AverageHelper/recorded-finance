@@ -1,6 +1,6 @@
 import { concatStrings } from "./concatStrings";
-import { env } from "../environment";
-import { logger } from "../logger";
+import { env } from "@/environment";
+import { logger } from "@/logger";
 import { URL } from "node:url";
 
 const _allowedOriginHostnames = new Set<string>();

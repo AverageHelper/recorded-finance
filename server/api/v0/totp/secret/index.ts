@@ -1,14 +1,14 @@
-import { apiHandler, dispatchRequests } from "../../../../helpers/apiHandler";
-import { BadRequestError } from "../../../../errors/BadRequestError";
-import { ConflictError } from "../../../../errors/ConflictError";
-import { compare, generateSecureToken } from "../../../../auth/generators";
-import { generateTOTPSecretURI, verifyTOTP } from "../../../../auth/totp";
+import { apiHandler, dispatchRequests } from "@/helpers/apiHandler";
+import { BadRequestError } from "@/errors/BadRequestError";
+import { ConflictError } from "@/errors/ConflictError";
+import { compare, generateSecureToken } from "@/auth/generators";
+import { generateTOTPSecretURI, verifyTOTP } from "@/auth/totp";
 import { is, nonempty, string, type } from "superstruct";
-import { metadataFromRequest } from "../../../../auth/requireAuth";
-import { respondSuccess } from "../../../../responses";
-import { totpToken } from "../../../../database/schemas";
-import { UnauthorizedError } from "../../../../errors/UnauthorizedError";
-import { upsertUser } from "../../../../database/write";
+import { metadataFromRequest } from "@/auth/requireAuth";
+import { respondSuccess } from "@/responses";
+import { totpToken } from "@/database/schemas";
+import { UnauthorizedError } from "@/errors/UnauthorizedError";
+import { upsertUser } from "@/database/write";
 
 // MARK: - GET
 

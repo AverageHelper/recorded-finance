@@ -1,6 +1,6 @@
-import type { UID } from "../database";
-import { is, uidSchema } from "../database";
-import { NotFoundError } from "../errors/NotFoundError";
+import type { UID } from "@/database";
+import { is, uidSchema } from "@/database";
+import { NotFoundError } from "@/errors/NotFoundError";
 
 /**
  * Express and Vercel keep query path params in the `params` and `query`

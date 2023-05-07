@@ -22,7 +22,10 @@
 		"forceConsistentCasingInFileNames": true,
 		"types": [],
 		"typeRoots": ["./node_modules/@types", "./src"],
-		"noEmit": false
+		"noEmit": false,
+		"paths": {
+			"@/*": ["./*"]
+		}
 	},
 	"include": ["./**/*.ts", "./**/*.d.ts"],
 	"exclude": [

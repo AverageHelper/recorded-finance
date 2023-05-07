@@ -1,12 +1,12 @@
-import type { User } from "../../../../../../../database/schemas";
-import { apiHandler, dispatchRequests } from "../../../../../../../helpers/apiHandler";
-import { BadRequestError } from "../../../../../../../errors/BadRequestError";
-import { logger } from "../../../../../../../logger";
-import { NotFoundError } from "../../../../../../../errors/NotFoundError";
-import { pathSegments } from "../../../../../../../helpers/pathSegments";
-import { requireAuth } from "../../../../../../../auth/requireAuth";
-import { respondData, respondSuccess } from "../../../../../../../responses";
-import { statsForUser } from "../../../../../../../database/read";
+import type { User } from "@/database/schemas";
+import { apiHandler, dispatchRequests } from "@/helpers/apiHandler";
+import { BadRequestError } from "@/errors/BadRequestError";
+import { logger } from "@/logger";
+import { NotFoundError } from "@/errors/NotFoundError";
+import { pathSegments } from "@/helpers/pathSegments";
+import { requireAuth } from "@/auth/requireAuth";
+import { respondData, respondSuccess } from "@/responses";
+import { statsForUser } from "@/database/read";
 import {
 	CollectionReference,
 	DocumentReference,
@@ -16,7 +16,7 @@ import {
 	isDataItem,
 	isUserKeys,
 	setDocument,
-} from "../../../../../../../database";
+} from "@/database";
 
 function collectionRef(user: User, req: APIRequest): CollectionReference | null {
 	const { collectionId } = pathSegments(req, "collectionId");

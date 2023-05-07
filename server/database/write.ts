@@ -1,13 +1,13 @@
 import type { AnyData, DataItem, DataItemKey, UID, User, UserKeys } from "./schemas";
 import type { CollectionReference, DocumentReference } from "./references";
 import type { FileData, PrismaPromise, User as DBUser } from "@prisma/client";
-import type { JWT } from "../auth/jwt";
-import type { Logger } from "../logger";
+import type { JWT } from "@/auth/jwt";
+import type { Logger } from "@/logger";
 import { assertSchema, isDataItemKey, isNonEmptyArray, user as userSchema } from "./schemas";
 import { dataSource } from "./io";
-import { logger as defaultLogger } from "../logger";
-import { ONE_HOUR } from "../constants/time";
-import { UnreachableCaseError } from "../errors/UnreachableCaseError";
+import { logger as defaultLogger } from "@/logger";
+import { ONE_HOUR } from "@/constants/time";
+import { UnreachableCaseError } from "@/errors/UnreachableCaseError";
 
 // MARK: - Pseudo Large-file Storage
 

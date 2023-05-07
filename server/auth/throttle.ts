@@ -1,7 +1,7 @@
 import type { RequestHandler } from "express";
-import { asyncWrapper } from "../asyncWrapper";
+import { asyncWrapper } from "@/asyncWrapper";
 import { RateLimiterMemory, RateLimiterRes } from "rate-limiter-flexible";
-import { ThrottledError } from "../errors/ThrottledError";
+import { ThrottledError } from "@/errors/ThrottledError";
 
 /**
  * // TODO: Better throttling

@@ -1,4 +1,4 @@
-import type { WebSocketCode } from "../networking/WebSocketCode";
+import type { WebSocketCode } from "@/networking/WebSocketCode";
 
 export class WebSocketError extends Error {
 	readonly code: WebSocketCode;

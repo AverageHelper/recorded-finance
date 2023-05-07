@@ -1,17 +1,17 @@
-import type { TOTPSecretUri } from "../../../../auth/totp";
-import { apiHandler, dispatchRequests } from "../../../../helpers/apiHandler";
-import { BadRequestError } from "../../../../errors/BadRequestError";
-import { ConflictError } from "../../../../errors/ConflictError";
-import { generateSecret, generateTOTPSecretURI, verifyTOTP } from "../../../../auth/totp";
-import { generateSecureToken } from "../../../../auth/generators";
+import type { TOTPSecretUri } from "@/auth/totp";
+import { apiHandler, dispatchRequests } from "@/helpers/apiHandler";
+import { BadRequestError } from "@/errors/BadRequestError";
+import { ConflictError } from "@/errors/ConflictError";
+import { generateSecret, generateTOTPSecretURI, verifyTOTP } from "@/auth/totp";
+import { generateSecureToken } from "@/auth/generators";
 import { is, type } from "superstruct";
-import { metadataFromRequest } from "../../../../auth/requireAuth";
-import { newAccessTokens, setSession } from "../../../../auth/jwt";
-import { respondSuccess } from "../../../../responses";
-import { statsForUser } from "../../../../database/read";
-import { totpToken } from "../../../../database/schemas";
-import { UnauthorizedError } from "../../../../errors/UnauthorizedError";
-import { upsertUser } from "../../../../database/write";
+import { metadataFromRequest } from "@/auth/requireAuth";
+import { newAccessTokens, setSession } from "@/auth/jwt";
+import { respondSuccess } from "@/responses";
+import { statsForUser } from "@/database/read";
+import { totpToken } from "@/database/schemas";
+import { UnauthorizedError } from "@/errors/UnauthorizedError";
+import { upsertUser } from "@/database/write";
 import safeCompare from "safe-compare";
 
 export const POST = apiHandler("POST", async (req, res) => {

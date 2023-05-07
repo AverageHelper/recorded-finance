@@ -1,13 +1,13 @@
 import type { Request as ExpressRequest } from "express";
 import type { Struct } from "superstruct";
-import type { ValueIteratorTypeGuard } from "../database";
+import type { ValueIteratorTypeGuard } from "@/database";
 import type { WebsocketRequestHandler } from "express-ws";
 import type { WebSocket } from "ws";
-import { assertSchema, isObject } from "../database/schemas";
+import { assertSchema, isObject } from "@/database/schemas";
 import { isWebSocketCode, WebSocketCode } from "./WebSocketCode";
-import { logger } from "../logger";
+import { logger } from "@/logger";
 import { StructError } from "superstruct";
-import { WebSocketError } from "../errors/WebSocketError";
+import { WebSocketError } from "@/errors/WebSocketError";
 
 /** The type that a type guard is checking. */
 type TypeFromGuard<G> = G extends ValueIteratorTypeGuard<unknown, infer T> ? T : never;

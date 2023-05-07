@@ -1,17 +1,12 @@
-import type { User } from "../../../../../../database/schemas";
-import { apiHandler, dispatchRequests } from "../../../../../../helpers/apiHandler";
-import { logger } from "../../../../../../logger";
-import { NotFoundError } from "../../../../../../errors/NotFoundError";
-import { pathSegments } from "../../../../../../helpers/pathSegments";
-import { requireAuth } from "../../../../../../auth/requireAuth";
-import { respondData, respondSuccess } from "../../../../../../responses";
-import { statsForUser } from "../../../../../../database/read";
-import {
-	CollectionReference,
-	deleteCollection,
-	getCollection,
-	isCollectionId,
-} from "../../../../../../database";
+import type { User } from "@/database/schemas";
+import { apiHandler, dispatchRequests } from "@/helpers/apiHandler";
+import { CollectionReference, deleteCollection, getCollection, isCollectionId } from "@/database";
+import { logger } from "@/logger";
+import { NotFoundError } from "@/errors/NotFoundError";
+import { pathSegments } from "@/helpers/pathSegments";
+import { requireAuth } from "@/auth/requireAuth";
+import { respondData, respondSuccess } from "@/responses";
+import { statsForUser } from "@/database/read";
 
 function collectionRef(user: User, req: APIRequest): CollectionReference | null {
 	const { collectionId } = pathSegments(req, "collectionId");

@@ -1,9 +1,9 @@
-import type { DocUpdate } from "../../../../../database/write";
-import { apiHandler, dispatchRequests } from "../../../../../helpers/apiHandler";
-import { BadRequestError } from "../../../../../errors/BadRequestError";
-import { statsForUser } from "../../../../../database/read";
-import { requireAuth } from "../../../../../auth/requireAuth";
-import { respondSuccess } from "../../../../../responses";
+import type { DocUpdate } from "@/database/write";
+import { apiHandler, dispatchRequests } from "@/helpers/apiHandler";
+import { BadRequestError } from "@/errors/BadRequestError";
+import { statsForUser } from "@/database/read";
+import { requireAuth } from "@/auth/requireAuth";
+import { respondSuccess } from "@/responses";
 import {
 	CollectionReference,
 	DocumentReference,
@@ -12,7 +12,7 @@ import {
 	isDocumentWriteBatch,
 	isNonEmptyArray,
 	setDocuments,
-} from "../../../../../database";
+} from "@/database";
 
 export const POST = apiHandler("POST", async (req, res) => {
 	const user = await requireAuth(req, res, true);

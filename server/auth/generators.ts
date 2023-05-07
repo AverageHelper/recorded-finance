@@ -1,4 +1,4 @@
-import type { AESCipherKey, Hash, Salt, TOTPSeed } from "../database/schemas";
+import type { AESCipherKey, Hash, Salt, TOTPSeed } from "@/database/schemas";
 import type { NonNegativeInteger } from "type-fest";
 import { compare, genSalt, hash } from "bcryptjs";
 import { generateSecureToken as _generateSecureToken } from "n-digit-token";

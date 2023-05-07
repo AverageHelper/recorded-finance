@@ -1,6 +1,6 @@
-import { addJwtToBlacklist, jwtFromRequest, killSession } from "../../../auth/jwt";
-import { apiHandler, dispatchRequests } from "../../../helpers/apiHandler";
-import { respondSuccess } from "../../../responses";
+import { addJwtToBlacklist, jwtFromRequest, killSession } from "@/auth/jwt";
+import { apiHandler, dispatchRequests } from "@/helpers/apiHandler";
+import { respondSuccess } from "@/responses";
 
 export const POST = apiHandler("POST", async (req, res) => {
 	const token = jwtFromRequest(req, res);

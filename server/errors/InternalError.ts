@@ -1,5 +1,5 @@
 import type { UnauthorizedErrorCode } from "./UnauthorizedError";
-import { HttpStatusCode } from "../helpers/HttpStatusCode";
+import { HttpStatusCode } from "@/helpers/HttpStatusCode";
 
 export type ErrorCode =
 	| UnauthorizedErrorCode

@@ -3,8 +3,8 @@ import type { CollectionReference, DocumentReference } from "./references";
 import type { DocUpdate } from "./write";
 import { deleteDbCollection, deleteDbDoc, deleteDbDocs, upsertDbDocs } from "./write";
 import { fetchDbCollection, fetchDbDoc, fetchDbDocs } from "./read";
-import { logger } from "../logger";
-import { publishWriteForRef } from "../auth/pubnub";
+import { logger } from "@/logger";
+import { publishWriteForRef } from "@/auth/pubnub";
 
 // Since all data is encrypted on the client, we only
 // need to bother about persistent I/O. We leave path-
