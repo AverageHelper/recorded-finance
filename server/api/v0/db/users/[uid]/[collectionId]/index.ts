@@ -42,11 +42,7 @@ export const DELETE = apiHandler("DELETE", async (req, res) => {
 	// Delete the referenced database entries
 	await deleteCollection(ref);
 
-	// TODO: Also delete associated files
-
 	const { totalSpace, usedSpace } = await statsForUser(uid);
-
-	// TODO: Also delete associated files
 
 	respondSuccess(res, { totalSpace, usedSpace });
 });

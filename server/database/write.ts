@@ -286,7 +286,6 @@ export async function deleteDbCollection(
 
 	switch (ref.id) {
 		case "accounts":
-		case "attachments":
 		case "locations":
 		case "tags":
 		case "transactions":
@@ -295,6 +294,18 @@ export async function deleteDbCollection(
 				where: { userId: uid, collectionId: ref.id },
 			});
 			return;
+		case "attachments": {
+			const db = dataSource({ logger });
+			await db.$transaction([
+				db.dataItem.deleteMany({
+					where: { userId: uid, collectionId: ref.id },
+				}),
+				db.fileData.deleteMany({
+					where: { userId: uid },
+				}),
+			]);
+			return;
+		}
 		case "keys":
 			await dataSource({ logger }).userKeys.deleteMany({ where: { userId: uid } });
 			return;

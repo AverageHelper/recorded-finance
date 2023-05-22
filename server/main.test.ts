@@ -1424,9 +1424,26 @@ describe("Routes", () => {
 		);
 	});
 
-	// TODO: /v0/db/users/[uid]/[coll] (GET, DELETE)
+	describe("/v0/db/users/[uid]/[coll]", () => {
+		// TODO: GET but websocket does nothing
+		// TODO: GET fails for bad auth
+		// TODO: GET fails for bad ownership
+		// TODO: GET returns data
+		// TODO: DELETE fails for bad auth
+		// TODO: DELETE fails for bad ownership
+		// TODO: DELETE deletes the collection
+		// TODO: Also test file attachment endpoints
+	});
 
-	// TODO: /v0/db/users/[uid]/[coll]/[doc] (GET, POST, DELETE)
+	describe("/v0/db/users/[uid]/[coll]/[doc]", () => {
+		// TODO: GET
+		// TODO: POST
+		// TODO: DELETE
+	});
 
-	// TODO: /v0/db/users/[uid]/attachments/[doc]/blob/[key] (GET, POST, DELETE)
+	describe("/v0/db/users/[uid]/attachments/[doc]/blob/[key]", () => {
+		// TODO: GET
+		// TODO: POST
+		// TODO: DELETE
+	});
 });
