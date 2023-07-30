@@ -69,6 +69,8 @@ export function apiHandler(method: HTTPMethod, cb: APIRequestHandler): APIReques
 			cors(req, res);
 
 			if (req.method === "OPTIONS") return respondOk(res);
+			// TODO: What to do about HEAD method?
+			// TODO: Also assert body parameter types
 			assertMethod(req.method, method);
 			await cb(req, res);
 		});

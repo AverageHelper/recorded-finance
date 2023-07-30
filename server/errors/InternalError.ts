@@ -29,7 +29,7 @@ export class InternalError extends Error {
 	constructor({
 		message,
 		status = HttpStatusCode.INTERNAL_SERVER_ERROR,
-		code = "unknown",
+		code = "unknown", // FIXME: Seems some errors don't provide this. Should this be mandatory, for I18N reasons?
 		headers = new Map(),
 		harmless = false,
 	}: {

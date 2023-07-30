@@ -1,12 +1,14 @@
 import type { User } from "@/database/schemas";
+import { isCollectionId } from "@/database/schemas";
+import { CollectionReference } from "@/database/references";
 import { apiHandler, dispatchRequests } from "@/helpers/apiHandler";
-import { CollectionReference, deleteCollection, getCollection, isCollectionId } from "@/database";
+import { deleteCollection } from "@/database/write";
+import { fetchDbCollection as getCollection, statsForUser } from "@/database/read";
 import { logger } from "@/logger";
 import { NotFoundError } from "@/errors/NotFoundError";
 import { pathSegments } from "@/helpers/pathSegments";
 import { requireAuth } from "@/auth/requireAuth";
 import { respondData, respondSuccess } from "@/responses";
-import { statsForUser } from "@/database/read";
 
 function collectionRef(user: User, req: APIRequest): CollectionReference | null {
 	const { collectionId } = pathSegments(req, "collectionId");
@@ -40,11 +42,7 @@ export const DELETE = apiHandler("DELETE", async (req, res) => {
 	// Delete the referenced database entries
 	await deleteCollection(ref);
 
-	// TODO: Also delete associated files
-
 	const { totalSpace, usedSpace } = await statsForUser(uid);
-
-	// TODO: Also delete associated files
 
 	respondSuccess(res, { totalSpace, usedSpace });
 });

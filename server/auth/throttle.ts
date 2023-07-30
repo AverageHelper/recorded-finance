@@ -1,5 +1,6 @@
 import type { RequestHandler } from "express";
 import { asyncWrapper } from "@/asyncWrapper";
+import { env } from "@/environment";
 import { RateLimiterMemory, RateLimiterRes } from "rate-limiter-flexible";
 import { ThrottledError } from "@/errors/ThrottledError";
 
@@ -23,6 +24,12 @@ const rateLimiter = new RateLimiterMemory({ points, duration, blockDuration });
  */
 export function throttle(): RequestHandler {
 	return asyncWrapper(async (req, res, next) => {
+		if (env("NODE_ENV") === "test") {
+			// Test mode. Skip throttle
+			next();
+			return;
+		}
+
 		const remoteIp = req.ip;
 		try {
 			await rateLimiter.consume(remoteIp);

@@ -23,14 +23,14 @@ import * as updateaccountid from "@/api/v0/updateaccountid";
  */
 export function auth(): Router {
 	return Router()
-		.post("/join", throttle(), asyncWrapper(join.POST))
-		.post("/login", throttle(), asyncWrapper(login.POST))
+		.all("/join", throttle(), asyncWrapper(join.POST))
+		.all("/login", throttle(), asyncWrapper(login.POST))
 		.get("/totp/secret", /* throttle(), */ asyncWrapper(totpSecret.GET))
-		.delete("/totp/secret", throttle(), asyncWrapper(totpSecret.DELETE))
-		.post("/totp/validate", throttle(), asyncWrapper(totpValidate.POST))
-		.get("/session", /* throttle(), */ asyncWrapper(session.GET))
-		.post("/logout", throttle(), asyncWrapper(logout.POST))
-		.post("/leave", throttle(), asyncWrapper(leave.POST))
-		.post("/updatepassword", throttle(), asyncWrapper(updatepassword.POST))
-		.post("/updateaccountid", throttle(), asyncWrapper(updateaccountid.POST));
+		.all("/totp/secret", throttle(), asyncWrapper(totpSecret.DELETE))
+		.all("/totp/validate", throttle(), asyncWrapper(totpValidate.POST))
+		.all("/session", /* throttle(), */ asyncWrapper(session.GET))
+		.all("/logout", throttle(), asyncWrapper(logout.POST))
+		.all("/leave", throttle(), asyncWrapper(leave.POST))
+		.all("/updatepassword", throttle(), asyncWrapper(updatepassword.POST))
+		.all("/updateaccountid", throttle(), asyncWrapper(updateaccountid.POST));
 }

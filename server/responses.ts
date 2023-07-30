@@ -1,4 +1,4 @@
-import type { DocumentData, UID } from "./database";
+import type { DocumentData, UID } from "./database/schemas";
 import { describeCode, HttpStatusCode } from "./helpers/HttpStatusCode";
 import { InternalError } from "./errors/InternalError";
 

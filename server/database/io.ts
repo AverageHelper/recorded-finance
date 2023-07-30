@@ -4,6 +4,15 @@ import type { URL } from "node:url";
 import { logger as defaultLogger } from "@/logger";
 import { PrismaClient } from "@prisma/client";
 
+export type { FileData, PrismaPromise, User as RawUser } from "@prisma/client";
+
+export type JsonValue = Prisma.JsonValue;
+
+export type LogDefinition = Prisma.LogDefinition;
+
+export type LogEvent = Prisma.LogEvent;
+
+// TODO: Use "@planetscale/database" directly, without storing the client in global scope, for "serverless" support
 const dataSources = new Map<URL | "default", DatabaseClient>();
 
 const logOptions = [
@@ -72,7 +81,7 @@ export function dataSource(options?: DataSourceOptions): PrismaClient {
 		return result;
 	});
 
-	function logMessageForEvent(event: Prisma.LogEvent): string {
+	function logMessageForEvent(event: LogEvent): string {
 		const { target, timestamp, message } = event;
 		return `[${target}, ${timestamp.toUTCString()}] ${message}`;
 	}
@@ -124,8 +133,11 @@ export function dataSource(options?: DataSourceOptions): PrismaClient {
 /**
  * Infers the log levels defined in the given array.
  */
-type LevelsFromLogDefinitions<A extends ReadonlyArray<Prisma.LogDefinition>> =
-	A extends ReadonlyArray<{ level: infer L }> ? L : never;
+type LevelsFromLogDefinitions<A extends ReadonlyArray<LogDefinition>> = A extends ReadonlyArray<{
+	level: infer L;
+}>
+	? L
+	: never;
 
 /**
  * Strips the `readonly` modifier from the given object.

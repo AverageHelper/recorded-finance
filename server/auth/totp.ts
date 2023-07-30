@@ -1,5 +1,5 @@
 import type { Opaque } from "type-fest";
-import type { TOTPSeed, TOTPToken } from "@/database";
+import type { TOTPSeed, TOTPToken } from "@/database/schemas";
 import { createHmac } from "node:crypto";
 import { persistentSecret } from "./jwt";
 import { URL } from "node:url";

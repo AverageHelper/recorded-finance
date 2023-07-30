@@ -1,5 +1,5 @@
 import type { TOTPSecretUri } from "./totp";
-import type { TOTPSeed, TOTPToken } from "../database";
+import type { TOTPSeed, TOTPToken } from "../database/schemas";
 import "jest-extended";
 import { jest } from "@jest/globals";
 import { URL } from "node:url";
