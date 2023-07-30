@@ -20,8 +20,10 @@ function collectionRef(user: User, req: APIRequest): CollectionReference | null 
 export const GET = apiHandler("GET", async (req, res) => {
 	const { collectionId } = pathSegments(req, "collectionId");
 	if (collectionId === ".websocket") {
-		logger.debug(`Received GET request for a collection called '.websocket'. Why are we here?`);
-		return; // we were never meant to be here
+		logger.debug(
+			`Received GET request for a collection called '.websocket'. Why are we here? Seems likely the user intended to start a WebSocket session, but by accident they requested the WebSocket collection.`
+		);
+		// We'll proceed, since the unknown collection will result in a 404 anyhow
 	}
 
 	const user = await requireAuth(req, res, true);

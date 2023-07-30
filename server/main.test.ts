@@ -1,4 +1,11 @@
-import type { DocumentWriteBatch, Hash, Salt, UID } from "./database/schemas";
+import type {
+	CollectionID,
+	DocumentWriteBatch,
+	Hash,
+	IdentifiedDataItem,
+	Salt,
+	UID,
+} from "./database/schemas";
 import type { DocUpdate } from "./database/write";
 import type { JWT } from "./auth/jwt";
 import "jest-extended";
@@ -1428,12 +1435,90 @@ describe("Routes", () => {
 	});
 
 	describe("/v0/db/users/[uid]/[coll]", () => {
-		// TODO: GET but websocket does nothing
-		// TODO: GET fails for bad auth
-		// TODO: GET fails for bad ownership
-		// TODO: GET returns data
-		// TODO: DELETE fails for bad auth
-		// TODO: DELETE fails for bad ownership
+		function pathForUidColl(uid: string, coll: CollectionID): string {
+			return `/v0/db/users/${uid}/${coll}`;
+		}
+
+		const user = userWithoutTotp;
+		const PATH = pathForUidColl(user.uid, "transactions");
+
+		const BadMethods = ["HEAD", "POST", "PUT", "PATCH"] as const;
+		test.each(BadMethods)("%s answers 405", async method => {
+			await request(method, PATH).expect(405);
+			expect(mockRead.fetchDbCollection).not.toHaveBeenCalled();
+		});
+
+		test("GET answers 403 if the user is not authenticated", async () => {
+			await request("GET", PATH)
+				.expect(403)
+				.expect({ message: "Unauthorized", code: "missing-token" });
+			expect(mockRead.fetchDbCollection).not.toHaveBeenCalled();
+		});
+
+		test("GET answers 403 if the caller is not the owner of the data", async () => {
+			setAuth(user);
+			const path = pathForUidColl("someone-else", "transactions");
+			await request("GET", path).expect(403).expect({ message: "Unauthorized", code: "not-owner" });
+			expect(mockRead.fetchDbCollection).not.toHaveBeenCalled();
+		});
+
+		test("GET answers 404 for an unknown collection", async () => {
+			setAuth(user);
+			const path = pathForUidColl(user.uid, "elsewise" as CollectionID);
+			await request("GET", path)
+				.expect(404)
+				.expect({ message: "No data found", code: "not-found" });
+			expect(mockRead.fetchDbCollection).not.toHaveBeenCalled();
+		});
+
+		test('GET answers 404 for the special ".websocket" endpoint', async () => {
+			setAuth(user);
+			const path = pathForUidColl(user.uid, ".websocket" as CollectionID);
+			await request("GET", path)
+				.expect(404)
+				.expect({ message: "No data found", code: "not-found" });
+			expect(mockRead.fetchDbCollection).not.toHaveBeenCalled();
+		});
+
+		test("GET answers 200 and the empty collection's contents", async () => {
+			setAuth(user);
+			await request("GET", PATH).expect(200).expect({ message: "Success!", data: [] });
+			expect(mockRead.fetchDbCollection).toHaveBeenCalledOnce();
+		});
+
+		test("GET answers 200 and the collection's contents", async () => {
+			setAuth(user);
+			const testDoc: IdentifiedDataItem = {
+				_id: "testDoc1",
+				ciphertext: "lorem ipsum",
+				cryption: "v0",
+				objectType: "lol",
+			};
+			mockRead.fetchDbCollection.mockResolvedValueOnce([testDoc]);
+			await request("GET", PATH)
+				.expect(200)
+				.expect({ message: "Success!", data: [testDoc] });
+			expect(mockRead.fetchDbCollection).toHaveBeenCalledOnce();
+		});
+
+		test("DELETE answers 403 if the user is not authenticated", async () => {
+			await request("DELETE", PATH)
+				.expect(403)
+				.expect({ message: "Unauthorized", code: "missing-token" });
+			expect(mockWrite.deleteCollection).not.toHaveBeenCalled();
+			expect(mockWrite.deleteDbCollection).not.toHaveBeenCalled();
+		});
+
+		test("DELETE answers 403 if the caller is not the owner of the data", async () => {
+			setAuth(user);
+			const path = pathForUidColl("someone-else", "transactions");
+			await request("DELETE", path)
+				.expect(403)
+				.expect({ message: "Unauthorized", code: "not-owner" });
+			expect(mockWrite.deleteCollection).not.toHaveBeenCalled();
+			expect(mockWrite.deleteDbCollection).not.toHaveBeenCalled();
+		});
+
 		// TODO: DELETE deletes the collection
 		// TODO: Also test file attachment endpoints
 	});
