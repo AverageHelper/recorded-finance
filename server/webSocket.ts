@@ -1,23 +1,22 @@
 import type { Infer } from "superstruct";
-import type { Unsubscribe, User } from "./database";
+import type { ReadonlyDeep } from "type-fest";
+import type { Unsubscribe } from "./database/read";
+import type { User } from "./database/schemas";
 import type { WebsocketRequestHandler } from "express-ws";
 import { array, enums, nullable, object, optional, union } from "superstruct";
+import { CollectionReference, DocumentReference } from "./database/references";
 import { logger } from "./logger";
 import { requireAuth } from "./auth/requireAuth";
+import { watchUpdatesToCollection, watchUpdatesToDocument } from "./database/read";
 import { WebSocketCode } from "./networking/WebSocketCode";
 import { ws } from "./networking/websockets";
 import {
 	allCollectionIds,
 	identifiedDataItem,
-	isValidForSchema,
+	is,
 	nonemptyString,
+	uidSchema,
 } from "./database/schemas";
-import {
-	CollectionReference,
-	DocumentReference,
-	watchUpdatesToCollection,
-	watchUpdatesToDocument,
-} from "./database";
 
 const watcherData = object({
 	message: nonemptyString,
@@ -33,13 +32,13 @@ export const webSocket: WebsocketRequestHandler = ws(
 		stop(tbd): tbd is "STOP" {
 			return tbd === "STOP";
 		},
-		data(tbd): tbd is WatcherData {
-			return isValidForSchema(tbd, watcherData);
+		data(tbd): tbd is ReadonlyDeep<WatcherData> {
+			return is(tbd, watcherData);
 		},
 	},
 	// params
 	object({
-		uid: nonemptyString,
+		uid: uidSchema,
 		collectionId: enums(allCollectionIds),
 		documentId: optional(nullable(nonemptyString)),
 	}),

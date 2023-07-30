@@ -1,6 +1,6 @@
 import type { DataItem, Keys } from "./api.js";
 import type { DocumentData, DocumentWriteBatch } from "./schemas.js";
-import type { EPackage } from "./cryption.js";
+import type { EPackage } from "./cryptionProtocols.js";
 import type { HashStore } from "./HashStore.js";
 import type { Unsubscribe } from "./onSnapshot.js";
 import type { User } from "./auth.js";
@@ -472,7 +472,20 @@ export function watchAllRecords<T extends NonNullable<unknown> = DocumentData>(
 	const queueId = `watchAllRecords-${collection.id}`;
 	const queue = useJobQueue<QuerySnapshot<T>>(queueId);
 	queue.process(onSnap);
-	const unsubscribe = onSnapshot<T>(collection, snap => queue.createJob(snap), onError);
+	queue.on("error", error => {
+		if (!onError) {
+			logger.error(error);
+			return;
+		}
+		if (error instanceof Error) {
+			onError(error);
+		} else if (typeof error === "string") {
+			onError(new Error(error));
+		} else {
+			onError(new Error(JSON.stringify(error)));
+		}
+	});
+	const unsubscribe = onSnapshot(collection, snap => queue.createJob(snap), onError);
 
 	return (): void => {
 		unsubscribe();

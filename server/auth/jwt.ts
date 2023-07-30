@@ -1,4 +1,5 @@
-import type { CsrfJwtPayload, JwtPayload, MFAOption, User } from "../database/schemas";
+import type { CsrfJwtPayload, JwtPayload, MFAOption, PubNubToken, User } from "../database/schemas";
+import type { Opaque, ReadonlyDeep } from "type-fest";
 import type { SignOptions } from "jsonwebtoken";
 import { addJwtToDatabase } from "../database/write";
 import { assertCsrfJwtPayload, assertJwtPayload } from "../database/schemas";
@@ -21,18 +22,20 @@ const SESSION_COOKIE_NAME = "sessionToken";
 const CSRF_COOKIE_NAME = "csrf";
 const keys = new Keygrip([persistentSecret]);
 
+export type JWT = Opaque<string, "JWT">;
+
 /**
  * Ascertains whether the token exists in the blacklist. If so,
  * that token's value should be treated as expired.
  */
-export async function blacklistHasJwt(token: string): Promise<boolean> {
+export async function blacklistHasJwt(token: JWT): Promise<boolean> {
 	return await jwtExistsInDatabase(token);
 }
 
 /**
  * Adds the token to a list of tokens to treat as expired.
  */
-export async function addJwtToBlacklist(token: string): Promise<void> {
+export async function addJwtToBlacklist(token: JWT): Promise<void> {
 	try {
 		const payload = await verifyJwt(token);
 		await revokePubNubToken(payload.pubnubToken, payload.uid);
@@ -55,7 +58,7 @@ interface AccessTokens {
 	/**
 	 * A token that permits the user to subscribe to data change notifications via PubNub.
 	 */
-	pubnub_token: string;
+	pubnub_token: PubNubToken;
 }
 
 /**
@@ -67,10 +70,10 @@ interface AccessTokens {
  */
 export async function newAccessTokens(
 	user: User,
-	validatedWithMfa: Array<MFAOption>
+	validatedWithMfa: ReadonlyArray<MFAOption>
 ): Promise<AccessTokens> {
 	const options: SignOptions = { expiresIn: "1h" };
-	const payload: JwtPayload = {
+	const payload: ReadonlyDeep<JwtPayload> = {
 		pubnubToken: await newPubNubTokenForUser(user),
 		uid: user.uid,
 		validatedWithMfa,
@@ -176,19 +179,21 @@ export function setCsrfCookie(req: APIRequest, res: APIResponse, value: string):
  * Checks the `Cookie` header for the token. If no data is found there,
  * then we check the `Authorization` header for a "Bearer" token.
  */
-export function jwtFromRequest(req: APIRequest, res: APIResponse): string | null {
+export function jwtFromRequest(req: APIRequest, res: APIResponse): JWT | null {
 	// Get session token from cookies, if it exists
 	const cookies = new Cookies(req, res, { keys, secure: true });
 	const token = cookies.get(SESSION_COOKIE_NAME, { signed: true }) ?? "";
 	if (token) {
-		return token;
+		return token as JWT;
 	}
 
 	// No cookies? Check auth header instead
 	const authHeader = req.headers.authorization;
 	const tokenParts = authHeader?.split(" ") ?? [];
 	if (tokenParts[0] === "Bearer") {
-		return (tokenParts[1] ?? "") || null;
+		const token = tokenParts[1] ?? "";
+		if (token === "") return null;
+		return token as JWT;
 	}
 	return null;
 }
@@ -213,11 +218,11 @@ export function csrfJwtFromRequest(req: APIRequest, res: APIResponse): string | 
  * @returns A Promise that resolves with an object containing the
  * key-value pairs encoded in the JWT.
  */
-export async function verifyJwt(token: string): Promise<JwtPayload> {
+export async function verifyJwt(token: JWT): Promise<JwtPayload> {
 	return await new Promise<JwtPayload>((resolve, reject) => {
 		_verifyJwt(token, persistentSecret, (err, payload) => {
 			// Fail if failed i guess
-			if (err) return reject(err);
+			if (err) return reject(err); // TODO: Something safer than a `reject`, since we always know what kind of error this is
 
 			// Check payload contents
 			if (payload !== undefined) {
@@ -240,7 +245,7 @@ export async function verifyJwt(token: string): Promise<JwtPayload> {
 	});
 }
 
-async function createJwt(payload: JwtPayload, options: SignOptions): Promise<string> {
+async function createJwt(payload: ReadonlyDeep<JwtPayload>, options: SignOptions): Promise<string> {
 	return await new Promise<string>((resolve, reject) => {
 		_signJwt(payload, persistentSecret, options, (err, token) => {
 			if (err) {

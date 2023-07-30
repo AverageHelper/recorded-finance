@@ -1,3 +1,4 @@
+import type { AESCipherKey, Hash, Salt, TOTPSeed } from "../../database/schemas";
 import type { compare as _compare } from "bcryptjs";
 import type {
 	generateSecureToken as _generateSecureToken,
@@ -7,18 +8,28 @@ import type {
 } from "../generators";
 import { jest } from "@jest/globals";
 
-export const compare = jest
-	.fn<typeof _compare>()
-	.mockImplementation((a: unknown, b: unknown) => Promise.resolve(a === b));
+export const compare = jest.fn<typeof _compare>();
 
-export const generateSecureToken = jest
-	.fn<typeof _generateSecureToken>()
-	.mockReturnValue("NOT_SECURE_TOKEN");
+export const DEFAULT_MOCK_SECURE_TOKEN = "NOT_SECURE_TOKEN" as TOTPSeed;
 
-export const generateSalt = jest.fn<typeof _generateSalt>().mockResolvedValue("INSECURE_SALT");
+export const generateSecureToken = jest.fn<typeof _generateSecureToken>();
 
-export const generateHash = jest.fn<typeof _generateHash>().mockResolvedValue("INSECURE_HASH");
+export const DEFAULT_MOCK_SALT = "INSECURE_SALT" as Salt;
 
-export const generateAESCipherKey = jest
-	.fn<typeof _generateAESCipherKey>()
-	.mockResolvedValue("INSECURE_CIPHER_KEY");
+export const generateSalt = jest.fn<typeof _generateSalt>();
+
+export const DEFAULT_MOCK_HASH = "INSECURE_HASH" as Hash;
+
+export const generateHash = jest.fn<typeof _generateHash>();
+
+export const DEFAULT_MOCK_AES_CIPHER_KEY = "INSECURE_CIPHER_KEY" as AESCipherKey;
+
+export const generateAESCipherKey = jest.fn<typeof _generateAESCipherKey>();
+
+beforeEach(() => {
+	compare.mockImplementation((a: string, b: string) => Promise.resolve(a === b));
+	generateSecureToken.mockReturnValue(DEFAULT_MOCK_SECURE_TOKEN);
+	generateSalt.mockResolvedValue(DEFAULT_MOCK_SALT);
+	generateHash.mockResolvedValue(DEFAULT_MOCK_HASH);
+	generateAESCipherKey.mockResolvedValue(DEFAULT_MOCK_AES_CIPHER_KEY);
+});

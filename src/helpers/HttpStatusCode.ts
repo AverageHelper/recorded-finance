@@ -4,7 +4,7 @@
 
 /**
  * Hypertext Transfer Protocol (HTTP) response status codes.
- * @see {@link https://en.wikipedia.org/wiki/List_of_HTTP_status_codes}
+ * @see https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
  */
 export enum HttpStatusCode {
 	/**
@@ -292,6 +292,12 @@ export enum HttpStatusCode {
 	FAILED_DEPENDENCY = 424,
 
 	/**
+	 * The server is unwilling to risk processing a request that might be replayed,
+	 * which creates the potential for a replay attack.
+	 */
+	TOO_EARLY = 425,
+
+	/**
 	 * The client should switch to a different protocol such as TLS/1.0, given in the Upgrade header field.
 	 */
 	UPGRADE_REQUIRED = 426,
@@ -381,7 +387,9 @@ export enum HttpStatusCode {
 	NETWORK_AUTHENTICATION_REQUIRED = 511,
 }
 
-/** Returns a brief textual description of the status code. */
+/**
+ * Returns a brief textual description of the status code.
+ */
 export function describeCode(code: HttpStatusCode): string {
 	return HttpStatusCode[code] ?? `HTTP_${code}`;
 }

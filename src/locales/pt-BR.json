@@ -25,7 +25,8 @@
 		"not-yet": "Ainda não",
 		"reset": "Recompor",
 		"save-imperative": "Armazenar",
-		"server": "Servidor"
+		"server": "Servidor",
+		"no-search-results": "Sem resultados"
 	},
 	"actions": {
 		"add-new-noun": "Adicionar um novo {noun}",
@@ -397,7 +398,7 @@
 			"subtitle": "legenda do localização"
 		},
 		"locations": {
-			"recent": "Locais recentes",
+			"recent": "Locais recentes:",
 			"disclaimer": "Para obter sua localização atual, você precisará habilitar o serviço de localização em {settings}."
 		}
 	},

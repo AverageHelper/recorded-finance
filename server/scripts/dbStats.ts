@@ -1,9 +1,9 @@
 #!/usr/bin/env ts-node
 
 import "../helpers/assertTsNode";
-import type { CollectionID } from "../database";
-import { allCollectionIds, CollectionReference } from "../database";
-import { logger } from "../logger";
+import type { CollectionID, UID } from "../database/schemas";
+import { allCollectionIds } from "../database/schemas";
+import { CollectionReference } from "../database/references";
 import {
 	countFileBlobsForUser,
 	countRecordsInCollection,
@@ -19,45 +19,45 @@ function isNotNull<T>(tbd: T): tbd is NonNullable<T> {
 
 async function main(): Promise<void> {
 	// Read the database, and count up every record
-	const userCount = await numberOfUsers();
-	const jwtCount = await numberOfExpiredJwts();
+	const userCount = await numberOfUsers(null);
+	const jwtCount = await numberOfExpiredJwts(null);
 
-	const uids = await listAllUserIds();
-	logger.info(`We have ${userCount} user(s):`, uids);
+	const uids = await listAllUserIds(null);
+	console.info(`We have ${userCount} user(s):`, uids);
 
 	// Compile the results...
-	const users = (await Promise.all(uids.map(userWithUid))).filter(isNotNull);
-	const recordCountsByUser: Record<string, Partial<Record<CollectionID, number>>> = {};
-	const fileCountsByUser: Record<string, number> = {};
+	const users = (await Promise.all(uids.map(uid => userWithUid(uid, null)))).filter(isNotNull);
+	const recordCountsByUser = new Map<UID, Map<CollectionID, number>>();
+	const fileCountsByUser = new Map<UID, number>();
 
 	for (const user of users) {
 		const uid = user.uid;
-		const counts: Partial<Record<CollectionID, number>> = {};
+		const counts = new Map<CollectionID, number>();
 
 		for (const collectionId of allCollectionIds) {
 			const ref = new CollectionReference(user, collectionId);
-			counts[collectionId] = await countRecordsInCollection(ref);
+			counts.set(collectionId, await countRecordsInCollection(ref));
 		}
 
-		recordCountsByUser[uid] = counts;
+		recordCountsByUser.set(uid, counts);
 
 		const fileCount = await countFileBlobsForUser(uid);
-		fileCountsByUser[uid] = fileCount;
+		fileCountsByUser.set(uid, fileCount);
 	}
 
 	// Print the results...
-	for (const [uid, counts] of Object.entries(recordCountsByUser)) {
-		logger.info(`Stats for user ${uid}:`);
+	for (const [uid, counts] of recordCountsByUser) {
+		console.info(`Stats for user ${uid}:`);
 
-		const fileCount = fileCountsByUser[uid] ?? 0;
-		logger.info(`\tFiles:  ${fileCount} record(s)`);
+		const fileCount = fileCountsByUser.get(uid) ?? 0;
+		console.info(`\tFiles:  ${fileCount} record(s)`);
 
-		for (const [collectionId, count] of Object.entries(counts)) {
-			logger.info(`\t${collectionId}:  ${count} record(s)`);
+		for (const [collectionId, count] of counts) {
+			console.info(`\t${collectionId}:  ${count} record(s)`);
 		}
 	}
 
-	logger.info(`Total expired JWTs:  ${jwtCount}`);
+	console.info(`Total expired JWTs:  ${jwtCount}`);
 }
 
 void main();

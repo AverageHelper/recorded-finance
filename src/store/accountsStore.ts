@@ -1,12 +1,11 @@
 import type { Account, AccountRecordParams } from "../model/Account";
 import type { AccountRecordPackage, Unsubscribe, WriteBatch } from "../transport";
 import type { AccountSchema } from "../model/DatabaseSchema";
-import type { Dinero } from "dinero.js";
 import { account, recordFromAccount } from "../model/Account";
-import { asyncForEach } from "../helpers/asyncForEach";
 import { asyncMap } from "../helpers/asyncMap";
-import { derived, get, writable } from "svelte/store";
+import { derived, get } from "svelte/store";
 import { getDekMaterial, pKey } from "./authStore";
+import { moduleWritable } from "../helpers/moduleWritable";
 import { logger } from "../logger";
 import { t } from "../i18n";
 import { updateUserStats } from "./uiStore";
@@ -23,10 +22,17 @@ import {
 	writeBatch,
 } from "../transport";
 
-export const accounts = writable<Record<string, Account>>({}); // Account.id -> Account
-export const currentBalance = writable<Record<string, Dinero<number>>>({}); // Account.id -> Dinero
-export const accountsLoadError = writable<Error | null>(null);
-export const accountsWatcher = writable<Unsubscribe | null>(null);
+// Account.id -> Account
+const [accounts, _accounts] = moduleWritable<Record<string, Account>>({});
+export { accounts };
+
+const [isLoadingAccounts, _isLoadingAccounts] = moduleWritable(true);
+export { isLoadingAccounts };
+
+const [accountsLoadError, _accountsLoadError] = moduleWritable<Error | null>(null);
+export { accountsLoadError };
+
+let accountsWatcher: Unsubscribe | null = null;
 
 export const allAccounts = derived(accounts, $accounts => {
 	return Object.values($accounts);
@@ -37,67 +43,68 @@ export const numberOfAccounts = derived(allAccounts, $allAccounts => {
 });
 
 export function clearAccountsCache(): void {
-	const watcher = get(accountsWatcher);
-	if (watcher) {
-		watcher();
-		accountsWatcher.set(null);
+	if (accountsWatcher) {
+		accountsWatcher();
+		accountsWatcher = null;
 	}
-	accounts.set({});
-	currentBalance.set({});
-	accountsLoadError.set(null);
+	_accounts.set({});
+	_accountsLoadError.set(null);
+	_isLoadingAccounts.set(true);
 	logger.debug("accountsStore: cache cleared");
 }
 
 export async function watchAccounts(force: boolean = false): Promise<void> {
-	const watcher = get(accountsWatcher);
-	if (watcher && !force) return;
-
-	if (watcher) {
-		watcher();
-		accountsWatcher.set(null);
-	}
-
 	const key = get(pKey);
 	if (key === null) throw new Error(t("error.cryption.missing-pek"));
 	const { dekMaterial } = await getDekMaterial();
 	const dek = await deriveDEK(key, dekMaterial);
 
-	const collection = accountsCollection();
-	accountsLoadError.set(null);
-	accountsWatcher.set(
-		watchAllRecords(
-			collection,
-			async snap =>
-				await asyncForEach(snap.docChanges(), async change => {
-					switch (change.type) {
-						case "removed":
-							accounts.update(accounts => {
-								const copy = { ...accounts };
-								delete copy[change.doc.id];
-								return copy;
-							});
-							break;
+	if (accountsWatcher) {
+		accountsWatcher();
+		accountsWatcher = null;
 
-						case "added":
-						case "modified": {
-							const account = await accountFromSnapshot(change.doc, dek);
-							accounts.update(accounts => {
-								const copy = { ...accounts };
-								copy[change.doc.id] = account;
-								return copy;
-							});
-							break;
-						}
+		if (!force) return;
+	}
+
+	_accountsLoadError.set(null);
+	accountsWatcher = watchAllRecords(
+		accountsCollection(),
+		async snap => {
+			_isLoadingAccounts.set(true);
+
+			// Update cache
+			const changes = snap.docChanges();
+			logger.debug(`${changes.length} changed accounts`);
+			for (const change of changes) {
+				switch (change.type) {
+					case "removed":
+						_accounts.update(accounts => {
+							const copy = { ...accounts };
+							delete copy[change.doc.id];
+							return copy;
+						});
+						break;
+
+					case "added":
+					case "modified": {
+						const account = await accountFromSnapshot(change.doc, dek);
+						_accounts.update(accounts => {
+							const copy = { ...accounts };
+							copy[change.doc.id] = account;
+							return copy;
+						});
+						break;
 					}
-				}),
-			error => {
-				accountsLoadError.set(error);
-				const watcher = get(accountsWatcher);
-				if (watcher) watcher();
-				accountsWatcher.set(null);
-				logger.error(error);
+				}
 			}
-		)
+			_isLoadingAccounts.set(false);
+		},
+		error => {
+			_accountsLoadError.set(error);
+			if (accountsWatcher) accountsWatcher();
+			accountsWatcher = null;
+			logger.error(error);
+		}
 	);
 }
 
@@ -127,8 +134,8 @@ export async function updateAccount(account: Account, batch?: WriteBatch): Promi
 
 export async function deleteAccount(account: Account, batch?: WriteBatch): Promise<void> {
 	// Don't delete if we have transactions
-	const { getTransactionsForAccount, transactionsForAccount } = await import("./transactionsStore");
-	await getTransactionsForAccount(account);
+	const { fetchAllTransactions, transactionsForAccount } = await import("./transactionsStore");
+	await fetchAllTransactions();
 
 	const accountTransactions = get(transactionsForAccount)[account.id] ?? {};
 	const transactionCount = Object.keys(accountTransactions).length;

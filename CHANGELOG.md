@@ -5,6 +5,56 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.18.3] - 2023-05-22
+### Fixed
+- Our Express environment now sends the `Access-Control-Allow-Headers` header with each request, as our Vercel environment does.
+- Our Express environment no longer sends HTTP 404 when making a request to a valid endpoint using the wrong method. We now, correctly, send HTTP 405, as our Vercel environment does.
+
+### Security
+- `DELETE /v0/totp/secret` now sends HTTP 403 when the password is incorrect, even when the user does not have TOTP enabled. Before, this endpoint would ignore the password field and send HTTP 200 if the user does not have TOTP enabled. This wasn't _much_ of a security issue, since that endpoint and method requires a valid session anyway, but since a password is a required field to do a delete, it makes sense to not respond HTTP 200 unless the password is correct.
+
+## [0.18.2] - 2023-07-30
+### Security
+- Updated vulnerable dependencies
+
+## [0.18.1] - 2023-03-24
+### Added
+- A management UI for viewing database contents. (These should be encrypted client-side, so there's no user data to see here. I just don't wanna have to write a query string every time I need to read other parts of the database.)
+
+### Changed
+- Moved our front-end cryption logic somewhere more self-contained, to help with potential future optimizations.
+
+## [0.18.0] - 2023-03-11
+### Added
+- [Open Graph](https://ogp.me) tags for social media embeds.
+- Autofocus the title field in the Create Transaction screen.
+
+### Removed
+- Removed geolocation look-up logic (IPLocate calls, etc.) for now, trying to simplify things. Will re-evaluate how or if to do geolocation stuff later on.
+
+### Fixed
+- Text fields no longer steal focus from one another (especially in the Create Transaction screen).
+- The location dropdown is no longer utterly broken.
+
+## [0.17.0] - 2023-03-03
+### Added
+- Loading spinners for Account and Transaction lists.
+
+### Changed
+- Greatly simplified transaction storage logic, and found a much more efficient way to count balances. Load times should be considerably faster!
+
+### Fixed
+- The account balance no longer runs around like a slot machine while loading transactions.
+- Months now sort correctly when switching between account views.
+- Fixed data watchers not responding for users with 2FA enabled.
+
+## [0.16.8] - 2023-03-01
+### Changed
+- More robust HTTP status codes on the back-end.
+
+### Fixed
+- Duplicate logging of allowed origin hostnames (back-end).
+
 ## [0.16.7] - 2023-02-19
 ### Changed
 - Better optimized database snapshots on the front-end, with thorough unit testing around relevant structures.
@@ -422,6 +472,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial commit
 
+[0.18.3]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.2...v0.18.3
+[0.18.2]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.1...v0.18.2
+[0.18.1]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.0...v0.18.1
+[0.18.0]: https://github.com/RecordedFinance/recorded-finance/compare/v0.17.0...v0.18.0
+[0.17.0]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.8...v0.17.0
+[0.16.8]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.7...v0.16.8
 [0.16.7]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.6...v0.16.7
 [0.16.6]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.5...v0.16.6
 [0.16.5]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.4...v0.16.5

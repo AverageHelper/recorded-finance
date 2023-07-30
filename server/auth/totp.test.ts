@@ -1,3 +1,5 @@
+import type { TOTPSecretUri } from "./totp";
+import type { TOTPSeed, TOTPToken } from "../database/schemas";
 import "jest-extended";
 import { jest } from "@jest/globals";
 import { URL } from "node:url";
@@ -27,7 +29,7 @@ describe("TOTP", () => {
 	);
 
 	test("secret generator throws if the seed is empty", () => {
-		expect(() => generateSecret("")).toThrow(TypeError);
+		expect(() => generateSecret("" as TOTPSeed)).toThrow(TypeError);
 	});
 
 	test.each`
@@ -40,7 +42,7 @@ describe("TOTP", () => {
 		${"something extra long, like more than 21 chars"} | ${"UQNCNGNBLI22WVXQG3MXM"}
 	`(
 		"generates a secret, stable for a given seed",
-		({ seed, result }: { seed: string; result: string }) => {
+		({ seed, result }: { seed: TOTPSeed; result: TOTPSecretUri }) => {
 			const secret1 = generateSecret(seed);
 			const secret2 = generateSecret(seed);
 			expect(secret1).toHaveLength(21);
@@ -59,7 +61,7 @@ describe("TOTP", () => {
 		${"something extra long, like more than 21 chars"} | ${"UQNCNGNBLI22WVXQG3MXM"}
 	`(
 		"generates a secret URI, stable for a given seed",
-		({ seed, secret }: { seed: string; secret: string }) => {
+		({ seed, secret }: { seed: TOTPSeed; secret: TOTPSecretUri }) => {
 			const uri = new URL(generateTOTPSecretURI(accountId, seed));
 			const uri2 = new URL(generateTOTPSecretURI(accountId, seed));
 			expect(uri2.href).toBe(uri.href);
@@ -82,25 +84,25 @@ describe("TOTP", () => {
 	);
 
 	test("uri generator throws if the seed is empty", () => {
-		expect(() => generateTOTPSecretURI("bob", "")).toThrow(TypeError);
+		expect(() => generateTOTPSecretURI("bob", "" as TOTPSeed)).toThrow(TypeError);
 	});
 
 	test("uri generator throws if the accountId is empty", () => {
-		expect(() => generateTOTPSecretURI("", "lol")).toThrow(TypeError);
+		expect(() => generateTOTPSecretURI("", "lol" as TOTPSeed)).toThrow(TypeError);
 	});
 
 	const timesAndTokens = [
-		[1_662_395_669_000, "236323"], // before change
+		[1_662_395_669_000, "236323" as TOTPToken], // before change
 
-		[1_662_395_670_000, "454045"], // after change
-		[1_662_395_680_000, "454045"], // middle
-		[1_662_395_699_000, "454045"], // before change
+		[1_662_395_670_000, "454045" as TOTPToken], // after change
+		[1_662_395_680_000, "454045" as TOTPToken], // middle
+		[1_662_395_699_000, "454045" as TOTPToken], // before change
 
-		[1_662_395_700_000, "533745"], // after change
-		[1_662_395_712_000, "533745"], // middle
-		[1_662_395_729_000, "533745"], // before change
+		[1_662_395_700_000, "533745" as TOTPToken], // after change
+		[1_662_395_712_000, "533745" as TOTPToken], // middle
+		[1_662_395_729_000, "533745" as TOTPToken], // before change
 
-		[1_662_395_730_000, "255632"], // after change
+		[1_662_395_730_000, "255632" as TOTPToken], // after change
 	] as const;
 
 	test.each(timesAndTokens)("generates a new 6-digit TOTP every 30 seconds", (now, totp) => {
@@ -112,7 +114,9 @@ describe("TOTP", () => {
 	test.each(timesAndTokens)("returns `true` for a valid TOTP", (now, totp) => {
 		const isValid = verifyTOTP(totp, secret, { now });
 		const isValid2 = verifyTOTP(totp, secret, { now });
-		const isValidButWithUriSecret = verifyTOTP(totp, secretUri.href, { now });
+		const isValidButWithUriSecret = verifyTOTP(totp, secretUri.href as TOTPSecretUri, {
+			now,
+		});
 		expect(isValid).toBeTrue();
 		expect(isValid2).toBe(isValid);
 		expect(isValidButWithUriSecret).toBe(isValid2);
@@ -121,25 +125,25 @@ describe("TOTP", () => {
 	test("returns `false` if the protocol of the given secret URI is not 'otpauth:'", () => {
 		const [now, totp] = timesAndTokens[0]; // these should be valid together
 		const badSecret = urlWithNewProtocol(secretUri, "https");
-		expect(verifyTOTP(totp, badSecret.href, { now })).toBeFalse();
+		expect(verifyTOTP(totp, badSecret.href as TOTPSecretUri, { now })).toBeFalse();
 	});
 
 	test("returns `false` if the given secret URI doesn't have a 'secret' param", () => {
 		const [now, totp] = timesAndTokens[0];
-		expect(verifyTOTP(totp, secretUri.href, { now })).toBeTrue(); // sanity check
+		expect(verifyTOTP(totp, secretUri.href as TOTPSecretUri, { now })).toBeTrue(); // sanity check
 
 		const badSecret = new URL(secretUri.href);
 		badSecret.searchParams.delete("secret");
-		expect(verifyTOTP(totp, badSecret.href, { now })).toBeFalse();
+		expect(verifyTOTP(totp, badSecret.href as TOTPSecretUri, { now })).toBeFalse();
 	});
 
 	test("returns `false` if the given secret URI's 'secret' param is empty", () => {
 		const [now, totp] = timesAndTokens[0];
-		expect(verifyTOTP(totp, secretUri.href, { now })).toBeTrue(); // sanity check
+		expect(verifyTOTP(totp, secretUri.href as TOTPSecretUri, { now })).toBeTrue(); // sanity check
 
 		const badSecret = new URL(secretUri.href);
 		badSecret.searchParams.set("secret", "");
-		expect(verifyTOTP(totp, badSecret.href, { now })).toBeFalse();
+		expect(verifyTOTP(totp, badSecret.href as TOTPSecretUri, { now })).toBeFalse();
 	});
 
 	test.each`
@@ -157,11 +161,13 @@ describe("TOTP", () => {
 		${"aaaaaa"}  | ${"all 'a' characters"}
 		${"      "}  | ${"all ' ' characters"}
 		${""}        | ${"no characters"}
-	`("returns `false` for an invalid TOTP of $desc", ({ totp }: { totp: string }) => {
+	`("returns `false` for an invalid TOTP of $desc", ({ totp }: { totp: TOTPToken }) => {
 		const now = timesAndTokens[0][0]; // valid code is 236323 or timesAndTokens[0][1]
 		const isValid = verifyTOTP(totp, secret, { now });
 		const isValid2 = verifyTOTP(totp, secret, { now });
-		const isValidButWithUriSecret = verifyTOTP(totp, secretUri.href, { now });
+		const isValidButWithUriSecret = verifyTOTP(totp, secretUri.href as TOTPSecretUri, {
+			now,
+		});
 		expect(isValid).toBeFalse();
 		expect(isValid2).toBe(isValid);
 		expect(isValidButWithUriSecret).toBe(isValid2);
@@ -188,7 +194,7 @@ describe("TOTP", () => {
 		${"different secret"}                            | ${"216535"}
 	`(
 		"codes generate differently for different secrets",
-		({ plainSecret, totp }: { plainSecret: string; totp: string }) => {
+		({ plainSecret, totp }: { plainSecret: string; totp: TOTPToken }) => {
 			const now = timesAndTokens[0][0];
 			const secret = base32Encode(Buffer.from(plainSecret));
 			const value = generateTOTP(secret, { now });

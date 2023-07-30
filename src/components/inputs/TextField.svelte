@@ -79,7 +79,6 @@
 	export let maxlength: number = 524288;
 	export let min: number | null = null;
 	export let max: number | null = null;
-	export let autofocus: boolean = false;
 	export let autocomplete: AutocompleteType = "on";
 	export let label: string = "";
 	export let disabled: boolean = false;
@@ -88,6 +87,9 @@
 	export let required: boolean = false;
 	export let showsRequired: boolean = true;
 	export let accentColor: ColorID | "label" = "label";
+	export let invalid: boolean = false;
+	export let valid: boolean = false;
+	export let feedback: string | undefined = undefined;
 
 	let root: HTMLDivElement | undefined;
 	let input: HTMLInputElement | undefined;
@@ -131,6 +133,10 @@
 		input?.focus();
 	}
 
+	export function blur(): void {
+		input?.blur();
+	}
+
 	export function contains(node: Node | null): boolean {
 		return root?.contains(node) ?? false;
 	}
@@ -145,9 +151,11 @@
 			{size}
 			{maxlength}
 			{disabled}
+			{valid}
+			{invalid}
+			{feedback}
 			min={min ?? undefined}
 			max={max ?? undefined}
-			{autofocus}
 			{autocomplete}
 			placeholder={placeholder || (type === "password" ? "********" : "")}
 			{autocapitalize}

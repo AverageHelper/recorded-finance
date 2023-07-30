@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { _ } from "../../i18n";
-	import { accounts, transactionsForAccountByMonth } from "../../store";
+	import { accounts, isLoadingTransactions, transactionsForAccountByMonth } from "../../store";
 	import AddRecordListItem from "../accounts/AddRecordListItem.svelte";
 	import List from "../../components/List.svelte";
+	import ListItem from "../../components/ListItem.svelte";
+	import Spinner from "../../components/Spinner.svelte";
 	import TransactionCreateModal from "./TransactionCreateModal.svelte";
 	import TransactionListItem from "./TransactionListItem.svelte";
 
@@ -45,6 +47,13 @@
 					on:click={startCreatingTransaction}
 				/>
 			</li>
+			{#if $isLoadingTransactions}
+				<li>
+					<ListItem title={$_("common.loading-in-progress")}>
+						<Spinner slot="icon" />
+					</ListItem>
+				</li>
+			{/if}
 			{#each monthTransactions as transaction (transaction.id)}
 				<li class="transaction">
 					<TransactionListItem {transaction} />

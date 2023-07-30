@@ -1,4 +1,4 @@
-import type { CollectionID, User } from "./schemas";
+import type { CollectionID, UID, User } from "./schemas";
 import { isCollectionId } from "./schemas";
 
 export class CollectionReference {
@@ -11,7 +11,7 @@ export class CollectionReference {
 		this.id = id;
 	}
 
-	get uid(): string {
+	get uid(): UID {
 		return this.user.uid;
 	}
 
@@ -40,7 +40,7 @@ export class DocumentReference {
 		return this.parent.user;
 	}
 
-	get uid(): string {
+	get uid(): UID {
 		return this.parent.uid;
 	}
 

@@ -7,7 +7,7 @@
 	export let quote: boolean = false;
 </script>
 
-<div class="location-ea9cfb80" title="id: {location.id}" on:keyup on:click>
+<div class="location" title="id: {location.id}" on:keyup on:click>
 	{#if location.coordinate}
 		<LocationIcon />
 	{:else}
@@ -18,10 +18,10 @@
 	>
 </div>
 
-<style lang="scss" global>
+<style lang="scss">
 	@use "styles/colors" as *;
 
-	.location-ea9cfb80 {
+	.location {
 		background-color: color($secondary-fill);
 		padding: 4pt;
 		cursor: pointer;
@@ -32,7 +32,7 @@
 			}
 		}
 
-		.icon {
+		:global(.icon) {
 			margin-right: 4pt;
 		}
 	}

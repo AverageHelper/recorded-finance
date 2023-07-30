@@ -94,7 +94,9 @@
 					>{$_("home.how-we-work.spa")}</OutLink
 				>
 				<!-- read -->
-				<OutLink to={repoFile("src/transport/cryption.ts")}>{$_("home.how-we-work.read")}</OutLink>
+				<OutLink to={repoFile("src/workers/cryptionWorker.ts")}
+					>{$_("home.how-we-work.read")}</OutLink
+				>
 			</I18N>
 		</p>
 	</section>

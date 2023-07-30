@@ -11,17 +11,19 @@
 	import EditButton from "../../components/buttons/EditButton.svelte";
 	import Fuse from "fuse.js";
 	import List from "../../components/List.svelte";
+	import ListItem from "../../components/ListItem.svelte";
 	import SearchBar from "../../components/SearchBar.svelte";
+	import Spinner from "../../components/Spinner.svelte";
 	import TransactionCreateModal from "../transactions/TransactionCreateModal.svelte";
 	import TransactionMonthListItem from "../transactions/TransactionMonthListItem.svelte";
 	import TransactionListItem from "../transactions/TransactionListItem.svelte";
 	import {
 		accounts,
 		currentBalance,
+		isLoadingTransactions,
 		months,
 		transactionsForAccount,
 		transactionsForAccountByMonth,
-		watchTransactions,
 	} from "../../store";
 
 	export let accountId: string;
@@ -66,8 +68,6 @@
 	$: remainingBalance = $currentBalance[accountId] ?? null;
 	$: isNegative = isDineroNegative(remainingBalance ?? zeroDinero);
 
-	$: account && void watchTransactions(account);
-
 	function goBack() {
 		navigate(-1);
 	}
@@ -84,7 +84,7 @@
 
 <main class="content account-view">
 	<div class="heading">
-		<div class="account-title-1dfc4112">
+		<div class="account-title">
 			<h1>{account?.title || $_("accounts.noun")}</h1>
 			<EditButton>
 				<AccountEdit
@@ -134,6 +134,13 @@
 					on:click={startCreatingTransaction}
 				/>
 			</li>
+			{#if $isLoadingTransactions}
+				<li>
+					<ListItem title={$_("common.loading-in-progress")}>
+						<Spinner slot="icon" />
+					</ListItem>
+				</li>
+			{/if}
 			{#each transactionMonths as [month, monthTransactions] (month)}
 				<li>
 					<TransactionMonthListItem
@@ -155,7 +162,7 @@
 	/>
 {/if}
 
-<style lang="scss" global>
+<style lang="scss">
 	@use "styles/colors" as *;
 
 	.heading {
@@ -165,7 +172,7 @@
 		max-width: 36em;
 		margin: 1em auto;
 
-		> .account-title-1dfc4112 {
+		> .account-title {
 			display: flex;
 			flex-flow: row nowrap;
 			align-items: center;
@@ -183,11 +190,11 @@
 				height: 22pt;
 				min-width: 22pt;
 				width: 22pt;
-				margin-left: 8pt;
+				margin: auto 0;
+			}
 
-				.icon {
-					height: 14pt;
-				}
+			:global(button .icon) {
+				height: 14pt;
 			}
 		}
 
@@ -210,12 +217,10 @@
 	}
 
 	.account-view {
-		:global(ul) {
-			.footer {
-				padding-top: 0.5em;
-				user-select: none;
-				color: color($secondary-label);
-			}
+		:global(ul .footer) {
+			padding-top: 0.5em;
+			user-select: none;
+			color: color($secondary-label);
 		}
 	}
 </style>

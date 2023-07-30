@@ -64,7 +64,7 @@
 					>{$_("security-faq.where-keys.pbkdf2")}</OutLink
 				>
 				<!-- source -->
-				<OutLink to={repoFile("src/transport/cryption.ts")}
+				<OutLink to={repoFile("src/transport/cryptionProtocols.ts")}
 					>{$_("security-faq.where-keys.source")}</OutLink
 				>
 			</I18N>

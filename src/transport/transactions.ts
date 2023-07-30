@@ -1,5 +1,4 @@
-import type { Account } from "../model/Account";
-import type { EPackage } from "./cryption";
+import type { EPackage } from "./cryptionProtocols";
 import type { HashStore } from "./HashStore";
 import type { Transaction, TransactionRecordParams } from "../model/Transaction";
 import type {
@@ -43,18 +42,12 @@ export async function transactionFromSnapshot(
 	});
 }
 
-export async function getTransactionsForAccount(
-	account: Account,
-	dek: HashStore
-): Promise<Record<string, Transaction>> {
-	const snap = await getDocs<TransactionRecordPackage>(transactionsCollection());
+export async function getAllTransactions(dek: HashStore): Promise<Record<string, Transaction>> {
+	const snap = await getDocs(transactionsCollection());
 
 	const result: Record<string, Transaction> = {};
 	for (const doc of snap.docs) {
-		const transaction = await transactionFromSnapshot(doc, dek);
-		if (transaction.accountId === account.id) {
-			result[doc.id] = transaction;
-		}
+		result[doc.id] ??= await transactionFromSnapshot(doc, dek);
 	}
 	return result;
 }

@@ -1,3 +1,5 @@
+import type { UID } from "../../../../../database/schemas";
+
 export interface Params {
-	uid: string;
+	uid: UID;
 }

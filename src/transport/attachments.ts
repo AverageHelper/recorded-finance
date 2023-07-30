@@ -6,13 +6,15 @@ import type {
 } from "./db";
 import type { Attachment, AttachmentRecordParams } from "../model/Attachment";
 import type { StorageReference } from "./storage.js";
-import type { EPackage } from "./cryption";
+import type { EPackage } from "./cryptionProtocols";
 import type { HashStore } from "./HashStore";
+import type { UID } from "./schemas";
 import { attachment, isAttachmentRecord, recordFromAttachment } from "../model/Attachment";
 import { collection, db, doc, recordFromSnapshot, setDoc, deleteDoc } from "./db";
-import { deleteObject, downloadString, ref, uploadString } from "./storage.js";
-import { encrypt, decrypt } from "./cryption";
 import { dataUrlFromFile } from "./getDataAtUrl";
+import { decrypt, encrypt } from "./cryption";
+import { deleteObject, downloadString, ref, uploadString } from "./storage.js";
+import { isUid } from "./schemas";
 import { t } from "../i18n";
 
 export type AttachmentRecordPackage = EPackage<"Attachment">;
@@ -22,7 +24,7 @@ export function attachmentsCollection(): CollectionReference<AttachmentRecordPac
 }
 
 function attachmentRef(
-	uid: string,
+	uid: UID,
 	attachment: Attachment
 ): DocumentReference<AttachmentRecordPackage> {
 	return doc<AttachmentRecordPackage>(db, "attachments", attachment.id);
@@ -38,7 +40,7 @@ function attachmentStorageRef(file: Attachment): StorageReference {
 
 	const uid = parts[1];
 	const fileName = parts[2];
-	if (uid === undefined) throw new TypeError(errMsg);
+	if (!isUid(uid)) throw new TypeError(errMsg);
 	if (fileName === undefined) throw new TypeError(errMsg);
 	const docRef = attachmentRef(uid, file);
 	return ref(db, uid, docRef, fileName);
@@ -76,7 +78,7 @@ export async function attachmentFromSnapshot(
 }
 
 export async function createAttachment(
-	uid: string,
+	uid: UID,
 	file: File,
 	record: Omit<AttachmentRecordParams, "storagePath">,
 	dek: HashStore
@@ -111,7 +113,7 @@ export async function createAttachment(
 }
 
 export async function updateAttachment(
-	uid: string,
+	uid: UID,
 	file: File | null,
 	attachment: Attachment,
 	dek: HashStore
@@ -134,7 +136,7 @@ export async function updateAttachment(
 }
 
 export async function deleteAttachment(
-	uid: string,
+	uid: UID,
 	attachment: Attachment,
 	batch?: WriteBatch
 ): Promise<void> {

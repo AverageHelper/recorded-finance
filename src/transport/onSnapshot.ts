@@ -265,21 +265,32 @@ export function onSnapshot<T extends NonNullable<unknown>>(
 				// Decrypt the message
 				let data: unknown;
 				try {
+					logger.debug("[onSnapshot] Handling PubNub event", event);
 					const rawData: unknown = pubnub.decrypt(event.message as string | object, cipherKey);
-					if (typeof rawData === "string") {
-						logger.debug("[onSnapshot] Parsing data from message string");
+					if (rawData === null) {
+						throw new TypeError(t("error.cryption.empty-result"));
+					} else if (typeof rawData === "string") {
+						logger.debug("[onSnapshot] Parsing data from message string", rawData);
 						data = JSON.parse(rawData) as unknown;
 					} else {
-						logger.debug("[onSnapshot] Taking message as data");
+						logger.debug("[onSnapshot] Taking message as data", rawData);
 						data = rawData;
 					}
 				} catch (error) {
 					logger.error(`[onSnapshot] Failed to decrypt message:`, error);
+					if (error instanceof Error) {
+						onErrorCallback(error);
+					} else if (typeof error === "string") {
+						onErrorCallback(new Error(error));
+					} else {
+						onErrorCallback(new Error(JSON.stringify(error)));
+					}
 					return;
 				}
 
 				// Ensure the data fits our expectations
 				try {
+					logger.debug(`[onSnapshot] Checking that message data matches watcher data shape:`, data);
 					assert(data, watcherData);
 					logger.debug(`[onSnapshot] Received snapshot from channel '${channel}'`);
 				} catch (error) {

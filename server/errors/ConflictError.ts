@@ -1,10 +1,11 @@
 import type { ErrorCode } from "./InternalError";
+import { HttpStatusCode } from "../helpers/HttpStatusCode";
 import { InternalError } from "./InternalError";
 
 export class ConflictError extends InternalError {
 	constructor(code: ErrorCode, message: string) {
 		super({
-			status: 409,
+			status: HttpStatusCode.CONFLICT,
 			code,
 			message,
 			harmless: false,

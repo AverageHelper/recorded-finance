@@ -25,7 +25,8 @@
 		"not-yet": "Not yet",
 		"reset": "Reset",
 		"save-imperative": "Save",
-		"server": "Server"
+		"server": "Server",
+		"no-search-results": "No results"
 	},
 	"actions": {
 		"add-new-noun": "Add a new {noun}",
@@ -397,7 +398,7 @@
 			"subtitle": "location subtitle"
 		},
 		"locations": {
-			"recent": "Recent Locations",
+			"recent": "Recent Locations:",
 			"disclaimer": "To get your current location, you'll need to enable the location service in {settings}."
 		}
 	},

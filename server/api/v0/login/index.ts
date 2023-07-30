@@ -40,7 +40,7 @@ export const POST = apiHandler("POST", async (req, res) => {
 
 	// ** If the user's account has a TOTP secret set and locked-in, validate="totp"
 	const validate: MFAOption | "none" =
-		(user.totpSeed ?? "") && // has a secret
+		user.totpSeed && // has a secret
 		user.requiredAddtlAuth?.includes("totp") === true // totp enabled
 			? "totp"
 			: "none";

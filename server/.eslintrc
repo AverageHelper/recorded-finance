@@ -67,7 +67,7 @@
 
 	"overrides": [
 		{
-			"files": ["**/*.test.ts", "**/__mocks__/**/*.ts"],
+			"files": ["**/*.test.ts", "**/__mocks__/**/*.ts", "./test/**/*.ts"],
 			"extends": ["plugin:prettier/recommended"],
 			"plugins": ["prettier", "@typescript-eslint"],
 			"parser": "@typescript-eslint/parser",
@@ -79,8 +79,25 @@
 				"jest": true
 			},
 			"rules": {
+				"jest/expect-expect": [
+					"warn",
+					{
+						"assertFunctionNames": [
+							"expect",
+							"request**.expect",
+							"request.**.expect",
+							"_request.**.expect"
+						]
+					}
+				],
 				"prettier/prettier": "warn",
 				"max-nested-callbacks": "off" // Unit tests involve a lot of nested callbacks
+			}
+		},
+		{
+			"files": ["scripts/**"],
+			"rules": {
+				"no-console": "off" // These should be able to print directly to the console
 			}
 		}
 	]

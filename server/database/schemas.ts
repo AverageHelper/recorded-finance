@@ -1,10 +1,12 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type { Infer, Struct, StructError } from "superstruct";
-import type { Prisma } from "@prisma/client";
+import type { JsonValue } from "./io";
+import type { Opaque } from "type-fest";
 import { UnreachableCaseError } from "../errors/UnreachableCaseError";
 import {
 	array,
 	assert,
+	define,
 	enums,
 	intersection,
 	is,
@@ -17,6 +19,8 @@ import {
 	type,
 	union,
 } from "superstruct";
+
+export { is };
 
 const NORMAL_MAX_CHARS = 191; // Prisma's `String` default is VARCHAR(191)
 const LARGE_MAX_CHARS = 65_535; // When we override to TEXT
@@ -37,17 +41,16 @@ export function isArrayOf<T>(
 	return isArray(tbd) && tbd.every(elementGuard);
 }
 
-export function isNonEmptyArray<T>(tbd: Array<T>): tbd is NonEmptyArray<T> {
+export function isNonEmptyArray<T>(tbd: ReadonlyArray<T>): tbd is ReadonlyNonEmptyArray<T>;
+
+export function isNonEmptyArray<T>(tbd: Array<T>): tbd is NonEmptyArray<T>;
+
+export function isNonEmptyArray<T>(tbd: ReadonlyArray<T>): tbd is NonEmptyArray<T> {
 	return tbd.length > 0;
 }
 
 export function isObject(tbd: unknown): tbd is Record<string, unknown> {
 	return typeof tbd === "object" && tbd !== null && !Array.isArray(tbd);
-}
-
-/** Returns `true` if the given value matches the given schema. */
-export function isValidForSchema<T>(tbd: unknown, schema: Struct<T>): tbd is T {
-	return is(tbd, schema);
 }
 
 /**
@@ -71,9 +74,22 @@ export const nonemptyString = size(string(), 1, NORMAL_MAX_CHARS);
 export const nonemptyLargeString = size(string(), 1, LARGE_MAX_CHARS);
 // export const nonemptyHugeString = size(string(), 1, HUGE_MAX_CHARS);
 
+/**
+ * A user ID.
+ */
+export type UID = Opaque<string, "UID">;
+const uid = define<UID>("UID", v => is(v, nonemptyString));
+export { uid as uidSchema };
+
+/**
+ * A string that is used to authenticate PubNub subscriptions, both to send and receive.
+ */
+export type PubNubToken = Opaque<string, "PubNubToken">;
+const pubnubToken = define<PubNubToken>("PubNubToken", v => is(v, nonemptyLargeString));
+
 export const jwtPayload = type({
 	/** The ID of the signed-in user */
-	uid: nonemptyString,
+	uid,
 
 	/**
 	 * The MFA authentication methods the user used recently.
@@ -83,7 +99,7 @@ export const jwtPayload = type({
 	validatedWithMfa: array(enums(mfaOptions)),
 
 	/** The token used to authenticate PubNub subscriptions. */
-	pubnubToken: nonemptyLargeString,
+	pubnubToken,
 });
 
 export type JwtPayload = Infer<typeof jwtPayload>;
@@ -102,12 +118,48 @@ export function assertCsrfJwtPayload(tbd: unknown): asserts tbd is CsrfJwtPayloa
 	return assert(tbd, csrfJwtPayload);
 }
 
+/**
+ * A hashed value, usually a password.
+ */
+export type Hash = Opaque<string, "Hash">;
+const hash = define<Hash>("Hash", v => is(v, nonemptyString));
+
+/**
+ * The salt used to hash a value. Combines with the original value
+ * to obtain a {@link Hash}.
+ */
+export type Salt = Opaque<string, "Salt">;
+const salt = define<Salt>("Salt", v => is(v, nonemptyString));
+
+/**
+ * A value used to generate TOTP values. Combines with the server
+ * secret and the current time to obtain a {@link TOTPToken}.
+ */
+export type TOTPSeed = Opaque<string, "TOTPSeed">;
+const totpSeed = define<TOTPSeed>("TOTPSeed", v => is(v, nonemptyString));
+
+/**
+ * A six-digit token, or a longer recovery value.
+ */
+export type TOTPToken = Opaque<string, "TOTPToken">;
+export const totpToken = define<TOTPToken>("TOTPToken", v => is(v, nonemptyString));
+
+export function isTotpToken(tbd: unknown): tbd is TOTPToken {
+	return is(tbd, totpToken);
+}
+
+/**
+ * A key used to encrypt PubNub messages before sending them to PubNub's service.
+ */
+export type AESCipherKey = Opaque<string, "AESCipherKey">;
+const aesCipherKey = define<AESCipherKey>("AESCipherKey", v => is(v, nonemptyString));
+
 export const user = object({
 	/**
 	 * The user's unique ID. This value never changes for the life
 	 * of the account.
 	 */
-	uid: nonemptyString,
+	uid,
 
 	/**
 	 * The user's account ID, used to identify the user at login.
@@ -118,19 +170,19 @@ export const user = object({
 	/**
 	 * The hash of the user's password.
 	 */
-	passwordHash: nonemptyString,
+	passwordHash: hash,
 
 	/**
 	 * The salt with which the user's password was hashed.
 	 */
-	passwordSalt: nonemptyString,
+	passwordSalt: salt,
 
 	/**
 	 * A value which is used to generate a special value that
 	 * will always be a valid TOTP code.
 	 * // TODO: Should we regenerate this every time it's used?
 	 */
-	mfaRecoverySeed: optional(nullable(nonemptyString)),
+	mfaRecoverySeed: optional(nullable(totpSeed)),
 
 	/**
 	 * Additional second-factor auth options that the user has enabled.
@@ -149,12 +201,12 @@ export const user = object({
 	 * on their account and they have not begun to set up TOTP as
 	 * their additional auth.
 	 */
-	totpSeed: optional(nullable(nonemptyString)),
+	totpSeed: optional(nullable(totpSeed)),
 
 	/**
 	 * The AES-256 cipher key used by PubNub for message-level encryption.
 	 */
-	pubnubCipherKey: nonemptyString,
+	pubnubCipherKey: aesCipherKey,
 });
 export type User = Infer<typeof user>;
 
@@ -168,14 +220,14 @@ function sortStrings(a: string, b: string): number {
  * Returns the array if the given primitive is of the correct type.
  * Returns an empty array otherwise.
  */
-function requiredAddtlAuth(primitive: Prisma.JsonValue): Array<MFAOption> {
+function requiredAddtlAuth(primitive: JsonValue): Array<MFAOption> {
 	if (!Array.isArray(primitive)) return [];
 	const result = primitive.filter(isMfaOption).sort(sortStrings);
 	return Array.from(new Set(result));
 }
 
 interface RawRequiredAddtlAuth {
-	requiredAddtlAuth: Prisma.JsonValue;
+	requiredAddtlAuth: JsonValue;
 }
 
 type WithRequiredAddtlAuth<T> = T & { requiredAddtlAuth: Array<MFAOption> };
@@ -209,19 +261,19 @@ const dataItem = object({
 export type DataItem = Infer<typeof dataItem>;
 
 export function isDataItem(tbd: unknown): tbd is DataItem {
-	return isValidForSchema(tbd, dataItem);
+	return is(tbd, dataItem);
 }
 
 const userKeys = object({
 	dekMaterial: nonemptyLargeString,
-	passSalt: nonemptyString,
+	passSalt: salt,
 	oldDekMaterial: optional(nonemptyLargeString),
-	oldPassSalt: optional(nonemptyString),
+	oldPassSalt: optional(salt),
 });
 export type UserKeys = Infer<typeof userKeys>;
 
 export function isUserKeys(tbd: unknown): tbd is UserKeys {
-	return isValidForSchema(tbd, userKeys);
+	return is(tbd, userKeys);
 }
 
 export const allCollectionIds = [
@@ -288,7 +340,7 @@ const documentWriteBatch = union([setBatch, deleteBatch]);
 export type DocumentWriteBatch = Infer<typeof documentWriteBatch>;
 
 export function isDocumentWriteBatch(tbd: unknown): tbd is DocumentWriteBatch {
-	return isValidForSchema(tbd, documentWriteBatch);
+	return is(tbd, documentWriteBatch);
 }
 
 const identified = type({

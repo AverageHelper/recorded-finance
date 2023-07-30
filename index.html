@@ -4,7 +4,16 @@
 		<meta charset="UTF-8" />
 		<meta name="robots" content="noai" />
 		<title>Recorded Finance</title>
-		<link rel="icon" href="/favicon.ico" />
+		<meta property="og:type" content="website" />
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:locale:alternate" content="pt_BR" />
+		<meta property="og:title" content="Recorded Finance" />
+		<meta property="og:description" content="Respectful digital financial records." />
+		<meta property="og:url" content="https://recorded.finance" />
+		<!-- <meta property="og:image" content="https://recorded.finance/embedimage.png" /> -->
+		<!-- <meta property="og:secure_url" content="https://recorded.finance/embedimage.png" /> -->
+		<meta name="theme-color" content="#0AA567" />
+		<!-- <link rel="icon" href="/favicon.ico" /> -->
 		<link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.min.css" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<link rel="stylesheet" href="/styles/setup.scss" />
@@ -126,7 +135,7 @@
 							cannot know what's in your wallet. This works entirely in the browser, using modern
 							standard JavaScript APIs. You can
 							<a
-								href="https://github.com/RecordedFinance/recorded-finance/tree/v0.16.0/src/transport/cryption.ts"
+								href="https://github.com/RecordedFinance/recorded-finance/blob/main/src/workers/cryptionWorker.ts"
 								target="_blank"
 								rel="noopener noreferrer"
 								>check the code yourself</a

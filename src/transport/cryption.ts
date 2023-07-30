@@ -1,49 +1,26 @@
 import type CryptoJS from "crypto-js";
+import type { EPackage, KeyMaterial, Salt } from "./cryptionProtocols";
+import type { Hashed } from "../workers/cryptionWorker";
+import type { Obfuscated } from "./HashStore";
+import { DecryptionError } from "./errors/DecryptionError";
+import { HashStore } from "./HashStore";
+import { isProbablyRawDecryptionError } from "./errors/RawDecryptionError";
 import { isString } from "../helpers/isString";
-import { HashStore } from "./HashStore.js";
 import { t } from "../i18n";
-import "crypto-js/sha512"; // to keep SHA512 algo from tree-shaking away
-import AES from "crypto-js/aes";
-import atob from "atob-lite";
-import btoa from "btoa-lite";
-import CryptoJSCore from "crypto-js/core";
-import EncBase64 from "crypto-js/enc-base64";
-import EncUtf8 from "crypto-js/enc-utf8";
-import PBKDF2 from "crypto-js/pbkdf2";
-import WordArray from "crypto-js/lib-typedarrays";
 
-const Protocols = {
-	v0: {
-		/**
-		 * crypto-js uses 32-bit words for PBKDF2
-		 *
-		 * See https://github.com/brix/crypto-js/blob/develop/docs/QuickStartGuide.wiki#sha-2
-		 * See also https://cryptojs.gitbook.io/docs/#pbkdf2
-		 */
-		wordSizeBits: 32,
-		keySizeBits: 8192, // my first aim was 256 bits, but that was actually WORDS, so this is the number of bits I was doing
-		saltSizeBytes: 32,
-		iterations: 10_000,
-		keyEncoding: EncBase64,
-		dataEncoding: EncUtf8,
-		hasher: CryptoJSCore.algo.SHA512,
-		cipher: AES,
-		derivation: PBKDF2,
+// TODO: Make this a Comlink worker
+import * as worker from "../workers/cryptionWorker";
 
-		/** Generates a cryptographically-secure random value. */
-		randomValue(byteCount: number): string {
-			return WordArray.random(byteCount).toString(EncBase64);
-		},
-	},
-} as const;
-
-const Cryption = Protocols.v0;
+async function wait(): Promise<void> {
+	await new Promise(resolve => setTimeout(resolve, 10));
+}
 
 /**
  * Makes special potatoes that are unique to the `input`.
  */
-export async function hashed(input: string): Promise<string> {
-	return btoa((await derivePKey(input, "salt")).value);
+export async function hashed(input: string): Promise<Hashed> {
+	await wait();
+	return worker.hashed(input);
 }
 
 /**
@@ -52,16 +29,9 @@ export async function hashed(input: string): Promise<string> {
  * @param password The user's plaintext passphrase.
  * @param salt A salt to make the final key more unique.
  */
-export async function derivePKey(password: string, salt: string): Promise<HashStore> {
-	await new Promise(resolve => setTimeout(resolve, 10)); // wait 10 ms for UI
-
-	return new HashStore(
-		Cryption.derivation(password, salt, {
-			iterations: Cryption.iterations,
-			hasher: Cryption.hasher,
-			keySize: Cryption.keySizeBits / Cryption.wordSizeBits,
-		}).toString(Cryption.keyEncoding)
-	);
+export async function derivePKey(password: string, salt: Salt): Promise<HashStore> {
+	await wait();
+	return HashStore.fromHashed(worker.derivePKey(password, salt));
 }
 
 /**
@@ -70,26 +40,11 @@ export async function derivePKey(password: string, salt: string): Promise<HashSt
  * @param pKey The key used to encrypt or decrypt the DEK.
  * @param ciphertext The encrypted DEK material.
  */
-export async function deriveDEK(pKey: HashStore, ciphertext: string): Promise<HashStore> {
+export async function deriveDEK(pKey: HashStore, ciphertext: Obfuscated): Promise<HashStore> {
 	const dekObject = await decrypt({ ciphertext }, pKey);
 	if (!isString(dekObject)) throw new TypeError(t("error.cryption.malformed-key"));
 
 	return new HashStore(atob(dekObject));
-}
-
-async function newDataEncryptionKeyMaterialForDEK(
-	password: string,
-	dek: HashStore
-): Promise<KeyMaterial> {
-	// To make passwords harder to guess
-	const passSalt = btoa(Cryption.randomValue(Cryption.saltSizeBytes));
-
-	// To encrypt the dek
-	const pKey = await derivePKey(password, passSalt);
-	const dekObject = btoa(dek.value);
-	const dekMaterial = (await encrypt(dekObject, "KeyMaterial", pKey)).ciphertext;
-
-	return { dekMaterial, passSalt };
 }
 
 /**
@@ -99,8 +54,8 @@ async function newDataEncryptionKeyMaterialForDEK(
  */
 export async function newDataEncryptionKeyMaterial(password: string): Promise<KeyMaterial> {
 	// To encrypt data
-	const dek = new HashStore(Cryption.randomValue(Cryption.keySizeBits / Cryption.wordSizeBits));
-	return await newDataEncryptionKeyMaterialForDEK(password, dek);
+	await wait();
+	return worker.newDataEncryptionKeyMaterial(password);
 }
 
 /**
@@ -116,16 +71,13 @@ export async function newMaterialFromOldKey(
 	newPassword: string,
 	oldKey: KeyMaterial
 ): Promise<KeyMaterial> {
-	const oldPKey = await derivePKey(oldPassword, oldKey.passSalt);
-	const dek = await deriveDEK(oldPKey, oldKey.dekMaterial);
-	const newPKey = await newDataEncryptionKeyMaterialForDEK(newPassword, dek);
-
-	return {
-		dekMaterial: newPKey.dekMaterial,
-		passSalt: newPKey.passSalt,
-		oldDekMaterial: oldKey.dekMaterial,
-		oldPassSalt: oldKey.passSalt,
-	};
+	try {
+		await wait();
+		return worker.newMaterialFromOldKey(oldPassword, newPassword, oldKey);
+	} catch (error) {
+		if (!isProbablyRawDecryptionError(error)) throw error;
+		throw new DecryptionError(error);
+	}
 }
 
 /**
@@ -141,37 +93,8 @@ export async function encrypt<T extends string>(
 	objectType: T,
 	dek: HashStore
 ): Promise<EPackage<T>> {
-	await new Promise(resolve => setTimeout(resolve)); // give UI a chance to breathe
-
-	const plaintext = JSON.stringify(data);
-	const ciphertext = Cryption.cipher.encrypt(plaintext, dek.value).toString();
-
-	return { ciphertext, objectType, cryption: "v0" };
-}
-
-class DecryptionError extends Error {
-	private constructor(message: string) {
-		super(message);
-		this.name = "DecryptionError";
-	}
-
-	static resultIsEmpty(): DecryptionError {
-		return new DecryptionError(t("error.cryption.empty-result"));
-	}
-
-	static parseFailed(error: unknown, plaintext: string): DecryptionError {
-		let message: string;
-		if (error instanceof Error) {
-			message = error.message;
-		} else {
-			message = JSON.stringify(error);
-		}
-		return new DecryptionError(
-			t("error.cryption.plaintext-not-json", {
-				values: { error: message, plaintext },
-			})
-		);
-	}
+	await wait();
+	return worker.encrypt(data, objectType, dek.hashedValue);
 }
 
 /**
@@ -185,52 +108,14 @@ export async function decrypt<T extends string>(
 	pkg: Pick<EPackage<T>, "ciphertext">,
 	dek: HashStore
 ): Promise<unknown> {
-	await new Promise(resolve => setTimeout(resolve)); // give UI a chance to breathe
-
-	const { ciphertext } = pkg;
-	const plaintext = Cryption.cipher.decrypt(ciphertext, dek.value).toString(Cryption.dataEncoding);
-
-	if (!plaintext) {
-		throw DecryptionError.resultIsEmpty();
-	}
+	await wait();
 
 	try {
-		return JSON.parse(plaintext) as unknown;
+		return worker.decrypt(pkg, dek.hashedValue);
 	} catch (error) {
-		throw DecryptionError.parseFailed(error, plaintext);
+		if (!isProbablyRawDecryptionError(error)) throw error;
+		throw new DecryptionError(error);
 	}
-}
-
-/**
- * User-level encryption material that lives on the server.
- * This data is useless without the user's password.
- */
-export interface KeyMaterial {
-	dekMaterial: string;
-	passSalt: string;
-	oldDekMaterial?: string;
-	oldPassSalt?: string;
-}
-
-export interface EPackage<T extends string> {
-	/**
-	 * The encrypted payload. This data should be unreadable without the user's password.
-	 */
-	ciphertext: string;
-
-	/** A string identifying to the application the type of data encoded. */
-	objectType: T;
-
-	/**
-	 * A string identifying the en/decryption protocol to use.
-	 *
-	 * If this value is not set, `"v0"` is assumed.
-	 *
-	 * `"v0"` uses an AES cipher with a 256-word key (with 32-bit words), a 32-bit salt,
-	 * and 10000 iterations of PBKDF2. Keys are encoded in Base64. Hashes are generated
-	 * using SHA-512.
-	 */
-	cryption?: "v0";
 }
 
 export type DEKMaterial = CryptoJS.lib.CipherParams;
