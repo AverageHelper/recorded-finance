@@ -1,7 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type { Infer, Struct, StructError } from "superstruct";
+import type { JsonValue } from "./io";
 import type { Opaque } from "type-fest";
-import type { Prisma } from "@prisma/client";
 import { UnreachableCaseError } from "../errors/UnreachableCaseError";
 import {
 	array,
@@ -210,14 +210,14 @@ function sortStrings(a: string, b: string): number {
  * Returns the array if the given primitive is of the correct type.
  * Returns an empty array otherwise.
  */
-function requiredAddtlAuth(primitive: Prisma.JsonValue): Array<MFAOption> {
+function requiredAddtlAuth(primitive: JsonValue): Array<MFAOption> {
 	if (!Array.isArray(primitive)) return [];
 	const result = primitive.filter(isMfaOption).sort(sortStrings);
 	return Array.from(new Set(result));
 }
 
 interface RawRequiredAddtlAuth {
-	requiredAddtlAuth: Prisma.JsonValue;
+	requiredAddtlAuth: JsonValue;
 }
 
 type WithRequiredAddtlAuth<T> = T & { requiredAddtlAuth: Array<MFAOption> };

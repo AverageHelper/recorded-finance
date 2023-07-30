@@ -12,7 +12,7 @@ import type {
 	UserKeys,
 } from "./schemas";
 import type { CollectionReference, DocumentReference } from "./references";
-import type { FileData } from "@prisma/client";
+import type { FileData } from "./io";
 import type { JWT } from "../auth/jwt";
 import type { Logger } from "../logger";
 import { computeRequiredAddtlAuth } from "./schemas";
@@ -21,6 +21,7 @@ import { generateAESCipherKey } from "../auth/generators";
 import { logger as defaultLogger } from "../logger";
 import { maxSpacePerUser } from "../auth/limits";
 import { NotFoundError } from "../errors/NotFoundError";
+import { publishWriteForRef } from "../auth/pubnub";
 import { UnreachableCaseError } from "../errors/UnreachableCaseError";
 
 interface UserStats {
@@ -334,4 +335,142 @@ export async function fetchDbDocs(
 	// Fetch the data
 	// TODO: Use findMany or a transaction instead
 	return (await Promise.all(refs.map(doc => fetchDbDoc(doc, logger)))) as NonEmptyArray<Snapshot>;
+}
+
+// MARK: - Watchers
+
+export type Unsubscribe = () => void;
+
+type SDataChangeCallback = (newData: Readonly<IdentifiedDataItem> | null) => void;
+type PDataChangeCallback = (newData: ReadonlyArray<Readonly<IdentifiedDataItem>>) => void;
+
+interface _Watcher {
+	readonly plurality: "single" | "plural";
+	readonly id: string;
+	readonly onChange: SDataChangeCallback | PDataChangeCallback;
+}
+
+interface DocumentWatcher extends _Watcher {
+	readonly plurality: "single";
+	readonly collectionId: string;
+	readonly onChange: SDataChangeCallback;
+}
+
+interface CollectionWatcher extends _Watcher {
+	readonly plurality: "plural";
+	readonly onChange: PDataChangeCallback;
+}
+
+// TODO: Cloudflare doesn't like global state. Figure another way to do this. Durable Objects?
+const documentWatchers = new Map<string, DocumentWatcher>();
+const collectionWatchers = new Map<string, CollectionWatcher>();
+
+export function watchUpdatesToDocument(
+	ref: DocumentReference,
+	onChange: SDataChangeCallback
+): Unsubscribe {
+	defaultLogger.debug(`Watching updates to document at ${ref.path}`);
+	const handle: DocumentWatcher = {
+		id: ref.id,
+		collectionId: ref.parent.id,
+		onChange,
+		plurality: "single",
+	};
+	documentWatchers.set(handle.id, handle);
+
+	// Send all data at path
+	/* eslint-disable promise/prefer-await-to-then */
+	void fetchDbDoc(ref)
+		.then(async ({ ref, data }) => {
+			if (data) {
+				await informWatchersForDocument(ref, data);
+			}
+		})
+		.catch((error: unknown) => {
+			defaultLogger.error(
+				`Error on initial data load from document watcher at path ${ref.path}:`,
+				error
+			);
+			defaultLogger.debug(
+				`Removing listener '${handle.id}' for document ${ref.path} due to error on initial load`
+			);
+			documentWatchers.delete(handle.id);
+		});
+	/* eslint-enable promise/prefer-await-to-then */
+
+	return (): void => {
+		defaultLogger.debug(`Removing listener '${handle.id}' for document ${ref.path}`);
+		documentWatchers.delete(handle.id);
+	};
+}
+
+export function watchUpdatesToCollection(
+	ref: CollectionReference,
+	onChange: PDataChangeCallback
+): Unsubscribe {
+	const handle: CollectionWatcher = { id: ref.id, onChange, plurality: "plural" };
+	collectionWatchers.set(handle.id, handle);
+
+	// Send "added" for all data at path
+	/* eslint-disable promise/prefer-await-to-then */
+	void fetchDbCollection(ref)
+		.then(async data => {
+			await informWatchersForCollection(ref, data);
+		})
+		.catch((error: unknown) => {
+			defaultLogger.error(
+				`Error on initial data load from collection watcher at path ${ref.path}:`,
+				error
+			);
+			defaultLogger.debug(
+				`Removing listener '${handle.id}' for collection ${ref.path} due to error on initial load`
+			);
+			collectionWatchers.delete(handle.id);
+		});
+	/* eslint-enable promise/prefer-await-to-then */
+
+	return (): void => {
+		defaultLogger.debug(`Removing listener '${handle.id}' for collection ${ref.path}`);
+		collectionWatchers.delete(handle.id);
+	};
+}
+
+export async function informWatchersForDocument(
+	ref: DocumentReference,
+	newItem: Readonly<IdentifiedDataItem> | null
+): Promise<void> {
+	const docListeners = Array.from(documentWatchers.values()).filter(
+		w => w.id === ref.id && w.collectionId === ref.parent.id
+	);
+	const collectionListeners = Array.from(collectionWatchers.values()) //
+		.filter(w => w.id === ref.parent.id);
+
+	if (docListeners.length + collectionListeners.length > 0) {
+		defaultLogger.debug(
+			`Informing ${
+				docListeners.length + collectionListeners.length
+			} listener(s) about changes to document ${ref.path}`
+		);
+	}
+	await Promise.all(docListeners.map(l => l.onChange(newItem)));
+	await publishWriteForRef(ref, newItem);
+	const newCollection = await fetchDbCollection(ref.parent);
+	await Promise.all(collectionListeners.map(l => l.onChange(newCollection)));
+	await publishWriteForRef(ref.parent, newCollection);
+}
+
+export async function informWatchersForCollection(
+	ref: CollectionReference,
+	newItems: ReadonlyArray<IdentifiedDataItem>
+): Promise<void> {
+	const listeners = Array.from(collectionWatchers.values()) //
+		.filter(w => w.id === ref.id);
+
+	if (listeners.length > 0) {
+		defaultLogger.debug(
+			`Informing ${listeners.length} listener(s) about changes to collection ${ref.path}`
+		);
+	}
+	await Promise.all(listeners.map(l => l.onChange(newItems)));
+	await publishWriteForRef(ref, newItems);
 }

@@ -14,14 +14,14 @@ export function db(): Router {
 			.ws("/users/:uid/:collectionId", webSocket)
 			.ws("/users/:uid/:collectionId/:documentId", webSocket)
 			// Each of these should call `requireAuth` from here on in
-			.post("/users/:uid", asyncWrapper(dataBatch.POST))
+			.all("/users/:uid", asyncWrapper(dataBatch.POST))
 			.get("/users/:uid/attachments/:documentId/blob/:fileName", asyncWrapper(fileBlob.GET))
 			.post("/users/:uid/attachments/:documentId/blob/:fileName", asyncWrapper(fileBlob.POST))
-			.delete("/users/:uid/attachments/:documentId/blob/:fileName", asyncWrapper(fileBlob.DELETE))
+			.all("/users/:uid/attachments/:documentId/blob/:fileName", asyncWrapper(fileBlob.DELETE))
 			.get("/users/:uid/:collectionId", asyncWrapper(dataCollection.GET))
-			.delete("/users/:uid/:collectionId", asyncWrapper(dataCollection.DELETE))
+			.all("/users/:uid/:collectionId", asyncWrapper(dataCollection.DELETE))
 			.get("/users/:uid/:collectionId/:documentId", asyncWrapper(dataDocument.GET))
 			.post("/users/:uid/:collectionId/:documentId", asyncWrapper(dataDocument.POST))
-			.delete("/users/:uid/:collectionId/:documentId", asyncWrapper(dataDocument.DELETE))
+			.all("/users/:uid/:collectionId/:documentId", asyncWrapper(dataDocument.DELETE))
 	);
 }

@@ -2,7 +2,7 @@ import type { Config } from "@jest/types";
 
 const config: Config.InitialOptions = {
 	displayName: "client",
-	clearMocks: true,
+	resetMocks: true,
 	preset: "ts-jest/presets/default-esm",
 	setupFilesAfterEnv: ["jest-extended/all"],
 	testEnvironment: "node",

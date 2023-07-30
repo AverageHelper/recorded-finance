@@ -39,6 +39,7 @@ export async function metadataFromRequest(req: APIRequest, res: APIResponse): Pr
 
 	const payload = await verifyJwt(token).catch((error: unknown) => {
 		if (error instanceof JsonWebTokenError) {
+			// TODO: Check specifically for `TokenExpiredError`
 			logger.debug(`JWT failed to verify because ${error.message}`);
 			throw new UnauthorizedError("expired-token");
 		} else {

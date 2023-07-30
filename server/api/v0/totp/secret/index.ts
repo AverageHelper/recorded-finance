@@ -10,8 +10,6 @@ import { totpToken } from "../../../../database/schemas";
 import { UnauthorizedError } from "../../../../errors/UnauthorizedError";
 import { upsertUser } from "../../../../database/write";
 
-// MARK: - GET
-
 export const GET = apiHandler("GET", async (req, res) => {
 	// ** TOTP Registration
 
@@ -38,15 +36,13 @@ export const GET = apiHandler("GET", async (req, res) => {
 		passwordHash: user.passwordHash,
 		passwordSalt: user.passwordSalt,
 		pubnubCipherKey: user.pubnubCipherKey,
-		requiredAddtlAuth: [], // TODO: Leave other 2FA alone
+		requiredAddtlAuth: user.requiredAddtlAuth?.filter(t => t !== "totp") ?? [],
 		totpSeed,
 		uid,
 	});
 
 	respondSuccess(res, { secret });
 });
-
-// MARK: - DELETE
 
 export const DELETE = apiHandler("DELETE", async (req, res) => {
 	const reqBody = type({
@@ -66,18 +62,18 @@ export const DELETE = apiHandler("DELETE", async (req, res) => {
 	const givenPassword = req.body.password;
 	const token = req.body.token;
 
+	// Validate the user's passphrase
+	const isPasswordGood = await compare(givenPassword, user.passwordHash);
+	if (!isPasswordGood) {
+		throw new UnauthorizedError("wrong-credentials");
+	}
+
 	// If the user has no secret, treat the secret as deleted and return 200
 	if (user.totpSeed === null || user.totpSeed === undefined) {
 		respondSuccess(res);
 		return;
 	}
 	const secret = generateTOTPSecretURI(user.currentAccountId, user.totpSeed);
-
-	// Validate the user's passphrase
-	const isPasswordGood = await compare(givenPassword, user.passwordHash);
-	if (!isPasswordGood) {
-		throw new UnauthorizedError("wrong-credentials");
-	}
 
 	// Re-validate TOTP
 	const isCodeGood = verifyTOTP(token, secret);
@@ -88,11 +84,11 @@ export const DELETE = apiHandler("DELETE", async (req, res) => {
 	// Delete the secret and disable 2FA
 	await upsertUser({
 		currentAccountId: accountId,
-		mfaRecoverySeed: user.mfaRecoverySeed ?? null,
+		mfaRecoverySeed: null,
 		passwordHash: user.passwordHash,
 		passwordSalt: user.passwordSalt,
 		pubnubCipherKey: user.pubnubCipherKey,
-		requiredAddtlAuth: [], // TODO: Leave other 2FA alone
+		requiredAddtlAuth: user.requiredAddtlAuth?.filter(t => t !== "totp") ?? [],
 		totpSeed: null,
 		uid,
 	});

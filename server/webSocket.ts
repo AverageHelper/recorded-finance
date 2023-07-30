@@ -1,10 +1,13 @@
 import type { Infer } from "superstruct";
 import type { ReadonlyDeep } from "type-fest";
-import type { Unsubscribe, User } from "./database";
+import type { Unsubscribe } from "./database/read";
+import type { User } from "./database/schemas";
 import type { WebsocketRequestHandler } from "express-ws";
 import { array, enums, nullable, object, optional, union } from "superstruct";
+import { CollectionReference, DocumentReference } from "./database/references";
 import { logger } from "./logger";
 import { requireAuth } from "./auth/requireAuth";
+import { watchUpdatesToCollection, watchUpdatesToDocument } from "./database/read";
 import { WebSocketCode } from "./networking/WebSocketCode";
 import { ws } from "./networking/websockets";
 import {
@@ -14,12 +17,6 @@ import {
 	nonemptyString,
 	uidSchema,
 } from "./database/schemas";
-import {
-	CollectionReference,
-	DocumentReference,
-	watchUpdatesToCollection,
-	watchUpdatesToDocument,
-} from "./database";
 
 const watcherData = object({
 	message: nonemptyString,
