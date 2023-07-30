@@ -2,7 +2,8 @@
 
 import "../helpers/assertTsNode";
 import type { CollectionID, UID } from "../database/schemas";
-import { allCollectionIds, CollectionReference } from "../database";
+import { allCollectionIds } from "../database/schemas";
+import { CollectionReference } from "../database/references";
 import {
 	countFileBlobsForUser,
 	countRecordsInCollection,

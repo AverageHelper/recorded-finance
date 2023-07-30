@@ -1,6 +1,6 @@
 import type { Request as ExpressRequest } from "express";
 import type { Struct } from "superstruct";
-import type { ValueIteratorTypeGuard } from "../database";
+import type { ValueIteratorTypeGuard } from "../database/schemas";
 import type { WebsocketRequestHandler } from "express-ws";
 import type { WebSocket } from "ws";
 import { assertSchema, isObject } from "../database/schemas";

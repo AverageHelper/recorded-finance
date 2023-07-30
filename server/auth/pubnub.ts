@@ -2,7 +2,6 @@ import type { CollectionReference, DocumentReference } from "../database/referen
 import type { IdentifiedDataItem, PubNubToken, UID, User } from "../database/schemas";
 import { logger } from "../logger";
 import { requireEnv } from "../environment";
-import { userWithUid } from "../database/read";
 import PubNub from "pubnub";
 
 /**
@@ -136,6 +135,7 @@ async function pubnubForUser<T>(
 	userOrUid: User | UID,
 	cb: (pubnub: PubNub, cipherKey: string) => T | Promise<T>
 ): Promise<T> {
+	const { userWithUid } = await import("../database/read");
 	const user = typeof userOrUid === "string" ? await userWithUid(userOrUid) : userOrUid;
 	if (!user)
 		throw new TypeError(

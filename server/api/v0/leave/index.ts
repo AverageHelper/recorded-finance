@@ -21,7 +21,7 @@ export const POST = apiHandler("POST", async (req, res) => {
 	}
 
 	// Ask for full credentials, so we aren't leaning on a repeatable token
-	const givenAccountId = req.body.account;
+	const givenAccountId = req.body.account; // TODO: Get this from auth state instead
 	const givenPassword = req.body.password;
 
 	// ** Get credentials
@@ -44,8 +44,7 @@ export const POST = apiHandler("POST", async (req, res) => {
 		// TOTP is required
 		const token = req.body.token;
 
-		if (typeof token !== "string" || token === "")
-			throw new UnauthorizedError("missing-mfa-credentials");
+		if (typeof token !== "string") throw new UnauthorizedError("missing-mfa-credentials");
 
 		const secret = generateTOTPSecretURI(storedUser.currentAccountId, storedUser.totpSeed);
 		const isValid = verifyTOTP(token, secret);

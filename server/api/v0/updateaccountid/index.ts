@@ -22,7 +22,7 @@ export const POST = apiHandler("POST", async (req, res) => {
 	}
 
 	// Ask for full credentials, so we aren't leaning on a repeatable token
-	const givenAccountId = req.body.account;
+	const givenAccountId = req.body.account; // TODO: Get this from auth state instead
 	const newGivenAccountId = req.body.newaccount;
 	const givenPassword = req.body.password;
 
