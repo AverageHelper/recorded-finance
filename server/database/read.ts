@@ -345,22 +345,23 @@ type SDataChangeCallback = (newData: Readonly<IdentifiedDataItem> | null) => voi
 type PDataChangeCallback = (newData: ReadonlyArray<Readonly<IdentifiedDataItem>>) => void;
 
 interface _Watcher {
-	plurality: "single" | "plural";
-	id: string;
-	onChange: SDataChangeCallback | PDataChangeCallback;
+	readonly plurality: "single" | "plural";
+	readonly id: string;
+	readonly onChange: SDataChangeCallback | PDataChangeCallback;
 }
 
 interface DocumentWatcher extends _Watcher {
-	plurality: "single";
-	collectionId: string;
-	onChange: SDataChangeCallback;
+	readonly plurality: "single";
+	readonly collectionId: string;
+	readonly onChange: SDataChangeCallback;
 }
 
 interface CollectionWatcher extends _Watcher {
-	plurality: "plural";
-	onChange: PDataChangeCallback;
+	readonly plurality: "plural";
+	readonly onChange: PDataChangeCallback;
 }
 
+// TODO: Cloudflare doesn't like global state. Figure another way to do this. Durable Objects?
 const documentWatchers = new Map<string, DocumentWatcher>();
 const collectionWatchers = new Map<string, CollectionWatcher>();
 
