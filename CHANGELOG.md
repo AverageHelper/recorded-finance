@@ -5,13 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.18.2] - 2023-05-22
+## [0.18.3] - 2023-05-22
 ### Fixed
 - Our Express environment now sends the `Access-Control-Allow-Headers` header with each request, as our Vercel environment does.
 - Our Express environment no longer sends HTTP 404 when making a request to a valid endpoint using the wrong method. We now, correctly, send HTTP 405, as our Vercel environment does.
 
 ### Security
 - `DELETE /v0/totp/secret` now sends HTTP 403 when the password is incorrect, even when the user does not have TOTP enabled. Before, this endpoint would ignore the password field and send HTTP 200 if the user does not have TOTP enabled. This was't _much_ of a security issue, since that endpoint and method requires a valid session anyway, but since a password is a required field to do a delete, it makes sense to not respond HTTP 200 unless the password is correct.
+
+## [0.18.2] - 2023-07-30
+### Security
+- Updated vulnerable dependencies
 
 ## [0.18.1] - 2023-03-24
 ### Added
@@ -468,6 +472,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial commit
 
+[0.18.3]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.2...v0.18.3
 [0.18.2]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.1...v0.18.2
 [0.18.1]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.0...v0.18.1
 [0.18.0]: https://github.com/RecordedFinance/recorded-finance/compare/v0.17.0...v0.18.0
