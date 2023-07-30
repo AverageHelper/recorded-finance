@@ -44,7 +44,7 @@ export async function metadataFromRequest(req: APIRequest, res: APIResponse): Pr
 			throw new UnauthorizedError("expired-token");
 		} else {
 			logger.error(`JWT failed to verify due to an unknown error:`, error);
-			throw new InternalError();
+			throw new InternalError({ code: "unknown" });
 		}
 	});
 

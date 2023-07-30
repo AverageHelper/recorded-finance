@@ -12,12 +12,14 @@ const errorCodes = [
 	"not-found",
 	"not-implemented",
 	"not-owner",
+	"storage-quota-exceeded",
 	"too-many-requests",
 	"totp-conflict",
 	"totp-secret-missing",
 	"wrong-credentials",
 	"wrong-mfa-credentials",
 	"unknown",
+	"user-quota-exceeded",
 ] as const;
 
 type ErrorCode = (typeof errorCodes)[number];

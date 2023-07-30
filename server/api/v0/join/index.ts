@@ -6,7 +6,7 @@ import { generateAESCipherKey, generateHash, generateSalt } from "../../../auth/
 import { is, nonempty, string, type } from "superstruct";
 import { MAX_USERS } from "../../../auth/limits";
 import { newAccessTokens, setSession } from "../../../auth/jwt";
-import { NotEnoughRoomError } from "../../../errors/NotEnoughRoomError";
+import { NotEnoughUserSlotsError } from "../../../errors/NotEnoughUserSlotsError";
 import { numberOfUsers, statsForUser, userWithAccountId } from "../../../database/read";
 import { respondSuccess } from "../../../responses";
 import { upsertUser } from "../../../database/write";
@@ -37,7 +37,7 @@ export const POST = apiHandler("POST", async (req, res) => {
 	// ** Make sure we arent' full
 	const limit = MAX_USERS;
 	const current = await numberOfUsers();
-	if (current >= limit) throw new NotEnoughRoomError("We're full at the moment. Try again later!");
+	if (current >= limit) throw new NotEnoughUserSlotsError();
 
 	// ** Check credentials are unused
 	const storedUser = await userWithAccountId(givenAccountId);

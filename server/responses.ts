@@ -93,5 +93,5 @@ export function respondError(res: APIResponse, err: InternalError): void {
  * Sends HTTP 500, then ends the connection.
  */
 export function respondInternalError(res: APIResponse): void {
-	respondError(res, new InternalError());
+	respondError(res, new InternalError({ code: "unknown" }));
 }

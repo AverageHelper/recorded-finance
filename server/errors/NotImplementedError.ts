@@ -6,7 +6,7 @@ export class NotImplementedError extends InternalError {
 		super({
 			status: HttpStatusCode.NOT_IMPLEMENTED,
 			code: "not-implemented",
-			// FIXME: This seems silly
+			// FIXME: This seems grammatically silly
 			message: `${nameOfFeature} is not implemented yet`,
 		});
 		this.name = "NotImplementedError";

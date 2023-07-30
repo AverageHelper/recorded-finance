@@ -191,12 +191,15 @@ describe("Routes", () => {
 			expectInaction();
 		});
 
-		test("answers 507 if the server is cannot accept new users", async () => {
+		test("answers 423 if the server is cannot accept new users", async () => {
 			mockRead.numberOfUsers.mockResolvedValueOnce(Number.POSITIVE_INFINITY);
 			await request("POST", PATH)
 				.send({ account: "nonempty", password: "nonempty" })
-				.expect(507)
-				.expect({ message: "We're full at the moment. Try again later!", code: "unknown" });
+				.expect(423)
+				.expect({
+					message: "We're full at the moment. Try again later!",
+					code: "user-quota-exceeded",
+				});
 			expectInaction();
 		});
 
