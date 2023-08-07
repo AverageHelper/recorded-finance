@@ -79,7 +79,8 @@
 		"@typescript-eslint/no-dynamic-delete": "off",
 		"new-cap": "off", // Many decorators do not follow normal function conventions
 		"unicorn/catch-error-name": ["warn", { "name": "error" }],
-		"unicorn/numeric-separators-style": "warn"
+		"unicorn/numeric-separators-style": "warn",
+		"unicorn/no-unused-properties": "warn"
 	},
 
 	"overrides": [

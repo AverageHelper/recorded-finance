@@ -6,8 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Comprehensive unit test line coverage of REST endpoints.
+
 ### Fixed
 - Clarified and documented API responses for when the user is out of storage, and when our server isn't accepting new users.
+- Respond HTTP 200, instead of 404, when deleting any unknown collection. If the collection doesn't exist, it must already be gone!
+- Respond HTTP 400, instead of 404, when trying to write data to an unknown collection. If later we add new collection IDs, a 400 still makes more sense than a 404. If later we permit arbitrary IDs, a 404 won't make any sense at all.
 
 ## [0.18.3] - 2023-05-22
 ### Fixed
