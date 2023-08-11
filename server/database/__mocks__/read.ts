@@ -19,6 +19,7 @@ import type {
 	informWatchersForDocument as _informWatchersForDocument,
 	informWatchersForCollection as _informWatchersForCollection,
 } from "../read";
+import type { DocumentReference } from "../references";
 import { jest } from "@jest/globals";
 
 export const statsForUser = jest.fn<typeof _statsForUser>();
@@ -59,6 +60,10 @@ export const informWatchersForDocument = jest.fn<typeof _informWatchersForDocume
 
 export const informWatchersForCollection = jest.fn<typeof _informWatchersForCollection>();
 
+// FIXME: We can't see `NonEmptyArray` in here for some reason, so we must redefine the type locally
+type NonEmptyArray<T> = [T, ...Array<T>];
+type ReadonlyNonEmptyArray<T> = readonly [T, ...ReadonlyArray<T>];
+
 beforeEach(() => {
 	statsForUser.mockResolvedValue({ totalSpace: 0, usedSpace: 0 });
 	numberOfUsers.mockResolvedValue(0);
@@ -73,8 +78,15 @@ beforeEach(() => {
 	fetchDbCollection.mockResolvedValue([]);
 	userWithUid.mockResolvedValue(null);
 	userWithAccountId.mockResolvedValue(null);
-	fetchDbDoc.mockRejectedValue(new EvalError("This is a test"));
-	fetchDbDocs.mockRejectedValue(new EvalError("This is a test"));
+	fetchDbDoc.mockImplementation(ref => Promise.resolve({ ref, data: null }));
+	fetchDbDocs.mockImplementation(refs =>
+		Promise.resolve(
+			(refs as ReadonlyNonEmptyArray<DocumentReference>).map(ref => ({
+				ref,
+				data: null,
+			})) as NonEmptyArray<{ ref: DocumentReference; data: null }>
+		)
+	);
 	watchUpdatesToDocument.mockReturnValue(() => undefined);
 	watchUpdatesToCollection.mockReturnValue(() => undefined);
 	informWatchersForDocument.mockResolvedValue(undefined);

@@ -29,8 +29,10 @@ function documentRef(user: User, req: APIRequest): DocumentReference | null {
 export const GET = apiHandler("GET", async (req, res) => {
 	const { documentId } = pathSegments(req, "documentId");
 	if (documentId === ".websocket") {
-		logger.debug(`Received GET request for a document called '.websocket'. Why are we here?`);
-		return; // we were never meant to be here
+		logger.debug(
+			`Received GET request for a document called '.websocket'. Why are we here? It seems likely that the user intended to start a WebSocket session, but by accident they requested the WebSocket document.`
+		);
+		// We'll proceed, since the unknown document will be considered empty anyhow
 	}
 
 	const user = await requireAuth(req, res, true);
@@ -49,11 +51,11 @@ export const POST = apiHandler("POST", async (req, res) => {
 	const user = await requireAuth(req, res, true);
 	const uid = user.uid;
 
+	const ref = documentRef(user, req);
+	if (!ref) throw new BadRequestError(); // Unknown collection. The client should know what collections we support.
+
 	const providedData = req.body as unknown;
 	if (!isDataItem(providedData) && !isUserKeys(providedData)) throw new BadRequestError();
-
-	const ref = documentRef(user, req);
-	if (!ref) throw new NotFoundError();
 
 	await setDocument(ref, providedData);
 	const { totalSpace, usedSpace } = await statsForUser(uid);
@@ -65,12 +67,14 @@ export const DELETE = apiHandler("DELETE", async (req, res) => {
 	const uid = user.uid;
 
 	const ref = documentRef(user, req);
-	if (!ref) throw new NotFoundError();
+	if (!ref) {
+		// Unknown collection? Call the document gone!
+		const { totalSpace, usedSpace } = await statsForUser(uid);
+		return respondSuccess(res, { totalSpace, usedSpace });
+	}
 
 	// Delete the referenced database entry
 	await deleteDocument(ref);
-
-	// TODO: Delete any associated files
 
 	const { totalSpace, usedSpace } = await statsForUser(uid);
 
