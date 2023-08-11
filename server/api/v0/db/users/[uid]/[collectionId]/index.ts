@@ -20,8 +20,10 @@ function collectionRef(user: User, req: APIRequest): CollectionReference | null 
 export const GET = apiHandler("GET", async (req, res) => {
 	const { collectionId } = pathSegments(req, "collectionId");
 	if (collectionId === ".websocket") {
-		logger.debug(`Received GET request for a collection called '.websocket'. Why are we here?`);
-		return; // we were never meant to be here
+		logger.debug(
+			`Received GET request for a collection called '.websocket'. Why are we here? It seems likely that the user intended to start a WebSocket session, but by accident they requested the WebSocket collection.`
+		);
+		// We'll proceed, since the unknown collection will result in a 404 anyhow
 	}
 
 	const user = await requireAuth(req, res, true);
@@ -37,7 +39,11 @@ export const DELETE = apiHandler("DELETE", async (req, res) => {
 	const uid = user.uid;
 
 	const ref = collectionRef(user, req);
-	if (!ref) throw new NotFoundError();
+	if (!ref) {
+		// Unknown collection? Call it gone!
+		const { totalSpace, usedSpace } = await statsForUser(uid);
+		return respondSuccess(res, { totalSpace, usedSpace });
+	}
 
 	// Delete the referenced database entries
 	await deleteCollection(ref);

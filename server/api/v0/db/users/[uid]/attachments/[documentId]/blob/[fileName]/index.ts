@@ -56,25 +56,6 @@ function requireFilePathParameters(req: APIRequest): Required<Params> {
 	};
 }
 
-export const DELETE = apiHandler("DELETE", async (req, res) => {
-	await requireAuth(req, res, true);
-	const params = pathSegments(req, "uid", "documentId", "fileName");
-
-	const userId = params.uid;
-
-	const { fileName } = requireFilePathParameters(req);
-	await destroyFileData(userId, fileName);
-
-	// Report the user's new usage
-	const { totalSpace, usedSpace } = await statsForUser(userId);
-	const userSizeDesc = simplifiedByteCount(usedSpace);
-	const maxSpacDesc = simplifiedByteCount(maxSpacePerUser);
-	logger.debug(`User ${userId} has used ${userSizeDesc} of ${maxSpacDesc}`);
-
-	// When done, get back to the caller with new stats
-	respondSuccess(res, { totalSpace, usedSpace });
-});
-
 interface FileData {
 	contents: string;
 	_id: string;
@@ -132,4 +113,23 @@ export const POST = apiHandler("POST", async (req, res) => {
 	}
 });
 
-export default dispatchRequests({ GET, DELETE, POST });
+export const DELETE = apiHandler("DELETE", async (req, res) => {
+	await requireAuth(req, res, true);
+	const params = pathSegments(req, "uid", "documentId", "fileName");
+
+	const userId = params.uid;
+
+	const { fileName } = requireFilePathParameters(req);
+	await destroyFileData(userId, fileName);
+
+	// Report the user's new usage
+	const { totalSpace, usedSpace } = await statsForUser(userId);
+	const userSizeDesc = simplifiedByteCount(usedSpace);
+	const maxSpacDesc = simplifiedByteCount(maxSpacePerUser);
+	logger.debug(`User ${userId} has used ${userSizeDesc} of ${maxSpacDesc}`);
+
+	// When done, get back to the caller with new stats
+	respondSuccess(res, { totalSpace, usedSpace });
+});
+
+export default dispatchRequests({ GET, POST, DELETE });

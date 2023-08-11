@@ -91,12 +91,14 @@
 			"not-found": "Nenhum dado encontrado",
 			"not-implemented": "Esse recurso ainda não foi implementado",
 			"not-owner": "Não autorizado",
+			"storage-quota-exceeded": "Não há espaço suficiente para escrever seus dados. Apague primeiro algumas coisas.",
 			"too-many-requests": "Você está sendo velocidade limitada",
 			"totp-conflict": "Você já tem a autenticação TOTP habilitada",
 			"totp-secret-missing": "Você não tem um segredo TOTP para validar",
 			"wrong-credentials": "ID da conta ou senha incorreta",
 			"wrong-mfa-credentials": "Esse código é inválido",
-			"unknown": "Não tenho certeza do que deu errado. Talvez tente novamente"
+			"unknown": "Não tenho certeza do que deu errado. Talvez tente novamente",
+			"user-quota-exceeded": "Estamos cheios no momento. Tente novamente mais tarde!"
 		},
 		"sanity": {
 			"empty-param": "O parâmetro '{name}' não pode estar vazio",

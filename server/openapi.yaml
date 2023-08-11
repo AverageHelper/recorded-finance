@@ -161,6 +161,20 @@ paths:
                     type: string
                     enum:
                       - "An account with that ID already exists"
+        423:
+          description: We aren't accepting new users right now.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "user-quota-exceeded"
+                  message:
+                    type: string
+                    example: "We're full at the moment. Try again later!"
   "/v0/login":
     post:
       tags:
@@ -946,7 +960,7 @@ paths:
                       - "missing-token"
                       - "not-owner"
         404:
-          description: The collection not found
+          description: The collection was not found.
           content:
             application/json:
               schema:
@@ -1410,6 +1424,20 @@ paths:
                     type: string
                     enum:
                       - "No data found"
+        507:
+          description: The user's storage quota has been exceeded. The user should delete some things before proceeding.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - "storage-quota-exceeded"
+                  message:
+                    type: string
+                    example: "There is not enough room to write your data. Delete some stuff first."
     delete:
       tags:
         - database

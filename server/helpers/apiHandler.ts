@@ -94,6 +94,7 @@ function cors(req: APIRequest, res: APIResponse): void {
 		"Access-Control-Allow-Headers",
 		"X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
 	);
+	// Not sure we're allowed to set certain headers during CORS preflight response...
 
 	// Allow requests with no origin (mobile apps, curl, etc.)
 	const origin = req.headers.origin;
