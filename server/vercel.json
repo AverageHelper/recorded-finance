@@ -8,18 +8,24 @@
 	],
 	"headers": [
 		{
-			"source": "/api/(.*)",
+			"source": "/((?!api/.*).*)",
 			"headers": [
+				{ "key": "Cache-Control", "value": "no-store" },
 				{
 					"key": "Content-Security-Policy",
-					"value": "default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests"
+					"value": "default-src 'self' data: https://*.pndsn.com; base-uri 'self'; font-src 'self' data:; form-action 'self'; frame-ancestors 'self'; img-src 'self' data:; object-src 'none'; script-src 'self' blob:; script-src-attr 'none'; style-src 'self' 'unsafe-inline' 'unsafe-eval'; upgrade-insecure-requests"
 				},
 				{ "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" },
 				{ "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
 				{ "key": "Cross-Origin-Resource-Policy", "value": "same-origin" },
 				{ "key": "Origin-Agent-Cluster", "value": "?1" },
+				{
+					"key": "Permissions-Policy",
+					"value": "accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), camera=(), clipboard-read=(), clipboard-write=(), cross-origin-isolated=(), display-capture=(), document-domain=(), encrypted-media=(), execution-while-not-rendered=self, execution-while-out-of-viewport=self, fullscreen=*, gamepad=(), geolocation=self, gyroscope=(), identity-credentials-get=self, idle-detection=(), interest-cohort=(), keyboard-map=(), local-fonts=(), magnetometer=(), microphone=(), midi=(), navigation-override=self, payment=self, picture-in-picture=*, publickey-credentials-create=self, publickey-credentials-get=self, screen-wake-lock=(), serial=(), speaker-selection=(), storage-access=(), sync-xhr=(), usb=(), web-share=*, xr-spatial-tracking=()"
+				},
 				{ "key": "Referrer-Policy", "value": "no-referrer" },
 				{ "key": "Strict-Transport-Security", "value": "max-age=15552000; includeSubDomains" },
+				{ "key": "Vary", "value": "*" },
 				{ "key": "X-Content-Type-Options", "value": "nosniff" },
 				{ "key": "X-DNS-Prefetch-Control", "value": "off" },
 				{ "key": "X-Download-Options", "value": "noopen" },
