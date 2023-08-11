@@ -6,10 +6,10 @@ import { generateAESCipherKey, generateHash, generateSalt } from "@/auth/generat
 import { is, nonempty, string, type } from "superstruct";
 import { MAX_USERS } from "@/auth/limits";
 import { newAccessTokens, setSession } from "@/auth/jwt";
-import { NotEnoughUserSlotsError } from "../../../errors/NotEnoughUserSlotsError";
+import { NotEnoughUserSlotsError } from "@/errors/NotEnoughUserSlotsError";
 import { numberOfUsers, statsForUser, userWithAccountId } from "@/database/read";
 import { respondSuccess } from "@/responses";
-import { upsertUser } from "../../../database/write";
+import { upsertUser } from "@/database/write";
 import { v4 as uuid } from "uuid";
 
 /**
