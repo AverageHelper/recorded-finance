@@ -50,11 +50,40 @@ function request(method: HTTPMethod, path: string): _request.Test {
 		"X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version";
 	const m = method.toLowerCase() as Lowercase<typeof method>;
 
+	if (m === "options") {
+		// CORS doesn't allow any of the security headers
+		return _request(app)[m](path);
+	}
+
 	// eslint-disable-next-line @typescript-eslint/return-await
-	return _request(app)
-		[m](path)
-		.expect("Access-Control-Allow-Headers", AllowedHeaders)
-		.expect("Access-Control-Allow-Credentials", "true");
+	return (
+		_request(app)
+			[m](path)
+
+			// Headers, should be set in vercel.json too:
+
+			// ** CORS **
+			.expect("Access-Control-Allow-Headers", AllowedHeaders)
+			.expect("Access-Control-Allow-Credentials", "true")
+
+			// ** Security **
+			.expect("Strict-Transport-Security", "max-age=15552000; includeSubDomains")
+			.expect("X-Content-Type-Options", "nosniff")
+			.expect(
+				"Content-Security-Policy",
+				"default-src 'self';base-uri 'self';block-all-mixed-content;font-src 'self' data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' 'unsafe-inline';upgrade-insecure-requests"
+			)
+			.expect("X-Frame-Options", "SAMEORIGIN")
+			.expect("Referrer-Policy", "no-referrer")
+			.expect(
+				"Permissions-Policy",
+				"accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), camera=(), clipboard-read=(), clipboard-write=(), cross-origin-isolated=(), display-capture=(), document-domain=(), encrypted-media=(), execution-while-not-rendered=self, execution-while-out-of-viewport=self, fullscreen=*, gamepad=(), geolocation=self, gyroscope=(), identity-credentials-get=self, idle-detection=(), interest-cohort=(), keyboard-map=(), local-fonts=(), magnetometer=(), microphone=(), midi=(), navigation-override=self, payment=self, picture-in-picture=*, publickey-credentials-create=self, publickey-credentials-get=self, screen-wake-lock=(), serial=(), speaker-selection=(), storage-access=(), sync-xhr=(), usb=(), web-share=*, xr-spatial-tracking=()"
+			)
+
+			// ** Miscellaneous **
+			.expect("Vary", "*")
+			.expect("Cache-Control", "no-store")
+	);
 }
 
 describe("Routes", () => {
