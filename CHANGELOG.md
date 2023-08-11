@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.18.4] - 2023-08-07
+### Added
+- Comprehensive unit test line coverage of REST endpoints.
+
+### Fixed
+- Clarified and documented API responses for when the user is out of storage, and when our server isn't accepting new users.
+- Respond HTTP 200, instead of 404, when deleting any unknown collection. If the collection doesn't exist, it must already be gone!
+- Respond HTTP 400, instead of 404, when trying to write data to an unknown collection. If later we add new collection IDs, a 400 still makes more sense than a 404. If later we permit arbitrary IDs, a 404 won't make any sense at all.
+
+### Security
+- Respond with appropriate security headers
+
 ## [0.18.3] - 2023-05-22
 ### Fixed
 - Our Express environment now sends the `Access-Control-Allow-Headers` header with each request, as our Vercel environment does.
@@ -472,6 +484,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial commit
 
+[0.18.4]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.3...v0.18.4
 [0.18.3]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.2...v0.18.3
 [0.18.2]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.1...v0.18.2
 [0.18.1]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.0...v0.18.1

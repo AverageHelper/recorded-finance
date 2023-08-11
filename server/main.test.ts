@@ -1,7 +1,19 @@
-import type { DocumentWriteBatch, Hash, Salt, UID } from "./database/schemas";
+import type {
+	AnyData,
+	DataItem,
+	DocumentWriteBatch,
+	Hash,
+	Identified,
+	IdentifiedDataItem,
+	Salt,
+	UID,
+	UserKeys,
+} from "./database/schemas";
 import type { DocUpdate } from "./database/write";
+import type { FileData } from "@prisma/client";
 import type { JWT } from "./auth/jwt";
 import "jest-extended";
+import { allCollectionIds } from "./database/schemas";
 import { CollectionReference, DocumentReference } from "./database/references";
 import { jest } from "@jest/globals";
 import { setAuth, userWithTotp, userWithoutTotp } from "./test/userMocks";
@@ -38,11 +50,40 @@ function request(method: HTTPMethod, path: string): _request.Test {
 		"X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version";
 	const m = method.toLowerCase() as Lowercase<typeof method>;
 
+	if (m === "options") {
+		// CORS doesn't allow any of the security headers
+		return _request(app)[m](path);
+	}
+
 	// eslint-disable-next-line @typescript-eslint/return-await
-	return _request(app)
-		[m](path)
-		.expect("Access-Control-Allow-Headers", AllowedHeaders)
-		.expect("Access-Control-Allow-Credentials", "true");
+	return (
+		_request(app)
+			[m](path)
+
+			// Headers:
+
+			// ** CORS **
+			.expect("Access-Control-Allow-Headers", AllowedHeaders)
+			.expect("Access-Control-Allow-Credentials", "true")
+
+			// ** Security **
+			.expect("Strict-Transport-Security", "max-age=15552000; includeSubDomains")
+			.expect("X-Content-Type-Options", "nosniff")
+			.expect(
+				"Content-Security-Policy",
+				"default-src 'self'; base-uri 'self'; object-src 'none'; script-src-attr 'none'; upgrade-insecure-requests"
+			)
+			.expect("X-Frame-Options", "SAMEORIGIN")
+			.expect("Referrer-Policy", "no-referrer")
+			.expect(
+				"Permissions-Policy",
+				"accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), camera=(), clipboard-read=(), clipboard-write=(), cross-origin-isolated=(), display-capture=(), document-domain=(), encrypted-media=(), execution-while-not-rendered=(), execution-while-out-of-viewport=(), fullscreen=*, gamepad=(), geolocation=(), gyroscope=(), identity-credentials-get=(), idle-detection=(), interest-cohort=(), keyboard-map=(), local-fonts=(), magnetometer=(), microphone=(), midi=(), navigation-override=(), payment=(), picture-in-picture=*, publickey-credentials-create=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), speaker-selection=(), storage-access=(), sync-xhr=(), usb=(), web-share=*, xr-spatial-tracking=()"
+			)
+
+			// ** Miscellaneous **
+			.expect("Vary", "*")
+			.expect("Cache-Control", "no-store")
+	);
 }
 
 describe("Routes", () => {
@@ -152,14 +193,14 @@ describe("Routes", () => {
 			expectInaction();
 		});
 
-		test("answers 400 to missing 'account' and 'password' fields", async () => {
+		test("POST answers 400 to missing 'account' and 'password' fields", async () => {
 			await request("POST", PATH)
 				.expect(400)
 				.expect({ message: "Improper parameter types", code: "unknown" });
 			expectInaction();
 		});
 
-		test("answers 400 to missing 'account'", async () => {
+		test("POST answers 400 to missing 'account'", async () => {
 			await request("POST", PATH)
 				.send({ password: "nonempty" })
 				.expect(400)
@@ -167,7 +208,7 @@ describe("Routes", () => {
 			expectInaction();
 		});
 
-		test("answers 400 to missing 'password'", async () => {
+		test("POST answers 400 to missing 'password'", async () => {
 			await request("POST", PATH)
 				.send({ account: "nonempty" })
 				.expect(400)
@@ -175,7 +216,7 @@ describe("Routes", () => {
 			expectInaction();
 		});
 
-		test("answers 400 to empty 'account'", async () => {
+		test("POST answers 400 to empty 'account'", async () => {
 			await request("POST", PATH)
 				.send({ account: "", password: "nonempty" })
 				.expect(400)
@@ -183,7 +224,7 @@ describe("Routes", () => {
 			expectInaction();
 		});
 
-		test("answers 400 to empty 'password'", async () => {
+		test("POST answers 400 to empty 'password'", async () => {
 			await request("POST", PATH)
 				.send({ account: "nonempty", password: "" })
 				.expect(400)
@@ -191,16 +232,19 @@ describe("Routes", () => {
 			expectInaction();
 		});
 
-		test("answers 507 if the server is cannot accept new users", async () => {
+		test("POST answers 423 if the server is cannot accept new users", async () => {
 			mockRead.numberOfUsers.mockResolvedValueOnce(Number.POSITIVE_INFINITY);
 			await request("POST", PATH)
 				.send({ account: "nonempty", password: "nonempty" })
-				.expect(507)
-				.expect({ message: "We're full at the moment. Try again later!", code: "unknown" });
+				.expect(423)
+				.expect({
+					message: "We're full at the moment. Try again later!",
+					code: "user-quota-exceeded",
+				});
 			expectInaction();
 		});
 
-		test("answers 409 if an account already exists by that name", async () => {
+		test("POST answers 409 if an account already exists by that name", async () => {
 			const account = userWithTotp.currentAccountId;
 			mockRead.userWithAccountId.mockResolvedValueOnce(userWithoutTotp);
 			await request("POST", PATH)
@@ -210,7 +254,7 @@ describe("Routes", () => {
 			expectInaction();
 		});
 
-		test("answers 200 for new account", async () => {
+		test("POST answers 200 for new account", async () => {
 			const account = userWithTotp.currentAccountId;
 			const response = await request("POST", PATH)
 				.send({ account, password: "nonempty" })
@@ -1425,25 +1469,447 @@ describe("Routes", () => {
 	});
 
 	describe("/v0/db/users/[uid]/[coll]", () => {
-		// TODO: GET but websocket does nothing
-		// TODO: GET fails for bad auth
-		// TODO: GET fails for bad ownership
-		// TODO: GET returns data
-		// TODO: DELETE fails for bad auth
-		// TODO: DELETE fails for bad ownership
-		// TODO: DELETE deletes the collection
-		// TODO: Also test file attachment endpoints
+		function pathForUidColl(uid: string, coll: string): string {
+			return `/v0/db/users/${uid}/${coll}`;
+		}
+
+		const user = userWithoutTotp;
+
+		test("GET answers 404 for an unknown collection", async () => {
+			setAuth(user);
+			const path = pathForUidColl(user.uid, "elsewise");
+			await request("GET", path)
+				.expect(404)
+				.expect({ message: "No data found", code: "not-found" });
+			expect(mockRead.fetchDbCollection).not.toHaveBeenCalled();
+		});
+
+		test('GET answers 404 for the special ".websocket" endpoint', async () => {
+			setAuth(user);
+			const path = pathForUidColl(user.uid, ".websocket");
+			await request("GET", path)
+				.expect(404)
+				.expect({ message: "No data found", code: "not-found" });
+			expect(mockRead.fetchDbCollection).not.toHaveBeenCalled();
+		});
+
+		test("DELETE answers 200 to an unknown (already gone) collection", async () => {
+			setAuth(user);
+			const path = pathForUidColl(user.uid, "elsewise");
+			await request("DELETE", path)
+				.expect(200)
+				.expect({ message: "Success!", totalSpace: 0, usedSpace: 0 });
+			expect(mockWrite.deleteCollection).not.toHaveBeenCalled();
+		});
+	});
+
+	describe.each(allCollectionIds)("/v0/db/users/[uid]/%s", collectionId => {
+		function pathForUid(uid: string): string {
+			return `/v0/db/users/${uid}/${collectionId}`;
+		}
+
+		const user = userWithoutTotp;
+		const PATH = pathForUid(user.uid);
+
+		const BadMethods = ["HEAD", "POST", "PUT", "PATCH"] as const;
+		test.each(BadMethods)("%s answers 405", async method => {
+			await request(method, PATH).expect(405);
+			expect(mockRead.fetchDbCollection).not.toHaveBeenCalled();
+		});
+
+		test("GET answers 403 if the user is not authenticated", async () => {
+			await request("GET", PATH)
+				.expect(403)
+				.expect({ message: "Unauthorized", code: "missing-token" });
+			expect(mockRead.fetchDbCollection).not.toHaveBeenCalled();
+		});
+
+		test("GET answers 403 if the caller is not the owner of the data", async () => {
+			setAuth(user);
+			const path = pathForUid("someone-else");
+			await request("GET", path).expect(403).expect({ message: "Unauthorized", code: "not-owner" });
+			expect(mockRead.fetchDbCollection).not.toHaveBeenCalled();
+		});
+
+		test("GET answers 200 and the empty collection's contents", async () => {
+			setAuth(user);
+			await request("GET", PATH).expect(200).expect({ message: "Success!", data: [] });
+			expect(mockRead.fetchDbCollection).toHaveBeenCalledOnce();
+		});
+
+		test("GET answers 200 and the collection's contents", async () => {
+			setAuth(user);
+			const testDoc: IdentifiedDataItem = {
+				_id: "testDoc1",
+				ciphertext: "lorem ipsum",
+				cryption: "v0",
+				objectType: "lol",
+			};
+			mockRead.fetchDbCollection.mockResolvedValueOnce([testDoc]);
+			await request("GET", PATH)
+				.expect(200)
+				.expect({ message: "Success!", data: [testDoc] });
+			expect(mockRead.fetchDbCollection).toHaveBeenCalledOnce();
+		});
+
+		test("DELETE answers 403 if the user is not authenticated", async () => {
+			await request("DELETE", PATH)
+				.expect(403)
+				.expect({ message: "Unauthorized", code: "missing-token" });
+			expect(mockWrite.deleteCollection).not.toHaveBeenCalled();
+		});
+
+		test("DELETE answers 403 if the caller is not the owner of the data", async () => {
+			setAuth(user);
+			const path = pathForUid("someone-else");
+			await request("DELETE", path)
+				.expect(403)
+				.expect({ message: "Unauthorized", code: "not-owner" });
+			expect(mockWrite.deleteCollection).not.toHaveBeenCalled();
+		});
+
+		test("DELETE answers 200 and deletes the collection", async () => {
+			setAuth(user);
+			await request("DELETE", PATH)
+				.expect(200)
+				.expect({ message: "Success!", totalSpace: 0, usedSpace: 0 });
+			expect(mockWrite.deleteCollection).toHaveBeenCalledOnce();
+		});
 	});
 
 	describe("/v0/db/users/[uid]/[coll]/[doc]", () => {
-		// TODO: GET
-		// TODO: POST
-		// TODO: DELETE
+		function pathForUidCollDoc(uid: string, coll: string, doc: string): string {
+			return `/v0/db/users/${uid}/${coll}/${doc}`;
+		}
+
+		const user = userWithoutTotp;
+
+		test("GET answers 404 for document in an unknown collection", async () => {
+			setAuth(user);
+			const path = pathForUidCollDoc(user.uid, "elsewise", "any");
+			await request("GET", path)
+				.expect(404)
+				.expect({ message: "No data found", code: "not-found" });
+			expect(mockRead.fetchDbDoc).not.toHaveBeenCalled();
+		});
+
+		test.each(allCollectionIds)(
+			"GET answers 200 and an empty document for the special \".websocket\" endpoint in the '%s' collection",
+			async collectionId => {
+				setAuth(user);
+				const path = pathForUidCollDoc(user.uid, collectionId, ".websocket");
+				await request("GET", path).expect(200).expect({ message: "Success!", data: null });
+				expect(mockRead.fetchDbDoc).toHaveBeenCalledOnce();
+			}
+		);
+
+		test("POST answers 400 if trying to write to an unknown collection", async () => {
+			setAuth(user);
+			const data: DataItem = {
+				ciphertext: "lorem ipsum",
+				cryption: "v0",
+				objectType: "lol",
+			};
+			const path = pathForUidCollDoc(user.uid, "elsewise", "any");
+			await request("POST", path)
+				.send(data)
+				.expect(400)
+				.expect({ message: "Invalid data", code: "unknown" });
+			expect(mockWrite.setDocument).not.toHaveBeenCalled();
+		});
+
+		test("DELETE answers 200 to document in [an unknown (already gone) collection", async () => {
+			setAuth(user);
+			const path = pathForUidCollDoc(user.uid, "elsewise", "any");
+			await request("DELETE", path)
+				.expect(200)
+				.expect({ message: "Success!", totalSpace: 0, usedSpace: 0 });
+			expect(mockWrite.deleteDocument).not.toHaveBeenCalled();
+		});
+
+		test.each(allCollectionIds)(
+			"DELETE answers 200 to an unknown (already gone) document in the '%s' collection",
+			async collectionId => {
+				setAuth(user);
+				const path = pathForUidCollDoc(user.uid, collectionId, "elsewise");
+				await request("DELETE", path)
+					.expect(200)
+					.expect({ message: "Success!", totalSpace: 0, usedSpace: 0 });
+				expect(mockWrite.deleteDocument).toHaveBeenCalledOnce();
+			}
+		);
+	});
+
+	describe.each(allCollectionIds)("/v0/db/users/[uid]/%s/[doc]", collectionId => {
+		function pathForUidDoc(uid: string, doc: string): string {
+			return `/v0/db/users/${uid}/${collectionId}/${doc}`;
+		}
+
+		const user = userWithoutTotp;
+		const testDocumentId = "testDoc1";
+		const collectionRef: CollectionReference = {
+			id: collectionId,
+			path: collectionId,
+			uid: user.uid,
+			user,
+		};
+		const ref: DocumentReference = {
+			id: testDocumentId,
+			parent: collectionRef,
+			path: `${collectionId}/${testDocumentId}`,
+			uid: user.uid,
+			user,
+		};
+		const data: DataItem = {
+			ciphertext: "lorem ipsum",
+			cryption: "v0",
+			objectType: "lol",
+		};
+		const PATH = pathForUidDoc(user.uid, testDocumentId);
+
+		const BadMethods = ["HEAD", "PUT", "PATCH"] as const;
+		test.each(BadMethods)("%s answers 405", async method => {
+			await request(method, PATH).expect(405);
+			expect(mockRead.fetchDbDoc).not.toHaveBeenCalled();
+		});
+
+		test("GET answers 403 if the user is not authenticated", async () => {
+			await request("GET", PATH)
+				.expect(403)
+				.expect({ message: "Unauthorized", code: "missing-token" });
+			expect(mockRead.fetchDbDoc).not.toHaveBeenCalled();
+		});
+
+		test("GET answers 403 if the caller is not the owner of the data", async () => {
+			setAuth(user);
+			const path = pathForUidDoc("someone-else", testDocumentId);
+			await request("GET", path).expect(403).expect({ message: "Unauthorized", code: "not-owner" });
+			expect(mockRead.fetchDbDoc).not.toHaveBeenCalled();
+		});
+
+		test("GET answers 200 and `null` if the document does not exist", async () => {
+			setAuth(user);
+			mockRead.fetchDbDoc.mockResolvedValueOnce({ ref, data: null });
+			await request("GET", PATH).expect(200).expect({ message: "Success!", data: null });
+			expect(mockRead.fetchDbDoc).toHaveBeenCalledOnce();
+		});
+
+		test("GET answers 200 and the document", async () => {
+			setAuth(user);
+			const data: Identified<AnyData> = {
+				_id: ref.id,
+				ciphertext: "lorem ipsum",
+				cryption: "v0",
+				objectType: "lol",
+			};
+			mockRead.fetchDbDoc.mockResolvedValueOnce({ ref, data });
+			await request("GET", PATH).expect(200).expect({ message: "Success!", data });
+			expect(mockRead.fetchDbDoc).toHaveBeenCalledOnce();
+		});
+
+		test("POST answers 403 if the user is not authenticated", async () => {
+			await request("POST", PATH)
+				.send(data)
+				.expect(403)
+				.expect({ message: "Unauthorized", code: "missing-token" });
+			expect(mockWrite.setDocument).not.toHaveBeenCalled();
+		});
+
+		test("POST answers 403 if the caller is not the owner of the data ref", async () => {
+			setAuth(user);
+			const path = pathForUidDoc("someone-else", testDocumentId);
+			await request("POST", path)
+				.send(data)
+				.expect(403)
+				.expect({ message: "Unauthorized", code: "not-owner" });
+			expect(mockWrite.setDocument).not.toHaveBeenCalled();
+		});
+
+		test("POST answers 400 to badly-formatted data", async () => {
+			setAuth(user);
+			const badData = {};
+			await request("POST", PATH)
+				.send(badData)
+				.expect(400)
+				.expect({ message: "Invalid data", code: "unknown" });
+			expect(mockWrite.setDocument).not.toHaveBeenCalled();
+		});
+
+		test("POST answers 200 and writes the user's data", async () => {
+			setAuth(user);
+			await request("POST", PATH)
+				.send(data)
+				.expect(200)
+				.expect({ message: "Success!", totalSpace: 0, usedSpace: 0 });
+			expect(mockWrite.setDocument).toHaveBeenCalledOnce();
+		});
+
+		test("POST answers 200 and writes the user's auth keys", async () => {
+			setAuth(user);
+			const keys: UserKeys = {
+				dekMaterial: "lorem ipsum",
+				passSalt: "dolor sit" as Salt,
+			};
+			await request("POST", PATH)
+				.send(keys)
+				.expect(200)
+				.expect({ message: "Success!", totalSpace: 0, usedSpace: 0 });
+			expect(mockWrite.setDocument).toHaveBeenCalledOnce();
+		});
 	});
 
 	describe("/v0/db/users/[uid]/attachments/[doc]/blob/[key]", () => {
-		// TODO: GET
-		// TODO: POST
-		// TODO: DELETE
+		function pathForUidDocKey(uid: string, doc: string, key: string): string {
+			return `/v0/db/users/${uid}/attachments/${doc}/blob/${key}`;
+		}
+
+		const user = userWithoutTotp;
+		const testDocumentId = "testDoc1";
+		const collectionRef: CollectionReference = {
+			id: "attachments",
+			path: "attachments",
+			uid: user.uid,
+			user,
+		};
+		const ref: DocumentReference = {
+			id: testDocumentId,
+			parent: collectionRef,
+			path: `attachments/${testDocumentId}`,
+			uid: user.uid,
+			user,
+		};
+		const fileData: FileData = {
+			userId: user.uid,
+			fileName: "test",
+			size: 0,
+			contents: Buffer.from("lorem ipsum"),
+		};
+		const PATH = pathForUidDocKey(user.uid, testDocumentId, testDocumentId);
+
+		const BadMethods = ["HEAD", "PUT", "PATCH"] as const;
+		test.each(BadMethods)("%s answers 405", async method => {
+			await request(method, PATH).expect(405);
+			expect(mockRead.fetchFileData).not.toHaveBeenCalled();
+		});
+
+		test("GET answers 403 if the user is not authenticated", async () => {
+			await request("GET", PATH)
+				.expect(403)
+				.expect({ message: "Unauthorized", code: "missing-token" });
+			expect(mockRead.fetchFileData).not.toHaveBeenCalled();
+		});
+
+		test("GET answers 403 if the caller is not the owner of the data", async () => {
+			setAuth(user);
+			const path = pathForUidDocKey("someone-else", testDocumentId, testDocumentId);
+			await request("GET", path).expect(403).expect({ message: "Unauthorized", code: "not-owner" });
+			expect(mockRead.fetchFileData).not.toHaveBeenCalled();
+		});
+
+		test("GET answers 404 and `null` if the file does not exist", async () => {
+			setAuth(user);
+			mockRead.fetchFileData.mockResolvedValueOnce(null);
+			await request("GET", PATH)
+				.expect(404)
+				.expect({ message: "No data found", code: "not-found" });
+			expect(mockRead.fetchFileData).toHaveBeenCalledOnce();
+		});
+
+		test("GET answers 200 and the file contents", async () => {
+			setAuth(user);
+			mockRead.fetchFileData.mockResolvedValueOnce(fileData);
+			await request("GET", PATH)
+				.expect(200)
+				.expect({
+					message: "Success!",
+					// FIXME: We don't return ref.id here, we return the given file path. This is not useful behavior, since the client has this info already. Do something about this in v1?
+					data: { _id: ref.id, contents: fileData.contents.toString("utf8") },
+				});
+			expect(mockRead.fetchFileData).toHaveBeenCalledOnce();
+		});
+
+		test("POST answers 403 if the user is not authenticated", async () => {
+			await request("POST", PATH)
+				.attach("file", fileData.contents, "foo.json")
+				.expect(403)
+				.expect({ message: "Unauthorized", code: "missing-token" });
+			expect(mockWrite.upsertFileData).not.toHaveBeenCalled();
+		});
+
+		test("POST answers 403 if the caller is not the owner of the data ref", async () => {
+			setAuth(user);
+			const path = pathForUidDocKey("someone-else", testDocumentId, testDocumentId);
+			await request("POST", path)
+				.attach("file", fileData.contents, "foo.json")
+				.expect(403)
+				.expect({ message: "Unauthorized", code: "not-owner" });
+			expect(mockWrite.upsertFileData).not.toHaveBeenCalled();
+		});
+
+		test("POST answers 400 if no file is provided", async () => {
+			setAuth(user);
+			await request("POST", PATH)
+				.expect(400)
+				.expect({ message: "You must include a file to store", code: "unknown" });
+			expect(mockWrite.upsertFileData).not.toHaveBeenCalled();
+		});
+
+		test("POST answers 400 if the filename contains '..'", async () => {
+			setAuth(user);
+			const path = pathForUidDocKey(user.uid, testDocumentId, "..");
+			await request("POST", path) //
+				.attach("file", fileData.contents, "foo.json")
+				.expect(400)
+				.expect({
+					message: "fileName cannot contain a '/' character or a parent directory marker",
+					code: "unknown",
+				});
+		});
+
+		test("POST answers 507 if there is insufficient room to store the attachment", async () => {
+			setAuth(user);
+			await request("POST", PATH) //
+				.attach("file", fileData.contents, "foo.json")
+				.expect(507)
+				.expect({
+					message: "There is not enough room to write your data. Delete some stuff first.",
+					code: "storage-quota-exceeded",
+				});
+			expect(mockWrite.upsertFileData).not.toHaveBeenCalled();
+		});
+
+		test("POST answers 200 and writes the user's data", async () => {
+			setAuth(user);
+			mockRead.statsForUser.mockResolvedValueOnce({ usedSpace: 0, totalSpace: 5 });
+			await request("POST", PATH)
+				.attach("file", fileData.contents, "foo.json")
+				.expect(200)
+				.expect({ message: "Success!", totalSpace: 0, usedSpace: 0 });
+			expect(mockWrite.upsertFileData).toHaveBeenCalledOnce();
+		});
+
+		test("DELETE answers 403 if the user is not authenticated", async () => {
+			await request("DELETE", PATH)
+				.expect(403)
+				.expect({ message: "Unauthorized", code: "missing-token" });
+			expect(mockWrite.destroyFileData).not.toHaveBeenCalled();
+		});
+
+		test("DELETE answers 403 if the user is not the owner of the data ref", async () => {
+			setAuth(user);
+			const path = pathForUidDocKey("someone-else", testDocumentId, testDocumentId);
+			await request("DELETE", path)
+				.expect(403)
+				.expect({ message: "Unauthorized", code: "not-owner" });
+			expect(mockWrite.destroyFileData).not.toHaveBeenCalled();
+		});
+
+		test("DELETE answers 200 and destroys the file", async () => {
+			setAuth(user);
+			await request("DELETE", PATH)
+				.expect(200)
+				.expect({ message: "Success!", totalSpace: 0, usedSpace: 0 });
+			expect(mockWrite.destroyFileData).toHaveBeenCalledOnce();
+		});
 	});
 });

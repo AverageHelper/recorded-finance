@@ -8,10 +8,12 @@ export type ErrorCode =
 	| "bad-method"
 	| "not-found"
 	| "not-implemented"
+	| "storage-quota-exceeded"
 	| "too-many-requests"
 	| "totp-conflict"
 	| "totp-secret-missing"
-	| "unknown";
+	| "unknown"
+	| "user-quota-exceeded";
 
 export class InternalError extends Error {
 	/** The HTTP status that should be reported to the caller. */
@@ -29,16 +31,16 @@ export class InternalError extends Error {
 	constructor({
 		message,
 		status = HttpStatusCode.INTERNAL_SERVER_ERROR,
-		code = "unknown", // FIXME: Seems some errors don't provide this. Should this be mandatory, for I18N reasons?
+		code,
 		headers = new Map(),
 		harmless = false,
 	}: {
 		message?: string;
 		status?: number;
-		code?: ErrorCode;
+		code: ErrorCode;
 		headers?: Map<string, string | number | ReadonlyArray<string>>;
 		harmless?: boolean;
-	} = {}) {
+	}) {
 		super(message ?? code);
 		this.status = status;
 		this.code = code;

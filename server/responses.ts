@@ -2,10 +2,39 @@ import type { DocumentData, UID } from "./database/schemas";
 import { describeCode, HttpStatusCode } from "./helpers/HttpStatusCode";
 import { InternalError } from "./errors/InternalError";
 
-// See https://stackoverflow.com/a/54337073 for why "Vary: *" is necessary for Safari
-const VARY = ["Vary", "*"] as const;
-const CACHE_CONTROL = ["Cache-Control", "no-store"] as const;
-const CLACKS = ["X-Clacks-Overhead", "GNU Terry Pratchett"] as const;
+/**
+ * Sets common headers on the given API response handle.
+ *
+ * @param res The response on which to set the headers.
+ * @returns The same API response handle, modified with the common headers.
+ */
+function setCommonHeaders(res: APIResponse): APIResponse {
+	// These should be set in vercel.json too, for frontend headers:
+	return (
+		res
+			// CORS headers should have be set elsewhere, either before or after this call.
+
+			// ** Security **
+			.setHeader("Strict-Transport-Security", "max-age=15552000; includeSubDomains")
+			.setHeader("X-Content-Type-Options", "nosniff")
+			.setHeader(
+				"Content-Security-Policy",
+				"default-src 'self'; base-uri 'self'; object-src 'none'; script-src-attr 'none'; upgrade-insecure-requests"
+			)
+			.setHeader("X-Frame-Options", "SAMEORIGIN")
+			.setHeader("Referrer-Policy", "no-referrer")
+			.setHeader(
+				"Permissions-Policy",
+				"accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), camera=(), clipboard-read=(), clipboard-write=(), cross-origin-isolated=(), display-capture=(), document-domain=(), encrypted-media=(), execution-while-not-rendered=(), execution-while-out-of-viewport=(), fullscreen=*, gamepad=(), geolocation=(), gyroscope=(), identity-credentials-get=(), idle-detection=(), interest-cohort=(), keyboard-map=(), local-fonts=(), magnetometer=(), microphone=(), midi=(), navigation-override=(), payment=(), picture-in-picture=*, publickey-credentials-create=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), speaker-selection=(), storage-access=(), sync-xhr=(), usb=(), web-share=*, xr-spatial-tracking=()"
+			)
+
+			// ** Miscellaneous **
+			// See https://stackoverflow.com/a/54337073 for why "Vary: *" is necessary for Safari
+			.setHeader("Vary", "*")
+			.setHeader("Cache-Control", "no-store")
+			.setHeader("X-Clacks-Overhead", "GNU Terry Pratchett")
+	);
+}
 
 /**
  * Sends HTTP 200, then ends the connection.
@@ -13,12 +42,8 @@ const CLACKS = ["X-Clacks-Overhead", "GNU Terry Pratchett"] as const;
 export function respondOk(res: APIResponse): void {
 	// Only works on HTTP versions older than HTTP/2 (for now).
 	res.statusMessage = describeCode(HttpStatusCode.OK);
-	res
-		.setHeader(...CACHE_CONTROL)
-		.setHeader(...VARY)
-		.setHeader(...CLACKS)
-		.status(HttpStatusCode.OK)
-		.end();
+	setCommonHeaders(res);
+	res.status(HttpStatusCode.OK).end();
 }
 
 /**
@@ -32,12 +57,8 @@ export function respondMessage(
 ): void {
 	// Only works on HTTP versions older than HTTP/2 (for now).
 	res.statusMessage = describeCode(HttpStatusCode.OK);
-	res
-		.setHeader(...CACHE_CONTROL)
-		.setHeader(...VARY)
-		.setHeader(...CLACKS)
-		.json({ ...additionalValues, message })
-		.end();
+	setCommonHeaders(res);
+	res.json({ ...additionalValues, message }).end();
 }
 
 /**
@@ -49,12 +70,8 @@ export function respondSuccess(
 ): void {
 	// Only works on HTTP versions older than HTTP/2 (for now).
 	res.statusMessage = describeCode(HttpStatusCode.OK);
-	res
-		.setHeader(...CACHE_CONTROL)
-		.setHeader(...VARY)
-		.setHeader(...CLACKS)
-		.json({ ...additionalValues, message: "Success!" })
-		.end();
+	setCommonHeaders(res);
+	res.json({ ...additionalValues, message: "Success!" }).end();
 }
 
 /**
@@ -66,10 +83,8 @@ export function respondData<T extends { _id: string } | { uid: UID }>(
 ): void {
 	// Only works on HTTP versions older than HTTP/2 (for now).
 	res.statusMessage = describeCode(HttpStatusCode.OK);
+	setCommonHeaders(res);
 	res
-		.setHeader(...CACHE_CONTROL)
-		.setHeader(...VARY)
-		.setHeader(...CLACKS)
 		.json({ message: "Success!", data }) // TODO: Should this go down as a multipart thingthing instead?
 		.end();
 }
@@ -80,9 +95,7 @@ export function respondData<T extends { _id: string } | { uid: UID }>(
 export function respondError(res: APIResponse, err: InternalError): void {
 	// Only works on HTTP versions older than HTTP/2 (for now).
 	res.statusMessage = describeCode(err.status);
-	res.setHeader(...CACHE_CONTROL);
-	res.setHeader(...VARY);
-	res.setHeader(...CLACKS);
+	setCommonHeaders(res);
 	err.headers.forEach((value, name) => {
 		res.setHeader(name, value);
 	});
@@ -93,5 +106,5 @@ export function respondError(res: APIResponse, err: InternalError): void {
  * Sends HTTP 500, then ends the connection.
  */
 export function respondInternalError(res: APIResponse): void {
-	respondError(res, new InternalError());
+	respondError(res, new InternalError({ code: "unknown" }));
 }

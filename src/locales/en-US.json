@@ -91,12 +91,14 @@
 			"not-found": "No data found",
 			"not-implemented": "That feature is not implemented yet",
 			"not-owner": "Unauthorized",
+			"storage-quota-exceeded": "There is not enough room to write your data. Delete some stuff first.",
 			"too-many-requests": "You are being throttled",
 			"totp-conflict": "You already have TOTP authentication enabled",
 			"totp-secret-missing": "You do not have a TOTP secret to validate against",
 			"wrong-credentials": "Incorrect account ID or passphrase",
 			"wrong-mfa-credentials": "That code is invalid",
-			"unknown": "Not sure what went wrong. Try again maybe?"
+			"unknown": "Not sure what went wrong. Try again maybe?",
+			"user-quota-exceeded": "We're full at the moment. Try again later!"
 		},
 		"sanity": {
 			"empty-param": "'{name}' parameter cannot be empty",
