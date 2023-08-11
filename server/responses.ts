@@ -19,7 +19,7 @@ function setCommonHeaders(res: APIResponse): APIResponse {
 			.setHeader("X-Content-Type-Options", "nosniff")
 			.setHeader(
 				"Content-Security-Policy",
-				"default-src 'self';base-uri 'self';block-all-mixed-content;font-src 'self' data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' 'unsafe-inline';upgrade-insecure-requests"
+				"default-src 'self';base-uri 'self';font-src 'self' data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' 'unsafe-inline';upgrade-insecure-requests"
 			) // TODO: ??
 			.setHeader("X-Frame-Options", "SAMEORIGIN")
 			.setHeader("Referrer-Policy", "no-referrer")
