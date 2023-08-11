@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Respond HTTP 200, instead of 404, when deleting any unknown collection. If the collection doesn't exist, it must already be gone!
 - Respond HTTP 400, instead of 404, when trying to write data to an unknown collection. If later we add new collection IDs, a 400 still makes more sense than a 404. If later we permit arbitrary IDs, a 404 won't make any sense at all.
 
+### Security
+- Respond with appropriate security headers
+
 ## [0.18.3] - 2023-05-22
 ### Fixed
 - Our Express environment now sends the `Access-Control-Allow-Headers` header with each request, as our Vercel environment does.
