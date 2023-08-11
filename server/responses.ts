@@ -9,7 +9,7 @@ import { InternalError } from "./errors/InternalError";
  * @returns The same API response handle, modified with the common headers.
  */
 function setCommonHeaders(res: APIResponse): APIResponse {
-	// These should be set in vercel.json too:
+	// These should be set in vercel.json too, for frontend headers:
 	return (
 		res
 			// CORS headers should have be set elsewhere, either before or after this call.

@@ -60,7 +60,7 @@ function request(method: HTTPMethod, path: string): _request.Test {
 		_request(app)
 			[m](path)
 
-			// Headers, should be set in vercel.json too:
+			// Headers:
 
 			// ** CORS **
 			.expect("Access-Control-Allow-Headers", AllowedHeaders)
