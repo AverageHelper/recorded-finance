@@ -71,7 +71,7 @@ function request(method: HTTPMethod, path: string): _request.Test {
 			.expect("X-Content-Type-Options", "nosniff")
 			.expect(
 				"Content-Security-Policy",
-				"default-src 'self';base-uri 'self';object-src 'none';script-src-attr 'none';upgrade-insecure-requests"
+				"default-src 'self'; base-uri 'self'; object-src 'none'; script-src-attr 'none'; upgrade-insecure-requests"
 			)
 			.expect("X-Frame-Options", "SAMEORIGIN")
 			.expect("Referrer-Policy", "no-referrer")

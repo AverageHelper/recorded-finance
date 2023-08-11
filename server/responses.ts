@@ -19,7 +19,7 @@ function setCommonHeaders(res: APIResponse): APIResponse {
 			.setHeader("X-Content-Type-Options", "nosniff")
 			.setHeader(
 				"Content-Security-Policy",
-				"default-src 'self';base-uri 'self';object-src 'none';script-src-attr 'none';upgrade-insecure-requests"
+				"default-src 'self'; base-uri 'self'; object-src 'none'; script-src-attr 'none'; upgrade-insecure-requests"
 			)
 			.setHeader("X-Frame-Options", "SAMEORIGIN")
 			.setHeader("Referrer-Policy", "no-referrer")
