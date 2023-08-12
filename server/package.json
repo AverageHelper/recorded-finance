@@ -14,7 +14,7 @@
 		"build": "npm run lint && npm run build:only",
 		"build:express": "npm run lint && SINGLE_FILE_BUILD=true npm run build:only",
 		"build:only": "./node_modules/.bin/vite build",
-		"prisma:generate": "./node_modules/.bin/prisma generate --schema ./prisma/schema.prisma",
+		"prisma:generate": "./node_modules/.bin/prisma generate --schema ./prisma/schema.prisma", 
 		"prisma:introspect": "./node_modules/.bin/prisma db pull",
 		"prisma:push": "./node_modules/.bin/prisma db push",
 		"lint": "npm run export-version && npm run lintonly",
