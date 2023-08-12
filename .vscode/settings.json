@@ -17,6 +17,6 @@
 	"[svelte]": {
 		"editor.defaultFormatter": "svelte.svelte-vscode"
 	},
-	"todo-tree.filtering.excludeGlobs": ["**/dist/**"],
+	"todo-tree.filtering.excludeGlobs": ["**/dist/**", "**/node_modules/**"],
 	"eslint.workingDirectories": [".", "server"]
 }

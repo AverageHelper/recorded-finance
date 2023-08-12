@@ -14,12 +14,12 @@ The API is documented using [OpenAPI](https://petstore.swagger.io/?url=https://r
 
 ### Prerequesites
 
-This project requires Node 16 and NPM v7 or above. You can check what versions you have installed by running `npm -v` and `node -v`:
+This project requires Node 18 and NPM v7 or above. You can check what versions you have installed by running `npm -v` and `node -v`:
 
 ```sh
 $ npm -v && node -v
-8.1.2
-v16.13.1
+9.6.7
+v18.17.1
 ```
 
 The server supports self-hosting out of the box using Express. If you wish to host the back-end using Vercel Serverless Functions, you should set up an account with [Vercel](https://vercel.com) and [PubNub](https://www.pubnub.com).
