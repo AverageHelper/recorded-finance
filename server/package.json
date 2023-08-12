@@ -1,6 +1,6 @@
 {
 	"name": "recorded-finance-server",
-	"version": "0.8.9",
+	"version": "0.8.10",
 	"license": "GPL-3.0",
 	"description": "A simple data storage server. Clients are encouraged to implement E2EE before sending data here.",
 	"scripts": {
@@ -115,6 +115,6 @@
 		"ts-node": "10.9.1",
 		"type-fest": "3.6.1",
 		"typescript": "4.8.3",
-		"vercel": "28.4.5"
+		"vercel": "31.2.3"
 	}
 }
