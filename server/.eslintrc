@@ -38,9 +38,8 @@
 		"no-console": "error",
 		"no-dupe-else-if": "warn",
 		"consistent-return": "off", // TS handles this
-		"no-duplicate-imports": "off", // typescript-eslint handles this
+		"no-duplicate-imports": "off", // eslint-plugin-import handles this
 		"@typescript-eslint/no-namespace": "off",
-		"@typescript-eslint/no-duplicate-imports": "error",
 		"@typescript-eslint/consistent-type-assertions": "off",
 		"@typescript-eslint/no-empty-interface": "off",
 		"@typescript-eslint/require-await": "warn",

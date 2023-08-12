@@ -1,17 +1,13 @@
+import type { PluginOption } from "vite";
 import { defineConfig } from "vite";
 import { nodeResolve } from "@rollup/plugin-node-resolve";
-import { terser } from "rollup-plugin-terser";
-import { visualizer } from "rollup-plugin-visualizer";
 import { VitePluginNode } from "vite-plugin-node";
-import analyze from "rollup-plugin-analyzer";
 import commonjs from "@rollup/plugin-commonjs";
+import esbuild from "rollup-plugin-esbuild";
 import json from "@rollup/plugin-json";
 import replace from "@rollup/plugin-replace";
 import typescript from "@rollup/plugin-typescript";
 import vercel from "vite-plugin-vercel";
-
-// When we're built using the `--production` flag:
-const isProduction = process.env["NODE_ENV"] === "production";
 
 const HOME = process.env["HOME"];
 
@@ -40,7 +36,7 @@ export default defineConfig({
 		// Transpile source
 		typescript({
 			project: "./tsconfig.json",
-			sourceMap: !isProduction,
+			sourceMap: false,
 		}), // translate TypeScript to JS
 		commonjs({ transformMixedEsModules: true }), // translate CommonJS to ESM
 		json(), // translate JSON ("express" requires this for its status messages)
@@ -52,15 +48,14 @@ export default defineConfig({
 		}),
 
 		// Minify output
-		isProduction ? terser() : null,
-
-		// Statistics
-		analyze({ filter: () => false }), // only top-level summary
-		visualizer(),
+		esbuild({
+			minify: true,
+			sourceMap: false,
+		}),
 
 		// Output Vercel-compatible endpoints (using `_api` dir instead of `api` so Vercel doesn't also do its own compile)
-		SINGLE_FILE_BUILD ? null : vercel(),
-	],
+		SINGLE_FILE_BUILD ? null : vercel(), // FIXME: This line puts functions in the correct `functions` folder in output, and sets config.json correctly, but deletes the `static` folder that serves the frontend!
+	] as Array<PluginOption>,
 	build: {
 		rollupOptions: {
 			onwarn(warning, defaultHandler) {
@@ -100,8 +95,7 @@ export default defineConfig({
 				format: "cjs",
 			},
 		},
+		emptyOutDir: false,
 		commonjsOptions: { transformMixedEsModules: true },
-		minify: isProduction ? "terser" : false,
-		sourcemap: !isProduction,
 	},
 });
