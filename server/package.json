@@ -1,6 +1,6 @@
 {
 	"name": "recorded-finance-server",
-	"version": "0.8.9",
+	"version": "0.8.10",
 	"license": "GPL-3.0",
 	"description": "A simple data storage server. Clients are encouraged to implement E2EE before sending data here.",
 	"scripts": {
