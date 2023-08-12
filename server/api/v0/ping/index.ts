@@ -1,3 +1,4 @@
+import "module-alias/register";
 import { apiHandler, dispatchRequests } from "@/helpers/apiHandler";
 import { respondMessage } from "@/responses";
 

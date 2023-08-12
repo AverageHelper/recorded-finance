@@ -28,6 +28,9 @@
 	"imports": {
 		"@/": "./"
 	},
+	"_moduleAliases": {
+		"@": "."
+	},
 	"dependencies": {
 		"@prisma/client": "4.3.1",
 		"atob-lite": "2.0.0",
@@ -44,6 +47,7 @@
 		"helmet": "5.1.1",
 		"jsonwebtoken": "9.0.0",
 		"keygrip": "1.1.0",
+		"module-alias": "2.2.3",
 		"multer": "1.4.5-lts.1",
 		"n-digit-token": "2.1.0",
 		"pubnub": "7.3.0",
@@ -72,6 +76,7 @@
 		"@types/inquirer": "8.2.6",
 		"@types/jest": "28.1.7",
 		"@types/jsonwebtoken": "9.0.1",
+		"@types/module-alias": "2.0.1",
 		"@types/multer": "1.4.7",
 		"@types/node": "16.6.2",
 		"@types/pubnub": "7.2.0",

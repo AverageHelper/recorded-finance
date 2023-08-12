@@ -1,4 +1,5 @@
 import type { MFAOption } from "@/database/schemas";
+import "module-alias/register";
 import { apiHandler, dispatchRequests } from "@/helpers/apiHandler";
 import { BadRequestError } from "@/errors/BadRequestError";
 import { compare } from "@/auth/generators";

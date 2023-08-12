@@ -1,3 +1,4 @@
+import "module-alias/register";
 import { addJwtToBlacklist, jwtFromRequest, killSession } from "@/auth/jwt";
 import { apiHandler, dispatchRequests } from "@/helpers/apiHandler";
 import { respondSuccess } from "@/responses";

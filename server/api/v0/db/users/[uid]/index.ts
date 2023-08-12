@@ -1,4 +1,5 @@
 import type { DocUpdate } from "@/database/write";
+import "module-alias/register";
 import { apiHandler, dispatchRequests } from "@/helpers/apiHandler";
 import { BadRequestError } from "@/errors/BadRequestError";
 import { CollectionReference, DocumentReference } from "@/database/references";

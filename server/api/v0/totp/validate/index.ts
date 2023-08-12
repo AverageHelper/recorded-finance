@@ -1,3 +1,4 @@
+import "module-alias/register";
 import type { TOTPSecretUri } from "@/auth/totp";
 import { apiHandler, dispatchRequests } from "@/helpers/apiHandler";
 import { BadRequestError } from "@/errors/BadRequestError";

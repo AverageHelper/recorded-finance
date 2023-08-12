@@ -1,4 +1,5 @@
 import type { User } from "@/database/schemas";
+import "module-alias/register";
 import { isCollectionId } from "@/database/schemas";
 import { CollectionReference } from "@/database/references";
 import { apiHandler, dispatchRequests } from "@/helpers/apiHandler";
