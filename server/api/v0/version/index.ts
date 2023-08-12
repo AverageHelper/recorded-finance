@@ -1,3 +1,5 @@
+// eslint-disable-next-line import/extensions
+import "../../../package.json";
 import "module-alias/register";
 import { apiHandler, dispatchRequests } from "@/helpers/apiHandler";
 import { respondMessage } from "@/responses";
