@@ -26,7 +26,7 @@
 	"type": "commonjs",
 	"main": "./dist/server.js",
 	"engines": {
-		"node": "18"
+		"node": "^18.17.0"
 	},
 	"dependencies": {
 		"@prisma/client": "4.3.1",
@@ -84,7 +84,7 @@
 		"@types/ws": "8.5.3",
 		"@typescript-eslint/eslint-plugin": "5.36.1",
 		"@typescript-eslint/parser": "5.36.1",
-		"@vercel/node": "2.5.21",
+		"@vercel/node": "2.15.9",
 		"concurrently": "7.5.0",
 		"eslint": "8.23.0",
 		"eslint-config-prettier": "8.5.0",
