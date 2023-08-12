@@ -2,10 +2,10 @@ import { asyncWrapper } from "./asyncWrapper";
 import { Router } from "express";
 
 import { webSocket } from "./webSocket";
-import * as fileBlob from "./api/v0/db/users/[uid]/attachments/[documentId]/blob/[fileName]";
-import * as dataBatch from "./api/v0/db/users/[uid]";
-import * as dataCollection from "./api/v0/db/users/[uid]/[collectionId]";
-import * as dataDocument from "./api/v0/db/users/[uid]/[collectionId]/[documentId]";
+import * as fileBlob from "./_api/v0/db/users/[uid]/attachments/[documentId]/blob/[fileName]";
+import * as dataBatch from "./_api/v0/db/users/[uid]";
+import * as dataCollection from "./_api/v0/db/users/[uid]/[collectionId]";
+import * as dataDocument from "./_api/v0/db/users/[uid]/[collectionId]/[documentId]";
 
 export function db(): Router {
 	// Function, so we defer creation of the router until after we've set up websocket support

@@ -2,7 +2,7 @@
 	"apps": [
 		{
 			"name": "recorded-finance",
-			"script": "./dist/server.js",
+			"script": "./dist/main.js",
 			"source_map_support": true,
 			"watch": ["dist"],
 			"watch_delay": 1000,

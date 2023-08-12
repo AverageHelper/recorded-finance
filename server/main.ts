@@ -12,9 +12,9 @@ import express from "express";
 import expressWs from "express-ws";
 import helmet from "helmet";
 
-import * as lol from "./api/v0";
-import * as ping from "./api/v0/ping";
-import * as serverVersion from "./api/v0/version";
+import * as lol from "./_api/v0";
+import * as ping from "./_api/v0/ping";
+import * as serverVersion from "./_api/v0/version";
 
 // eslint-disable-next-line unicorn/numeric-separators-style
 const PORT = 40850;

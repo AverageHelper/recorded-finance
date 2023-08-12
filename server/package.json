@@ -12,7 +12,8 @@
 		"deploy": "./node_modules/.bin/vercel pull --yes --environment=preview && ./node_modules/.bin/vercel build && ./node_modules/.bin/vercel deploy --prebuilt",
 		"prebuild": "rm -rf ./dist && npm run export-version",
 		"build": "npm run lint && npm run build:only",
-		"build:only": "./node_modules/.bin/rollup --config rollup.config.ts --configPlugin typescript",
+		"build:express": "npm run lint && SINGLE_FILE_BUILD=true npm run build:only",
+		"build:only": "./node_modules/.bin/vite build",
 		"prisma:generate": "./node_modules/.bin/prisma generate --schema ./prisma/schema.prisma",
 		"prisma:introspect": "./node_modules/.bin/prisma db pull",
 		"prisma:push": "./node_modules/.bin/prisma db push",
@@ -24,12 +25,9 @@
 		"export-version": "./node_modules/.bin/genversion ./version.ts -esd"
 	},
 	"type": "commonjs",
-	"main": "./dist/server.js",
+	"main": "./dist/main.js",
 	"imports": {
 		"@/": "./"
-	},
-	"_moduleAliases": {
-		"@": "."
 	},
 	"dependencies": {
 		"@prisma/client": "4.3.1",
@@ -47,7 +45,6 @@
 		"helmet": "5.1.1",
 		"jsonwebtoken": "9.0.0",
 		"keygrip": "1.1.0",
-		"module-alias": "2.2.3",
 		"multer": "1.4.5-lts.1",
 		"n-digit-token": "2.1.0",
 		"pubnub": "7.3.0",
@@ -76,7 +73,6 @@
 		"@types/inquirer": "8.2.6",
 		"@types/jest": "28.1.7",
 		"@types/jsonwebtoken": "9.0.1",
-		"@types/module-alias": "2.0.1",
 		"@types/multer": "1.4.7",
 		"@types/node": "16.6.2",
 		"@types/pubnub": "7.2.0",
@@ -110,7 +106,6 @@
 		"ora": "5.4.1",
 		"prettier": "2.7.1",
 		"prisma": "4.3.1",
-		"rollup": "2.78.1",
 		"rollup-plugin-analyzer": "4.0.0",
 		"rollup-plugin-terser": "7.0.2",
 		"rollup-plugin-visualizer": "5.8.0",
@@ -120,7 +115,10 @@
 		"ts-node": "10.9.1",
 		"type-fest": "3.6.1",
 		"typescript": "4.8.3",
-		"vercel": "28.4.5"
+		"vercel": "28.4.5",
+		"vite": "4.4.9",
+		"vite-plugin-node": "3.0.2",
+		"vite-plugin-vercel": "0.2.1"
 	},
 	"engines": {
 		"node": "16"
