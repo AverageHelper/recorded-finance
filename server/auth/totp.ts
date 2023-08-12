@@ -159,5 +159,5 @@ export function generateSecret(seed: TOTPSeed): TOTPSecretUri {
 	hmac.update(Buffer.from(seed));
 	const digest = hmac.digest();
 
-	return base32Encode(Buffer.from(digest).slice(0, 13)); // 21-char secret
+	return base32Encode(Buffer.from(digest).subarray(0, 13)); // 21-char secret
 }

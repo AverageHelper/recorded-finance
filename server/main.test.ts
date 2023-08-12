@@ -1765,19 +1765,7 @@ describe("Routes", () => {
 
 		const user = userWithoutTotp;
 		const testDocumentId = "testDoc1";
-		const collectionRef: CollectionReference = {
-			id: "attachments",
-			path: "attachments",
-			uid: user.uid,
-			user,
-		};
-		const ref: DocumentReference = {
-			id: testDocumentId,
-			parent: collectionRef,
-			path: `attachments/${testDocumentId}`,
-			uid: user.uid,
-			user,
-		};
+		const refId = testDocumentId;
 		const fileData: FileData = {
 			userId: user.uid,
 			fileName: "test",
@@ -1823,7 +1811,7 @@ describe("Routes", () => {
 				.expect({
 					message: "Success!",
 					// FIXME: We don't return ref.id here, we return the given file path. This is not useful behavior, since the client has this info already. Do something about this in v1?
-					data: { _id: ref.id, contents: fileData.contents.toString("utf8") },
+					data: { _id: refId, contents: fileData.contents.toString("utf8") },
 				});
 			expect(mockRead.fetchFileData).toHaveBeenCalledOnce();
 		});
