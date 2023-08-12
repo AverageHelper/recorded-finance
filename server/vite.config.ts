@@ -58,6 +58,7 @@ export default defineConfig({
 		analyze({ filter: () => false }), // only top-level summary
 		visualizer(),
 
+		// Output Vercel-compatible endpoints (using `_api` dir instead of `api` so Vercel doesn't also do its own compile)
 		SINGLE_FILE_BUILD ? null : vercel(),
 	],
 	build: {

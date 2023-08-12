@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Changed
+- Now using Vite for build, to avoid import overhead on back-end. Also lets us use module aliases properly.
+
 ## [0.18.4] - 2023-08-07
 ### Added
 - Comprehensive unit test line coverage of REST endpoints.
@@ -484,6 +488,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial commit
 
+[Unreleased]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.4...HEAD
 [0.18.4]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.3...v0.18.4
 [0.18.3]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.2...v0.18.3
 [0.18.2]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.1...v0.18.2
