@@ -26,9 +26,6 @@
 	},
 	"type": "commonjs",
 	"main": "./dist/main.js",
-	"imports": {
-		"@/": "./"
-	},
 	"dependencies": {
 		"@prisma/client": "4.3.1",
 		"atob-lite": "2.0.0",
