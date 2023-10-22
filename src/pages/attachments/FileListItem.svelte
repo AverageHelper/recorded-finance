@@ -11,7 +11,7 @@
 	const dispatch = createEventDispatcher<{
 		delete: Attachment;
 		"delete-reference": string;
-		keyup: KeyboardEvent;
+		keydown: KeyboardEvent;
 		click: MouseEvent;
 	}>();
 
@@ -36,7 +36,7 @@
 			if (event.detail.key === " ") {
 				isModalOpen = true;
 			}
-			dispatch("keyup", event.detail);
+			dispatch("keydown", event.detail);
 		} else {
 			dispatch("click", event.detail);
 			isModalOpen = true;
@@ -56,7 +56,7 @@
 	}
 </script>
 
-<ListItem {title} {subtitle} to="" on:keyup={presentImageModal} on:click={presentImageModal} />
+<ListItem {title} {subtitle} to="" on:keydown={presentImageModal} on:click={presentImageModal} />
 <Modal open={isModalOpen && !!file} {closeModal}>
 	<FileView {file} on:delete={askToDelete} on:deleteReference={askToDeleteReference} />
 </Modal>

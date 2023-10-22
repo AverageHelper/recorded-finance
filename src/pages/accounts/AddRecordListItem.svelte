@@ -6,20 +6,18 @@
 
 	const dispatch = createEventDispatcher<{
 		click: MouseEvent;
-		keyup: KeyboardEvent;
+		keydown: KeyboardEvent;
 	}>();
 
 	export let noun: string = "record";
 
-	function onClick(event: CustomEvent<MouseEvent> | CustomEvent<KeyboardEvent>) {
-		event.preventDefault();
-		event.detail.preventDefault();
+	function onKeydown(event: CustomEvent<KeyboardEvent>) {
+		dispatch("keydown", event.detail);
+	}
 
-		if ("key" in event.detail) {
-			dispatch("keyup", event.detail);
-		} else {
-			dispatch("click", event.detail);
-		}
+	function onClick(event: CustomEvent<MouseEvent>) {
+		event.preventDefault();
+		dispatch("click", event.detail);
 	}
 </script>
 
@@ -27,7 +25,7 @@
 	kind="add"
 	title={$_("actions.add-new-noun", { values: { noun } })}
 	to=""
-	on:keyup={onClick}
+	on:keydown={onKeydown}
 	on:click={onClick}
 >
 	<PlusWithCircle slot="icon" />

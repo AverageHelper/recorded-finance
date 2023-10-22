@@ -67,7 +67,7 @@
 			<li>
 				<AddRecordListItem
 					noun="account"
-					on:keyup={startCreatingAccount}
+					on:keydown={startCreatingAccount}
 					on:click={startCreatingAccount}
 				/>
 			</li>

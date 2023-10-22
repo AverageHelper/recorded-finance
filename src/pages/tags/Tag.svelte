@@ -21,7 +21,7 @@
 <div
 	class={`tag tag--${tag.colorId} ${onSelect ? "selectable" : ""}`}
 	title={tag.id}
-	on:keyup={e => selectTag(e, tag)}
+	on:keydown={e => selectTag(e, tag)}
 	on:click={e => selectTag(e, tag)}
 >
 	<span class="title">{tag.name}</span>

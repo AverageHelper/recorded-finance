@@ -222,7 +222,7 @@
 					{:else}
 						<FileListItem
 							{fileId}
-							on:keyup={e => {
+							on:keydown={e => {
 								e.preventDefault();
 								e.detail.preventDefault();
 								if (e.detail.key === " ") {

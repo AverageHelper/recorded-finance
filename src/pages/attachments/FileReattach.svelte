@@ -59,7 +59,7 @@
 				<ListItem
 					title={$_("files.upload.imperative")}
 					to=""
-					on:keyup={e => {
+					on:keydown={e => {
 						e.preventDefault();
 						e.detail.preventDefault();
 						if (e.detail.key === " ") {
@@ -78,7 +78,7 @@
 			<li>
 				<FileListItem
 					fileId={file.id}
-					on:keyup={e => {
+					on:keydown={e => {
 						e.preventDefault();
 						e.detail.preventDefault();
 						if (e.detail.key === " ") {
