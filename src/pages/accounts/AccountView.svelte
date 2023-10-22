@@ -130,7 +130,7 @@
 		<List>
 			<li>
 				<AddRecordListItem
-					on:keyup={startCreatingTransaction}
+					on:keydown={startCreatingTransaction}
 					on:click={startCreatingTransaction}
 				/>
 			</li>

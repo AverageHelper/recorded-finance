@@ -29,7 +29,7 @@
 	<label class="checkbox {loading ? 'loading' : ''}">
 		<label
 			class="mark {disabled ? 'disabled' : ''} {value ? 'checked' : ''}"
-			on:keyup={toggle}
+			on:keydown={toggle}
 			on:click|stopPropagation|preventDefault={toggle}
 		>
 			<input type="checkbox" checked={value} {disabled} on:change={onChange} />

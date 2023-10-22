@@ -7,7 +7,7 @@
 	export let quote: boolean = false;
 </script>
 
-<div class="location" title="id: {location.id}" on:keyup on:click>
+<div class="location" title="id: {location.id}" on:keydown on:click>
 	{#if location.coordinate}
 		<LocationIcon />
 	{:else}

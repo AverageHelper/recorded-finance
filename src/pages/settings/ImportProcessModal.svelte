@@ -168,7 +168,7 @@
 							{account}
 							link={false}
 							count={transactionCounts[account.id] ?? 0}
-							on:keyup={e => toggleAccount(e, account)}
+							on:keydown={e => toggleAccount(e, account)}
 							on:click={e => toggleAccount(e, account)}
 						/>
 						{#if accountIdsToImport.has(account.id)}
@@ -191,7 +191,7 @@
 							{account}
 							link={false}
 							count={transactionCounts[account.id] ?? 0}
-							on:keyup={e => toggleAccount(e, account)}
+							on:keydown={e => toggleAccount(e, account)}
 							on:click={e => toggleAccount(e, account)}
 						/>
 						{#if accountIdsToImport.has(account.id)}

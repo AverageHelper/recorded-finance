@@ -13,7 +13,7 @@
 		dispatch("change", colorId);
 	}
 
-	function onKeyup(event: CustomEvent<KeyboardEvent>, colorId: ColorID) {
+	function onKeydown(event: CustomEvent<KeyboardEvent>, colorId: ColorID) {
 		if (event.detail.key !== " ") return;
 		event.stopPropagation();
 		select(colorId);
@@ -24,7 +24,11 @@
 	<List>
 		{#each colors as colorId}
 			<li class={colorId === value ? "selected" : ""}>
-				<ColorDot {colorId} on:keyup={e => onKeyup(e, colorId)} on:click={() => select(colorId)}>
+				<ColorDot
+					{colorId}
+					on:keydown={e => onKeydown(e, colorId)}
+					on:click={() => select(colorId)}
+				>
 					<div class="check" />
 				</ColorDot>
 			</li>

@@ -16,7 +16,7 @@
 	}
 
 	function onClose(event: MouseEvent | KeyboardEvent) {
-		if ("key" in event && event.key !== "Escape") return;
+		if ("key" in event && event.key.toLowerCase() !== "escape") return;
 		doClose();
 	}
 
@@ -30,7 +30,7 @@
 		<div
 			transition:fly|local
 			class="modal-6ca181ee__wrapper"
-			on:keyup={onClose}
+			on:keydown={onClose}
 			on:click|self={onClose}
 		>
 			{#if closeModal}

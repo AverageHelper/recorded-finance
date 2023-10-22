@@ -5,7 +5,7 @@
 
 	const dispatch = createEventDispatcher<{
 		click: MouseEvent;
-		keyup: KeyboardEvent;
+		keydown: KeyboardEvent;
 	}>();
 
 	type ListItemKind = "add" | "choose";
@@ -20,13 +20,20 @@
 	export let kind: ListItemKind = "choose";
 
 	function onClick(event: KeyboardEvent | MouseEvent) {
-		console.debug("onClick", to);
-		if (to) {
-			navigate(to, { replace });
-		} else if ("key" in event) {
-			dispatch("keyup", event);
+		if ("key" in event) {
+			// Keyboard event
+			dispatch("keydown", event);
+			if (to && (event.key.toLowerCase() === "enter" || event.key === " ")) {
+				event.preventDefault();
+				event.stopPropagation();
+				navigate(to, { replace });
+			}
 		} else {
+			// Mouse event
 			dispatch("click", event);
+			if (to) {
+				navigate(to, { replace });
+			}
 		}
 	}
 </script>
@@ -35,7 +42,7 @@
 	this={to === null ? "div" : "a"}
 	class="list-item {kind} {to !== null ? 'clickable' : ''}"
 	href={to}
-	on:keyup|stopPropagation|preventDefault={onClick}
+	on:keydown={onClick}
 	on:click|stopPropagation|preventDefault={onClick}
 >
 	<slot name="icon" />
