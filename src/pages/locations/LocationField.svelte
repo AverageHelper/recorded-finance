@@ -18,11 +18,11 @@
 	let titleField: TextField | undefined;
 	let recentsList: HTMLUListElement | undefined;
 	let root: HTMLLabelElement | undefined;
-	let hasFocus = false;
+	let isOpen = false;
 	let arrowCounter = -1;
 
 	$: {
-		hasFocus; // Changed focus
+		isOpen; // Changed drawer state
 		arrowCounter = -1;
 	}
 
@@ -73,11 +73,6 @@
 		}
 	}
 
-	async function updateFocusState() {
-		await tick(); // Wait until new focus is resolved before we check
-		hasFocus = root?.contains(document.activeElement) ?? false;
-	}
-
 	async function onLocationSelect(location: Location, event?: KeyboardEvent) {
 		// if event is given, make sure space or enter key
 		if (event && event.code !== "Enter") return;
@@ -87,8 +82,9 @@
 		newLocationSubtitle = "";
 		newLocationCoordinates = null;
 		arrowCounter = -1;
-		hasFocus = false;
+		isOpen = false;
 		await updateModelValue(location);
+		titleField?.blur();
 	}
 
 	function clear(event: CustomEvent<MouseEvent>) {
@@ -96,7 +92,6 @@
 		newLocationTitle = "";
 		newLocationSubtitle = "";
 		newLocationCoordinates = null;
-		hasFocus = false;
 		arrowCounter = -1;
 		dispatch("change", null);
 	}
@@ -126,13 +121,15 @@
 	}
 </script>
 
-<label
-	bind:this={root}
-	on:focusin={updateFocusState}
-	on:focusout={updateFocusState}
-	on:blur={updateFocusState}
->
-	<div class="fields{hasFocus ? ' open' : ''}{title || subtitle ? ' plural' : ''}">
+<!--
+	Needs:
+	- Choose title and subtitle for new location
+	- Display current location
+	- Change location to an existing old location, sorted by recent use and filtered by input
+-->
+
+<label bind:this={root}>
+	<div class="fields{isOpen ? ' open' : ''}{title || subtitle ? ' plural' : ''}">
 		<TextField
 			bind:this={titleField}
 			value={title}
@@ -140,6 +137,10 @@
 			placeholder={$_("example.business-name")}
 			on:input={updateTitle}
 			on:keydown={onKeyDown}
+			on:focusin={() => !value && (isOpen = true)}
+			on:focus={() => !value && (isOpen = true)}
+			on:focusout={() => (isOpen = false)}
+			on:blur={() => (isOpen = false)}
 		/>
 		{#if title || subtitle}
 			<TextField
@@ -151,7 +152,7 @@
 			/>
 		{/if}
 
-		<ul bind:this={recentsList} class={hasFocus ? "" : "hidden"}>
+		<ul bind:this={recentsList} class={isOpen ? "" : "hidden"}>
 			{#if recentLocations.length > 0}
 				<li class="heading">
 					<strong>{$_("input.locations.recent")}</strong>
@@ -233,6 +234,7 @@
 			border-radius: 0 0 0.375rem 0.375rem;
 			border: 1pt solid color($separator);
 			border-top: none;
+			overflow: hidden;
 
 			&.hidden {
 				// Hide the list, but keep interactive, so that click interactions work

@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.18.6] - 2023-10-21
+### Fixed
+- The "Recent Locations" dropdown no longer just turns invisible while "closed". Mouse events should now work properly beneath the location selector while it's closed.
+
 ## [0.18.5] - 2023-08-12
 ### Changed
 - Updated back-end engine to Node 18
@@ -488,6 +492,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial commit
 
+[0.18.6]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.5...v0.18.6
 [0.18.5]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.4...v0.18.5
 [0.18.4]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.3...v0.18.4
 [0.18.3]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.2...v0.18.3

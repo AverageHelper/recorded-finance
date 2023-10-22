@@ -44,4 +44,5 @@
 
 <Button class="action-button" {color} {type} {title} {disabled} on:click={onClick}>
 	<slot />
+	{#if title}<span class="visually-hidden">{title}</span>{/if}
 </Button>
