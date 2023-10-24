@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { _ } from "../../i18n";
-	import { transactionsByMonth } from "../../router";
+	import { transactionsByMonth } from "../../router/routes";
 	import ListItem from "../../components/ListItem.svelte";
 	import MonthIcon from "../../icons/Month.svelte";
 

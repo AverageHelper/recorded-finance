@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { _ } from "../../i18n";
+	import { logger } from "../../logger";
 	import { onMount } from "svelte";
 	import AccountEdit from "./AccountEdit.svelte";
 	import AccountListItem from "./AccountListItem.svelte";
@@ -27,7 +28,7 @@
 	let isCreatingAccount = false;
 
 	async function load() {
-		console.debug("Starting watchers...");
+		logger.debug("Starting watchers...");
 		await Promise.all([
 			watchAccounts(), //
 			watchAttachments(),

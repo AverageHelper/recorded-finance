@@ -8,7 +8,7 @@
 		logoutPath,
 		securityPath,
 		settingsPath,
-	} from "../router";
+	} from "../router/routes";
 	import { _ } from "../i18n";
 	import { APP_ROOTS } from "../model/ui/tabs";
 	import { Collapse, NavbarToggler, Nav, NavItem } from "sveltestrap";

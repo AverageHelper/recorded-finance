@@ -2,6 +2,7 @@
 	import type { Transaction } from "../../model/Transaction";
 	import { _, locale } from "../../i18n";
 	import { isNegative as isDineroNegative } from "dinero.js";
+	import { logger } from "../../logger";
 	import { reverseChronologically } from "../../model/utility/sort";
 	import { toCurrency } from "../../transformers";
 	import { useLocation, useNavigate } from "svelte-navigator";
@@ -46,8 +47,8 @@
 				const a = $months[monthId1];
 				const b = $months[monthId2];
 
-				if (!a) console.warn(`Month ${monthId1} (a) doesn't exist in cache`);
-				if (!b) console.warn(`Month ${monthId2} (b) doesn't exist in cache`);
+				if (!a) logger.warn(`Month ${monthId1} (a) doesn't exist in cache`);
+				if (!b) logger.warn(`Month ${monthId2} (b) doesn't exist in cache`);
 
 				const aStart = a?.start ?? now;
 				const bStart = b?.start ?? now;

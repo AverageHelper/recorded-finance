@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { _ } from "../../i18n";
-	import { accountsPath, loginPath, signupPath } from "../../router";
+	import { accountsPath, loginPath, signupPath } from "../../router/routes";
+	import { logger } from "../../logger";
 	import { onMount, tick } from "svelte";
 	import { PlatformError, UnreachableCaseError } from "../../transport/errors";
 	import { repoReadmeHeading } from "../../platformMeta";
@@ -142,7 +143,7 @@
 			if (isSignupMode && password !== passwordRepeat)
 				throw new Error($_("error.form.password-mismatch"));
 
-			console.debug(`Doing ${mode}`);
+			logger.debug(`Doing ${mode}`);
 			switch (mode) {
 				case "signup":
 					await createVault(accountId, password);
@@ -159,7 +160,7 @@
 				default:
 					throw new UnreachableCaseError(mode);
 			}
-			console.debug(`Finished ${mode}`);
+			logger.debug(`Finished ${mode}`);
 
 			navigate(accountsPath(), { replace: true });
 		} catch (error) {
@@ -167,7 +168,7 @@
 			if (error instanceof PlatformError && error.code === "auth/unauthenticated") {
 				// Switch to TOTP mode
 				needsTotp = true;
-				console.debug(`Entering ${mode} mode`);
+				logger.debug(`Entering ${mode} mode`);
 				return;
 			}
 			// Otherwise, treat the error like a problem:

@@ -34,7 +34,7 @@ describe("QuerySnapshot", () => {
 
 		describe("`forEach`", () => {
 			test("does nothing for an empty snap", () => {
-				const mockCallback = jest.fn();
+				const mockCallback = vi.fn();
 				const snap = new QuerySnapshot(query, []);
 
 				snap.forEach(mockCallback);
@@ -42,7 +42,7 @@ describe("QuerySnapshot", () => {
 			});
 
 			test("iterates over the only doc", () => {
-				const mockCallback = jest.fn();
+				const mockCallback = vi.fn();
 				const snap = new QuerySnapshot(query, [doc1Snap]);
 
 				snap.forEach(mockCallback);
@@ -50,7 +50,7 @@ describe("QuerySnapshot", () => {
 			});
 
 			test("iterates over each doc", () => {
-				const mockCallback = jest.fn();
+				const mockCallback = vi.fn();
 				const snap = new QuerySnapshot(query, [doc1Snap, doc2Snap]);
 
 				snap.forEach(mockCallback);
@@ -130,7 +130,7 @@ describe("QuerySnapshot", () => {
 
 		describe("`forEach`", () => {
 			test("does nothing for an empty snap", () => {
-				const mockCallback = jest.fn();
+				const mockCallback = vi.fn();
 				const ogSnap = new QuerySnapshot(query, []);
 				const snap = new QuerySnapshot(ogSnap, ogSnap.docs);
 
@@ -139,7 +139,7 @@ describe("QuerySnapshot", () => {
 			});
 
 			test("iterates over the only doc", () => {
-				const mockCallback = jest.fn();
+				const mockCallback = vi.fn();
 				const ogSnap = new QuerySnapshot(query, [doc1Snap]);
 				const snap = new QuerySnapshot(ogSnap, ogSnap.docs);
 
@@ -148,7 +148,7 @@ describe("QuerySnapshot", () => {
 			});
 
 			test("iterates over each doc", () => {
-				const mockCallback = jest.fn();
+				const mockCallback = vi.fn();
 				const ogSnap = new QuerySnapshot(query, [doc1Snap, doc2Snap]);
 				const snap = new QuerySnapshot(ogSnap, ogSnap.docs);
 

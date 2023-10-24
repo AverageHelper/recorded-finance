@@ -6,7 +6,7 @@
 	import { onMount } from "svelte";
 	import { toCurrency, toTimestamp } from "../../transformers";
 	import { transaction as newTransaction } from "../../model/Transaction";
-	import { transactionPath } from "../../router";
+	import { transactionPath } from "../../router/routes";
 	import ListItem from "../../components/ListItem.svelte";
 	import LocationIcon from "../../icons/Location.svelte";
 	import PaperclipIcon from "../../icons/Paperclip.svelte";
