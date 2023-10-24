@@ -18,5 +18,13 @@
 		"editor.defaultFormatter": "svelte.svelte-vscode"
 	},
 	"todo-tree.filtering.excludeGlobs": ["**/dist/**", "**/node_modules/**"],
-	"eslint.workingDirectories": [".", "server"]
+	"eslint.workingDirectories": [".", "server"],
+	"coverage-gutters.coverageFileNames": [
+		"clover.xml",
+		"lcov.info",
+		"cov.xml",
+		"coverage.xml",
+		"jacoco.xml",
+		"coverage.cobertura.xml"
+	]
 }

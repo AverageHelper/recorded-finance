@@ -2,7 +2,7 @@
 	import { _ } from "./i18n";
 	import { isLoginEnabled } from "./store";
 	import { Link } from "svelte-navigator";
-	import { loginPath } from "./router";
+	import { loginPath } from "./router/routes";
 	import { repoReadmeHeading } from "./platformMeta";
 	import I18N from "./components/I18N.svelte";
 	import OutLink from "./components/OutLink.svelte";

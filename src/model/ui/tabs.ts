@@ -1,5 +1,4 @@
-import type { ComponentType } from "svelte";
-import { accountsPath, attachmentsPath, locationsPath, tagsPath } from "router";
+import type { ComponentType } from "svelte/internal";
 import { UnreachableCaseError } from "../../transport/errors";
 import AccountIcon from "../../icons/IdCard.svelte";
 import FileIcon from "../../icons/File.svelte";
@@ -7,12 +6,16 @@ import LocationIcon from "../../icons/Location.svelte";
 import TagIcon from "../../icons/Tag.svelte";
 import {
 	aboutPath,
+	accountsPath,
+	attachmentsPath,
 	homePath,
 	installPath,
+	locationsPath,
 	lockPath,
 	loginPath,
 	securityPath,
 	signupPath,
+	tagsPath,
 } from "../../router/routes";
 
 export const appTabs = ["accounts", "attachments", "locations", "tags"] as const;

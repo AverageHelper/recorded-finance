@@ -2,9 +2,9 @@
 	import type { SvelteToastOptions } from "@zerodevx/svelte-toast";
 	import "./i18n";
 	import { onMount } from "svelte";
-	import { Router } from "./router";
 	import { SvelteToast } from "@zerodevx/svelte-toast";
 	import { watchColorScheme } from "./store/uiStore";
+	import Router from "./router/Router.svelte";
 
 	const options: SvelteToastOptions = {};
 

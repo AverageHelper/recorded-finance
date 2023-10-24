@@ -4,15 +4,23 @@ import type {
 	newPubNubTokenForUser as _newPubNubTokenForUser,
 	revokePubNubToken as _revokePubNubToken,
 } from "../pubnub";
-import { jest } from "@jest/globals";
 
-export const publishWriteForRef = jest.fn<typeof _publishWriteForRef>();
+export const publishWriteForRef = vi.fn<
+	Parameters<typeof _publishWriteForRef>,
+	ReturnType<typeof _publishWriteForRef>
+>();
 
 export const DEFAULT_MOCK_NEW_TOKEN = "INSECURE_TOKEN" as PubNubToken;
 
-export const newPubNubTokenForUser = jest.fn<typeof _newPubNubTokenForUser>();
+export const newPubNubTokenForUser = vi.fn<
+	Parameters<typeof _newPubNubTokenForUser>,
+	ReturnType<typeof _newPubNubTokenForUser>
+>();
 
-export const revokePubNubToken = jest.fn<typeof _revokePubNubToken>();
+export const revokePubNubToken = vi.fn<
+	Parameters<typeof _revokePubNubToken>,
+	ReturnType<typeof _revokePubNubToken>
+>();
 
 beforeEach(() => {
 	publishWriteForRef.mockResolvedValue(undefined);

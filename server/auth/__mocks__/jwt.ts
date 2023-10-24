@@ -8,27 +8,41 @@ import type {
 	jwtFromRequest as _jwtFromRequest,
 	verifyJwt as _verifyJwt,
 } from "../jwt";
-import { jest } from "@jest/globals";
 
 export const persistentSecret = "wAheb^8v^YV^s6YaeYVW&8tyLa*ce4"; // from the README
 
-export const blacklistHasJwt = jest.fn<typeof _blacklistHasJwt>();
+export const blacklistHasJwt = vi.fn<
+	Parameters<typeof _blacklistHasJwt>,
+	ReturnType<typeof _blacklistHasJwt>
+>();
 
-export const addJwtToBlacklist = jest.fn<typeof _addJwtToBlacklist>();
+export const addJwtToBlacklist = vi.fn<
+	Parameters<typeof _addJwtToBlacklist>,
+	ReturnType<typeof _addJwtToBlacklist>
+>();
 
 export const DEFAULT_MOCK_ACCESS_TOKEN: string = "deft";
 
 export const DEFAULT_MOCK_PUBNUB_TOKEN = "move" as PubNubToken;
 
-export const newAccessTokens = jest.fn<typeof _newAccessTokens>();
+export const newAccessTokens = vi.fn<
+	Parameters<typeof _newAccessTokens>,
+	ReturnType<typeof _newAccessTokens>
+>();
 
-export const setSession = jest.fn<typeof _setSession>();
+export const setSession = vi.fn<Parameters<typeof _setSession>, ReturnType<typeof _setSession>>();
 
-export const killSession = jest.fn<typeof _killSession>();
+export const killSession = vi.fn<
+	Parameters<typeof _killSession>,
+	ReturnType<typeof _killSession>
+>();
 
-export const jwtFromRequest = jest.fn<typeof _jwtFromRequest>();
+export const jwtFromRequest = vi.fn<
+	Parameters<typeof _jwtFromRequest>,
+	ReturnType<typeof _jwtFromRequest>
+>();
 
-export const verifyJwt = jest.fn<typeof _verifyJwt>();
+export const verifyJwt = vi.fn<Parameters<typeof _verifyJwt>, ReturnType<typeof _verifyJwt>>();
 
 beforeEach(() => {
 	blacklistHasJwt.mockResolvedValue(false);

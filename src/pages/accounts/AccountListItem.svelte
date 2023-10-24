@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Account } from "../../model/Account";
 	import { _, locale } from "../../i18n";
-	import { accountPath } from "../../router";
+	import { accountPath } from "../../router/routes";
 	import { currentBalance, transactionsForAccount } from "../../store";
 	import { isNegative as isDineroNegative } from "dinero.js";
 	import { toCurrency } from "../../transformers";

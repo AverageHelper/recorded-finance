@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { _ } from "../../i18n";
-	import { accountsPath } from "../../router";
+	import { accountsPath } from "../../router/routes";
 	import { NetworkError, PlatformError } from "../../transport/errors";
 	import { onMount, tick } from "svelte";
 	import { useNavigate } from "svelte-navigator";

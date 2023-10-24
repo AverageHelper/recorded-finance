@@ -38,12 +38,12 @@ export const GET = apiHandler("GET", async (req, res) => {
 	const user = await requireAuth(req, res, true);
 
 	const ref = documentRef(user, req);
-	// console.debug(`Handling GET for document at ${ref?.path ?? "null"}`);
+	// logger.debug(`Handling GET for document at ${ref?.path ?? "null"}`);
 	if (!ref) throw new NotFoundError();
 
 	const doc = await getDocument(ref);
 	const data = doc.data;
-	// console.debug(`Found item: ${JSON.stringify(data, undefined, "  ")}`);
+	// logger.debug(`Found item: ${JSON.stringify(data, undefined, "  ")}`);
 	respondData(res, data);
 });
 

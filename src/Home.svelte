@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { _ } from "./i18n";
-	import { aboutPath, signupPath } from "./router";
+	import { aboutPath, signupPath } from "./router/routes";
 	import { isSignupEnabled } from "./store";
 	import { Link } from "svelte-navigator";
 	import { repoFile, repoMain, repoNewIssue } from "./platformMeta";

@@ -15,30 +15,26 @@ import type { JWT } from "./auth/jwt";
 import "jest-extended";
 import { allCollectionIds } from "./database/schemas";
 import { CollectionReference, DocumentReference } from "./database/references";
-import { jest } from "@jest/globals";
 import { setAuth, userWithTotp, userWithoutTotp } from "./test/userMocks";
 import { version } from "./version";
 import _request from "supertest";
 import jsonwebtoken from "jsonwebtoken";
 
-/* eslint-disable jest/no-mocks-import */
-import * as mockEnvironment from "./__mocks__/environment";
-import * as mockGenerators from "./auth/__mocks__/generators";
-import * as mockJwt from "./auth/__mocks__/jwt";
-import * as mockPubnub from "./auth/__mocks__/pubnub";
-import * as mockTotp from "./auth/__mocks__/totp";
-import * as mockRead from "./database/__mocks__/read";
-import * as mockWrite from "./database/__mocks__/write";
-/* eslint-enable jest/no-mocks-import */
+vi.mock("./environment");
+vi.mock("./auth/generators");
+vi.mock("./auth/jwt");
+vi.mock("./auth/pubnub");
+vi.mock("./auth/totp");
+vi.mock("./database/read");
+vi.mock("./database/write");
 
-// See https://github.com/facebook/jest/issues/10025 on why `jest.mock` doesn't work under ESM
-jest.unstable_mockModule("./environment", () => mockEnvironment);
-jest.unstable_mockModule("./auth/generators", () => mockGenerators);
-jest.unstable_mockModule("./auth/jwt", () => mockJwt);
-jest.unstable_mockModule("./auth/pubnub", () => mockPubnub);
-jest.unstable_mockModule("./auth/totp", () => mockTotp);
-jest.unstable_mockModule("./database/read", () => mockRead);
-jest.unstable_mockModule("./database/write", () => mockWrite);
+/* eslint-disable vitest/no-mocks-import */
+const mockGenerators = await import("./auth/__mocks__/generators");
+const mockJwt = await import("./auth/__mocks__/jwt");
+const mockTotp = await import("./auth/__mocks__/totp");
+const mockRead = await import("./database/__mocks__/read");
+const mockWrite = await import("./database/__mocks__/write");
+/* eslint-enable vitest/no-mocks-import */
 
 const { app } = await import("./main");
 
@@ -272,7 +268,7 @@ describe("Routes", () => {
 			expect(mockGenerators.generateSalt).toHaveBeenCalledOnce();
 			expect(mockGenerators.generateHash).toHaveBeenCalledOnce();
 			expect(mockGenerators.generateAESCipherKey).toHaveBeenCalledOnce();
-			expect(mockWrite.upsertUser).toHaveBeenCalledOnceWith({
+			expect(mockWrite.upsertUser).toHaveBeenCalledExactlyOnceWith({
 				uid: expect.toBeString() as UID,
 				currentAccountId: account,
 				passwordHash: mockGenerators.DEFAULT_MOCK_HASH,
@@ -491,7 +487,7 @@ describe("Routes", () => {
 					usedSpace: 0,
 					message: "Success!",
 				});
-			expect(mockWrite.upsertUser).toHaveBeenCalledOnceWith({
+			expect(mockWrite.upsertUser).toHaveBeenCalledExactlyOnceWith({
 				...user,
 				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN, // FIXME: This is weird. Shouldn't the seed != the token?
 				requiredAddtlAuth: ["totp"],
@@ -512,7 +508,7 @@ describe("Routes", () => {
 					usedSpace: 0,
 					message: "Success!",
 				});
-			expect(mockWrite.upsertUser).toHaveBeenCalledOnceWith({
+			expect(mockWrite.upsertUser).toHaveBeenCalledExactlyOnceWith({
 				...user,
 				mfaRecoverySeed: null,
 			});
@@ -558,7 +554,7 @@ describe("Routes", () => {
 			await request("GET", PATH)
 				.expect(200)
 				.expect({ secret: mockTotp.DEFAULT_MOCK_OTP_SECUET_URI, message: "Success!" });
-			expect(mockWrite.upsertUser).toHaveBeenCalledOnceWith({
+			expect(mockWrite.upsertUser).toHaveBeenCalledExactlyOnceWith({
 				...user,
 				totpSeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
 			});
@@ -648,7 +644,7 @@ describe("Routes", () => {
 				.send({ password: "nonempty", token: "nonempty" })
 				.expect(200)
 				.expect({ message: "Success!" });
-			expect(mockWrite.upsertUser).toHaveBeenCalledOnceWith({
+			expect(mockWrite.upsertUser).toHaveBeenCalledExactlyOnceWith({
 				...user,
 				totpSeed: null,
 				mfaRecoverySeed: null,
@@ -760,7 +756,7 @@ describe("Routes", () => {
 			const token = "auth-token-12345" as JWT;
 			mockJwt.jwtFromRequest.mockReturnValueOnce(token);
 			await request("POST", PATH).expect(200).expect({ message: "Success!" });
-			expect(mockJwt.addJwtToBlacklist).toHaveBeenCalledOnceWith(token);
+			expect(mockJwt.addJwtToBlacklist).toHaveBeenCalledExactlyOnceWith(token);
 			expect(mockJwt.killSession).toHaveBeenCalledOnce();
 		});
 	});
@@ -841,7 +837,7 @@ describe("Routes", () => {
 				.send({ account: "nonempty", password: "nonempty" })
 				.expect(200)
 				.expect({ message: "Success!" });
-			expect(mockWrite.destroyUser).toHaveBeenCalledOnceWith(user.uid);
+			expect(mockWrite.destroyUser).toHaveBeenCalledExactlyOnceWith(user.uid);
 		});
 
 		test("POST answers 403 if TOTP is required and not provided", async () => {
@@ -890,7 +886,7 @@ describe("Routes", () => {
 				.send({ account: "nonempty", password: "nonempty", token: "123456" })
 				.expect(200)
 				.expect({ message: "Success!" });
-			expect(mockWrite.destroyUser).toHaveBeenCalledOnceWith(user.uid);
+			expect(mockWrite.destroyUser).toHaveBeenCalledExactlyOnceWith(user.uid);
 		});
 	});
 
@@ -1017,7 +1013,7 @@ describe("Routes", () => {
 				.send({ account: "nonempty", password: "nonempty", newpassword: "nonempty-again" })
 				.expect(200)
 				.expect({ message: "Success!" });
-			expect(mockWrite.upsertUser).toHaveBeenCalledOnceWith({
+			expect(mockWrite.upsertUser).toHaveBeenCalledExactlyOnceWith({
 				...user,
 				passwordSalt,
 				passwordHash,
@@ -1084,7 +1080,7 @@ describe("Routes", () => {
 				})
 				.expect(200)
 				.expect({ message: "Success!" });
-			expect(mockWrite.upsertUser).toHaveBeenCalledOnceWith({
+			expect(mockWrite.upsertUser).toHaveBeenCalledExactlyOnceWith({
 				...user,
 				passwordSalt,
 				passwordHash,
@@ -1211,7 +1207,7 @@ describe("Routes", () => {
 				.send({ account: "nonempty", newaccount, password: "nonempty" })
 				.expect(200)
 				.expect({ message: "Success!" });
-			expect(mockWrite.upsertUser).toHaveBeenCalledOnceWith({
+			expect(mockWrite.upsertUser).toHaveBeenCalledExactlyOnceWith({
 				...user,
 				currentAccountId: newaccount,
 			});
@@ -1261,7 +1257,7 @@ describe("Routes", () => {
 				})
 				.expect(200)
 				.expect({ message: "Success!" });
-			expect(mockWrite.upsertUser).toHaveBeenCalledOnceWith({
+			expect(mockWrite.upsertUser).toHaveBeenCalledExactlyOnceWith({
 				...user,
 				currentAccountId: newaccount,
 			});
@@ -1361,7 +1357,7 @@ describe("Routes", () => {
 			});
 			await request("POST", PATH).send(batch).expect(200);
 			expect(mockWrite.deleteDocuments).not.toHaveBeenCalled();
-			expect(mockWrite.setDocuments).toHaveBeenCalledOnceWith(updates);
+			expect(mockWrite.setDocuments).toHaveBeenCalledExactlyOnceWith(updates);
 		});
 
 		test.each(counts)("POST answers 200 for a batch of %d 'delete' operations", async count => {
@@ -1378,7 +1374,7 @@ describe("Routes", () => {
 				};
 			});
 			await request("POST", PATH).send(batch).expect(200);
-			expect(mockWrite.deleteDocuments).toHaveBeenCalledOnceWith(refs);
+			expect(mockWrite.deleteDocuments).toHaveBeenCalledExactlyOnceWith(refs);
 			expect(mockWrite.setDocuments).not.toHaveBeenCalled();
 		});
 
@@ -1462,7 +1458,7 @@ describe("Routes", () => {
 					};
 				});
 				await request("POST", PATH).send(batch).expect(200);
-				expect(mockWrite.deleteDocuments).toHaveBeenCalledOnceWith(refs);
+				expect(mockWrite.deleteDocuments).toHaveBeenCalledExactlyOnceWith(refs);
 				expect(mockWrite.setDocuments).not.toHaveBeenCalled();
 			}
 		);

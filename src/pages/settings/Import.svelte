@@ -2,7 +2,7 @@
 	import type { DatabaseSchema } from "../../model/DatabaseSchema";
 	import type { Entry } from "@zip.js/zip.js";
 	import { _, locale } from "../../i18n";
-	import { accountsPath } from "../../router";
+	import { accountsPath } from "../../router/routes";
 	import { BlobReader, TextWriter, ZipReader } from "@zip.js/zip.js";
 	import { create } from "superstruct";
 	import { handleError } from "../../store";

@@ -20,45 +20,98 @@ import type {
 	informWatchersForCollection as _informWatchersForCollection,
 } from "../read";
 import type { DocumentReference } from "../references";
-import { jest } from "@jest/globals";
 
-export const statsForUser = jest.fn<typeof _statsForUser>();
+export const statsForUser = vi.fn<
+	Parameters<typeof _statsForUser>,
+	ReturnType<typeof _statsForUser>
+>();
 
-export const numberOfUsers = jest.fn<typeof _numberOfUsers>();
+export const numberOfUsers = vi.fn<
+	Parameters<typeof _numberOfUsers>,
+	ReturnType<typeof _numberOfUsers>
+>();
 
-export const listAllUserIds = jest.fn<typeof _listAllUserIds>();
+export const listAllUserIds = vi.fn<
+	Parameters<typeof _listAllUserIds>,
+	ReturnType<typeof _listAllUserIds>
+>();
 
-export const fetchFileData = jest.fn<typeof _fetchFileData>();
+export const fetchFileData = vi.fn<
+	Parameters<typeof _fetchFileData>,
+	ReturnType<typeof _fetchFileData>
+>();
 
-export const totalSizeOfFile = jest.fn<typeof _totalSizeOfFile>();
+export const totalSizeOfFile = vi.fn<
+	Parameters<typeof _totalSizeOfFile>,
+	ReturnType<typeof _totalSizeOfFile>
+>();
 
-export const totalSizeOfFilesForUser = jest.fn<typeof _totalSizeOfFilesForUser>();
+export const totalSizeOfFilesForUser = vi.fn<
+	Parameters<typeof _totalSizeOfFilesForUser>,
+	ReturnType<typeof _totalSizeOfFilesForUser>
+>();
 
-export const countFileBlobsForUser = jest.fn<typeof _countFileBlobsForUser>();
+export const countFileBlobsForUser = vi.fn<
+	Parameters<typeof _countFileBlobsForUser>,
+	ReturnType<typeof _countFileBlobsForUser>
+>();
 
-export const jwtExistsInDatabase = jest.fn<typeof _jwtExistsInDatabase>();
+export const jwtExistsInDatabase = vi.fn<
+	Parameters<typeof _jwtExistsInDatabase>,
+	ReturnType<typeof _jwtExistsInDatabase>
+>();
 
-export const numberOfExpiredJwts = jest.fn<typeof _numberOfExpiredJwts>();
+export const numberOfExpiredJwts = vi.fn<
+	Parameters<typeof _numberOfExpiredJwts>,
+	ReturnType<typeof _numberOfExpiredJwts>
+>();
 
-export const countRecordsInCollection = jest.fn<typeof _countRecordsInCollection>();
+export const countRecordsInCollection = vi.fn<
+	Parameters<typeof _countRecordsInCollection>,
+	ReturnType<typeof _countRecordsInCollection>
+>();
 
-export const fetchDbCollection = jest.fn<typeof _fetchDbCollection>();
+export const fetchDbCollection = vi.fn<
+	Parameters<typeof _fetchDbCollection>,
+	ReturnType<typeof _fetchDbCollection>
+>();
 
-export const userWithUid = jest.fn<typeof _userWithUid>();
+export const userWithUid = vi.fn<
+	Parameters<typeof _userWithUid>,
+	ReturnType<typeof _userWithUid>
+>();
 
-export const userWithAccountId = jest.fn<typeof _userWithAccountId>();
+export const userWithAccountId = vi.fn<
+	Parameters<typeof _userWithAccountId>,
+	ReturnType<typeof _userWithAccountId>
+>();
 
-export const fetchDbDoc = jest.fn<typeof _fetchDbDoc>();
+export const fetchDbDoc = vi.fn<Parameters<typeof _fetchDbDoc>, ReturnType<typeof _fetchDbDoc>>();
 
-export const fetchDbDocs = jest.fn<typeof _fetchDbDocs>();
+export const fetchDbDocs = vi.fn<
+	Parameters<typeof _fetchDbDocs>,
+	ReturnType<typeof _fetchDbDocs>
+>();
 
-export const watchUpdatesToDocument = jest.fn<typeof _watchUpdatesToDocument>();
+export const watchUpdatesToDocument = vi.fn<
+	Parameters<typeof _watchUpdatesToDocument>,
+	ReturnType<typeof _watchUpdatesToDocument>
+>();
 
-export const watchUpdatesToCollection = jest.fn<typeof _watchUpdatesToCollection>();
+export const watchUpdatesToCollection = vi.fn<
+	Parameters<typeof _watchUpdatesToCollection>,
+	ReturnType<typeof _watchUpdatesToCollection>
+>();
 
-export const informWatchersForDocument = jest.fn<typeof _informWatchersForDocument>();
+export const informWatchersForDocument = vi.fn<
+	Parameters<typeof _informWatchersForDocument>,
+	ReturnType<typeof _informWatchersForDocument>
+>();
 
-export const informWatchersForCollection = jest.fn<typeof _informWatchersForCollection>();
+export const informWatchersForCollection = vi.fn<
+	Parameters<typeof _informWatchersForCollection>,
+	ReturnType<typeof _informWatchersForCollection>
+>();
 
 // FIXME: We can't see `NonEmptyArray` in here for some reason, so we must redefine the type locally
 type NonEmptyArray<T> = [T, ...Array<T>];

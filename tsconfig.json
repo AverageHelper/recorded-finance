@@ -3,7 +3,7 @@
 	"compilerOptions": {
 		"declaration": true,
 		"noEmit": false,
-		"types": ["vite/client", "svelte", "jest", "jest-extended", "node"]
+		"types": ["vite/client", "svelte", "vitest/globals", "jest-extended", "node"]
 	},
 	"include": ["src/**/*", "scripts/**/*"],
 	"exclude": ["node_modules/*", "__sapper__/*", "public/*", "**/__mocks__/**/*.ts", "./server/**"]

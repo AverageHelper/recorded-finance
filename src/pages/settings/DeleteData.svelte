@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { _ } from "../../i18n";
 	import { accountId, destroyVault, handleError } from "../../store";
-	import { logoutPath } from "../../router";
+	import { logoutPath } from "../../router/routes";
 	import { useNavigate } from "svelte-navigator";
 	import ActionButton from "../../components/buttons/ActionButton.svelte";
 	import ConfirmDeleteEverything from "./ConfirmDeleteEverything.svelte";

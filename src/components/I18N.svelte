@@ -40,6 +40,7 @@
  -->
 <script lang="ts">
 	import { _ } from "../i18n";
+	import { logger } from "../logger";
 	import { onMount, tick } from "svelte";
 
 	export let tag: keyof HTMLElementTagNameMap = "span";
@@ -66,7 +67,7 @@
 	let leftovers: HTMLSpanElement | undefined;
 
 	$: rawText = $_(keypath);
-	$: if (debug) console.debug(`text for keypath ${keypath}: "${rawText}"`);
+	$: if (debug) logger.debug(`text for keypath ${keypath}: "${rawText}"`);
 
 	let items: Array<Item> = [];
 
@@ -117,7 +118,7 @@
 		}
 
 		items = newItems;
-		if (debug) console.debug("Items:", items);
+		if (debug) logger.debug("Items:", items);
 		await processSlots();
 	}
 
@@ -136,13 +137,13 @@
 		const slots = Array.from(leftovers.children);
 		const targets = Array.from(root.children).filter(hasDataset);
 
-		if (debug) console.debug(`targets: ${targets.length}`, targets);
+		if (debug) logger.debug(`targets: ${targets.length}`, targets);
 		slots.forEach((stuff, idx) => {
 			// Move this slot to the one at index `idx`
 			const slotName = stuff.slot;
-			if (debug) console.debug(`slotName: ${slotName}`);
+			if (debug) logger.debug(`slotName: ${slotName}`);
 			const target = targets[idx];
-			if (debug) console.debug("target:", target);
+			if (debug) logger.debug("target:", target);
 			if (!target) return; // Ignore this item if we don't know where it goes
 			stuff.remove();
 			target.appendChild(stuff);

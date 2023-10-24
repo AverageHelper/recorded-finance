@@ -2,10 +2,11 @@
 	import type { Tag as TagObject, TagRecordParams } from "../../model/Tag";
 	import type { Attachment } from "../../model/Attachment";
 	import { _, locale } from "../../i18n";
-	import { accountPath } from "../../router";
+	import { accountPath } from "../../router/routes";
 	import { addTagToTransaction, addAttachmentToTransaction } from "../../model/Transaction";
 	import { isNegative } from "dinero.js";
 	import { link, useNavigate } from "svelte-navigator";
+	import { logger } from "../../logger";
 	import { toCurrency, toTimestamp } from "../../transformers";
 	import ConfirmDestroyFile from "../attachments/ConfirmDestroyFile.svelte";
 	import EditButton from "../../components/buttons/EditButton.svelte";
@@ -68,7 +69,7 @@
 	}
 
 	function modifyTag(tag: CustomEvent<TagObject>) {
-		console.debug("modify", tag.detail);
+		logger.debug("modify", tag.detail);
 	}
 
 	async function removeTag(tag: CustomEvent<TagObject>) {
