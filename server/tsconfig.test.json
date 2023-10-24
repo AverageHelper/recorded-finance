@@ -1,18 +1,8 @@
 {
 	"extends": "./tsconfig.json",
 	"compilerOptions": {
-		"declaration": true,
-		"noEmit": false,
-		"types": ["node", "jest", "jest-extended"]
+		"types": ["vitest/globals", "jest-extended", "node"]
 	},
-	"include": [
-		"./*.ts",
-		"./*.cjs",
-		"**/*.ts",
-		"**/*.d.ts",
-		"**/*.json",
-		"**/__mocks__/**/*.ts",
-		"./test/**/*.ts"
-	],
+	"include": ["./*.ts", "./*.cjs", "**/*.ts", "**/*.d.ts", "**/*.json", "scripts/**/*"],
 	"exclude": []
 }

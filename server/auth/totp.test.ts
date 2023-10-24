@@ -1,16 +1,9 @@
 import type { TOTPSecretUri } from "./totp";
 import type { TOTPSeed, TOTPToken } from "../database/schemas";
-import "jest-extended";
-import { jest } from "@jest/globals";
 import { URL } from "node:url";
 import totpGenerator from "totp-generator";
 
-/* eslint-disable jest/no-mocks-import */
-import * as mockJwt from "./__mocks__/jwt";
-/* eslint-enable jest/no-mocks-import */
-
-// See https://github.com/facebook/jest/issues/10025 on why `jest.mock` doesn't work under ESM
-jest.unstable_mockModule("./jwt", () => mockJwt);
+vi.mock("./jwt");
 
 const { base32Encode, generateSecret, generateTOTP, generateTOTPSecretURI, verifyTOTP } =
 	await import("./totp");
@@ -179,12 +172,12 @@ describe("TOTP", () => {
 	});
 
 	test.each(timesAndTokens)("uses Date.now() if no timestamp is given", now => {
-		jest.useFakeTimers({ now });
+		vi.useFakeTimers({ now });
 		const value = generateTOTP(secret);
 		const isValid = verifyTOTP(value, secret);
 		expect(value).toBe(totpGenerator(secret));
 		expect(isValid).toBeTrue();
-		jest.useRealTimers();
+		vi.useRealTimers();
 	});
 
 	test.each`

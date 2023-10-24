@@ -20,8 +20,8 @@
 		"useUnknownInCatchVariables": true,
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
-		"types": [],
-		"typeRoots": ["./node_modules/@types", "./src"],
+		"types": ["node"],
+		"typeRoots": ["./node_modules/@types", "./node_modules", "./src"],
 		"noEmit": false
 	},
 	"include": ["./**/*.ts", "./**/*.d.ts"],

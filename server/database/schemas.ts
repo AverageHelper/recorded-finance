@@ -64,7 +64,7 @@ export function assertSchema<T>(tbd: unknown, schema: Struct<T>): asserts tbd is
 
 const mfaOptions = ["totp"] as const;
 
-export type MFAOption = typeof mfaOptions[number];
+export type MFAOption = (typeof mfaOptions)[number];
 
 export function isMfaOption(tbd: unknown): tbd is MFAOption {
 	return is(tbd, enums(mfaOptions));
@@ -276,7 +276,7 @@ export const allCollectionIds = [
 	"users",
 ] as const;
 
-export type CollectionID = typeof allCollectionIds[number];
+export type CollectionID = (typeof allCollectionIds)[number];
 
 export function isCollectionId(tbd: string): tbd is CollectionID {
 	return allCollectionIds.includes(tbd as CollectionID);

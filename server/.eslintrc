@@ -8,7 +8,7 @@
 		"strictest/typescript-eslint",
 		"strictest/unicorn",
 		"eslint:recommended",
-		"plugin:jest/recommended",
+		"plugin:vitest/recommended",
 		"plugin:@typescript-eslint/recommended",
 		"plugin:@typescript-eslint/recommended-requiring-type-checking",
 		"plugin:import/recommended",
@@ -21,6 +21,7 @@
 		"deprecation",
 		"@typescript-eslint",
 		"import",
+		"vitest",
 		"file-progress"
 	],
 	"parser": "@typescript-eslint/parser",
@@ -40,7 +41,6 @@
 		"consistent-return": "off", // TS handles this
 		"no-duplicate-imports": "off", // typescript-eslint handles this
 		"@typescript-eslint/no-namespace": "off",
-		"@typescript-eslint/no-duplicate-imports": "error",
 		"@typescript-eslint/consistent-type-assertions": "off",
 		"@typescript-eslint/no-empty-interface": "off",
 		"@typescript-eslint/require-await": "warn",
@@ -76,14 +76,11 @@
 				"project": "./tsconfig.test.json",
 				"tsconfigRootDir": "."
 			},
-			"env": {
-				"jest": true
-			},
 			"rules": {
-				"jest/expect-expect": [
+				"vitest/expect-expect": [
 					"warn",
 					{
-						"assertFunctionNames": [
+						"customExpressions": [
 							"expect",
 							"request**.expect",
 							"request.**.expect",

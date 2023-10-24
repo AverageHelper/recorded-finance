@@ -1,12 +1,12 @@
 import type { JWT } from "../auth/jwt";
 import type { JwtPayload, UID, User } from "../database/schemas";
 
-/* eslint-disable jest/no-mocks-import */
+/* eslint-disable vitest/no-mocks-import */
 import * as mockGenerators from "../auth/__mocks__/generators";
 import * as mockJwt from "../auth/__mocks__/jwt";
 import * as mockPubnub from "../auth/__mocks__/pubnub";
 import * as mockRead from "../database/__mocks__/read";
-/* eslint-enable jest/no-mocks-import */
+/* eslint-enable vitest/no-mocks-import */
 
 const uid: UID = "test-user-123" as UID;
 
