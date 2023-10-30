@@ -339,16 +339,24 @@ export async function updatePassword(
 	db: PlatformDB,
 	user: User,
 	oldPassword: string,
-	newPassword: string
+	newPassword: string,
+	token?: string
 ): Promise<void> {
 	if (!oldPassword)
 		throw new TypeError(t("error.sanity.empty-param", { values: { name: "oldPassword" } }));
 	if (!newPassword)
 		throw new TypeError(t("error.sanity.empty-param", { values: { name: "newPassword" } }));
 
-	await run(postV0Updatepassword, db, {
+	type Payload = Parameters<typeof postV0Updatepassword>[0];
+	const payload: Payload = {
 		account: user.accountId,
 		password: oldPassword,
 		newpassword: newPassword,
-	});
+	};
+
+	if (token) {
+		payload.token = token;
+	}
+
+	await run(postV0Updatepassword, db, payload);
 }
