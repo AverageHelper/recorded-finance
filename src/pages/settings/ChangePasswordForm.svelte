@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { _ } from "../../i18n";
+	import { currentUser } from "../../store/authStore";
 	import { handleError } from "../../store";
 	import { toast } from "@zerodevx/svelte-toast";
 	import { updatePassword } from "../../store/authStore";
@@ -11,6 +12,7 @@
 	let currentPassword = "";
 	let newPassword = "";
 	let newPasswordRepeat = "";
+	let token = "";
 
 	$: hasChanges = currentPassword !== "" && newPassword !== "" && newPassword === newPasswordRepeat;
 
@@ -32,7 +34,7 @@
 
 			isLoading = true;
 
-			await updatePassword(currentPassword, newPassword);
+			await updatePassword(currentPassword, newPassword, token);
 			toast.push($_("settings.auth.passphrase-updated"), { classes: ["toast-success"] });
 			reset();
 		} catch (error) {
@@ -71,6 +73,16 @@
 		showsRequired={false}
 		required
 	/>
+	{#if $currentUser?.mfa.includes("totp")}
+		<TextField
+			value={token}
+			on:input={e => (token = e.detail)}
+			label={$_("login.totp")}
+			autocomplete="one-time-code"
+			showsRequired={false}
+			required
+		/>
+	{/if}
 
 	<div class="buttons">
 		<ActionButton type="submit" disabled={!hasChanges || isLoading}

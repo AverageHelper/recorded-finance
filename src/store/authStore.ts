@@ -335,7 +335,11 @@ export async function regenerateAccountId(currentPassword: string): Promise<void
 	_isNewLogin.set(true);
 }
 
-export async function updatePassword(oldPassword: string, newPassword: string): Promise<void> {
+export async function updatePassword(
+	oldPassword: string,
+	newPassword: string,
+	token?: string
+): Promise<void> {
 	const user = auth.currentUser;
 	if (user === null) {
 		throw new PlatformError("auth/unauthenticated");
@@ -358,7 +362,7 @@ export async function updatePassword(oldPassword: string, newPassword: string): 
 
 	// Update auth password
 	try {
-		await _updatePassword(auth, user, await hashed(oldPassword), await hashed(newPassword));
+		await _updatePassword(auth, user, await hashed(oldPassword), await hashed(newPassword), token);
 	} catch (error) {
 		// Overwrite the new key with the old key, and have user try again
 		await setAuthMaterial(user.uid, oldMaterial);
