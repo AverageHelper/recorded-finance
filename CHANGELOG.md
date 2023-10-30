@@ -5,9 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.18.8] - 2023-10-30
 ### Changed
 - Replaced Jest with Vitest.
+
+### Fixed
+- Added Token field to "Change Password" form. Previously, the password change process would simply error out early, but still update the DEK. This leaves the account in a very weird state where the old password is required to enter the and download data, but the data may only be decrypted using the new password! Maybe one day I'll add a separate modal view to collect that password, to aid in getting out of this state, but for now, provide your TOTP token. And don't get it wrong, or bad things might happen! :D
 
 ## [0.18.7] - 2023-10-22
 ### Fixed
@@ -500,7 +503,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial commit
 
-[Unreleased]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.7...HEAD
+[0.18.8]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.7...v0.18.8
 [0.18.7]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.6...v0.18.7
 [0.18.6]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.5...v0.18.6
 [0.18.5]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.4...v0.18.5
