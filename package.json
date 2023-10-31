@@ -75,7 +75,6 @@
 		"eslint-plugin-unicorn": "48.0.1",
 		"eslint-plugin-vitest": "0.3.8",
 		"genversion": "3.1.1",
-		"jest-extended": "4.0.2",
 		"keep-a-changelog": "2.1.0",
 		"postcss": "8.4.31",
 		"prettier": "3.0.3",

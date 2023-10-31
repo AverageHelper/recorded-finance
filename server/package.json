@@ -97,7 +97,6 @@
 		"eslint-plugin-vitest": "0.3.8",
 		"genversion": "3.1.1",
 		"inquirer": "8.2.5",
-		"jest-extended": "4.0.2",
 		"ora": "5.4.1",
 		"prettier": "3.0.3",
 		"prisma": "4.3.1",

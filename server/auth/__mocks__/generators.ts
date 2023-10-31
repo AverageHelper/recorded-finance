@@ -6,6 +6,7 @@ import type {
 	generateHash as _generateHash,
 	generateAESCipherKey as _generateAESCipherKey,
 } from "../generators";
+import { beforeEach, vi } from "vitest";
 
 export const compare = vi.fn<Parameters<typeof _compare>, ReturnType<typeof _compare>>();
 

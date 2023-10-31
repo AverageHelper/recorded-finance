@@ -1,4 +1,5 @@
 import type { CollectionReference, DocumentReference, PlatformDB } from "../db";
+import { describe, expect, test } from "vitest";
 import { DocumentSnapshot } from "./DocumentSnapshot";
 
 describe("DocumentSnapshot", () => {
@@ -27,12 +28,12 @@ describe("DocumentSnapshot", () => {
 
 	test("returns data", () => {
 		expect(snap.data()).toBe(testData);
-		expect(snap.exists()).toBeTrue();
+		expect(snap.exists()).toBe(true);
 	});
 
 	test("returns no data for empty snap", () => {
 		const emptySnap = new DocumentSnapshot(docRef, null);
 		expect(emptySnap.data()).toBeUndefined();
-		expect(emptySnap.exists()).toBeFalse();
+		expect(emptySnap.exists()).toBe(false);
 	});
 });

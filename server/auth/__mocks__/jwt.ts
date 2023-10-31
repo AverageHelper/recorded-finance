@@ -8,6 +8,7 @@ import type {
 	jwtFromRequest as _jwtFromRequest,
 	verifyJwt as _verifyJwt,
 } from "../jwt";
+import { beforeEach, vi } from "vitest";
 
 export const persistentSecret = "wAheb^8v^YV^s6YaeYVW&8tyLa*ce4"; // from the README
 

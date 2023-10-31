@@ -1,5 +1,6 @@
 import type { TOTPSecretUri } from "./totp";
 import type { TOTPSeed, TOTPToken } from "../database/schemas";
+import { describe, expect, test, vi } from "vitest";
 import { URL } from "node:url";
 import totpGenerator from "totp-generator";
 
@@ -110,7 +111,7 @@ describe("TOTP", () => {
 		const isValidButWithUriSecret = verifyTOTP(totp, secretUri.href as TOTPSecretUri, {
 			now,
 		});
-		expect(isValid).toBeTrue();
+		expect(isValid).toBe(true);
 		expect(isValid2).toBe(isValid);
 		expect(isValidButWithUriSecret).toBe(isValid2);
 	});
@@ -118,25 +119,25 @@ describe("TOTP", () => {
 	test("returns `false` if the protocol of the given secret URI is not 'otpauth:'", () => {
 		const [now, totp] = timesAndTokens[0]; // these should be valid together
 		const badSecret = urlWithNewProtocol(secretUri, "https");
-		expect(verifyTOTP(totp, badSecret.href as TOTPSecretUri, { now })).toBeFalse();
+		expect(verifyTOTP(totp, badSecret.href as TOTPSecretUri, { now })).toBe(false);
 	});
 
 	test("returns `false` if the given secret URI doesn't have a 'secret' param", () => {
 		const [now, totp] = timesAndTokens[0];
-		expect(verifyTOTP(totp, secretUri.href as TOTPSecretUri, { now })).toBeTrue(); // sanity check
+		expect(verifyTOTP(totp, secretUri.href as TOTPSecretUri, { now })).toBe(true); // sanity check
 
 		const badSecret = new URL(secretUri.href);
 		badSecret.searchParams.delete("secret");
-		expect(verifyTOTP(totp, badSecret.href as TOTPSecretUri, { now })).toBeFalse();
+		expect(verifyTOTP(totp, badSecret.href as TOTPSecretUri, { now })).toBe(false);
 	});
 
 	test("returns `false` if the given secret URI's 'secret' param is empty", () => {
 		const [now, totp] = timesAndTokens[0];
-		expect(verifyTOTP(totp, secretUri.href as TOTPSecretUri, { now })).toBeTrue(); // sanity check
+		expect(verifyTOTP(totp, secretUri.href as TOTPSecretUri, { now })).toBe(true); // sanity check
 
 		const badSecret = new URL(secretUri.href);
 		badSecret.searchParams.set("secret", "");
-		expect(verifyTOTP(totp, badSecret.href as TOTPSecretUri, { now })).toBeFalse();
+		expect(verifyTOTP(totp, badSecret.href as TOTPSecretUri, { now })).toBe(false);
 	});
 
 	test.each`
@@ -161,7 +162,7 @@ describe("TOTP", () => {
 		const isValidButWithUriSecret = verifyTOTP(totp, secretUri.href as TOTPSecretUri, {
 			now,
 		});
-		expect(isValid).toBeFalse();
+		expect(isValid).toBe(false);
 		expect(isValid2).toBe(isValid);
 		expect(isValidButWithUriSecret).toBe(isValid2);
 	});
@@ -176,7 +177,7 @@ describe("TOTP", () => {
 		const value = generateTOTP(secret);
 		const isValid = verifyTOTP(value, secret);
 		expect(value).toBe(totpGenerator(secret));
-		expect(isValid).toBeTrue();
+		expect(isValid).toBe(true);
 		vi.useRealTimers();
 	});
 
