@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Changed
+- Removed `uuid`, `safe-compare`, and `tsscmp` dependencies in favor of Node-native and browser-native alternatives.
+- Removed `jest-extended` in favor of native Vitest assertions.
+
 ## [0.18.8] - 2023-10-30
 ### Changed
 - Replaced Jest with Vitest.
@@ -503,6 +508,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial commit
 
+[Unreleased]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.8...HEAD
 [0.18.8]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.7...v0.18.8
 [0.18.7]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.6...v0.18.7
 [0.18.6]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.5...v0.18.6
