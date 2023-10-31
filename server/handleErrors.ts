@@ -2,6 +2,16 @@ import { InternalError } from "./errors/InternalError";
 import { logger } from "./logger";
 import { respondError, respondInternalError } from "./responses";
 
+/**
+ * Calls the given request handler. If anything is thrown, an appropriate
+ * error response is returned to the caller.
+ *
+ * @param req The request.
+ * @param res The Response.
+ * @param cb The request handler.
+ * @returns The handler's resulting HTTP response if the handler was successful, or
+ *  an error response if an error was thrown.
+ */
 export async function handleErrors(
 	req: APIRequest,
 	res: APIResponse,

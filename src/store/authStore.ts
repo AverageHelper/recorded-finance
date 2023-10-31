@@ -344,6 +344,14 @@ export async function updatePassword(
 		throw new PlatformError("auth/unauthenticated");
 	}
 
+	// TODO: Check auth here. Is the password right? Is it wrong? If it's wrong, DON'T SET THE PEK
+	// Update auth first. If the credentials are bad, then nothing happened, and we can mosey on along!
+	// If something went wrong with auth, we can fail right there.
+	// If auth worked, but something went wrong with db, we can undo auth.
+	// If auth worked, but something went wrong with db, then auth _failed to undo_.... figure out what do.
+
+	// TODO: Make the current stage clear to the user.
+
 	// Get old DEK material
 	const oldMaterial = await getAuthMaterial(user.uid);
 	if (!oldMaterial) {
@@ -364,6 +372,7 @@ export async function updatePassword(
 		await _updatePassword(auth, user, await hashed(oldPassword), await hashed(newPassword), token);
 	} catch (error) {
 		// Overwrite the new key with the old key, and have user try again
+		// FIXME: This write will probably fail if we managed to set the new key already...
 		await setAuthMaterial(user.uid, oldMaterial);
 		_pKey.set(await derivePKey(oldPassword, oldMaterial.passSalt));
 		throw error;
