@@ -2,7 +2,7 @@ import type { AESCipherKey, Hash, Salt, TOTPSeed } from "../database/schemas";
 import type { NonNegativeInteger } from "type-fest";
 import { compare, genSalt, hash } from "bcryptjs";
 import { generateSecureToken as _generateSecureToken } from "n-digit-token";
-import { randomBytes } from "node:crypto";
+import crypto from "node:crypto";
 
 export { compare };
 
@@ -33,5 +33,16 @@ export async function generateHash(data: string, salt: Salt): Promise<Hash> {
  * Generates a new 32-character key for PubNub's AES 256 message-level encryption.
  */
 export async function generateAESCipherKey(): Promise<AESCipherKey> {
-	return await Promise.resolve(randomBytes(16).toString("hex") as AESCipherKey);
+	return await Promise.resolve(crypto.randomBytes(16).toString("hex") as AESCipherKey);
+}
+
+export function timingSafeEqual(a: string, b: string): boolean {
+	const encoder = new TextEncoder();
+	const aBuf = encoder.encode(a);
+	const bBuf = encoder.encode(b);
+
+	// Strings must be the same length in order to compare with `timingSafeEqual`
+	if (aBuf.byteLength !== bBuf.byteLength) return false;
+
+	return crypto.timingSafeEqual(aBuf, bBuf);
 }

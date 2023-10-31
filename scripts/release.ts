@@ -1,6 +1,6 @@
 #!/usr/bin/env ts-node
 
-import { assert, literal, string, type } from "superstruct";
+import { assert, enums, string, type } from "superstruct";
 import { parser as changelogParser } from "keep-a-changelog";
 import { debugLogger as logger } from "../src/logger.js";
 import { readFileSync, writeFileSync } from "node:fs";
@@ -61,7 +61,7 @@ const versioned = type({
 });
 const versionedLock = type({
 	version: string(),
-	lockfileVersion: literal(2),
+	lockfileVersion: enums([2, 3]),
 	packages: type({
 		"": type({
 			version: string(),

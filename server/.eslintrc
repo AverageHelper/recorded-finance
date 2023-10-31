@@ -20,8 +20,8 @@
 		"promise",
 		"deprecation",
 		"@typescript-eslint",
-		"import",
 		"vitest",
+		"import",
 		"file-progress"
 	],
 	"parser": "@typescript-eslint/parser",
@@ -40,12 +40,13 @@
 		"no-dupe-else-if": "warn",
 		"consistent-return": "off", // TS handles this
 		"no-duplicate-imports": "off", // typescript-eslint handles this
+		"@typescript-eslint/no-unused-vars": "warn",
 		"@typescript-eslint/no-namespace": "off",
 		"@typescript-eslint/consistent-type-assertions": "off",
 		"@typescript-eslint/no-empty-interface": "off",
 		"@typescript-eslint/require-await": "warn",
 		"@typescript-eslint/no-inferrable-types": "off",
-		"@typescript-eslint/no-invalid-void-type": "off", // TODO: Should be "error", but some bugs exist
+		"@typescript-eslint/no-invalid-void-type": "error",
 		"@typescript-eslint/explicit-member-accessibility": [
 			"error",
 			{ "accessibility": "no-public", "overrides": { "properties": "off" } }
@@ -65,10 +66,15 @@
 		"unicorn/numeric-separators-style": "warn",
 		"unicorn/no-unused-properties": "warn"
 	},
-
 	"overrides": [
 		{
-			"files": ["**/*.test.ts", "**/__mocks__/**/*.ts", "./test/**/*.ts"],
+			"files": [
+				"./*.ts",
+				"./test/**/*.ts",
+				"**/*.test.ts",
+				"**/__mocks__/**/*.ts",
+				"./test/**/*.ts"
+			],
 			"extends": ["plugin:prettier/recommended"],
 			"plugins": ["prettier", "@typescript-eslint"],
 			"parser": "@typescript-eslint/parser",
@@ -93,9 +99,14 @@
 			}
 		},
 		{
-			"files": ["scripts/**"],
+			"files": ["scripts/**/*.ts"],
+			"parserOptions": {
+				"project": "./tsconfig.test.json",
+				"tsconfigRootDir": "."
+			},
 			"rules": {
-				"no-console": "off" // These should be able to print directly to the console
+				"no-console": "off", // These should be able to print directly to the console
+				"unicorn/no-process-exit": "off"
 			}
 		}
 	]
