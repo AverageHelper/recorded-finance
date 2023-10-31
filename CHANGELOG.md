@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.18.10] - 2023-10-30
+### Fixed
+- Add missing translation for "Change Language" tooltip.
+
 ## [0.18.9] - 2023-10-30
 ### Fixed
 - Footer shouldn't get in the way anymore.
@@ -507,6 +511,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial commit
 
+[0.18.10]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.9...v0.18.10
 [0.18.9]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.8...v0.18.9
 [0.18.8]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.7...v0.18.8
 [0.18.7]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.6...v0.18.7
