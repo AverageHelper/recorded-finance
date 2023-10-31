@@ -3,7 +3,7 @@
 	"compilerOptions": {
 		"declaration": true,
 		"noEmit": false,
-		"types": ["node", "vitest/globals", "jest-extended", "svelte"]
+		"types": ["node", "svelte"]
 	},
 	"include": ["./*.ts", "./*.cjs", "**/*.ts", "**/*.d.ts", "**/*.json", "**/*.svelte"],
 	"exclude": []

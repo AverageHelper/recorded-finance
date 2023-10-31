@@ -12,9 +12,9 @@ import type {
 import type { DocUpdate } from "./database/write";
 import type { FileData } from "@prisma/client";
 import type { JWT } from "./auth/jwt";
-import "jest-extended";
 import { allCollectionIds } from "./database/schemas";
 import { CollectionReference, DocumentReference } from "./database/references";
+import { describe, expect, test, vi } from "vitest";
 import { setAuth, userWithTotp, userWithoutTotp } from "./test/userMocks";
 import { version } from "./version";
 import _request from "supertest";

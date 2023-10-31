@@ -1,4 +1,5 @@
 import type { CollectionReference, DocumentReference, PlatformDB, Query } from "../db";
+import { describe, expect, test, vi } from "vitest";
 import { QueryDocumentSnapshot } from "./QueryDocumentSnapshot";
 import { QuerySnapshot } from "./QuerySnapshot";
 
@@ -61,17 +62,17 @@ describe("QuerySnapshot", () => {
 		describe("`empty`", () => {
 			test("returns `true` if there are no docs", () => {
 				const snap = new QuerySnapshot(query, []);
-				expect(snap.empty).toBeTrue();
+				expect(snap.empty).toBe(true);
 			});
 
 			test("returns `false` if there is one doc", () => {
 				const snap = new QuerySnapshot(query, [doc1Snap]);
-				expect(snap.empty).toBeFalse();
+				expect(snap.empty).toBe(false);
 			});
 
 			test("returns `false` if there is more than one doc", () => {
 				const snap = new QuerySnapshot(query, [doc1Snap, doc2Snap]);
-				expect(snap.empty).toBeFalse();
+				expect(snap.empty).toBe(false);
 			});
 		});
 
@@ -95,13 +96,16 @@ describe("QuerySnapshot", () => {
 		describe("`docChanges`", () => {
 			test("returns an empty array if the snapshot is empty", () => {
 				const snap = new QuerySnapshot(query, []);
-				expect(snap.docChanges()).toBeArrayOfSize(0);
+				const changes = snap.docChanges();
+				expect(Array.isArray(changes)).toBe(true);
+				expect(changes.length).toBe(0);
 			});
 
 			test("all elements of the array are 'added'", () => {
 				const snap = new QuerySnapshot(query, [doc1Snap, doc2Snap]);
 				const changes = snap.docChanges();
-				expect(changes).toBeArrayOfSize(2);
+				expect(Array.isArray(changes)).toBe(true);
+				expect(changes.length).toBe(2);
 
 				const first = changes[0];
 				expect(first).toBeDefined();
@@ -161,19 +165,19 @@ describe("QuerySnapshot", () => {
 			test("returns `true` if there are no docs", () => {
 				const ogSnap = new QuerySnapshot(query, []);
 				const snap = new QuerySnapshot(ogSnap, ogSnap.docs);
-				expect(snap.empty).toBeTrue();
+				expect(snap.empty).toBe(true);
 			});
 
 			test("returns `false` if there is one doc", () => {
 				const ogSnap = new QuerySnapshot(query, [doc1Snap]);
 				const snap = new QuerySnapshot(ogSnap, ogSnap.docs);
-				expect(snap.empty).toBeFalse();
+				expect(snap.empty).toBe(false);
 			});
 
 			test("returns `false` if there is more than one doc", () => {
 				const ogSnap = new QuerySnapshot(query, [doc1Snap, doc2Snap]);
 				const snap = new QuerySnapshot(ogSnap, ogSnap.docs);
-				expect(snap.empty).toBeFalse();
+				expect(snap.empty).toBe(false);
 			});
 		});
 
@@ -201,7 +205,9 @@ describe("QuerySnapshot", () => {
 			test("returns an empty array if the snapshot is empty", () => {
 				const ogSnap = new QuerySnapshot(query, []);
 				const snap = new QuerySnapshot(ogSnap, ogSnap.docs);
-				expect(snap.docChanges()).toBeArrayOfSize(0);
+				const changes = snap.docChanges();
+				expect(Array.isArray(changes)).toBe(true);
+				expect(changes.length).toBe(0);
 			});
 
 			test("returns one 'added' doc when new snapshot is a strict superset of the old snapshot", () => {
@@ -209,7 +215,8 @@ describe("QuerySnapshot", () => {
 				const snap = new QuerySnapshot(ogSnap, ogSnap.docs.concat(doc2Snap));
 
 				const changes = snap.docChanges();
-				expect(changes).toBeArrayOfSize(1);
+				expect(Array.isArray(changes)).toBe(true);
+				expect(changes.length).toBe(1);
 				for (const change of changes) {
 					expect(change.type).toBe("added");
 					expect(change.oldIndex).toBe(-1);
@@ -223,7 +230,8 @@ describe("QuerySnapshot", () => {
 				const snap = new QuerySnapshot(ogSnap, [doc1Snap, doc2Snap]);
 
 				const changes = snap.docChanges();
-				expect(changes).toBeArrayOfSize(2);
+				expect(Array.isArray(changes)).toBe(true);
+				expect(changes.length).toBe(2);
 
 				const first = changes[0];
 				expect(first).toBeDefined();
@@ -245,7 +253,8 @@ describe("QuerySnapshot", () => {
 				const snap = new QuerySnapshot(ogSnap, []);
 
 				const changes = snap.docChanges();
-				expect(changes).toBeArrayOfSize(1);
+				expect(Array.isArray(changes)).toBe(true);
+				expect(changes.length).toBe(1);
 				for (const change of changes) {
 					expect(change.type).toBe("removed");
 					expect(change.oldIndex).toBe(0);
@@ -259,7 +268,8 @@ describe("QuerySnapshot", () => {
 				const snap = new QuerySnapshot(ogSnap, []);
 
 				const changes = snap.docChanges();
-				expect(changes).toBeArrayOfSize(2);
+				expect(Array.isArray(changes)).toBe(true);
+				expect(changes.length).toBe(2);
 
 				const first = changes[0];
 				expect(first).toBeDefined();
@@ -282,7 +292,8 @@ describe("QuerySnapshot", () => {
 				const snap = new QuerySnapshot(ogSnap, [doc1Snap, newDoc2Snap]);
 
 				const changes = snap.docChanges();
-				expect(changes).toBeArrayOfSize(1);
+				expect(Array.isArray(changes)).toBe(true);
+				expect(changes.length).toBe(1);
 				for (const change of changes) {
 					expect(change.type).toBe("modified");
 					expect(change.newIndex).toBe(change.oldIndex);
@@ -296,7 +307,8 @@ describe("QuerySnapshot", () => {
 				const snap = new QuerySnapshot(ogSnap, [doc2Snap]);
 
 				const changes = snap.docChanges();
-				expect(changes).toBeArrayOfSize(2);
+				expect(Array.isArray(changes)).toBe(true);
+				expect(changes.length).toBe(2);
 
 				const remove = changes.find(c => c.type === "removed");
 				expect(remove).toBeDefined();
@@ -317,7 +329,8 @@ describe("QuerySnapshot", () => {
 				const snap = new QuerySnapshot(ogSnap, [newDoc1Snap, doc2Snap]);
 
 				const changes = snap.docChanges();
-				expect(changes).toBeArrayOfSize(2);
+				expect(Array.isArray(changes)).toBe(true);
+				expect(changes.length).toBe(2);
 
 				const modify = changes.find(c => c.type === "modified");
 				expect(modify).toBeDefined();
@@ -338,7 +351,8 @@ describe("QuerySnapshot", () => {
 				const snap = new QuerySnapshot(ogSnap, [newDoc2Snap]);
 
 				const changes = snap.docChanges();
-				expect(changes).toBeArrayOfSize(2);
+				expect(Array.isArray(changes)).toBe(true);
+				expect(changes.length).toBe(2);
 
 				const remove = changes.find(c => c.type === "removed");
 				expect(remove).toBeDefined();

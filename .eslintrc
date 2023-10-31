@@ -59,6 +59,7 @@
 		"consistent-return": "off", // TS handles this
 		"no-duplicate-imports": "off", // eslint-plugin-import handles this
 		"import/no-duplicates": "error",
+		"@typescript-eslint/no-unused-vars": "warn",
 		"@typescript-eslint/no-namespace": "off",
 		"@typescript-eslint/consistent-type-assertions": "off",
 		"@typescript-eslint/no-empty-interface": "off",
