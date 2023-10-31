@@ -4,6 +4,7 @@
 	import { onMount } from "svelte";
 	import { SvelteToast } from "@zerodevx/svelte-toast";
 	import { watchColorScheme } from "./store/uiStore";
+	import Footer from "./Footer.svelte";
 	import Router from "./router/Router.svelte";
 
 	const options: SvelteToastOptions = {};
@@ -11,9 +12,13 @@
 	onMount(watchColorScheme);
 </script>
 
-<Router />
-<div id="modal" />
-<SvelteToast {options} />
+<div class="wrapper">
+	<Router />
+	<div id="modal" />
+	<SvelteToast {options} />
+
+	<Footer />
+</div>
 
 <style lang="scss" global>
 	@use "styles/colors" as *;
@@ -29,9 +34,16 @@
 		margin: 0;
 	}
 
+	.wrapper {
+		position: relative;
+		height: 100%;
+		display: flex;
+		flex-flow: column nowrap;
+	}
+
 	main {
 		margin: 0;
-		margin-bottom: 58pt;
+		flex-grow: 1;
 	}
 
 	a {
