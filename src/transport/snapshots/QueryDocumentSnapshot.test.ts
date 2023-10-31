@@ -1,6 +1,6 @@
-import type { CollectionReference, DocumentReference, PlatformDB } from "../db";
+import type { CollectionReference, DocumentReference, PlatformDB } from "../db.js";
 import { describe, expect, test } from "vitest";
-import { QueryDocumentSnapshot } from "./QueryDocumentSnapshot";
+import { QueryDocumentSnapshot } from "./QueryDocumentSnapshot.js";
 
 describe("QueryDocumentSnapshot", () => {
 	test("throws if `data` was somehow `null`", () => {

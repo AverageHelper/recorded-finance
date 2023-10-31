@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { simplifiedByteCount } from "./simplifiedByteCount";
+import { simplifiedByteCount } from "./simplifiedByteCount.js";
 
 describe("Human-readable byte count formatter", () => {
 	// ** Positive numbers
