@@ -131,8 +131,6 @@ main.loading {
 
 main.content {
 	padding: 16pt 24pt;
-	overflow-y: scroll;
-	overflow-x: hidden;
 
 	.error {
 		color: color($red);

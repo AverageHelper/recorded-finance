@@ -5,7 +5,6 @@
 	import Accounts from "../pages/accounts/Accounts.svelte";
 	import AccountView from "../pages/accounts/AccountView.svelte";
 	import Attachments from "../pages/attachments/Attachments.svelte";
-	import Footer from "../Footer.svelte";
 	import Home from "../Home.svelte";
 	import Install from "../Install.svelte";
 	import Locations from "../pages/locations/Locations.svelte";
@@ -163,6 +162,4 @@
 	<Route path="\*">
 		<NotFound />
 	</Route>
-
-	<Footer />
 </Router>
