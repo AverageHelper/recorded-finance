@@ -11,7 +11,6 @@ import { logger } from "../logger.js";
 import { moduleWritable } from "../helpers/moduleWritable.js";
 import { NetworkError, PlatformError } from "../transport/errors/index.js";
 import { t } from "../i18n.js";
-import { v4 as uuid } from "uuid";
 import {
 	dataUriToBlob,
 	defaultPrefs,
@@ -258,7 +257,7 @@ export async function getDekMaterial(): Promise<KeyMaterial> {
 }
 
 export function createAccountId(): string {
-	return uuid().replace(/\W+/gu, "");
+	return crypto.randomUUID().replace(/\W+/gu, "");
 }
 
 export async function createVault(accountId: string, password: string): Promise<void> {

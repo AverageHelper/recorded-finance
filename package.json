@@ -4,7 +4,7 @@
 	"license": "GPL-3.0",
 	"description": "A Svelte app for managing monetary assets.",
 	"scripts": {
-		"start": "./node_modules/.bin/concurrently -rkn EXPRESS,APP -s first \"npm run dev:server\" \"npm run dev:client\"",
+		"start": "cd server && npm start",
 		"release": "./node_modules/.bin/ts-node --esm ./scripts/release.ts",
 		"serve": "./node_modules/.bin/vite preview --open",
 		"test": "npm run test:client && npm run test:server",
@@ -46,8 +46,7 @@
 		"svelte-i18n": "3.4.0",
 		"svelte-navigator": "3.1.6",
 		"svelte-portal": "2.2.0",
-		"sveltestrap": "5.10.0",
-		"uuid": "8.3.2"
+		"sveltestrap": "5.10.0"
 	},
 	"devDependencies": {
 		"@rollup/plugin-typescript": "11.0.0",
@@ -59,12 +58,10 @@
 		"@types/pubnub": "7.2.0",
 		"@types/qrcode": "1.5.0",
 		"@types/semver": "7.3.12",
-		"@types/uuid": "8.3.4",
 		"@typescript-eslint/eslint-plugin": "6.9.0",
 		"@typescript-eslint/parser": "6.9.0",
 		"@vitest/coverage-istanbul": "0.34.6",
 		"autoprefixer": "10.4.8",
-		"concurrently": "6.5.1",
 		"eslint": "8.52.0",
 		"eslint-config-prettier": "9.0.0",
 		"eslint-config-strictest": "0.8.1",

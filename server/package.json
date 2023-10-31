@@ -51,8 +51,7 @@
 		"safe-compare": "1.1.4",
 		"source-map-support": "0.5.21",
 		"superstruct": "1.0.3",
-		"tsscmp": "1.0.6",
-		"uuid": "8.3.2"
+		"tsscmp": "1.0.6"
 	},
 	"devDependencies": {
 		"@rollup/plugin-commonjs": "22.0.2",
@@ -79,7 +78,6 @@
 		"@types/supertest": "2.0.12",
 		"@types/totp-generator": "0.0.4",
 		"@types/tsscmp": "1.0.0",
-		"@types/uuid": "8.3.4",
 		"@types/ws": "8.5.3",
 		"@typescript-eslint/eslint-plugin": "6.9.0",
 		"@typescript-eslint/parser": "6.9.0",
