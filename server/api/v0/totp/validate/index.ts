@@ -1,33 +1,29 @@
 import type { TOTPSecretUri } from "../../../../auth/totp";
-import { apiHandler, dispatchRequests } from "../../../../helpers/apiHandler";
-import { BadRequestError } from "../../../../errors/BadRequestError";
+import { apiHandler } from "../../../../helpers/apiHandler";
 import { ConflictError } from "../../../../errors/ConflictError";
 import { generateSecret, generateTOTPSecretURI, verifyTOTP } from "../../../../auth/totp";
-import { generateSecureToken } from "../../../../auth/generators";
-import { is, type } from "superstruct";
+import { generateSecureToken, timingSafeEqual } from "../../../../auth/generators";
 import { metadataFromRequest } from "../../../../auth/requireAuth";
 import { newAccessTokens, setSession } from "../../../../auth/jwt";
-import { respondSuccess } from "../../../../responses";
 import { statsForUser } from "../../../../database/read";
+import { successResponse } from "../../../../responses";
 import { totpToken } from "../../../../database/schemas";
+import { type } from "superstruct";
 import { UnauthorizedError } from "../../../../errors/UnauthorizedError";
 import { upsertUser } from "../../../../database/write";
-import safeCompare from "safe-compare";
 
-export const POST = apiHandler("POST", async (req, res) => {
-	const reqBody = type({
-		token: totpToken,
-	});
+const PATH = "/api/v0/totp/validate";
+const reqBody = type({
+	token: totpToken,
+});
 
-	if (!is(req.body, reqBody)) {
-		throw new BadRequestError("Improper parameter types");
-	}
-	const token = req.body.token;
+export const POST = apiHandler(PATH, "POST", reqBody, async c => {
+	const { token } = c.req.valid("json");
 
 	// ** Check that the given TOTP is valid for the user. If valid, but the user hasn't yet enabled a 2FA requirement, enable it
 
 	// Get credentials
-	const { user } = await metadataFromRequest(req, res);
+	const { user } = await metadataFromRequest(c);
 	const uid = user.uid;
 
 	// If the user doesn't have a secret stored, return 409
@@ -37,19 +33,19 @@ export const POST = apiHandler("POST", async (req, res) => {
 			"You do not have a TOTP secret to validate against"
 		);
 	}
-	const secret = generateTOTPSecretURI(user.currentAccountId, user.totpSeed);
+	const secret = generateTOTPSecretURI(c, user.currentAccountId, user.totpSeed);
 
 	// Check the TOTP is valid
 	const isValid = verifyTOTP(token, secret);
 	// FIXME: This considers TOTP to always be valid if there is no recovery seed (like when the seed has been previously used). Change the API response such that TOTP is not even requested on login if there is no recovery seed.
 	if (!isValid && typeof user.mfaRecoverySeed === "string") {
 		// Check that the value is the user's recovery token
-		const mfaRecoveryToken = generateSecret(user.mfaRecoverySeed);
-		if (!safeCompare(token, mfaRecoveryToken)) {
+		const mfaRecoveryToken = generateSecret(c, user.mfaRecoverySeed);
+		if (!timingSafeEqual(token, mfaRecoveryToken)) {
 			throw new UnauthorizedError("wrong-mfa-credentials");
 		} else {
 			// Invalidate the old token
-			await upsertUser({
+			await upsertUser(c, {
 				currentAccountId: user.currentAccountId,
 				mfaRecoverySeed: null, // TODO: Should we regenerate this?
 				passwordHash: user.passwordHash,
@@ -66,8 +62,8 @@ export const POST = apiHandler("POST", async (req, res) => {
 	let recovery_token: TOTPSecretUri | null = null;
 	if (user.requiredAddtlAuth?.includes("totp") !== true) {
 		const mfaRecoverySeed = generateSecureToken(15);
-		recovery_token = generateSecret(mfaRecoverySeed);
-		await upsertUser({
+		recovery_token = generateSecret(c, mfaRecoverySeed);
+		await upsertUser(c, {
 			currentAccountId: user.currentAccountId,
 			mfaRecoverySeed,
 			pubnubCipherKey: user.pubnubCipherKey,
@@ -80,12 +76,12 @@ export const POST = apiHandler("POST", async (req, res) => {
 	}
 
 	const pubnub_cipher_key = user.pubnubCipherKey;
-	const { access_token, pubnub_token } = await newAccessTokens(user, ["totp"]);
-	const { totalSpace, usedSpace } = await statsForUser(uid);
+	const { access_token, pubnub_token } = await newAccessTokens(c, user, ["totp"]);
+	const { totalSpace, usedSpace } = await statsForUser(c, uid);
 
-	setSession(req, res, access_token);
+	await setSession(c, access_token);
 	if (recovery_token !== null) {
-		respondSuccess(res, {
+		return successResponse(c, {
 			access_token,
 			pubnub_cipher_key,
 			pubnub_token,
@@ -94,16 +90,14 @@ export const POST = apiHandler("POST", async (req, res) => {
 			totalSpace,
 			usedSpace,
 		});
-	} else {
-		respondSuccess(res, {
-			access_token,
-			pubnub_cipher_key,
-			pubnub_token,
-			uid,
-			totalSpace,
-			usedSpace,
-		});
 	}
-});
 
-export default dispatchRequests({ POST });
+	return successResponse(c, {
+		access_token,
+		pubnub_cipher_key,
+		pubnub_token,
+		uid,
+		totalSpace,
+		usedSpace,
+	});
+});

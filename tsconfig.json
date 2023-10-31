@@ -3,7 +3,7 @@
 	"compilerOptions": {
 		"declaration": true,
 		"noEmit": false,
-		"types": ["vite/client", "svelte", "node"]
+		"types": ["svelte", "node"]
 	},
 	"include": ["src/**/*", "scripts/**/*"],
 	"exclude": ["node_modules/*", "__sapper__/*", "public/*", "**/__mocks__/**/*.ts", "./server/**"]

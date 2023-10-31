@@ -19,6 +19,7 @@ import type {
 	informWatchersForDocument as _informWatchersForDocument,
 	informWatchersForCollection as _informWatchersForCollection,
 } from "../read";
+import { beforeEach, vi } from "vitest";
 import type { DocumentReference } from "../references";
 
 export const statsForUser = vi.fn<
@@ -131,8 +132,8 @@ beforeEach(() => {
 	fetchDbCollection.mockResolvedValue([]);
 	userWithUid.mockResolvedValue(null);
 	userWithAccountId.mockResolvedValue(null);
-	fetchDbDoc.mockImplementation(ref => Promise.resolve({ ref, data: null }));
-	fetchDbDocs.mockImplementation(refs =>
+	fetchDbDoc.mockImplementation((c, ref) => Promise.resolve({ ref, data: null }));
+	fetchDbDocs.mockImplementation((c, refs) =>
 		Promise.resolve(
 			(refs as ReadonlyNonEmptyArray<DocumentReference>).map(ref => ({
 				ref,

@@ -387,10 +387,13 @@ export enum HttpStatusCode {
 	NETWORK_AUTHENTICATION_REQUIRED = 511,
 }
 
+// TODO: Move this somewhere else. We don't use it :(
+
 /**
  * Returns a brief textual description of the status code.
  */
-export function describeCode(code: HttpStatusCode): string {
+/*
+function describeCode(code: HttpStatusCode): string {
 	// Based on https://equestria.social/@edchdx/109942817018398027
 	// This will be annoying to anyone who inspects the HTTP responses.
 	switch (code) {
@@ -522,3 +525,4 @@ export function describeCode(code: HttpStatusCode): string {
 			return `HTTP ${code as number}`; // need to assert `number` here, otherwise the type is `never`
 	}
 }
+*/

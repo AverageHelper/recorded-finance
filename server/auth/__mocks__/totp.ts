@@ -8,6 +8,7 @@ import type {
 	generateSecret as _generateSecret,
 	TOTPSecretUri,
 } from "../totp";
+import { beforeEach, vi } from "vitest";
 import { DEFAULT_MOCK_SECURE_TOKEN } from "./generators";
 
 export const base32Decode = vi.fn<

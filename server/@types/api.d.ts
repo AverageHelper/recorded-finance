@@ -1,11 +1,30 @@
-import type { Request as ExpressRequest, Response as ExpressResponse } from "express";
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import type { Context, Input, MiddlewareHandler } from "hono";
 
 declare global {
-	type APIRequest = ExpressRequest | VercelRequest;
-	type APIResponse = ExpressResponse | VercelResponse;
+	type EnvKey =
+		| "AUTH_SECRET"
+		| "DATABASE_URL"
+		| "HOST"
+		| "MAX_BYTES"
+		| "MAX_USERS"
+		| "NODE_ENV"
+		| "PUBNUB_PUBLISH_KEY"
+		| "PUBNUB_SUBSCRIBE_KEY"
+		| "PUBNUB_SECRET_KEY"
+		| "VERCEL_URL";
 
-	type APIRequestHandler = (req: APIRequest, res: APIResponse) => void | Promise<void>;
+	type Bindings = Record<EnvKey, string | undefined>;
 
-	type VercelRequestHandler = (req: VercelRequest, res: VercelResponse) => void | Promise<void>;
+	interface Env {
+		Bindings?: Bindings;
+		Variables?: Record<string, unknown>;
+	}
+
+	// eslint-disable-next-line @typescript-eslint/ban-types
+	type APIRequestHandler<P extends string, I extends Input = {}> = (
+		context: Context<Env, P, I>
+	) => Response | Promise<Response>;
+
+	// eslint-disable-next-line @typescript-eslint/ban-types
+	type APIRequestMiddleware<P extends string, I extends Input = {}> = MiddlewareHandler<Env, P, I>;
 }

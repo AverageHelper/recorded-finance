@@ -1,17 +1,17 @@
 import { addJwtToBlacklist, jwtFromRequest, killSession } from "../../../auth/jwt";
-import { apiHandler, dispatchRequests } from "../../../helpers/apiHandler";
-import { respondSuccess } from "../../../responses";
+import { apiHandler } from "../../../helpers/apiHandler";
+import { successResponse } from "../../../responses";
 
-export const POST = apiHandler("POST", async (req, res) => {
-	const token = jwtFromRequest(req, res);
+const PATH = "/api/v0/logout";
 
-	killSession(req, res);
+export const POST = apiHandler(PATH, "POST", null, async c => {
+	const token = await jwtFromRequest(c);
+
+	await killSession(c);
 
 	if (token !== null) {
-		await addJwtToBlacklist(token);
+		await addJwtToBlacklist(c, token);
 	}
 
-	respondSuccess(res);
+	return successResponse(c);
 });
-
-export default dispatchRequests({ POST });

@@ -1,44 +1,44 @@
 import "source-map-support/register";
-import { asyncWrapper } from "./asyncWrapper";
 import { auth } from "./auth";
 import { cors } from "./cors";
 import { db } from "./db";
+import { errorResponse, headers } from "./responses";
+import { Hono } from "hono";
+import { logger as reqLogger } from "hono/logger";
 import { logger } from "./logger";
 import { NotFoundError } from "./errors/NotFoundError";
-import { respondError } from "./responses";
 import { version as appVersion } from "./version";
 // import csurf from "csurf"; // TODO: Might be important later
-import express from "express";
-import expressWs from "express-ws";
-import helmet from "helmet";
 
 import * as lol from "./api/v0";
 import * as ping from "./api/v0/ping";
 import * as serverVersion from "./api/v0/version";
+import { badMethodFallback } from "./helpers/apiHandler";
 
-// eslint-disable-next-line unicorn/numeric-separators-style
-const PORT = 40850;
+export const app = new Hono<Env>()
+	.basePath("/api")
+	.use("*", reqLogger(logger.info))
+	.use("*", cors)
+	.use("*", headers)
 
-export const app = express()
-	.use(helmet()) // also disables 'x-powered-by' header
-	.use(cors());
+	// Routes
+	.get("/v0/", lol.GET)
+	.all(badMethodFallback)
 
-expressWs(app); // Set up websocket support. This is the reason our endpoint declarations need to be functions and not `const` declarations
+	.get("/v0/ping", ping.GET)
+	.all(badMethodFallback)
 
-app
-	.all("/v0/", asyncWrapper(lol.GET))
-	.all("/v0/ping", asyncWrapper(ping.GET))
-	.all("/v0/version", asyncWrapper(serverVersion.GET))
-	.set("trust proxy", 1) // trust first proxy
-	.use(express.json({ limit: "5mb" }))
-	.use(express.urlencoded({ limit: "5mb", extended: true }))
-	.use("/v0/", auth()) // Auth endpoints
-	.use("/v0/db", db()) // Database endpoints (checks auth)
-	.use((req, res) => {
-		// Custom 404
-		respondError(res, new NotFoundError());
+	.get("/v0/version", serverVersion.GET)
+	.all(badMethodFallback)
+
+	.route("/v0/", auth) // Auth endpoints
+	.route("/v0/db", db) // Database endpoints (checks auth)
+	.all("*", c => {
+		// 404
+		return errorResponse(c, new NotFoundError(`No such path '${c.req.path}'`));
 	});
 
-app.listen(PORT, () => {
-	logger.info(`Recorded Finance storage server v${appVersion} listening on port ${PORT}`);
-});
+// Cloudflare wants this:
+export default app;
+
+logger.info(`** Recorded Finance storage server v${appVersion} **`);

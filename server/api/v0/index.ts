@@ -1,8 +1,8 @@
-import { apiHandler, dispatchRequests } from "../../helpers/apiHandler";
-import { respondMessage } from "../../responses";
+import { apiHandler } from "../../helpers/apiHandler";
+import { messageResponse } from "../../responses";
 
-export const GET = apiHandler("GET", (req, res) => {
-	respondMessage(res, "lol");
+const PATH = "/api/v0";
+
+export const GET = apiHandler(PATH, "GET", null, c => {
+	return messageResponse(c, "lol");
 });
-
-export default dispatchRequests({ GET });

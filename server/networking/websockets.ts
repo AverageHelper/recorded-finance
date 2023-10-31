@@ -1,22 +1,23 @@
-import type { Request as ExpressRequest } from "express";
-import type { Struct } from "superstruct";
-import type { ValueIteratorTypeGuard } from "../database/schemas";
-import type { WebsocketRequestHandler } from "express-ws";
-import type { WebSocket } from "ws";
-import { assertSchema, isObject } from "../database/schemas";
+import type { Context } from "hono";
+import type { Infer, Struct } from "superstruct";
+import type { ParamKeyToRecord, ParamKeys } from "hono/dist/types/types";
+import type { ReadonlyDeep } from "type-fest";
+import type { UnionToIntersection } from "hono/utils/types";
+import type { WebSocket } from "@cloudflare/workers-types";
+import { assert, literal, type, unknown } from "superstruct";
+import { errorResponse, internalErrorResponse } from "../responses";
+import { InternalError } from "../errors/InternalError";
 import { isWebSocketCode, WebSocketCode } from "./WebSocketCode";
 import { logger } from "../logger";
-import { StructError } from "superstruct";
+import { UpgradeRequiredError } from "../errors/UpgradeRequiredError";
 import { WebSocketError } from "../errors/WebSocketError";
 
-/** The type that a type guard is checking. */
-type TypeFromGuard<G> = G extends ValueIteratorTypeGuard<unknown, infer T> ? T : never;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type WebSocketMessages = Record<string, Struct<any, any>>;
 
-type WebSocketMessages = Record<string, ValueIteratorTypeGuard<unknown, unknown>>;
-
-interface WebSocketUtils<T extends WebSocketMessages> {
+interface WebSocketUtils<T extends WebSocketMessages, P extends string> {
 	/** The request that started the connection. */
-	req: ExpressRequest;
+	context: Context<Env, P>;
 
 	/**
 	 * Registers a function to be called when the connection closes.
@@ -28,13 +29,10 @@ interface WebSocketUtils<T extends WebSocketMessages> {
 	 * Registers a function to be called when the client sends
 	 * a message via the websocket.
 	 */
-	onMessage: <K extends keyof T, G extends T[K]>(
-		name: K,
-		cb: (data: TypeFromGuard<G>) => void
-	) => void;
+	onMessage: <K extends keyof T, G extends T[K]>(name: K, cb: (data: Infer<G>) => void) => void;
 
 	/** Sends a message to the client via the websocket. */
-	send: <K extends keyof T, G extends T[K]>(name: K, data: TypeFromGuard<G>) => void;
+	send: <K extends keyof T, G extends T[K]>(name: K, data: ReadonlyDeep<Infer<G>>) => void;
 
 	/** Closes the websocket. */
 	close: (code: WebSocketCode, reason: string) => void;
@@ -49,34 +47,46 @@ interface WebSocketUtils<T extends WebSocketMessages> {
  *
  * @returns An object with utility functions to use to interact with the client.
  */
-export function wsFactory<T extends WebSocketMessages>(
-	req: ExpressRequest,
+export function wsFactory<T extends WebSocketMessages, P extends string>(
+	context: Context<Env, P>,
 	ws: WebSocket,
 	interactions: T
-): WebSocketUtils<T> {
+): WebSocketUtils<T, P> {
 	interface _WebSocketMessage<M extends keyof T> {
 		name: M;
-		data: TypeFromGuard<T[M]>;
+		data: Infer<T[M]>;
 	}
 
-	function isWebSocketMessage<M extends keyof T>(
+	function assertWebSocketMessage<M extends keyof T>(
 		name: M,
 		tbd: unknown
-	): tbd is _WebSocketMessage<M> {
-		if (
-			!isObject(tbd) || //
-			!("name" in tbd) ||
-			!("data" in tbd) ||
-			tbd["name"] !== name
-		)
-			return false;
+	): asserts tbd is _WebSocketMessage<M> {
+		const webSocketMessage = type({
+			name: literal(name as string),
+			data: unknown(),
+		});
+
+		try {
+			assert(tbd, webSocketMessage);
+		} catch (error) {
+			logger.warn("[WebSocket]", error);
+			throw new WebSocketError(WebSocketCode.WRONG_MESSAGE_TYPE, "Improper message");
+		}
 
 		// check name
 		const guard = interactions[name];
-		if (!guard) return false;
+		if (!guard) {
+			logger.warn("[WebSocket]", `Unknown interaction name '${String(name)}'`);
+			throw new WebSocketError(WebSocketCode.WRONG_MESSAGE_TYPE, "Improper message");
+		}
 
 		// check data
-		return guard(tbd["data"]);
+		try {
+			assert(tbd.data, guard);
+		} catch (error) {
+			logger.warn("[WebSocket]", error);
+			throw new WebSocketError(WebSocketCode.WRONG_MESSAGE_TYPE, "Improper message");
+		}
 	}
 
 	function close(ws: WebSocket, code: WebSocketCode, reason: string): void {
@@ -87,51 +97,19 @@ export function wsFactory<T extends WebSocketMessages>(
 		ws.send(JSON.stringify(message));
 	}
 
-	// Send an occasional ping
-	// If the client doesn't respond a few times consecutively, assume they aren't coming back
-	let timesNotThere = 0;
-	ws.on("open", () => {
-		const pingInterval = setInterval(() => {
-			if (timesNotThere > 5) {
-				logger.info("Client didn't respond after 5 tries. Closing");
-				close(ws, WebSocketCode.WENT_AWAY, "Client did not respond to pings, probably dead");
-				clearInterval(pingInterval);
-				return;
-			}
-			ws.ping();
-			logger.debug("sent ping to client");
-			timesNotThere += 1; // this goes away if the client responds
-		}, 10_000); // 10 second interval
-
-		ws.on("close", () => {
-			clearInterval(pingInterval);
-		});
-	});
-
-	ws.on("pong", () => {
-		logger.debug("received pong from client");
-		timesNotThere = 0;
-	});
-
-	ws.on("ping", data => {
-		logger.debug("ping", data);
-		ws.pong(data); // answer the ping with the data
-	});
-
 	// Application-layer communications
 	return {
-		req,
+		context,
 
 		onClose(cb): void {
-			ws.on("close", (code, reason) => {
+			ws.addEventListener("close", ({ code, reason }) => {
 				if (isWebSocketCode(code)) {
-					cb(code, reason.toString("utf-8"));
+					cb(code, reason);
 				} else {
-					const msg = reason.toString("utf-8");
-					if (msg) {
+					if (reason) {
 						cb(
 							WebSocketCode.UNEXPECTED_CONDITION,
-							`Client closed the connection with reason "${msg}" and unknown code ${code}`
+							`Client closed the connection with reason "${reason}" and unknown code ${code}`
 						);
 					} else {
 						cb(
@@ -144,25 +122,24 @@ export function wsFactory<T extends WebSocketMessages>(
 		},
 
 		onMessage(name, cb): void {
-			ws.on("message", msg => {
+			ws.addEventListener("message", ({ data }) => {
 				try {
-					const message = JSON.parse((msg as Buffer).toString()) as unknown;
-					if (!isWebSocketMessage(name, message))
-						throw new WebSocketError(WebSocketCode.WRONG_MESSAGE_TYPE, "Improper message");
-
+					const textData = typeof data === "string" ? data : Buffer.from(data).toString("utf-8");
+					const message = JSON.parse(textData) as unknown;
+					assertWebSocketMessage(name, message);
 					cb(message.data);
 				} catch (error) {
 					if (error instanceof WebSocketError) {
 						close(ws, error.code, error.reason);
 					} else {
-						logger.error("Unknown WebSocket message error:", error);
+						logger.error("[WebSocket] Unknown WebSocket message error:", error);
 						close(ws, WebSocketCode.UNEXPECTED_CONDITION, "Internal error");
 					}
 				}
 			});
 
-			ws.on("error", error => {
-				logger.error("Websocket error:", error);
+			ws.addEventListener("error", error => {
+				logger.error("[WebSocket] Websocket error:", error);
 			});
 		},
 
@@ -176,26 +153,39 @@ export function wsFactory<T extends WebSocketMessages>(
 	};
 }
 
-export function ws<P, T extends WebSocketMessages>(
+// See https://github.com/honojs/hono/issues/1153#issuecomment-1767321332
+export function ws<P extends string, T extends WebSocketMessages>(
 	interactions: T,
-	params: Struct<P>,
-	start: (context: WebSocketUtils<T>, params: P) => void | Promise<void>
-): WebsocketRequestHandler {
-	return function webSocket(ws, req, next): void {
-		const context = wsFactory(req, ws, interactions);
-
-		// Ensure valid input
-		try {
-			assertSchema(req.params, params);
-		} catch (error) {
-			if (error instanceof StructError) {
-				return context.close(WebSocketCode.VIOLATED_CONTRACT, error.message);
-			}
-			logger.error("Unknown error trying to validate WebSocket inputs:", error);
-			return context.close(WebSocketCode.UNEXPECTED_CONDITION, "Internal error");
+	start: (
+		wsContext: WebSocketUtils<T, P>,
+		params: UnionToIntersection<ParamKeyToRecord<ParamKeys<P>>>
+	) => void | Promise<void>
+): APIRequestHandler<P> {
+	return async function webSocket(c): Promise<Response> {
+		const upgradeHeader = c.req.header("Upgrade");
+		if (upgradeHeader !== "websocket") {
+			return errorResponse(c, new UpgradeRequiredError());
 		}
 
-		// eslint-disable-next-line promise/prefer-await-to-then, promise/no-callback-in-promise
-		Promise.resolve(start(context, req.params)).then(next).catch(next);
+		const webSocketPair = new WebSocketPair();
+		const client = webSocketPair[0];
+		const server = webSocketPair[1];
+		server.accept();
+
+		const context = wsFactory(c, server, interactions);
+
+		try {
+			await start(context, c.req.param());
+		} catch (error) {
+			if (error instanceof InternalError) {
+				return errorResponse(c, error);
+			}
+			return internalErrorResponse(c);
+		}
+
+		return new Response(null, {
+			status: 101,
+			webSocket: client,
+		});
 	};
 }

@@ -1,24 +1,26 @@
+import type { Context } from "hono";
+import type { CookieOptions } from "hono/utils/cookie";
 import type { JwtPayload, MFAOption, PubNubToken, User } from "../database/schemas";
 import type { Opaque, ReadonlyDeep } from "type-fest";
 import type { SignOptions } from "jsonwebtoken";
 import { addJwtToDatabase } from "../database/write";
 import { assertJwtPayload } from "../database/schemas";
+import { getSignedCookie, setCookie, setSignedCookie } from "hono/cookie";
 import { env, requireEnv } from "../environment";
 import { generateSecureToken } from "./generators";
 import { jwtExistsInDatabase } from "../database/read";
 import { newPubNubTokenForUser, revokePubNubToken } from "./pubnub";
 import { ONE_HOUR } from "../constants/time";
 import _jwt from "jsonwebtoken";
-import Cookies from "cookies";
-import Keygrip from "keygrip";
 
 // FIXME: Not sure why, but tests fail unless we do this:
 const { sign: _signJwt, verify: _verifyJwt } = _jwt;
 
 /** A special secret that only the server should ever know. */
-export const persistentSecret = requireEnv("AUTH_SECRET");
+export function persistentSecret(c: Pick<Context<Env>, "env">): string {
+	return requireEnv(c, "AUTH_SECRET");
+}
 const SESSION_COOKIE_NAME = "sessionToken";
-const keys = new Keygrip([persistentSecret]);
 
 export type JWT = Opaque<string, "JWT">;
 
@@ -26,18 +28,18 @@ export type JWT = Opaque<string, "JWT">;
  * Ascertains whether the token exists in the blacklist. If so,
  * that token's value should be treated as expired.
  */
-export async function blacklistHasJwt(token: JWT): Promise<boolean> {
-	return await jwtExistsInDatabase(token);
+export async function blacklistHasJwt(c: Context<Env>, token: JWT): Promise<boolean> {
+	return await jwtExistsInDatabase(c, token);
 }
 
 /**
  * Adds the token to a list of tokens to treat as expired.
  */
-export async function addJwtToBlacklist(token: JWT): Promise<void> {
+export async function addJwtToBlacklist(c: Context<Env>, token: JWT): Promise<void> {
 	try {
-		const payload = await verifyJwt(token);
-		await revokePubNubToken(payload.pubnubToken, payload.uid);
-		await addJwtToDatabase(token);
+		const payload = await verifyJwt(c, token);
+		await revokePubNubToken(c, payload.pubnubToken, payload.uid);
+		await addJwtToDatabase(c, token);
 	} catch {
 		// The token was expired or otherwise invalid. No need to blacklist
 	}
@@ -67,18 +69,19 @@ interface AccessTokens {
  * - The `pubnub_token` should be sent to the client directly in a response body.
  */
 export async function newAccessTokens(
+	c: Context<Env>,
 	user: User,
 	validatedWithMfa: ReadonlyArray<MFAOption>
 ): Promise<AccessTokens> {
 	const options: SignOptions = { expiresIn: "1h" };
 	const payload: ReadonlyDeep<JwtPayload> = {
-		pubnubToken: await newPubNubTokenForUser(user),
+		pubnubToken: await newPubNubTokenForUser(c, user),
 		uid: user.uid,
 		validatedWithMfa,
 	};
 
 	return {
-		access_token: await createJwt(payload, options),
+		access_token: await createJwt(c, payload, options),
 		pubnub_token: payload.pubnubToken,
 	};
 }
@@ -86,9 +89,8 @@ export async function newAccessTokens(
 /**
  * Sets the session cookie with the given value, or revokes the cookie if the value is `null`.
  */
-export function setSession(req: APIRequest, res: APIResponse, value: string | null): void {
-	const cookies = new Cookies(req, res, { keys, secure: true });
-	let domain = env("HOST") ?? env("VERCEL_URL") ?? "";
+export async function setSession(c: Context<Env>, value: string | null): Promise<void> {
+	let domain = env(c, "HOST") ?? env(c, "VERCEL_URL") ?? "";
 	if (!domain) {
 		throw new TypeError("Missing value for environment keys HOST and VERCEL_URL");
 	}
@@ -103,15 +105,16 @@ export function setSession(req: APIRequest, res: APIResponse, value: string | nu
 	// Strip port
 	domain = domain.split(":")[0] ?? "";
 
-	const opts: Cookies.SetOption = {
-		maxAge: ONE_HOUR,
+	const signingSecret = persistentSecret(c);
+
+	const opts: CookieOptions = {
 		domain,
-		path: "/",
-		sameSite: "strict",
 		httpOnly: true,
+		maxAge: ONE_HOUR,
+		path: "/",
+		sameSite: "Strict",
 		secure: true,
-		signed: true,
-		overwrite: true,
+		signingSecret,
 	};
 
 	if (value === null) {
@@ -125,10 +128,10 @@ export function setSession(req: APIRequest, res: APIResponse, value: string | nu
 		const twoHrsAgo = new Date(new Date().getTime() - 2 * ONE_HOUR);
 		opts.maxAge = -1;
 		opts.expires = twoHrsAgo;
-		cookies.set(SESSION_COOKIE_NAME, gibberish, opts);
+		setCookie(c, SESSION_COOKIE_NAME, gibberish, opts);
 	} else {
 		// Set session cookies
-		cookies.set(SESSION_COOKIE_NAME, value, opts);
+		await setSignedCookie(c, SESSION_COOKIE_NAME, value, signingSecret, opts);
 	}
 }
 
@@ -138,8 +141,8 @@ export function setSession(req: APIRequest, res: APIResponse, value: string | nu
  * sending the session cookies. You should blacklist and expire
  * the related session tokens as well, separately.
  */
-export function killSession(req: APIRequest, res: APIResponse): void {
-	setSession(req, res, null);
+export async function killSession(c: Context<Env>): Promise<void> {
+	await setSession(c, null);
 }
 
 /**
@@ -149,16 +152,16 @@ export function killSession(req: APIRequest, res: APIResponse): void {
  * Checks the `Cookie` header for the token. If no data is found there,
  * then we check the `Authorization` header for a "Bearer" token.
  */
-export function jwtFromRequest(req: APIRequest, res: APIResponse): JWT | null {
+export async function jwtFromRequest(c: Context<Env>): Promise<JWT | null> {
 	// Get session token from cookies, if it exists
-	const cookies = new Cookies(req, res, { keys, secure: true });
-	const token = cookies.get(SESSION_COOKIE_NAME, { signed: true }) ?? "";
-	if (token) {
+	// const cookies = new Cookies(req, res, { keys, secure: true });
+	const token = (await getSignedCookie(c, persistentSecret(c), SESSION_COOKIE_NAME)) ?? false;
+	if (token !== false) {
 		return token as JWT;
 	}
 
 	// No cookies? Check auth header instead
-	const authHeader = req.headers.authorization;
+	const authHeader = c.req.header("authorization");
 	const tokenParts = authHeader?.split(" ") ?? [];
 	if (tokenParts[0] === "Bearer") {
 		const token = tokenParts[1] ?? "";
@@ -168,9 +171,9 @@ export function jwtFromRequest(req: APIRequest, res: APIResponse): JWT | null {
 	return null;
 }
 
-export async function verifyJwt(token: JWT): Promise<JwtPayload> {
+export async function verifyJwt(c: Context<Env>, token: JWT): Promise<JwtPayload> {
 	return await new Promise<JwtPayload>((resolve, reject) => {
-		_verifyJwt(token, persistentSecret, (err, payload) => {
+		_verifyJwt(token, persistentSecret(c), (err, payload) => {
 			// Fail if failed i guess
 			if (err) return reject(err); // TODO: Something safer than a `reject`, since we always know what kind of error this is
 
@@ -195,9 +198,13 @@ export async function verifyJwt(token: JWT): Promise<JwtPayload> {
 	});
 }
 
-async function createJwt(payload: ReadonlyDeep<JwtPayload>, options: SignOptions): Promise<string> {
+async function createJwt(
+	c: Context<Env>,
+	payload: ReadonlyDeep<JwtPayload>,
+	options: SignOptions
+): Promise<string> {
 	return await new Promise<string>((resolve, reject) => {
-		_signJwt(payload, persistentSecret, options, (err, token) => {
+		_signJwt(payload, persistentSecret(c), options, (err, token) => {
 			if (err) {
 				reject(err);
 				return;

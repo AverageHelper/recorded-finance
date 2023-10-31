@@ -15,6 +15,7 @@ import type {
 	setDocuments as _setDocuments,
 	setDocument as _setDocument,
 } from "../write";
+import { beforeEach, vi } from "vitest";
 
 export const upsertFileData = vi.fn<
 	Parameters<typeof _upsertFileData>,

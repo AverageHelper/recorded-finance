@@ -1,5 +1,6 @@
 import type { AnyData, DataItem, DataItemKey, UID, User, UserKeys } from "./schemas";
 import type { CollectionReference, DocumentReference } from "./references";
+import type { Context } from "hono";
 import type { FileData, PrismaPromise, RawUser } from "./io";
 import type { JWT } from "../auth/jwt";
 import type { Logger } from "../logger";
@@ -21,6 +22,7 @@ import {
  * Stores the given file data, replacing existing data if it already exists.
  */
 export function upsertFileData(
+	c: Context<Env>,
 	attachment: Omit<FileData, "size">,
 	logger: Logger | null = defaultLogger
 ): PrismaPromise<Pick<FileData, "size">> {
@@ -29,7 +31,7 @@ export function upsertFileData(
 	const contents = attachment.contents;
 	const size = contents.length;
 
-	return dataSource({ logger }).fileData.upsert({
+	return dataSource({ context: c, logger }).fileData.upsert({
 		select: { size: true },
 		where: {
 			userId_fileName: { userId, fileName },
@@ -52,11 +54,12 @@ export function upsertFileData(
  * @returns a `Promise` that resolves with the number of bytes deleted.
  */
 export async function destroyFileData(
+	c: Context<Env>,
 	userId: UID,
 	fileName: string,
 	logger: Logger | null = defaultLogger
 ): Promise<number> {
-	const file = await dataSource({ logger }).fileData.delete({
+	const file = await dataSource({ context: c, logger }).fileData.delete({
 		where: { userId_fileName: { userId, fileName } },
 		select: { size: true },
 	});
@@ -73,10 +76,11 @@ export async function destroyFileData(
  * window elapses.
  */
 export async function addJwtToDatabase(
+	c: Context<Env>,
 	token: JWT,
 	logger: Logger | null = defaultLogger
 ): Promise<void> {
-	await dataSource({ logger }).expiredJwt.upsert({
+	await dataSource({ context: c, logger }).expiredJwt.upsert({
 		where: { token },
 		update: {}, // nop if the value already exists
 		create: { token }, // database generates the timestamp
@@ -86,9 +90,12 @@ export async function addJwtToDatabase(
 /**
  * Purges the database of expired JWTs older than two hours.
  */
-export async function purgeExpiredJwts(logger: Logger | null = defaultLogger): Promise<void> {
+export async function purgeExpiredJwts(
+	c: Context<Env>,
+	logger: Logger | null = defaultLogger
+): Promise<void> {
 	const twoHrsAgo = new Date(new Date().getTime() - 2 * ONE_HOUR);
-	await dataSource({ logger }).expiredJwt.deleteMany({
+	await dataSource({ context: c, logger }).expiredJwt.deleteMany({
 		where: {
 			createdAt: { lte: twoHrsAgo },
 		},
@@ -96,13 +103,14 @@ export async function purgeExpiredJwts(logger: Logger | null = defaultLogger): P
 }
 
 export function upsertUser(
+	c: Context<Env>,
 	properties: Required<User>,
 	logger: Logger | null = defaultLogger
 ): PrismaPromise<Pick<RawUser, "uid">> {
 	assertSchema(properties, userSchema); // assures nonempty fields
 	const uid = properties.uid;
 
-	return dataSource({ logger }).user.upsert({
+	return dataSource({ context: c, logger }).user.upsert({
 		select: { uid: true },
 		where: { uid },
 		update: properties,
@@ -110,12 +118,16 @@ export function upsertUser(
 	});
 }
 
-export async function destroyUser(uid: UID, logger: Logger | null = defaultLogger): Promise<void> {
+export async function destroyUser(
+	c: Context<Env>,
+	uid: UID,
+	logger: Logger | null = defaultLogger
+): Promise<void> {
 	if (uid === "") throw new TypeError("uid was empty");
 
-	await dataSource({ logger }).dataItem.deleteMany({ where: { userId: uid } });
-	await dataSource({ logger }).userKeys.deleteMany({ where: { userId: uid } });
-	await dataSource({ logger }).user.delete({ where: { uid } });
+	await dataSource({ context: c, logger }).dataItem.deleteMany({ where: { userId: uid } });
+	await dataSource({ context: c, logger }).userKeys.deleteMany({ where: { userId: uid } });
+	await dataSource({ context: c, logger }).user.delete({ where: { uid } });
 }
 
 export interface DocUpdate {
@@ -124,6 +136,7 @@ export interface DocUpdate {
 }
 
 export async function upsertDbDocs(
+	c: Context<Env>,
 	updates: ReadonlyArray<DocUpdate>,
 	logger: Logger | null = defaultLogger
 ): Promise<void> {
@@ -163,7 +176,7 @@ export async function upsertDbDocs(
 	);
 
 	// FIXME: This gets REEEEEALLY slow after about 10 records
-	// await dataSource({ logger }).$transaction([
+	// await dataSource({ context: c, logger }).$transaction([
 	await Promise.all([
 		...dataItemUpserts.map(data => {
 			const collectionId = data.collectionId;
@@ -173,7 +186,7 @@ export async function upsertDbDocs(
 				objectType: data.objectType,
 				cryption: data.cryption ?? "v0",
 			};
-			return dataSource({ logger }).dataItem.upsert({
+			return dataSource({ context: c, logger }).dataItem.upsert({
 				select: { docId: true },
 				where: { userId_collectionId_docId: { userId, collectionId, docId } },
 				update: upsert,
@@ -194,7 +207,7 @@ export async function upsertDbDocs(
 				oldDekMaterial: data.oldDekMaterial ?? null,
 				oldPassSalt: data.oldPassSalt ?? null,
 			};
-			return dataSource({ logger }).userKeys.upsert({
+			return dataSource({ context: c, logger }).userKeys.upsert({
 				select: { userId: true },
 				where: { userId },
 				update: upsert,
@@ -207,7 +220,7 @@ export async function upsertDbDocs(
 			});
 		}),
 		...userUpserts.map(data => {
-			return dataSource({ logger }).user.upsert({
+			return dataSource({ context: c, logger }).user.upsert({
 				select: { uid: true },
 				where: { uid: userId },
 				update: data,
@@ -218,6 +231,7 @@ export async function upsertDbDocs(
 }
 
 export async function deleteDbDocs(
+	c: Context<Env>,
 	refs: ReadonlyNonEmptyArray<DocumentReference>,
 	logger: Logger | null = defaultLogger
 ): Promise<void> {
@@ -249,7 +263,7 @@ export async function deleteDbDocs(
 	}
 
 	// Run deletes
-	await dataSource({ logger }).$transaction([
+	await dataSource({ context: c, logger }).$transaction([
 		// Not sure about deleteMany here, since we need each doc to match each ref
 		...dataItemRefs.map(ref => {
 			const collectionId = ref.parent.id;
@@ -258,7 +272,7 @@ export async function deleteDbDocs(
 				throw new TypeError(
 					`SANITY FAIL: Collection ID '${collectionId}' suddenly appeared among DataItem data.`
 				);
-			return dataSource({ logger }).dataItem.delete({
+			return dataSource({ context: c, logger }).dataItem.delete({
 				where: {
 					userId_collectionId_docId: {
 						userId: ref.uid,
@@ -268,17 +282,18 @@ export async function deleteDbDocs(
 				},
 			});
 		}),
-		dataSource({ logger }).userKeys.deleteMany({
+		dataSource({ context: c, logger }).userKeys.deleteMany({
 			where: { userId: { in: keyRefs.map(r => r.id) } },
 		}),
 	]);
 }
 
-export async function deleteDbDoc(ref: DocumentReference): Promise<void> {
-	await deleteDbDocs([ref]);
+export async function deleteDbDoc(c: Context<Env>, ref: DocumentReference): Promise<void> {
+	await deleteDbDocs(c, [ref]);
 }
 
 export async function deleteDbCollection(
+	c: Context<Env>,
 	ref: CollectionReference,
 	logger: Logger | null = defaultLogger
 ): Promise<void> {
@@ -290,12 +305,12 @@ export async function deleteDbCollection(
 		case "tags":
 		case "transactions":
 		case "users":
-			await dataSource({ logger }).dataItem.deleteMany({
+			await dataSource({ context: c, logger }).dataItem.deleteMany({
 				where: { userId: uid, collectionId: ref.id },
 			});
 			return;
 		case "attachments": {
-			const db = dataSource({ logger });
+			const db = dataSource({ context: c, logger });
 			await db.$transaction([
 				db.dataItem.deleteMany({
 					where: { userId: uid, collectionId: ref.id },
@@ -307,7 +322,7 @@ export async function deleteDbCollection(
 			return;
 		}
 		case "keys":
-			await dataSource({ logger }).userKeys.deleteMany({ where: { userId: uid } });
+			await dataSource({ context: c, logger }).userKeys.deleteMany({ where: { userId: uid } });
 			return;
 		default:
 			throw new UnreachableCaseError(ref.id);
@@ -315,53 +330,61 @@ export async function deleteDbCollection(
 }
 
 export async function deleteDocuments(
+	c: Context<Env>,
 	refs: ReadonlyNonEmptyArray<DocumentReference>
 ): Promise<void> {
 	// Fetch the data
-	const before = await fetchDbDocs(refs);
+	const before = await fetchDbDocs(c, refs);
 
 	// Delete the stored data
-	await deleteDbDocs(refs);
+	await deleteDbDocs(c, refs);
 
 	// Tell listeners what happened
 	for (const { ref, data } of before) {
 		// Only call listeners about deletion if it wasn't gone in the first place
 		if (!data) continue;
-		await informWatchersForDocument(ref, null);
+		await informWatchersForDocument(c, ref, null);
 	}
 }
 
-export async function deleteDocument(ref: DocumentReference): Promise<void> {
+export async function deleteDocument(c: Context<Env>, ref: DocumentReference): Promise<void> {
 	// Fetch the data
-	const { data: oldData } = await fetchDbDoc(ref);
+	const { data: oldData } = await fetchDbDoc(c, ref);
 
 	// Delete the stored data
-	await deleteDbDoc(ref);
+	await deleteDbDoc(c, ref);
 
 	// Tell listeners what happened
 	if (oldData) {
 		// Only call listeners about deletion if it wasn't gone in the first place
-		await informWatchersForDocument(ref, null);
+		await informWatchersForDocument(c, ref, null);
 	}
 }
 
-export async function deleteCollection(ref: CollectionReference): Promise<void> {
-	await deleteDbCollection(ref);
+export async function deleteCollection(c: Context<Env>, ref: CollectionReference): Promise<void> {
+	await deleteDbCollection(c, ref);
 
 	// Tell listeners what happened
-	await informWatchersForCollection(ref, []);
+	await informWatchersForCollection(c, ref, []);
 }
 
-export async function setDocuments(updates: ReadonlyNonEmptyArray<DocUpdate>): Promise<void> {
-	await upsertDbDocs(updates);
+export async function setDocuments(
+	c: Context<Env>,
+	updates: ReadonlyNonEmptyArray<DocUpdate>
+): Promise<void> {
+	await upsertDbDocs(c, updates);
 
 	// Tell listeners what happened
 	// TODO: Do we need to read a "before" value for these too?
 	for (const { ref, data } of updates) {
-		await informWatchersForDocument(ref, { ...data, _id: ref.id });
+		await informWatchersForDocument(c, ref, { ...data, _id: ref.id });
 	}
 }
 
-export async function setDocument(ref: DocumentReference, data: AnyData): Promise<void> {
-	await setDocuments([{ ref, data }]);
+export async function setDocument(
+	c: Context<Env>,
+	ref: DocumentReference,
+	data: AnyData
+): Promise<void> {
+	await setDocuments(c, [{ ref, data }]);
 }

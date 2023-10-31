@@ -1,7 +1,7 @@
 {
 	"extends": "./tsconfig.json",
 	"compilerOptions": {
-		"types": ["vitest/globals", "jest-extended", "node"]
+		"types": ["node", "@cloudflare/workers-types/2023-07-01"]
 	},
 	"include": ["./*.ts", "./*.cjs", "**/*.ts", "**/*.d.ts", "**/*.json", "scripts/**/*"],
 	"exclude": []

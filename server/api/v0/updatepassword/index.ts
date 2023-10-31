@@ -1,33 +1,30 @@
-import { apiHandler, dispatchRequests } from "../../../helpers/apiHandler";
-import { BadRequestError } from "../../../errors/BadRequestError";
+import { apiHandler } from "../../../helpers/apiHandler";
 import { compare, generateHash, generateSalt } from "../../../auth/generators";
 import { generateTOTPSecretURI, verifyTOTP } from "../../../auth/totp";
-import { is, nonempty, optional, string, type } from "superstruct";
-import { respondSuccess } from "../../../responses";
+import { nonempty, optional, string, type } from "superstruct";
+import { successResponse } from "../../../responses";
 import { totpToken } from "../../../database/schemas";
 import { UnauthorizedError } from "../../../errors/UnauthorizedError";
 import { upsertUser } from "../../../database/write";
 import { userWithAccountId } from "../../../database/read";
 
-export const POST = apiHandler("POST", async (req, res) => {
-	const reqBody = type({
-		account: nonempty(string()),
-		password: nonempty(string()),
-		newpassword: nonempty(string()),
-		token: optional(totpToken),
-	});
+const PATH = "/api/v0/updatepassword";
+const reqBody = type({
+	account: nonempty(string()),
+	password: nonempty(string()),
+	newpassword: nonempty(string()),
+	token: optional(totpToken),
+});
 
-	if (!is(req.body, reqBody)) {
-		throw new BadRequestError("Improper parameter types");
-	}
-
+export const POST = apiHandler(PATH, "POST", reqBody, async c => {
 	// Ask for full credentials, so we aren't leaning on a repeatable token
-	const givenAccountId = req.body.account; // TODO: Get this from auth state instead
-	const givenPassword = req.body.password;
-	const newGivenPassword = req.body.newpassword;
+	const body = c.req.valid("json");
+	const givenAccountId = body.account; // TODO: Get this from auth state instead
+	const givenPassword = body.password;
+	const newGivenPassword = body.newpassword;
 
 	// Get credentials
-	const storedUser = await userWithAccountId(givenAccountId);
+	const storedUser = await userWithAccountId(c, givenAccountId);
 	if (!storedUser) {
 		throw new UnauthorizedError("wrong-credentials");
 	}
@@ -44,11 +41,11 @@ export const POST = apiHandler("POST", async (req, res) => {
 		storedUser.requiredAddtlAuth?.includes("totp") === true
 	) {
 		// TOTP is required
-		const token = req.body.token;
+		const token = body.token;
 
 		if (typeof token !== "string") throw new UnauthorizedError("missing-mfa-credentials");
 
-		const secret = generateTOTPSecretURI(storedUser.currentAccountId, storedUser.totpSeed);
+		const secret = generateTOTPSecretURI(c, storedUser.currentAccountId, storedUser.totpSeed);
 		const isValid = verifyTOTP(token, secret);
 		if (!isValid) throw new UnauthorizedError("wrong-mfa-credentials");
 	}
@@ -56,7 +53,7 @@ export const POST = apiHandler("POST", async (req, res) => {
 	// Store new credentials
 	const passwordSalt = await generateSalt();
 	const passwordHash = await generateHash(newGivenPassword, passwordSalt);
-	await upsertUser({
+	await upsertUser(c, {
 		currentAccountId: storedUser.currentAccountId,
 		mfaRecoverySeed: storedUser.mfaRecoverySeed ?? null,
 		passwordHash,
@@ -68,7 +65,5 @@ export const POST = apiHandler("POST", async (req, res) => {
 	});
 
 	// TODO: Invalidate the old jwt, send a new one
-	respondSuccess(res);
+	return successResponse(c);
 });
-
-export default dispatchRequests({ POST });

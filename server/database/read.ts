@@ -12,6 +12,7 @@ import type {
 	UserKeys,
 } from "./schemas";
 import type { CollectionReference, DocumentReference } from "./references";
+import type { Context } from "hono";
 import type { FileData } from "./io";
 import type { JWT } from "../auth/jwt";
 import type { Logger } from "../logger";
@@ -19,7 +20,7 @@ import { computeRequiredAddtlAuth } from "./schemas";
 import { dataSource } from "./io";
 import { generateAESCipherKey } from "../auth/generators";
 import { logger as defaultLogger } from "../logger";
-import { maxSpacePerUser } from "../auth/limits";
+import { maxStorageSpacePerUser } from "../auth/limits";
 import { NotFoundError } from "../errors/NotFoundError";
 import { publishWriteForRef } from "../auth/pubnub";
 import { UnreachableCaseError } from "../errors/UnreachableCaseError";
@@ -29,19 +30,25 @@ interface UserStats {
 	usedSpace: number;
 }
 
-export async function statsForUser(uid: UID): Promise<UserStats> {
-	const totalSpace = Math.ceil(maxSpacePerUser);
-	const usedSpace = await totalSizeOfFilesForUser(uid);
+export async function statsForUser(c: Context<Env>, uid: UID): Promise<UserStats> {
+	const totalSpace = Math.ceil(maxStorageSpacePerUser(c));
+	const usedSpace = await totalSizeOfFilesForUser(c, uid);
 
 	return { totalSpace, usedSpace };
 }
 
-export async function numberOfUsers(logger: Logger | null = defaultLogger): Promise<number> {
-	return await dataSource({ logger }).user.count();
+export async function numberOfUsers(
+	c: Pick<Context<Env>, "env">,
+	logger: Logger | null = defaultLogger
+): Promise<number> {
+	return await dataSource({ context: c, logger }).user.count();
 }
 
-export async function listAllUserIds(logger: Logger | null = defaultLogger): Promise<Array<UID>> {
-	const users = await dataSource({ logger }).user.findMany({ select: { uid: true } });
+export async function listAllUserIds(
+	c: Pick<Context<Env>, "env">,
+	logger: Logger | null = defaultLogger
+): Promise<Array<UID>> {
+	const users = await dataSource({ context: c, logger }).user.findMany({ select: { uid: true } });
 	// Can an empty string even be a value for a primary key?
 	return users.map(({ uid }) => uid as UID).filter(uid => uid);
 }
@@ -49,11 +56,12 @@ export async function listAllUserIds(logger: Logger | null = defaultLogger): Pro
 // MARK: - Pseudo Large-file Storage
 
 export async function fetchFileData(
+	c: Context<Env>,
 	userId: UID,
 	fileName: string,
 	logger: Logger | null = defaultLogger
 ): Promise<FileData | null> {
-	return await dataSource({ logger }).fileData.findUnique({
+	return await dataSource({ context: c, logger }).fileData.findUnique({
 		where: { userId_fileName: { userId, fileName } },
 	});
 }
@@ -63,11 +71,12 @@ export async function fetchFileData(
  */
 // TODO: Expose this on the API
 export async function totalSizeOfFile(
+	c: Context<Env>,
 	userId: UID,
 	fileName: string,
 	logger: Logger | null = defaultLogger
 ): Promise<number | null> {
-	const file = await dataSource({ logger }).fileData.findUnique({
+	const file = await dataSource({ context: c, logger }).fileData.findUnique({
 		where: { userId_fileName: { userId, fileName } },
 		select: { size: true },
 	});
@@ -79,10 +88,11 @@ export async function totalSizeOfFile(
  * Returns the number of bytes of the user's stored files.
  */
 export async function totalSizeOfFilesForUser(
+	c: Context<Env>,
 	userId: UID,
 	logger: Logger | null = defaultLogger
 ): Promise<number> {
-	const files = await dataSource({ logger }).fileData.findMany({
+	const files = await dataSource({ context: c, logger }).fileData.findMany({
 		where: { userId },
 		select: { size: true },
 	});
@@ -93,10 +103,11 @@ export async function totalSizeOfFilesForUser(
  * Returns the number of files stored for the user.
  */
 export async function countFileBlobsForUser(
+	c: Pick<Context<Env>, "env">,
 	userId: UID,
 	logger: Logger | null = defaultLogger
 ): Promise<number> {
-	return await dataSource({ logger }).fileData.count({ where: { userId } });
+	return await dataSource({ context: c, logger }).fileData.count({ where: { userId } });
 }
 
 // MARK: - Database
@@ -105,22 +116,27 @@ export async function countFileBlobsForUser(
  * Resolves to `true` if the given token exists in the database.
  */
 export async function jwtExistsInDatabase(
+	c: Pick<Context<Env>, "env">,
 	token: JWT,
 	logger: Logger | null = defaultLogger
 ): Promise<boolean> {
 	// FIXME: This sometimes throws when Prisma can't reach the database server. We should probs do a retry in that case.
-	const result = await dataSource({ logger }).expiredJwt.findUnique({
+	const result = await dataSource({ context: c, logger }).expiredJwt.findUnique({
 		where: { token },
 		select: { token: true },
 	});
 	return result !== null;
 }
 
-export async function numberOfExpiredJwts(logger: Logger | null = defaultLogger): Promise<number> {
-	return await dataSource({ logger }).expiredJwt.count();
+export async function numberOfExpiredJwts(
+	c: Pick<Context<Env>, "env">,
+	logger: Logger | null = defaultLogger
+): Promise<number> {
+	return await dataSource({ context: c, logger }).expiredJwt.count();
 }
 
 export async function countRecordsInCollection(
+	c: Pick<Context<Env>, "env">,
 	ref: CollectionReference,
 	logger: Logger | null = defaultLogger
 ): Promise<number> {
@@ -131,20 +147,21 @@ export async function countRecordsInCollection(
 		case "tags":
 		case "transactions":
 		case "users":
-			return await dataSource({ logger }).dataItem.count({
+			return await dataSource({ context: c, logger }).dataItem.count({
 				where: {
 					userId: ref.uid,
 					collectionId: ref.id,
 				},
 			});
 		case "keys":
-			return await dataSource({ logger }).userKeys.count({
+			return await dataSource({ context: c, logger }).userKeys.count({
 				where: { userId: ref.uid },
 			});
 	}
 }
 
 export async function fetchDbCollection(
+	c: Pick<Context<Env>, "env">,
 	ref: CollectionReference,
 	logger: Logger | null = defaultLogger
 ): Promise<Array<IdentifiedDataItem>> {
@@ -158,7 +175,7 @@ export async function fetchDbCollection(
 		case "transactions":
 		case "users":
 			return (
-				await dataSource({ logger }).dataItem.findMany({
+				await dataSource({ context: c, logger }).dataItem.findMany({
 					where: { userId: uid, collectionId: ref.id },
 					select: {
 						ciphertext: true,
@@ -170,7 +187,7 @@ export async function fetchDbCollection(
 			).map(v => ({ ...v, _id: v.docId }));
 		case "keys":
 			return (
-				await dataSource({ logger }).userKeys.findMany({
+				await dataSource({ context: c, logger }).userKeys.findMany({
 					where: { userId: uid },
 					select: {
 						dekMaterial: true,
@@ -193,11 +210,12 @@ export async function fetchDbCollection(
 }
 
 async function findUserWithProperties(
+	c: Pick<Context<Env>, "env">,
 	query: Partial<Pick<User, "uid" | "currentAccountId">>,
 	logger: Logger | null = defaultLogger
 ): Promise<User | null> {
 	if (Object.keys(query).length === 0) return null; // Fail gracefully for an empty query
-	const first = await dataSource({ logger }).user.findFirst({
+	const first = await dataSource({ context: c, logger }).user.findFirst({
 		where: {
 			uid: query.uid,
 			currentAccountId: query.currentAccountId,
@@ -209,7 +227,7 @@ async function findUserWithProperties(
 	let pubnubCipherKey = first.pubnubCipherKey as AESCipherKey | null;
 	if (pubnubCipherKey === null) {
 		pubnubCipherKey = await generateAESCipherKey();
-		await dataSource({ logger }).user.update({
+		await dataSource({ context: c, logger }).user.update({
 			where: { uid: first.uid },
 			data: { pubnubCipherKey },
 		});
@@ -232,19 +250,21 @@ async function findUserWithProperties(
 }
 
 export async function userWithUid(
+	c: Pick<Context<Env>, "env">,
 	uid: UID,
 	logger: Logger | null = defaultLogger
 ): Promise<User | null> {
 	// Find first user whose UID matches
-	return await findUserWithProperties({ uid }, logger);
+	return await findUserWithProperties(c, { uid }, logger);
 }
 
 export async function userWithAccountId(
+	c: Pick<Context<Env>, "env">,
 	accountId: string,
 	logger: Logger | null = defaultLogger
 ): Promise<User | null> {
 	// Find first user whose account ID matches
-	return await findUserWithProperties({ currentAccountId: accountId }, logger);
+	return await findUserWithProperties(c, { currentAccountId: accountId }, logger);
 }
 
 /** A view of database data. */
@@ -263,6 +283,7 @@ interface Snapshot {
  * @returns a view of database data.
  */
 export async function fetchDbDoc(
+	c: Context<Env>,
 	ref: DocumentReference,
 	logger: Logger | null = defaultLogger
 ): Promise<Snapshot> {
@@ -276,7 +297,7 @@ export async function fetchDbDoc(
 		case "tags":
 		case "transactions":
 		case "users": {
-			const result = await dataSource({ logger }).dataItem.findFirst({
+			const result = await dataSource({ context: c, logger }).dataItem.findFirst({
 				where: { docId, collectionId },
 			});
 			if (result === null) {
@@ -294,7 +315,7 @@ export async function fetchDbDoc(
 			return { ref, data };
 		}
 		case "keys": {
-			const result = await dataSource({ logger }).userKeys.findUnique({
+			const result = await dataSource({ context: c, logger }).userKeys.findUnique({
 				where: { userId: docId },
 			});
 			if (result === null) {
@@ -324,6 +345,7 @@ export async function fetchDbDoc(
  * @returns an array containing the given references and their associated data.
  */
 export async function fetchDbDocs(
+	c: Context<Env>,
 	refs: ReadonlyNonEmptyArray<DocumentReference>,
 	logger: Logger | null = defaultLogger
 ): Promise<NonEmptyArray<Snapshot>> {
@@ -334,7 +356,9 @@ export async function fetchDbDocs(
 
 	// Fetch the data
 	// TODO: Use findMany or a transaction instead
-	return (await Promise.all(refs.map(doc => fetchDbDoc(doc, logger)))) as NonEmptyArray<Snapshot>;
+	return (await Promise.all(
+		refs.map(doc => fetchDbDoc(c, doc, logger))
+	)) as NonEmptyArray<Snapshot>;
 }
 
 // MARK: - Watchers
@@ -366,6 +390,7 @@ const documentWatchers = new Map<string, DocumentWatcher>();
 const collectionWatchers = new Map<string, CollectionWatcher>();
 
 export function watchUpdatesToDocument(
+	c: Context<Env>,
 	ref: DocumentReference,
 	onChange: SDataChangeCallback
 ): Unsubscribe {
@@ -380,10 +405,10 @@ export function watchUpdatesToDocument(
 
 	// Send all data at path
 	/* eslint-disable promise/prefer-await-to-then */
-	void fetchDbDoc(ref)
+	void fetchDbDoc(c, ref)
 		.then(async ({ ref, data }) => {
 			if (data) {
-				await informWatchersForDocument(ref, data);
+				await informWatchersForDocument(c, ref, data);
 			}
 		})
 		.catch((error: unknown) => {
@@ -405,6 +430,7 @@ export function watchUpdatesToDocument(
 }
 
 export function watchUpdatesToCollection(
+	c: Context<Env>,
 	ref: CollectionReference,
 	onChange: PDataChangeCallback
 ): Unsubscribe {
@@ -413,9 +439,9 @@ export function watchUpdatesToCollection(
 
 	// Send "added" for all data at path
 	/* eslint-disable promise/prefer-await-to-then */
-	void fetchDbCollection(ref)
+	void fetchDbCollection(c, ref)
 		.then(async data => {
-			await informWatchersForCollection(ref, data);
+			await informWatchersForCollection(c, ref, data);
 		})
 		.catch((error: unknown) => {
 			defaultLogger.error(
@@ -436,6 +462,7 @@ export function watchUpdatesToCollection(
 }
 
 export async function informWatchersForDocument(
+	c: Context<Env>,
 	ref: DocumentReference,
 	newItem: Readonly<IdentifiedDataItem> | null
 ): Promise<void> {
@@ -453,13 +480,14 @@ export async function informWatchersForDocument(
 		);
 	}
 	await Promise.all(docListeners.map(l => l.onChange(newItem)));
-	await publishWriteForRef(ref, newItem);
-	const newCollection = await fetchDbCollection(ref.parent);
+	await publishWriteForRef(c, ref, newItem);
+	const newCollection = await fetchDbCollection(c, ref.parent);
 	await Promise.all(collectionListeners.map(l => l.onChange(newCollection)));
-	await publishWriteForRef(ref.parent, newCollection);
+	await publishWriteForRef(c, ref.parent, newCollection);
 }
 
 export async function informWatchersForCollection(
+	c: Context<Env>,
 	ref: CollectionReference,
 	newItems: ReadonlyArray<IdentifiedDataItem>
 ): Promise<void> {
@@ -472,5 +500,5 @@ export async function informWatchersForCollection(
 		);
 	}
 	await Promise.all(listeners.map(l => l.onChange(newItems)));
-	await publishWriteForRef(ref, newItems);
+	await publishWriteForRef(c, ref, newItems);
 }

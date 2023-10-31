@@ -1,24 +1,26 @@
+import type { Context } from "hono";
 import type { User } from "../../../../../../database/schemas";
-import { isCollectionId } from "../../../../../../database/schemas";
+import { apiHandler } from "../../../../../../helpers/apiHandler";
 import { CollectionReference } from "../../../../../../database/references";
-import { apiHandler, dispatchRequests } from "../../../../../../helpers/apiHandler";
 import { deleteCollection } from "../../../../../../database/write";
+import { dataResponse, successResponse } from "../../../../../../responses";
 import { fetchDbCollection as getCollection, statsForUser } from "../../../../../../database/read";
+import { isCollectionId } from "../../../../../../database/schemas";
 import { logger } from "../../../../../../logger";
 import { NotFoundError } from "../../../../../../errors/NotFoundError";
-import { pathSegments } from "../../../../../../helpers/pathSegments";
 import { requireAuth } from "../../../../../../auth/requireAuth";
-import { respondData, respondSuccess } from "../../../../../../responses";
 
-function collectionRef(user: User, req: APIRequest): CollectionReference | null {
-	const { collectionId } = pathSegments(req, "collectionId");
+const PATH = "/api/v0/db/users/:uid/:collectionId";
+
+function collectionRef(user: User, c: Context<Env, typeof PATH>): CollectionReference | null {
+	const collectionId = c.req.param("collectionId");
 	if (!isCollectionId(collectionId)) return null;
 
 	return new CollectionReference(user, collectionId);
 }
 
-export const GET = apiHandler("GET", async (req, res) => {
-	const { collectionId } = pathSegments(req, "collectionId");
+export const GET = apiHandler(PATH, "GET", null, async c => {
+	const collectionId = c.req.param("collectionId");
 	if (collectionId === ".websocket") {
 		logger.debug(
 			`Received GET request for a collection called '.websocket'. Why are we here? It seems likely that the user intended to start a WebSocket session, but by accident they requested the WebSocket collection.`
@@ -26,31 +28,29 @@ export const GET = apiHandler("GET", async (req, res) => {
 		// We'll proceed, since the unknown collection will result in a 404 anyhow
 	}
 
-	const user = await requireAuth(req, res, true);
-	const ref = collectionRef(user, req);
+	const user = await requireAuth(c);
+	const ref = collectionRef(user, c);
 	if (!ref) throw new NotFoundError();
 
-	const items = await getCollection(ref);
-	respondData(res, items);
+	const items = await getCollection(c, ref);
+	return dataResponse(c, items);
 });
 
-export const DELETE = apiHandler("DELETE", async (req, res) => {
-	const user = await requireAuth(req, res, true);
+export const DELETE = apiHandler(PATH, "DELETE", null, async c => {
+	const user = await requireAuth(c);
 	const uid = user.uid;
 
-	const ref = collectionRef(user, req);
+	const ref = collectionRef(user, c);
 	if (!ref) {
 		// Unknown collection? Call it gone!
-		const { totalSpace, usedSpace } = await statsForUser(uid);
-		return respondSuccess(res, { totalSpace, usedSpace });
+		const { totalSpace, usedSpace } = await statsForUser(c, uid);
+		return successResponse(c, { totalSpace, usedSpace });
 	}
 
 	// Delete the referenced database entries
-	await deleteCollection(ref);
+	await deleteCollection(c, ref);
 
-	const { totalSpace, usedSpace } = await statsForUser(uid);
+	const { totalSpace, usedSpace } = await statsForUser(c, uid);
 
-	respondSuccess(res, { totalSpace, usedSpace });
+	return successResponse(c, { totalSpace, usedSpace });
 });
-
-export default dispatchRequests({ GET, DELETE });

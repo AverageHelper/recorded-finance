@@ -17,16 +17,18 @@ function isNotNull<T>(tbd: T): tbd is NonNullable<T> {
 	return tbd !== null;
 }
 
+const c = { env: process.env as Env["Bindings"] };
+
 async function main(): Promise<void> {
 	// Read the database, and count up every record
-	const userCount = await numberOfUsers(null);
-	const jwtCount = await numberOfExpiredJwts(null);
+	const userCount = await numberOfUsers(c, null);
+	const jwtCount = await numberOfExpiredJwts(c, null);
 
-	const uids = await listAllUserIds(null);
+	const uids = await listAllUserIds(c, null);
 	console.info(`We have ${userCount} user(s):`, uids);
 
 	// Compile the results...
-	const users = (await Promise.all(uids.map(uid => userWithUid(uid, null)))).filter(isNotNull);
+	const users = (await Promise.all(uids.map(uid => userWithUid(c, uid, null)))).filter(isNotNull);
 	const recordCountsByUser = new Map<UID, Map<CollectionID, number>>();
 	const fileCountsByUser = new Map<UID, number>();
 
@@ -36,12 +38,12 @@ async function main(): Promise<void> {
 
 		for (const collectionId of allCollectionIds) {
 			const ref = new CollectionReference(user, collectionId);
-			counts.set(collectionId, await countRecordsInCollection(ref));
+			counts.set(collectionId, await countRecordsInCollection(c, ref));
 		}
 
 		recordCountsByUser.set(uid, counts);
 
-		const fileCount = await countFileBlobsForUser(uid);
+		const fileCount = await countFileBlobsForUser(c, uid);
 		fileCountsByUser.set(uid, fileCount);
 	}
 

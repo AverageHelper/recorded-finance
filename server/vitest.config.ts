@@ -3,7 +3,6 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
 	test: {
 		name: "server",
-		globals: true,
 		typecheck: {
 			checker: "tsc",
 			tsconfig: "./tsconfig.test.json",
@@ -11,7 +10,10 @@ export default defineConfig({
 		mockReset: true,
 		clearMocks: true,
 		setupFiles: ["./vitestSetup.ts"],
-		environment: "node",
+		environment: "miniflare",
+		environmentOptions: {
+			bindings: { NODE_ENV: "test" },
+		},
 		coverage: {
 			enabled: true,
 			all: true,

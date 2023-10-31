@@ -1,6 +1,6 @@
-import type { RequestHandler } from "express";
-import { asyncWrapper } from "../asyncWrapper";
 import { env } from "../environment";
+import { errorResponse, internalErrorResponse } from "../responses";
+import { logger } from "../logger";
 import { RateLimiterMemory, RateLimiterRes } from "rate-limiter-flexible";
 import { ThrottledError } from "../errors/ThrottledError";
 
@@ -22,24 +22,28 @@ const rateLimiter = new RateLimiterMemory({ points, duration, blockDuration });
  * Returns middleware that prevents an IP address from sending more than
  * 10 requests in 10 minutes.
  */
-export function throttle(): RequestHandler {
-	return asyncWrapper(async (req, res, next) => {
-		if (env("NODE_ENV") === "test") {
-			// Test mode. Skip throttle
-			next();
-			return;
-		}
+export const throttle: APIRequestMiddleware<"*"> = async function throttle(c, next) {
+	if (env(c, "NODE_ENV") === "test") {
+		// Test mode. Skip throttle
+		await next();
+		return;
+	}
 
-		const remoteIp = req.ip;
-		try {
-			await rateLimiter.consume(remoteIp);
-			next();
-		} catch (error) {
-			if (error instanceof RateLimiterRes) {
-				next(new ThrottledError(error));
-			} else {
-				next(error);
-			}
+	// See https://developers.cloudflare.com/fundamentals/get-started/reference/http-request-headers/
+	const remoteIp = c.req.header("CF-Connecting-IP") ?? "";
+	if (!remoteIp) {
+		logger.error("No IP address found in headers. Must be misconfigured.");
+		return internalErrorResponse(c);
+	}
+
+	try {
+		await rateLimiter.consume(remoteIp);
+		return await next();
+	} catch (error) {
+		if (error instanceof RateLimiterRes) {
+			return errorResponse(c, new ThrottledError(error));
 		}
-	});
-}
+		logger.error(error);
+		return internalErrorResponse(c);
+	}
+};

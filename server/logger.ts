@@ -1,5 +1,3 @@
-import bunyan from "bunyan";
-
 /**
  * The basic interface used by the Console API.
  */
@@ -27,8 +25,7 @@ interface BaseLogger {
 
 export interface Logger extends BaseLogger {}
 
-const name = "Recorded Finance";
-const baseLogger = bunyan.createLogger({ name, level: "debug" });
+const baseLogger = console;
 
 /**
  * A simple logging interface that only sends its messages to

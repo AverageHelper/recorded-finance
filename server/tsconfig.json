@@ -2,7 +2,7 @@
 	"compilerOptions": {
 		"target": "ES2022",
 		"lib": ["ES2022"],
-		"module": "CommonJS",
+		"module": "ESNext",
 		"moduleResolution": "node",
 		"allowSyntheticDefaultImports": true,
 		"useDefineForClassFields": true,
@@ -20,7 +20,7 @@
 		"useUnknownInCatchVariables": true,
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
-		"types": ["node"],
+		"types": ["@cloudflare/workers-types/2023-07-01"],
 		"typeRoots": ["./node_modules/@types", "./node_modules", "./src"],
 		"noEmit": false
 	},
@@ -35,9 +35,6 @@
 		"tsconfig.*"
 	],
 	"ts-node": {
-		"transpileOnly": true,
-		"compilerOptions": {
-			"module": "CommonJS"
-		}
+		"transpileOnly": true
 	}
 }

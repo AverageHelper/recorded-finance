@@ -3,14 +3,12 @@
 import { assert, literal, string, type } from "superstruct";
 import { parser as changelogParser } from "keep-a-changelog";
 import { debugLogger as logger } from "../src/logger.js";
+import { parse as parseSemVer } from "semver";
 import { readFileSync, writeFileSync } from "node:fs";
 import { URL } from "node:url";
-import semver from "semver";
 
 // Fixes the changelog's footer links and bumps the `version` in [package.json](/package.json) and [package-lock.json](/package-lock.json).
 // This script may be run repeatedly on the same project.
-
-const { parse: parseSemVer } = semver;
 
 function quote(str: string | undefined): string | undefined {
 	if (str === undefined) return str;
@@ -61,7 +59,7 @@ const versioned = type({
 });
 const versionedLock = type({
 	version: string(),
-	lockfileVersion: literal(2),
+	lockfileVersion: literal(3),
 	packages: type({
 		"": type({
 			version: string(),

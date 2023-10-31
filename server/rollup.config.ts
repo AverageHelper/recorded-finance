@@ -32,7 +32,7 @@ export default defineConfig({
 			sourceMap: !isProduction,
 		}), // translate TypeScript to JS
 		commonjs({ transformMixedEsModules: true }), // translate CommonJS to ESM
-		json(), // translate JSON ("express" requires this for its status messages)
+		json(), // translate JSON
 
 		// Find external dependencies
 		nodeResolve({
@@ -53,17 +53,6 @@ export default defineConfig({
 		// TypeScript, and check their context by querying the value
 		// of global `this`.
 		if (warning.code === "THIS_IS_UNDEFINED") return;
-
-		// Circular dependencies are sometimes bad, but the devs at
-		// "readable-stream" insist they're using them correctly.
-		// See https://github.com/nodejs/readable-stream/issues/280
-		// and https://github.com/nodejs/readable-stream/issues/348
-		const circularWhitelist = ["readable-stream"];
-		if (
-			warning.code === "CIRCULAR_DEPENDENCY" &&
-			circularWhitelist.some(p => warning.importer?.includes(p) === true) // Required for "multer"
-		)
-			return;
 
 		// Ignore "Use of eval is strongly discouraged" warnings from
 		// prisma. Their `eval` calls are fairly tame, though this should

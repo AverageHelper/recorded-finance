@@ -1,60 +1,17 @@
-import { allowedOriginHostnames } from "./allowedOriginHostnames";
+import type { ValidationTargets } from "hono";
+import type { Infer, Struct } from "superstruct";
 import { assertMethod } from "./assertMethod";
 import { BadMethodError } from "../errors/BadMethodError";
+import { BadRequestError } from "../errors/BadRequestError";
+import { errorResponse, internalErrorResponse } from "../responses";
 import { handleErrors } from "../handleErrors";
+import { InternalError } from "../errors/InternalError";
 import { logger } from "../logger";
-import { OriginError } from "../errors/OriginError";
-import { respondError, respondOk } from "../responses";
-import { URL } from "node:url";
+import { requireAuth } from "../auth/requireAuth";
+import { validate } from "superstruct";
 
 // Only the methods we care about
 type HTTPMethod = "GET" | "POST" | "DELETE";
-
-/**
- * Returns a Vercel request handler that dispatches `GET`, `DELETE`,
- * and `POST` requests to their respective handlers. `OPTIONS` requests
- * are handled as normal CORS preflight requests. Requests with other
- * methods, or methods for which no handler is defined, receive an
- * HTTP 405 error.
- *
- * ```ts
- * import { dispatchRequests } from "/path/to/apiHandler";
- * const GET = (req, res) => res.json("Hello, world!");
- *
- * export default dispatchRequests({ GET });
- * ```
- */
-export function dispatchRequests(
-	handlers: Partial<Record<HTTPMethod, APIRequestHandler>>
-): VercelRequestHandler {
-	return async (req, res) => {
-		switch (req.method) {
-			// Normal requests:
-			case "GET":
-			case "DELETE":
-			case "POST": {
-				const handler = handlers[req.method];
-				if (handler) {
-					await handler(req, res);
-					break;
-				} else {
-					respondError(res, new BadMethodError());
-					break;
-				}
-			}
-
-			// CORS preflight:
-			case "OPTIONS":
-				cors(req, res);
-				return respondOk(res);
-
-			// Everything else:
-			default:
-				respondError(res, new BadMethodError());
-				break;
-		}
-	};
-}
 
 /**
  * Creates a serverless function for a given HTTP method and handles errors.
@@ -63,54 +20,96 @@ export function dispatchRequests(
  * request's method does not match this one for any reason, then a response
  * with code 405 is returned to the client.
  */
-export function apiHandler(method: HTTPMethod, cb: APIRequestHandler): APIRequestHandler {
-	return async (req, res) => {
-		await handleErrors(req, res, async (req, res) => {
-			cors(req, res);
+export function apiHandler<
+	P extends string,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	T extends Struct<any, any>,
+	Target extends keyof ValidationTargets,
+	V extends {
+		in: { [K in Target]: Infer<T> };
+		out: { [K_1 in Target]: Infer<T> };
+	} = {
+		in: { [K_2 in Target]: Infer<T> };
+		out: { [K_3 in Target]: Infer<T> };
+	},
+>(
+	path: P,
+	method: HTTPMethod,
+	validator: T | "form-data" | null,
+	cb: APIRequestHandler<P, V>
+): APIRequestHandler<P> {
+	return async context => {
+		return await handleErrors(context, async c => {
+			if (c.req.method === "OPTIONS") {
+				logger.error("Received OPTIONS request that should have been handled previously.");
+				return internalErrorResponse(c);
+			}
 
-			if (req.method === "OPTIONS") return respondOk(res);
 			// TODO: What to do about HEAD method?
 			// TODO: Also assert body parameter types
-			assertMethod(req.method, method);
-			await cb(req, res);
+			assertMethod(c.req.method, method);
+
+			if (validator === null) {
+				return await cb(c);
+			}
+
+			const contentType = c.req.header("Content-Type");
+
+			if (validator === "form-data") {
+				if (!contentType || !contentType.includes("multipart/form-data")) {
+					throw new BadRequestError(`Invalid HTTP header: Content-Type=${contentType}`);
+				}
+				return await cb(c);
+			}
+
+			if (!contentType || !contentType.startsWith("application/json")) {
+				// FIXME: This throws with FormData....
+				throw new BadRequestError(`Invalid HTTP header: Content-Type=${contentType}`);
+			}
+			const data = c.req.raw.body ? await c.req.json<unknown>() : {};
+
+			const [error, value] = validate<unknown, unknown>(data, validator, { coerce: true });
+			if (error) {
+				throw new BadRequestError(error.message);
+			}
+			// eslint-disable-next-line @typescript-eslint/ban-types
+			c.req.addValidatedData("json", value as {});
+
+			// const v = sValidator<typeof validator, "json", Env, P>("json", validator, onError);
+			// await v(c, nopNext);
+			return await cb(c);
 		});
 	};
 }
 
-function cors(req: APIRequest, res: APIResponse): void {
-	res.setHeader(
-		"Access-Control-Allow-Headers",
-		"X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
-	);
-	// Not sure we're allowed to set certain headers during CORS preflight response...
+export const badMethodFallback: APIRequestHandler<string> = async context => {
+	return await handleErrors(context, () => {
+		throw new BadMethodError();
+	});
+};
 
-	// Allow requests with no origin (mobile apps, curl, etc.)
-	const origin = req.headers.origin;
-	if (origin === undefined || !origin) {
-		logger.debug(`Handling request that has no origin`);
-		return;
-	}
-
-	// Guard origin based on hostname
-	let hostname: string;
-	let cleanOrigin: string;
-
+export const assertOwnership: APIRequestMiddleware<string> = async (c, next) => {
 	try {
-		const url = new URL(origin);
-		hostname = url.hostname;
-		cleanOrigin = url.origin;
-	} catch {
-		logger.debug(`Blocking request from origin: ${origin} (inferred hostname: <invalid-url>`);
-		throw new OriginError();
-	}
+		await requireAuth(c);
+		await next();
+	} catch (error) {
+		// FIXME: This is copied from `handleErrors`, lol
+		if (error instanceof InternalError) {
+			logger.debug(`Sending response [${error.status} (${error.code}): ${error.message}]`);
+			if (!error.harmless) {
+				logger.error("Non-harmless internal error:", error);
+			}
+			return errorResponse(c, error);
+		}
 
-	if (!allowedOriginHostnames.has(hostname)) {
-		logger.debug(`Blocking request from origin: ${origin} (inferred hostname: ${hostname}`);
-		throw new OriginError();
+		// These extra details may save us when the call stack is too deep for us to figure where this error came from:
+		logger.error(
+			`Unknown internal error for %s request at %s:`,
+			c.req.method ?? "unknown",
+			c.req.url ?? "unknown URL",
+			error
+		);
+		return internalErrorResponse(c);
 	}
-
-	// Origin must be OK! Let 'em in
-	logger.debug(`Handling request from origin: ${cleanOrigin}`);
-	res.setHeader("Access-Control-Allow-Origin", cleanOrigin);
-	res.setHeader("Access-Control-Allow-Credentials", "true");
-}
+	return undefined;
+};

@@ -1,0 +1,8 @@
+name = "recorded-finance"
+main = "./src/main.ts"
+compatibility_date = "2023-07-01"
+# compatibility_flags = [ "nodejs_compat" ]
+node_compat = true
+
+[vars]
+HOST="0.0.0.0:8787"
