@@ -1,6 +1,6 @@
 {
 	"name": "recorded-finance-client",
-	"version": "0.18.9",
+	"version": "0.18.11",
 	"license": "GPL-3.0",
 	"description": "A Svelte app for managing monetary assets.",
 	"scripts": {

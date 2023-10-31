@@ -18,7 +18,9 @@
 	bind:this={root}
 	aria-label={$_("common.current-language", { values: { name: $current.name } })}
 >
-	<Tooltip target={root}>Change language from {$current.shortName}</Tooltip>
+	<Tooltip target={root}
+		>{$_("common.change-language", { values: { name: $current.shortName } })}</Tooltip
+	>
 	<select value={$current.code} on:change={onSelectChange}>
 		{#each locales as locale (locale.code)}
 			<option value={locale.code}>{locale.flag} {locale.shortName}</option>
