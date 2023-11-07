@@ -4,6 +4,7 @@ import type {
 	newPubNubTokenForUser as _newPubNubTokenForUser,
 	revokePubNubToken as _revokePubNubToken,
 } from "../pubnub";
+import { beforeEach, vi } from "vitest";
 
 export const publishWriteForRef = vi.fn<
 	Parameters<typeof _publishWriteForRef>,

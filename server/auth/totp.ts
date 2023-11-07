@@ -2,10 +2,10 @@ import type { Opaque } from "type-fest";
 import type { TOTPSeed, TOTPToken } from "../database/schemas";
 import { createHmac } from "node:crypto";
 import { persistentSecret } from "./jwt";
+import { timingSafeEqual } from "./generators";
 import { URL } from "node:url";
 import _base32Decode from "base32-decode";
 import _base32Encode from "base32-encode";
-import safeCompare from "safe-compare";
 
 type Base32Variant = Parameters<typeof _base32Decode>[1];
 
@@ -110,7 +110,7 @@ export function verifyTOTP(
 
 	for (let errorWindow = -window; errorWindow <= window; errorWindow += 1) {
 		const totp = generateTOTP(secret, { now, window: errorWindow });
-		if (safeCompare(token, totp)) return true;
+		if (timingSafeEqual(token, totp)) return true;
 	}
 	return false;
 }

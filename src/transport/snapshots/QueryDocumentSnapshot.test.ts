@@ -1,4 +1,5 @@
 import type { CollectionReference, DocumentReference, PlatformDB } from "../db";
+import { describe, expect, test } from "vitest";
 import { QueryDocumentSnapshot } from "./QueryDocumentSnapshot";
 
 describe("QueryDocumentSnapshot", () => {

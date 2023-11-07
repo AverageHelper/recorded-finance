@@ -3,7 +3,7 @@ import { apiHandler, dispatchRequests } from "../../../../helpers/apiHandler";
 import { BadRequestError } from "../../../../errors/BadRequestError";
 import { ConflictError } from "../../../../errors/ConflictError";
 import { generateSecret, generateTOTPSecretURI, verifyTOTP } from "../../../../auth/totp";
-import { generateSecureToken } from "../../../../auth/generators";
+import { generateSecureToken, timingSafeEqual } from "../../../../auth/generators";
 import { is, type } from "superstruct";
 import { metadataFromRequest } from "../../../../auth/requireAuth";
 import { newAccessTokens, setSession } from "../../../../auth/jwt";
@@ -12,7 +12,6 @@ import { statsForUser } from "../../../../database/read";
 import { totpToken } from "../../../../database/schemas";
 import { UnauthorizedError } from "../../../../errors/UnauthorizedError";
 import { upsertUser } from "../../../../database/write";
-import safeCompare from "safe-compare";
 
 export const POST = apiHandler("POST", async (req, res) => {
 	const reqBody = type({
@@ -45,7 +44,7 @@ export const POST = apiHandler("POST", async (req, res) => {
 	if (!isValid && typeof user.mfaRecoverySeed === "string") {
 		// Check that the value is the user's recovery token
 		const mfaRecoveryToken = generateSecret(user.mfaRecoverySeed);
-		if (!safeCompare(token, mfaRecoveryToken)) {
+		if (!timingSafeEqual(token, mfaRecoveryToken)) {
 			throw new UnauthorizedError("wrong-mfa-credentials");
 		} else {
 			// Invalidate the old token

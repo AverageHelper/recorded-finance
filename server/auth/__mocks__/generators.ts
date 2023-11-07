@@ -5,7 +5,9 @@ import type {
 	generateSalt as _generateSalt,
 	generateHash as _generateHash,
 	generateAESCipherKey as _generateAESCipherKey,
+	timingSafeEqual as _timingSafeEqual,
 } from "../generators";
+import { beforeEach, vi } from "vitest";
 
 export const compare = vi.fn<Parameters<typeof _compare>, ReturnType<typeof _compare>>();
 
@@ -37,10 +39,19 @@ export const generateAESCipherKey = vi.fn<
 	ReturnType<typeof _generateAESCipherKey>
 >();
 
-beforeEach(() => {
+export const timingSafeEqual = vi.fn<
+	Parameters<typeof _timingSafeEqual>,
+	ReturnType<typeof _timingSafeEqual>
+>();
+
+beforeEach(async () => {
 	compare.mockImplementation((a: string, b: string) => Promise.resolve(a === b));
 	generateSecureToken.mockReturnValue(DEFAULT_MOCK_SECURE_TOKEN);
 	generateSalt.mockResolvedValue(DEFAULT_MOCK_SALT);
 	generateHash.mockResolvedValue(DEFAULT_MOCK_HASH);
 	generateAESCipherKey.mockResolvedValue(DEFAULT_MOCK_AES_CIPHER_KEY);
+	timingSafeEqual.mockImplementation(
+		// eslint-disable-next-line @typescript-eslint/consistent-type-imports
+		(await vi.importActual<typeof import("../generators")>("../generators")).timingSafeEqual
+	);
 });

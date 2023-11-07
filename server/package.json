@@ -1,6 +1,6 @@
 {
 	"name": "recorded-finance-server",
-	"version": "0.8.10",
+	"version": "0.8.11",
 	"license": "GPL-3.0",
 	"description": "A simple data storage server. Clients are encouraged to implement E2EE before sending data here.",
 	"scripts": {
@@ -48,11 +48,8 @@
 		"n-digit-token": "2.1.0",
 		"pubnub": "7.3.0",
 		"rate-limiter-flexible": "2.3.6",
-		"safe-compare": "1.1.4",
 		"source-map-support": "0.5.21",
-		"superstruct": "1.0.3",
-		"tsscmp": "1.0.6",
-		"uuid": "8.3.2"
+		"superstruct": "1.0.3"
 	},
 	"devDependencies": {
 		"@rollup/plugin-commonjs": "22.0.2",
@@ -74,12 +71,9 @@
 		"@types/multer": "1.4.7",
 		"@types/node": "18.17.5",
 		"@types/pubnub": "7.2.0",
-		"@types/safe-compare": "1.1.0",
 		"@types/source-map-support": "0.5.4",
 		"@types/supertest": "2.0.12",
 		"@types/totp-generator": "0.0.4",
-		"@types/tsscmp": "1.0.0",
-		"@types/uuid": "8.3.4",
 		"@types/ws": "8.5.3",
 		"@typescript-eslint/eslint-plugin": "6.9.0",
 		"@typescript-eslint/parser": "6.9.0",
@@ -99,7 +93,6 @@
 		"eslint-plugin-vitest": "0.3.8",
 		"genversion": "3.1.1",
 		"inquirer": "8.2.5",
-		"jest-extended": "4.0.2",
 		"ora": "5.4.1",
 		"prettier": "3.0.3",
 		"prisma": "4.3.1",

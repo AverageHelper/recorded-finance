@@ -1,6 +1,4 @@
-import { expect, vi } from "vitest";
-import * as matchers from "jest-extended";
-expect.extend(matchers);
+import { vi } from "vitest";
 
 // Mock out the logger, to keep our console clean while testing
 vi.mock("./logger", () => ({

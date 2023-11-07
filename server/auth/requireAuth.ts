@@ -7,10 +7,10 @@ import { logger } from "../logger";
 import { NotFoundError } from "../errors/NotFoundError";
 import { pathSegments } from "../helpers/pathSegments";
 import { StructError } from "superstruct";
+import { timingSafeEqual } from "./generators";
 import { UnauthorizedError } from "../errors/UnauthorizedError";
 import { userWithUid } from "../database/read";
 import _jwt from "jsonwebtoken";
-import safeCompare from "tsscmp";
 
 // FIXME: Not sure why, but tests fail unless we do this:
 const { JsonWebTokenError } = _jwt;
@@ -88,7 +88,7 @@ export async function requireAuth(
 
 	if (assertCallerIsOwner) {
 		const { uid } = pathSegments(req, "uid");
-		if (!safeCompare(uid, user.uid)) {
+		if (!timingSafeEqual(uid, user.uid)) {
 			throw new UnauthorizedError("not-owner");
 		}
 	}

@@ -8,7 +8,7 @@
 
 		"target": "es2017",
 		"lib": ["esnext", "dom", "DOM.Iterable"],
-		"module": "ES2020",
+		"module": "ESNext",
 		"moduleResolution": "node",
 		"jsx": "preserve",
 		"useDefineForClassFields": true,
@@ -25,7 +25,6 @@
 		"noPropertyAccessFromIndexSignature": true,
 		"noUncheckedIndexedAccess": true,
 		"useUnknownInCatchVariables": true,
-		"importsNotUsedAsValues": "error",
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
 		"types": [],

@@ -8,17 +8,16 @@ import { MAX_USERS } from "../../../auth/limits";
 import { newAccessTokens, setSession } from "../../../auth/jwt";
 import { NotEnoughUserSlotsError } from "../../../errors/NotEnoughUserSlotsError";
 import { numberOfUsers, statsForUser, userWithAccountId } from "../../../database/read";
+import { randomUUID } from "node:crypto";
 import { respondSuccess } from "../../../responses";
 import { upsertUser } from "../../../database/write";
-import { v4 as uuid } from "uuid";
 
 /**
  * Returns a fresh document ID that is virtually guaranteed
  * not to have been used before.
  */
 function newDocumentId(): UID {
-	// TODO: Use the database's own UUID or CUID implementation
-	return uuid().replace(/-/gu, "") as UID; // remove hyphens
+	return randomUUID().replace(/-/gu, "") as UID; // remove hyphens
 }
 
 export const POST = apiHandler("POST", async (req, res) => {

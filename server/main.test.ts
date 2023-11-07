@@ -12,11 +12,11 @@ import type {
 import type { DocUpdate } from "./database/write";
 import type { FileData } from "@prisma/client";
 import type { JWT } from "./auth/jwt";
-import "jest-extended";
 import { allCollectionIds } from "./database/schemas";
 import { CollectionReference, DocumentReference } from "./database/references";
 import { setAuth, userWithTotp, userWithoutTotp } from "./test/userMocks";
 import { version } from "./version";
+import { describe, expect, test, vi } from "vitest";
 import _request from "supertest";
 import jsonwebtoken from "jsonwebtoken";
 
@@ -260,7 +260,7 @@ describe("Routes", () => {
 				access_token: mockJwt.DEFAULT_MOCK_ACCESS_TOKEN,
 				pubnub_cipher_key: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
 				pubnub_token: mockJwt.DEFAULT_MOCK_PUBNUB_TOKEN,
-				uid: expect.toBeString() as string, // this is randomly generated
+				uid: expect.stringContaining("") as string, // this is randomly generated
 				totalSpace: 0,
 				usedSpace: 0,
 				message: "Success!",
@@ -268,8 +268,9 @@ describe("Routes", () => {
 			expect(mockGenerators.generateSalt).toHaveBeenCalledOnce();
 			expect(mockGenerators.generateHash).toHaveBeenCalledOnce();
 			expect(mockGenerators.generateAESCipherKey).toHaveBeenCalledOnce();
-			expect(mockWrite.upsertUser).toHaveBeenCalledExactlyOnceWith({
-				uid: expect.toBeString() as UID,
+			expect(mockWrite.upsertUser).toHaveBeenCalledOnce();
+			expect(mockWrite.upsertUser).toHaveBeenCalledWith({
+				uid: expect.stringContaining("") as UID,
 				currentAccountId: account,
 				passwordHash: mockGenerators.DEFAULT_MOCK_HASH,
 				passwordSalt: mockGenerators.DEFAULT_MOCK_SALT,
@@ -487,7 +488,8 @@ describe("Routes", () => {
 					usedSpace: 0,
 					message: "Success!",
 				});
-			expect(mockWrite.upsertUser).toHaveBeenCalledExactlyOnceWith({
+			expect(mockWrite.upsertUser).toHaveBeenCalledOnce();
+			expect(mockWrite.upsertUser).toHaveBeenCalledWith({
 				...user,
 				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN, // FIXME: This is weird. Shouldn't the seed != the token?
 				requiredAddtlAuth: ["totp"],
@@ -508,7 +510,8 @@ describe("Routes", () => {
 					usedSpace: 0,
 					message: "Success!",
 				});
-			expect(mockWrite.upsertUser).toHaveBeenCalledExactlyOnceWith({
+			expect(mockWrite.upsertUser).toHaveBeenCalledOnce();
+			expect(mockWrite.upsertUser).toHaveBeenCalledWith({
 				...user,
 				mfaRecoverySeed: null,
 			});
@@ -554,7 +557,8 @@ describe("Routes", () => {
 			await request("GET", PATH)
 				.expect(200)
 				.expect({ secret: mockTotp.DEFAULT_MOCK_OTP_SECUET_URI, message: "Success!" });
-			expect(mockWrite.upsertUser).toHaveBeenCalledExactlyOnceWith({
+			expect(mockWrite.upsertUser).toHaveBeenCalledOnce();
+			expect(mockWrite.upsertUser).toHaveBeenCalledWith({
 				...user,
 				totpSeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
 			});
@@ -644,7 +648,8 @@ describe("Routes", () => {
 				.send({ password: "nonempty", token: "nonempty" })
 				.expect(200)
 				.expect({ message: "Success!" });
-			expect(mockWrite.upsertUser).toHaveBeenCalledExactlyOnceWith({
+			expect(mockWrite.upsertUser).toHaveBeenCalledOnce();
+			expect(mockWrite.upsertUser).toHaveBeenCalledWith({
 				...user,
 				totpSeed: null,
 				mfaRecoverySeed: null,
@@ -756,7 +761,8 @@ describe("Routes", () => {
 			const token = "auth-token-12345" as JWT;
 			mockJwt.jwtFromRequest.mockReturnValueOnce(token);
 			await request("POST", PATH).expect(200).expect({ message: "Success!" });
-			expect(mockJwt.addJwtToBlacklist).toHaveBeenCalledExactlyOnceWith(token);
+			expect(mockJwt.addJwtToBlacklist).toHaveBeenCalledOnce();
+			expect(mockJwt.addJwtToBlacklist).toHaveBeenCalledWith(token);
 			expect(mockJwt.killSession).toHaveBeenCalledOnce();
 		});
 	});
@@ -837,7 +843,8 @@ describe("Routes", () => {
 				.send({ account: "nonempty", password: "nonempty" })
 				.expect(200)
 				.expect({ message: "Success!" });
-			expect(mockWrite.destroyUser).toHaveBeenCalledExactlyOnceWith(user.uid);
+			expect(mockWrite.destroyUser).toHaveBeenCalledOnce();
+			expect(mockWrite.destroyUser).toHaveBeenCalledWith(user.uid);
 		});
 
 		test("POST answers 403 if TOTP is required and not provided", async () => {
@@ -886,7 +893,8 @@ describe("Routes", () => {
 				.send({ account: "nonempty", password: "nonempty", token: "123456" })
 				.expect(200)
 				.expect({ message: "Success!" });
-			expect(mockWrite.destroyUser).toHaveBeenCalledExactlyOnceWith(user.uid);
+			expect(mockWrite.destroyUser).toHaveBeenCalledOnce();
+			expect(mockWrite.destroyUser).toHaveBeenCalledWith(user.uid);
 		});
 	});
 
@@ -1013,7 +1021,8 @@ describe("Routes", () => {
 				.send({ account: "nonempty", password: "nonempty", newpassword: "nonempty-again" })
 				.expect(200)
 				.expect({ message: "Success!" });
-			expect(mockWrite.upsertUser).toHaveBeenCalledExactlyOnceWith({
+			expect(mockWrite.upsertUser).toHaveBeenCalledOnce();
+			expect(mockWrite.upsertUser).toHaveBeenCalledWith({
 				...user,
 				passwordSalt,
 				passwordHash,
@@ -1080,7 +1089,8 @@ describe("Routes", () => {
 				})
 				.expect(200)
 				.expect({ message: "Success!" });
-			expect(mockWrite.upsertUser).toHaveBeenCalledExactlyOnceWith({
+			expect(mockWrite.upsertUser).toHaveBeenCalledOnce();
+			expect(mockWrite.upsertUser).toHaveBeenCalledWith({
 				...user,
 				passwordSalt,
 				passwordHash,
@@ -1207,7 +1217,8 @@ describe("Routes", () => {
 				.send({ account: "nonempty", newaccount, password: "nonempty" })
 				.expect(200)
 				.expect({ message: "Success!" });
-			expect(mockWrite.upsertUser).toHaveBeenCalledExactlyOnceWith({
+			expect(mockWrite.upsertUser).toHaveBeenCalledOnce();
+			expect(mockWrite.upsertUser).toHaveBeenCalledWith({
 				...user,
 				currentAccountId: newaccount,
 			});
@@ -1257,7 +1268,8 @@ describe("Routes", () => {
 				})
 				.expect(200)
 				.expect({ message: "Success!" });
-			expect(mockWrite.upsertUser).toHaveBeenCalledExactlyOnceWith({
+			expect(mockWrite.upsertUser).toHaveBeenCalledOnce();
+			expect(mockWrite.upsertUser).toHaveBeenCalledWith({
 				...user,
 				currentAccountId: newaccount,
 			});
@@ -1357,7 +1369,8 @@ describe("Routes", () => {
 			});
 			await request("POST", PATH).send(batch).expect(200);
 			expect(mockWrite.deleteDocuments).not.toHaveBeenCalled();
-			expect(mockWrite.setDocuments).toHaveBeenCalledExactlyOnceWith(updates);
+			expect(mockWrite.setDocuments).toHaveBeenCalledOnce();
+			expect(mockWrite.setDocuments).toHaveBeenCalledWith(updates);
 		});
 
 		test.each(counts)("POST answers 200 for a batch of %d 'delete' operations", async count => {
@@ -1374,7 +1387,8 @@ describe("Routes", () => {
 				};
 			});
 			await request("POST", PATH).send(batch).expect(200);
-			expect(mockWrite.deleteDocuments).toHaveBeenCalledExactlyOnceWith(refs);
+			expect(mockWrite.deleteDocuments).toHaveBeenCalledOnce();
+			expect(mockWrite.deleteDocuments).toHaveBeenCalledWith(refs);
 			expect(mockWrite.setDocuments).not.toHaveBeenCalled();
 		});
 
@@ -1458,7 +1472,8 @@ describe("Routes", () => {
 					};
 				});
 				await request("POST", PATH).send(batch).expect(200);
-				expect(mockWrite.deleteDocuments).toHaveBeenCalledExactlyOnceWith(refs);
+				expect(mockWrite.deleteDocuments).toHaveBeenCalledOnce();
+				expect(mockWrite.deleteDocuments).toHaveBeenCalledWith(refs);
 				expect(mockWrite.setDocuments).not.toHaveBeenCalled();
 			}
 		);

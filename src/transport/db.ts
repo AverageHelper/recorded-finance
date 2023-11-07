@@ -16,7 +16,6 @@ import { onSnapshot } from "./onSnapshot.js";
 import { PlatformError } from "./errors/index.js";
 import { run } from "./apiStruts.js";
 import { t } from "../i18n.js";
-import { v4 as uuid } from "uuid";
 import PubNub from "pubnub";
 import {
 	deleteV0DbUsersByUidAndCollDoc,
@@ -206,7 +205,7 @@ export function doc<T = DocumentData>(
 		const parent = collection<T>(dbOrCollection, collectionId);
 		return { id, parent, db: dbOrCollection, type: "document" };
 	}
-	const newId = uuid().replace(/-/gu, ""); // remove hyphens
+	const newId = crypto.randomUUID().replace(/-/gu, ""); // remove hyphens
 	return {
 		id: newId,
 		parent: dbOrCollection,
