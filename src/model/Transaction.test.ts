@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { dinero, toSnapshot } from "dinero.js";
-import { toCurrency } from "../transformers/index.js";
-import { transaction } from "./Transaction.js";
+import { toCurrency } from "../transformers";
+import { transaction } from "./Transaction";
 import { USD } from "@dinero.js/currencies";
 
 describe("Transaction record", () => {

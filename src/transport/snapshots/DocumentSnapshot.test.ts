@@ -1,6 +1,6 @@
-import type { CollectionReference, DocumentReference, PlatformDB } from "../db.js";
+import type { CollectionReference, DocumentReference, PlatformDB } from "../db";
 import { describe, expect, test } from "vitest";
-import { DocumentSnapshot } from "./DocumentSnapshot.js";
+import { DocumentSnapshot } from "./DocumentSnapshot";
 
 describe("DocumentSnapshot", () => {
 	const testData = {
