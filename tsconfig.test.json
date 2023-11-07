@@ -1,10 +1,5 @@
 {
 	"extends": "./tsconfig.json",
-	"compilerOptions": {
-		"declaration": true,
-		"noEmit": false,
-		"types": ["node", "svelte"]
-	},
 	"include": ["./*.ts", "./*.cjs", "**/*.ts", "**/*.d.ts", "**/*.json", "**/*.svelte"],
 	"exclude": []
 }

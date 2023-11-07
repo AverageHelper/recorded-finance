@@ -29,17 +29,11 @@ export async function generateHash(data: string, salt: Salt): Promise<Hash> {
 	return (await hash(data, salt)) as Hash;
 }
 
-function randomBytes<N extends number>(number: PositiveInteger<N>): Buffer {
-	const array = new Uint8Array(number);
-	crypto.getRandomValues(array); // fills the array with random values
-	return Buffer.from(array.buffer);
-}
-
 /**
  * Generates a new 32-character key for PubNub's AES 256 message-level encryption.
  */
 export async function generateAESCipherKey(): Promise<AESCipherKey> {
-	return await Promise.resolve(randomBytes(16).toString("hex") as AESCipherKey);
+	return await Promise.resolve(crypto.randomBytes(16).toString("hex") as AESCipherKey);
 }
 
 /**

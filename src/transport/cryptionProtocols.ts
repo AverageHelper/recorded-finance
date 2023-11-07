@@ -19,10 +19,10 @@ export const Protocols = {
 		wordSizeBits: 32,
 		keySizeBits: 8192, // my aim was 256 bits, but I accidentally did WORDS instead lol
 		saltSizeBytes: 32,
-		iterations: 10_000,
+		iterations: 10_000, // The default is now 250_000, so this sucks.
 		keyEncoding: "base64",
 		dataEncoding: "utf8",
-		hasher: "sha512",
+		hasher: "sha512", // The default is now SHA256.
 		cipher: "aes",
 		derivation: PBKDF2,
 		randomValue,

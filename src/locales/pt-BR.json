@@ -9,6 +9,7 @@
 		"platform": "Recorded Finance",
 		"cancel": "Cancelar",
 		"application": "Aplicativo",
+		"change-language": "Alterar idioma do {name}",
 		"current-language": "Idioma Atual: {name}",
 		"details": "Detalhes",
 		"current-aside": "(atual)",

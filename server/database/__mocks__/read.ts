@@ -19,8 +19,8 @@ import type {
 	informWatchersForDocument as _informWatchersForDocument,
 	informWatchersForCollection as _informWatchersForCollection,
 } from "../read";
-import { beforeEach, vi } from "vitest";
 import type { DocumentReference } from "../references";
+import { beforeEach, vi } from "vitest";
 
 export const statsForUser = vi.fn<
 	Parameters<typeof _statsForUser>,
