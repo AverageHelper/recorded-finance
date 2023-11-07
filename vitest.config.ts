@@ -15,7 +15,7 @@ export default defineConfig({
 		coverage: {
 			enabled: true,
 			all: true,
-			provider: "istanbul",
+			provider: "v8",
 			reportsDirectory: "coverage",
 			exclude: ["scripts/**/*", "vitest.config", "server"],
 		},
