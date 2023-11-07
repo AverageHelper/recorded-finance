@@ -10,7 +10,7 @@ export default defineConfig({
 		mockReset: true,
 		clearMocks: true,
 		setupFiles: ["./vitestSetup.ts"],
-		environment: "node",
+		environment: "jsdom",
 		exclude: ["node_modules", "server", "dist"],
 		coverage: {
 			enabled: true,
