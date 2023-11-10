@@ -8,7 +8,7 @@ The machine that stores stuff.
 
 This server doesn't do much on its own once you're authenticated. You give it data, and you ask for that data back. If you want to encrypt that data, do that yourself before you send it.
 
-The API is documented using [OpenAPI](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/RecordedFinance/recorded-finance/main/server/openapi.yaml).
+The API is documented using [OpenAPI](https://petstore.swagger.io/?url=https://recorded.finance/openapi.yaml).
 
 ## Setup
 
