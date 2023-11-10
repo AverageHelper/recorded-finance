@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.18.12] - 2023-11-10
+### Changed
+- Began migrating to [Codeberg](https://codeberg.org/RecordedFinance/recorded-finance). I eventually want to self-host the repo on something like [Forgejo](https://forgejo.org), but Codeberg seems a happy medium for now.
+  - Still need to work out a platform-agnostic spot for CI/CD.
+  - Still need to migrate our security reporting to something platform-agnostic, since Codeberg has no first-party alternative.
+
 ## [0.18.11] - 2023-10-30
 ### Changed
 - Removed `uuid`, `safe-compare`, and `tsscmp` dependencies in favor of Node-native and browser-native alternatives.
@@ -516,6 +522,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial commit
 
+[0.18.12]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.11...v0.18.12
 [0.18.11]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.10...v0.18.11
 [0.18.10]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.9...v0.18.10
 [0.18.9]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.8...v0.18.9

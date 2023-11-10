@@ -2,10 +2,10 @@ openapi: 3.0.1
 info:
   title: Recorded Finance Auth/Storage Server
   version: 0.8.6
-  description: This is the Recorded Finance Server. All the server does is store data given to it by the client. The server controls access to the data with basic password-based auth with optional time-based multi-factor auth. The Recorded Finance client does most of the hard work of encrypting the user's data. You can read Recorded Finance's source code on [GitHub](https://github.com/RecordedFinance/recorded-finance).
+  description: This is the Recorded Finance Server. All the server does is store data given to it by the client. The server controls access to the data with basic password-based auth with optional time-based multi-factor auth. The Recorded Finance client does most of the hard work of encrypting the user's data. You can read Recorded Finance's source code on [Codeberg](https://codeberg.org/RecordedFinance/recorded-finance).
   license:
     name: GNU General Public License v3.0
-    url: https://github.com/RecordedFinance/recorded-finance/blob/main/LICENSE
+    url: https://codeberg.org/RecordedFinance/recorded-finance/src/branch/main/LICENSE
 externalDocs:
   description: Find out more about Recorded Finance
   url: https://recorded.finance

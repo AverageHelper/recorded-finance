@@ -75,6 +75,6 @@ I recommend using something like [PM2](https://pm2.keymetrics.io) to run the ser
 
 ## Contributing
 
-This project is entirely open source. Do with it what you will. If you're willing to help me improve this project, consider [filing an issue](https://github.com/RecordedFinance/recorded-finance/issues/new/choose).
+This project is entirely open source. Do with it what you will. If you're willing to help me improve this project, consider [filing an issue](https://codeberg.org/RecordedFinance/recorded-finance/issues/new/choose).
 
 See [CONTRIBUTING.md](/CONTRIBUTING.md) for ways to contribute.
