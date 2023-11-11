@@ -1,0 +1,29 @@
+# On push to main, if the latest version in CHANGELOG.md is different from the latest version tag, create a new tag and release
+
+when:
+  - event: manual
+    branch: main
+  - event: push
+    branch: main
+
+steps:
+  changelog:
+    name: Parse Changelog
+    image: node:18
+    commands:
+      - npm ci
+      - npm run create-release-env # Saves details to local `.release.env` file
+
+  release:
+    name: Create Release
+    # This image doesn't create a new release if the tag already exists
+    image: woodpeckerci/plugin-gitea-release
+    settings:
+      env-file: .release.env # Created in previous step
+      base_url: https://codeberg.org
+      api_key:
+        from_secret: CODEBERG_ACCESS_TOKEN
+      target: main
+      title: v${NEW_RELEASE_VERSION}
+      note: ${NEW_RELEASE_DESCRIPTION}
+      prerelease: ${NEW_RELEASE_PRERELEASE}

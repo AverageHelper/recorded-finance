@@ -2,7 +2,7 @@
 .DS_Store
 
 # Secret files
-.env
+*.env
 Dockerfile
 
 # Useless files

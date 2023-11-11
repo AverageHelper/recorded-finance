@@ -126,7 +126,7 @@ I've missed some steps before. For example, version [0.9.0](/CHANGELOG.md#090---
 4. I push a PR.
    - The CI (Continuous Integration) bots check that there's a new version in the changelog, and if so, check that I've run `npm run release` on the branch. (The usual CI checks also occur.)
 5. I merge the PR.
-   - The CD (Continuous Deployment) bots dispatch a new git tag and Codeberg Release using the content of the [CHANGELOG.md](/CHANGELOG.md).
+   - The CD (Continuous Deployment) bots dispatch a new git tag and Forgejo Release using the content of the [CHANGELOG.md](/CHANGELOG.md).
 
 Once the release is tagged and deployed, it's up to server maintainers (including me) to pull down the latest changes. I might do something about that later.
 
