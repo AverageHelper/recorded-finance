@@ -3,7 +3,7 @@
 when:
   - event: manual
   - event: pull_request
-    branch: main
+    # branch: main  # TODO: Work out a way to test only on PRs toward `main`
 
 steps:
   build_client:
