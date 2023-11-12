@@ -5,7 +5,7 @@ when:
   - event: pull_request
     branch: main
 
-steps:
+steps: 
   build_client:
     name: Build Client
     group: build
