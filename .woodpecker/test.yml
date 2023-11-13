@@ -3,7 +3,7 @@
 when:
   - event: manual
   - event: pull_request
-    branch: main # TODO: Work out a way to test only on PRs toward `main`
+    branch: main
 
 steps:
   build_client:
@@ -13,9 +13,8 @@ steps:
     commands:
       - npm ci
       - npm run build:client
-    # secrets: [vite_enable_login, vite_enable_signup, vite_pubnub_subscribe_key]
     environment:
-      - VITE_ENABLE_LOGIN=true
+      - VITE_ENABLE_LOGIN=true # TODO: Some way to set these in one spot
       - VITE_ENABLE_SIGNUP=false
       - VITE_PUBNUB_SUBSCRIBE_KEY=foo
 
@@ -27,10 +26,6 @@ steps:
       - cd server
       - npm ci
       - npm run build
-    # secrets: [vite_enable_login, vite_enable_signup]
-    environment:
-      - VITE_ENABLE_LOGIN=true
-      - VITE_ENABLE_SIGNUP=false
 
   test:
     name: Tests

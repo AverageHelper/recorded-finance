@@ -1,3 +1,5 @@
+# Lint rules for OpenAPI spec files
+
 extends:
   - recommended
 
