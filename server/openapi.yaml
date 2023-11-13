@@ -2,15 +2,15 @@ openapi: 3.0.1
 info:
   title: Recorded Finance Auth/Storage Server
   version: 0.8.6
-  description: This is the Recorded Finance Server. All the server does is store data given to it by the client. The server controls access to the data with basic password-based auth with optional time-based multi-factor auth. The Recorded Finance client does most of the hard work of encrypting the user's data. You can read Recorded Finance's source code on [GitHub](https://github.com/RecordedFinance/recorded-finance).
+  description: This is the Recorded Finance Server. All the server does is store data given to it by the client. The server controls access to the data with basic password-based auth with optional time-based multi-factor auth. The Recorded Finance client does most of the hard work of encrypting the user's data. You can read Recorded Finance's source code on [Codeberg](https://codeberg.org/RecordedFinance/recorded-finance).
   license:
     name: GNU General Public License v3.0
-    url: https://github.com/RecordedFinance/recorded-finance/blob/main/LICENSE
+    url: https://codeberg.org/RecordedFinance/recorded-finance/src/branch/main/LICENSE
 externalDocs:
   description: Find out more about Recorded Finance
   url: https://recorded.finance
 servers:
-  - url: https://recorded.finance/api/
+  - url: https://recorded.finance/api
 tags:
   - name: misc
     description: Make sure everything works
@@ -19,12 +19,13 @@ tags:
   - name: database
     description: Arbitrary persistent data storage
 paths:
-  "/v0/":
+  "/v0":
     get:
       tags:
         - misc
       summary: Get back a silly response
       operationId: silly
+      security: [] # No security, public info
       responses:
         200:
           description: The server works
@@ -43,6 +44,7 @@ paths:
         - misc
       summary: Make sure the server is working
       operationId: ping
+      security: [] # No security, public info
       responses:
         200:
           description: The server works
@@ -61,6 +63,7 @@ paths:
         - misc
       summary: Get the server's version information
       operationId: version
+      security: [] # No security, public info
       responses:
         200:
           description: Gets the server's current version.
@@ -82,6 +85,7 @@ paths:
         - auth
       summary: Create a new account
       operationId: create-account
+      security: [] # No security, credentials passed in body
       requestBody:
         required: true
         content:
@@ -178,6 +182,7 @@ paths:
         - auth
       summary: Get an auth token for an existing account.
       operationId: login-account
+      security: [] # No security, credentials passed in body
       requestBody:
         required: true
         content:
@@ -533,6 +538,7 @@ paths:
         - auth
       summary: Destroy the user's data and account credentials.
       operationId: leave-forever
+      security: [] # No security, credentials passed in body
       requestBody:
         required: true
         content:
@@ -598,6 +604,7 @@ paths:
         - auth
       summary: Change the user's password.
       operationId: change-password
+      security: [] # No security, credentials passed in body
       requestBody:
         required: true
         content:
@@ -667,6 +674,7 @@ paths:
         - auth
       summary: Change the user's account ID.
       operationId: change-account-id
+      security: [] # No security, credentials passed in body
       requestBody:
         required: true
         content:

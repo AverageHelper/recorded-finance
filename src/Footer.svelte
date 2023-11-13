@@ -2,7 +2,7 @@
 	import { _ } from "./i18n";
 	import { repoFile, repoMain } from "./platformMeta";
 	import AppVersion from "./components/AppVersion.svelte";
-	import GitHubIcon from "./icons/GitHub.svelte";
+	import CodebergIcon from "./icons/Codeberg.svelte";
 	import I18N from "./components/I18N.svelte";
 	import LanguageSelector from "./components/LanguageSelector.svelte";
 	import OutLink from "./components/OutLink.svelte";
@@ -23,7 +23,7 @@
 	<aside>
 		<LanguageSelector />
 		<OutLink to={repoMain} title={$_("footer.view-source")}>
-			<GitHubIcon />
+			<CodebergIcon />
 		</OutLink>
 	</aside>
 </footer>

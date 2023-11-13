@@ -13,16 +13,14 @@ the app needs translated.
 
 To update an existing translation:
 
-1. Start a fork as you would normally do when contributing to a project
-   on GitHub.
+1. Start a fork as you would normally do when contributing to a project.
 2. Find the relevant strings file.
 3. Start translating! Test your work using `npm run dev:client`.
 4. Create a Pull Request as described [below](#pull-requests).
 
 To create a translation for a language which we don't yet support:
 
-1. Start a fork as you would normally do when contributing to a project
-   on GitHub.
+1. Start a fork as you would normally do when contributing to a project.
 2. Create a new file of the same format.
 3. Reference your new strings file in the [i18n index file](/src/i18n.ts).
 4. Start translating! Test your work using `npm run dev:client`.
@@ -30,7 +28,7 @@ To create a translation for a language which we don't yet support:
 
 ## Issues
 
-[Issues](https://github.com/RecordedFinance/recorded-finance/issues/new/choose) are very valuable to this project.
+[Issues](https://codeberg.org/RecordedFinance/recorded-finance/issues/new/choose) are very valuable to this project.
 
 - Ideas are a valuable source of contributions others can make
 - Problems show where this project is lacking
