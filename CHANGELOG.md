@@ -6,9 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.18.12] - 2023-11-10
 ### Changed
-- Began migrating to [Codeberg](https://codeberg.org/RecordedFinance/recorded-finance). I eventually want to self-host the repo on something like [Forgejo](https://forgejo.org), but Codeberg seems a happy medium for now.
-  - Still need to work out a platform-agnostic spot for CI/CD.
-  - Still need to migrate our security reporting to something platform-agnostic, since Codeberg has no first-party alternative.
+- Began migrating to [Codeberg](https://codeberg.org/RecordedFinance/recorded-finance). I eventually want to self-host the repo on something like [Forgejo](https://forgejo.org), but Codeberg seems a happy medium for now. Still need to migrate our security report form to something platform-agnostic, since Codeberg has no first-party alternative.
 
 ## [0.18.11] - 2023-10-30
 ### Changed
