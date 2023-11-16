@@ -24,5 +24,5 @@ steps:
       - export TAG="v$NEW_RELEASE_VERSION"
 
       # Tag if not exists
-      - if git show-ref --tags $TAG --quiet; then echo tag "$TAG" exists; else git tag "$TAG"; git push https://$GIT_CREDENTIALS@codeberg.org/$CI_REPO.git HEAD:main "$TAG"; fi
+      - if [ git show-ref --tags $TAG --quiet ]; then echo tag "$TAG" exists; else git tag "$TAG" && git push https://$GIT_CREDENTIALS@codeberg.org/$CI_REPO.git HEAD:main "$TAG"; fi
     secrets: [codeberg_username, codeberg_access_token]
