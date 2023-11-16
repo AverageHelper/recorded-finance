@@ -13,9 +13,8 @@ steps:
     commands:
       - npm ci
       - npm run build:client
+    secrets: [vite_enable_login, vite_enable_signup]
     environment:
-      - VITE_ENABLE_LOGIN=true # TODO: Some way to set these in one spot
-      - VITE_ENABLE_SIGNUP=false
       - VITE_PUBNUB_SUBSCRIBE_KEY=foo
 
   build_server:
@@ -32,20 +31,3 @@ steps:
     image: node:18
     commands:
       - npm test
-
-  # TODO: curl up to a server we control, and tell it to checkout and do a preview deploy of this hash
-  # deploy:
-  #   name: Deploy Preview
-  #   image: node:18
-  #   commands:
-  #     # Pull Vercel Environment Information
-  #     - cd server
-  #     - ./node_modules/.bin/vercel pull --yes --environment=preview --token=$VERCEL_TOKEN
-
-  #     # Build Project Artifacts
-  #     - npm run export-version
-  #     - ./node_modules/.bin/vercel build --token=$VERCEL_TOKEN
-
-  #     # Deploy
-  #     - ./node_modules/.bin/vercel deploy --prebuilt --token=$VERCEL_TOKEN
-  #   secrets: [vercel_token, vercel_org_id, vercel_project_id]
