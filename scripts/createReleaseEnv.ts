@@ -77,7 +77,7 @@ for (const [heading, changes] of thisRelease.changes) {
 // TODO: Write details to .release.env
 const output = `NEW_RELEASE_VERSION=${version}
 NEW_RELEASE_PRERELEASE=${isPrerelease}
-NEW_RELEASE_DESCRIPTION=${JSON.stringify(description).replaceAll("\\n", "\n")}
+NEW_RELEASE_DESCRIPTION="${description.trim().replaceAll("'", "\\'").replaceAll("\n", "\\\\n")}"
 `;
 
 const releaseEnvPath = new URL("../.release.env", import.meta.url).pathname;

@@ -1,10 +1,8 @@
-# On push to main, if the latest version in CHANGELOG.md is different from the latest version tag, create a new tag and release
+# When a new tag is made, cut a new release
 
 when:
-  - event: manual
-    branch: main
-  - event: push
-    branch: main
+  - event: tag
+    ref: refs/tags/v*
 
 steps:
   changelog:
@@ -16,13 +14,13 @@ steps:
 
   release:
     name: Create Release
-    # This image doesn't create a new release if the tag already exists
+    # Won't overwrite the release if it already exists
     image: woodpeckerci/plugin-gitea-release
     settings:
       env-file: .release.env # Created in previous step
       base_url: https://codeberg.org
       api_key:
-        from_secret: CODEBERG_ACCESS_TOKEN
+        from_secret: codeberg_access_token
       target: main
       title: v${NEW_RELEASE_VERSION}
       note: ${NEW_RELEASE_DESCRIPTION}
