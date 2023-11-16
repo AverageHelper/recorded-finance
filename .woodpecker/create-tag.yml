@@ -16,9 +16,13 @@ steps:
 
   tag:
     name: Create Tag
-    # TODO: Don't do this if the tag already exists
     image: alpine/git
     commands:
-      - while read line; do export "$line"; done < .release.env # Created in previous step
-      - git tag "v$NEW_RELEASE_VERSION"
-      - git push --tags
+      # Prepare env vars, from file created in previous step
+      - while read line; do export "$line"; done < .release.env
+      - export GIT_CREDENTIALS="$CODEBERG_USERNAME:$CODEBERG_ACCESS_TOKEN"
+      - export TAG="v$NEW_RELEASE_VERSION"
+
+      # Tag if not exists
+      - if git show-ref --tags $TAG --quiet; then echo tag "$TAG" exists; else git tag "$TAG"; git push https://$GIT_CREDENTIALS@codeberg.org/$CI_REPO.git HEAD:main "$TAG"; fi
+    secrets: [codeberg_username, codeberg_access_token]
