@@ -4,7 +4,7 @@ import { compare, generateHash, generateSalt } from "../../../auth/generators";
 import { generateTOTPSecretURI, verifyTOTP } from "../../../auth/totp";
 import { is, optional, type } from "superstruct";
 import { respondSuccess } from "../../../responses";
-import { nonemptyString, totpToken } from "../../../database/schemas";
+import { nonemptyLargeString, nonemptyString, totpToken } from "../../../database/schemas";
 import { UnauthorizedError } from "../../../errors/UnauthorizedError";
 import { upsertUser } from "../../../database/write";
 import { userWithAccountId } from "../../../database/read";
@@ -12,8 +12,8 @@ import { userWithAccountId } from "../../../database/read";
 export const POST = apiHandler("POST", async (req, res) => {
 	const reqBody = type({
 		account: nonemptyString,
-		password: nonemptyString,
-		newpassword: nonemptyString,
+		password: nonemptyLargeString,
+		newpassword: nonemptyLargeString,
 		token: optional(totpToken),
 	});
 

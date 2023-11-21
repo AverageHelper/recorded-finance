@@ -6,7 +6,7 @@ import { generateTOTPSecretURI, verifyTOTP } from "../../../../auth/totp";
 import { is, type } from "superstruct";
 import { metadataFromRequest } from "../../../../auth/requireAuth";
 import { respondSuccess } from "../../../../responses";
-import { nonemptyString, totpToken } from "../../../../database/schemas";
+import { nonemptyLargeString, totpToken } from "../../../../database/schemas";
 import { UnauthorizedError } from "../../../../errors/UnauthorizedError";
 import { upsertUser } from "../../../../database/write";
 
@@ -46,7 +46,7 @@ export const GET = apiHandler("GET", async (req, res) => {
 
 export const DELETE = apiHandler("DELETE", async (req, res) => {
 	const reqBody = type({
-		password: nonemptyString,
+		password: nonemptyLargeString,
 		token: totpToken,
 	});
 	if (!is(req.body, reqBody)) {

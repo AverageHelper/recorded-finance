@@ -6,7 +6,7 @@ import { generateAESCipherKey, generateHash, generateSalt } from "../../../auth/
 import { is, type } from "superstruct";
 import { MAX_USERS } from "../../../auth/limits";
 import { newAccessTokens, setSession } from "../../../auth/jwt";
-import { nonemptyString } from "../../../database/schemas";
+import { nonemptyLargeString, nonemptyString } from "../../../database/schemas";
 import { NotEnoughUserSlotsError } from "../../../errors/NotEnoughUserSlotsError";
 import { numberOfUsers, statsForUser, userWithAccountId } from "../../../database/read";
 import { randomUUID } from "node:crypto";
@@ -24,7 +24,7 @@ function newDocumentId(): UID {
 export const POST = apiHandler("POST", async (req, res) => {
 	const reqBody = type({
 		account: nonemptyString,
-		password: nonemptyString,
+		password: nonemptyLargeString,
 	});
 
 	if (!is(req.body, reqBody)) {

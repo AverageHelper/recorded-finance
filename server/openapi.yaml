@@ -106,7 +106,7 @@ paths:
                 password:
                   type: string
                   minLength: 1
-                  maxLength: 191
+                  maxLength: 65535
                   description: A passphrase to access the user's account. The user may change this later.
       responses:
         200:
@@ -212,7 +212,7 @@ paths:
                 password:
                   type: string
                   minLength: 1
-                  maxLength: 191
+                  maxLength: 65535
                   description: A passphrase to access the user's account.
       responses:
         200:
@@ -453,6 +453,8 @@ paths:
               properties:
                 password:
                   type: string
+                  minLength: 1
+                  maxLength: 65535
                   description: The passphrase to access the account.
                 token:
                   type: string
@@ -611,6 +613,8 @@ paths:
                   description: The identifier for the user's account.
                 password:
                   type: string
+                  minLength: 1
+                  maxLength: 65535
                   description: The passphrase to access the account.
                 token: # optional
                   type: string
@@ -677,12 +681,16 @@ paths:
                   description: The identifier for the user's account.
                 password:
                   type: string
+                  minLength: 1
+                  maxLength: 65535
                   description: The current passphrase to access the account.
                 token: # optional
                   type: string
                   description: The TOTP token. Required if the user's account requires TOTP 2FA.
                 newpassword:
                   type: string
+                  minLength: 1
+                  maxLength: 65535
                   description: The new passphrase to access the account from now on.
       responses:
         200:

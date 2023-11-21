@@ -5,14 +5,14 @@ import { destroyUser } from "../../../database/write";
 import { generateTOTPSecretURI, verifyTOTP } from "../../../auth/totp";
 import { is, optional, type } from "superstruct";
 import { respondSuccess } from "../../../responses";
-import { nonemptyString, totpToken } from "../../../database/schemas";
+import { nonemptyLargeString, nonemptyString, totpToken } from "../../../database/schemas";
 import { UnauthorizedError } from "../../../errors/UnauthorizedError";
 import { userWithAccountId } from "../../../database/read";
 
 export const POST = apiHandler("POST", async (req, res) => {
 	const reqBody = type({
 		account: nonemptyString,
-		password: nonemptyString,
+		password: nonemptyLargeString,
 		token: optional(totpToken),
 	});
 
