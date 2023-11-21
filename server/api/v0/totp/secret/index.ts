@@ -3,10 +3,10 @@ import { BadRequestError } from "../../../../errors/BadRequestError";
 import { ConflictError } from "../../../../errors/ConflictError";
 import { compare, generateSecureToken } from "../../../../auth/generators";
 import { generateTOTPSecretURI, verifyTOTP } from "../../../../auth/totp";
-import { is, nonempty, string, type } from "superstruct";
+import { is, type } from "superstruct";
 import { metadataFromRequest } from "../../../../auth/requireAuth";
 import { respondSuccess } from "../../../../responses";
-import { totpToken } from "../../../../database/schemas";
+import { nonemptyString, totpToken } from "../../../../database/schemas";
 import { UnauthorizedError } from "../../../../errors/UnauthorizedError";
 import { upsertUser } from "../../../../database/write";
 
@@ -46,7 +46,7 @@ export const GET = apiHandler("GET", async (req, res) => {
 
 export const DELETE = apiHandler("DELETE", async (req, res) => {
 	const reqBody = type({
-		password: nonempty(string()),
+		password: nonemptyString,
 		token: totpToken,
 	});
 	if (!is(req.body, reqBody)) {

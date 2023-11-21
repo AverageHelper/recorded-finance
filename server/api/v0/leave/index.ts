@@ -3,16 +3,16 @@ import { BadRequestError } from "../../../errors/BadRequestError";
 import { compare } from "../../../auth/generators";
 import { destroyUser } from "../../../database/write";
 import { generateTOTPSecretURI, verifyTOTP } from "../../../auth/totp";
-import { is, nonempty, optional, string, type } from "superstruct";
+import { is, optional, type } from "superstruct";
 import { respondSuccess } from "../../../responses";
-import { totpToken } from "../../../database/schemas";
+import { nonemptyString, totpToken } from "../../../database/schemas";
 import { UnauthorizedError } from "../../../errors/UnauthorizedError";
 import { userWithAccountId } from "../../../database/read";
 
 export const POST = apiHandler("POST", async (req, res) => {
 	const reqBody = type({
-		account: nonempty(string()),
-		password: nonempty(string()),
+		account: nonemptyString,
+		password: nonemptyString,
 		token: optional(totpToken),
 	});
 

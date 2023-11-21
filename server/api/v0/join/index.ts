@@ -3,9 +3,10 @@ import { apiHandler, dispatchRequests } from "../../../helpers/apiHandler";
 import { BadRequestError } from "../../../errors/BadRequestError";
 import { DuplicateAccountError } from "../../../errors/DuplicateAccountError";
 import { generateAESCipherKey, generateHash, generateSalt } from "../../../auth/generators";
-import { is, nonempty, string, type } from "superstruct";
+import { is, type } from "superstruct";
 import { MAX_USERS } from "../../../auth/limits";
 import { newAccessTokens, setSession } from "../../../auth/jwt";
+import { nonemptyString } from "../../../database/schemas";
 import { NotEnoughUserSlotsError } from "../../../errors/NotEnoughUserSlotsError";
 import { numberOfUsers, statsForUser, userWithAccountId } from "../../../database/read";
 import { randomUUID } from "node:crypto";
@@ -22,8 +23,8 @@ function newDocumentId(): UID {
 
 export const POST = apiHandler("POST", async (req, res) => {
 	const reqBody = type({
-		account: nonempty(string()),
-		password: nonempty(string()),
+		account: nonemptyString,
+		password: nonemptyString,
 	});
 
 	if (!is(req.body, reqBody)) {
@@ -68,8 +69,8 @@ export const POST = apiHandler("POST", async (req, res) => {
 	setSession(req, res, access_token);
 	respondSuccess(res, {
 		access_token,
-		pubnub_cipher_key: pubnubCipherKey,
 		pubnub_token,
+		pubnub_cipher_key: pubnubCipherKey,
 		uid,
 		totalSpace,
 		usedSpace,
