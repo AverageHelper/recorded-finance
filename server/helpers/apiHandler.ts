@@ -53,11 +53,7 @@ export function dispatchRequests<P extends string>(
 				const res = await handler(c);
 
 				// Answer with headers and status without data
-				return new Response(null, {
-					headers: res.headers,
-					status: res.status,
-					statusText: res.statusText,
-				});
+				return c.newResponse(null, res.status);
 			}
 
 			// Everything else:

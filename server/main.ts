@@ -26,7 +26,7 @@ export const app = new Hono<Env>({ strict: false }) // strict: false permits tra
 	.use("*", headers)
 
 	// Routes
-	.get("/v0/", lol.GET)
+	.get("/v0", lol.GET)
 	.all(badMethodFallback)
 
 	.get("/v0/ping", ping.GET)
@@ -35,7 +35,7 @@ export const app = new Hono<Env>({ strict: false }) // strict: false permits tra
 	.get("/v0/version", serverVersion.GET)
 	.all(badMethodFallback)
 
-	.route("/v0/", auth) // Auth endpoints
+	.route("/v0", auth) // Auth endpoints
 	.route("/v0/db", db) // Database endpoints (checks auth)
 
 	// All other paths answer 404:
