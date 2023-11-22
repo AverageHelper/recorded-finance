@@ -50,7 +50,7 @@ See [the server's README](/server/README.md) for info on that.
 # .env
 
 # Where your server lives (optional for Vercel, required with self-hosted instance)
-VITE_PLATFORM_SERVER_URL={your storage server URL}:40850
+VITE_PLATFORM_SERVER_URL={your storage server URL}:3000
 
 # Enables the "Login" menu item (optional, defaults to "true")
 VITE_ENABLE_LOGIN=true

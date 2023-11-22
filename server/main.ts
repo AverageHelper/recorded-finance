@@ -17,7 +17,7 @@ import * as ping from "./api/v0/ping";
 import * as serverVersion from "./api/v0/version";
 
 // eslint-disable-next-line unicorn/numeric-separators-style
-const PORT = 40850;
+const PORT = 3000;
 
 export const app = new Hono<Env>({ strict: false }) // strict: false permits trailing slashes in endpoint handlers
 	.basePath("/api")
