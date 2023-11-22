@@ -13,7 +13,6 @@
 		"test:server": "cd server && npm run test",
 		"test:server:watch": "cd server && npm run test:watch",
 		"dev:client": "./node_modules/.bin/vite --open",
-		"dev:server": "cd ./server && npm run start:express",
 		"api:generate": "rm -rf ./src/transport/api.ts && ./node_modules/.bin/oazapfts ./server/openapi.yaml ./src/transport/api.ts",
 		"build": "npm run build:client && npm run build:server",
 		"build:server": "cd ./server && npm run build",

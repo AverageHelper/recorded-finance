@@ -36,6 +36,13 @@ export async function generateAESCipherKey(): Promise<AESCipherKey> {
 	return await Promise.resolve(crypto.randomBytes(16).toString("hex") as AESCipherKey);
 }
 
+/**
+ * Do a constant time string comparison. Always compare the complete
+ * strings against each other to get a constant time. This method does
+ * not short-cut if the two string's length differs.
+ *
+ * Runtime always corresponds to the length of the first parameter.
+ */
 export function timingSafeEqual(a: string, b: string): boolean {
 	const encoder = new TextEncoder();
 	const aBuf = encoder.encode(a);

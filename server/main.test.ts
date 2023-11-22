@@ -1,3 +1,4 @@
+/* eslint-disable vitest/valid-expect */
 import type {
 	AnyData,
 	DataItem,
@@ -12,12 +13,14 @@ import type {
 import type { DocUpdate } from "./database/write";
 import type { FileData } from "@prisma/client";
 import type { JWT } from "./auth/jwt";
+import type { ReadonlyDeep } from "type-fest";
 import { allCollectionIds } from "./database/schemas";
 import { CollectionReference, DocumentReference } from "./database/references";
-import { setAuth, userWithTotp, userWithoutTotp } from "./test/userMocks";
-import { version } from "./version";
 import { describe, expect, test, vi } from "vitest";
-import _request from "supertest";
+import { join as pathJoin } from "node:path";
+import { setAuth, userWithTotp, userWithoutTotp } from "./test/userMocks";
+import { UnreachableCaseError } from "./errors/UnreachableCaseError";
+import { version } from "./version";
 import jsonwebtoken from "jsonwebtoken";
 
 vi.mock("./environment");
@@ -40,27 +43,175 @@ const { app } = await import("./main");
 
 type HTTPMethod = "HEAD" | "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS";
 
-// eslint-disable-next-line @typescript-eslint/promise-function-async
-function request(method: HTTPMethod, path: string): _request.Test {
-	const AllowedHeaders =
-		"X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version";
-	const m = method.toLowerCase() as Lowercase<typeof method>;
+//#region Basically reimplimenting supertest
+interface ResultBodyExpectation {
+	kind: "body";
+	expectedValue: ReadonlyDeep<object>;
+}
 
-	if (m === "options") {
+interface ResultHeaderExpectation {
+	kind: "header";
+	headerName: string;
+	expectedValueOrMatcher: string | RegExp;
+}
+
+interface ResultStatusExpectation {
+	kind: "status";
+	expectedStatus: number;
+}
+
+type ResultExpectation = ResultBodyExpectation | ResultHeaderExpectation | ResultStatusExpectation;
+
+class Test implements PromiseLike<Response> {
+	#expectations: Array<ResultExpectation>;
+	#requestInit: RequestInit;
+	#path: string;
+
+	constructor(path: string, method: HTTPMethod) {
+		this.#expectations = [];
+		this.#requestInit = { method, headers: { "CF-Connecting-IP": "127.0.0.1" } };
+		this.#path = path;
+	}
+
+	/** Sets a request header. */
+	set(headerName: string, value: string): this {
+		this.#requestInit.headers ??= {};
+		this.#requestInit.headers[headerName] = value;
+		return this;
+	}
+
+	/** Sets the payload to send in the request body. Must not be used alongside {@link attach}. */
+	send(payload: ReadonlyDeep<unknown>): Omit<this, "attach"> {
+		this.#requestInit.headers ??= {};
+		this.#requestInit.headers["Content-Type"] = "application/json";
+		this.#requestInit.body = JSON.stringify(payload);
+		return this;
+	}
+
+	/** Sets a file to upload in the request. Must not be used alongside {@link send}. */
+	attach(key: string, contents: Buffer, fileName: string): Omit<this, "send"> {
+		const formData = new FormData();
+		formData.set(key, new Blob([contents]));
+		formData.set("fileName", fileName);
+		this.#requestInit.body = formData;
+		return this;
+	}
+
+	/** Asserts that the response status should match the one specified. */
+	expect(status: number): this;
+
+	/** Asserts that the named response header should match the given value. */
+	expect(headerName: string, value: string | RegExp): this;
+
+	/** Asserts that the named response header should match the given value. */
+	expect(jsonBody: ReadonlyDeep<object>): this; // eslint-disable-line @typescript-eslint/unified-signatures
+
+	expect(...args: [string, string | RegExp] | [number | ReadonlyDeep<object>]): this {
+		if (args.length === 1) {
+			if (typeof args[0] === "object") {
+				// Expect JSON body
+				this.#requestInit.headers ??= {};
+				this.#requestInit.headers["Accept"] = "application/json";
+				this.#expectations.push({
+					kind: "body",
+					expectedValue: args[0],
+				});
+			} else {
+				// Expect status
+				this.#expectations.push({
+					kind: "status",
+					expectedStatus: args[0],
+				});
+			}
+		} else {
+			// Expect header value
+			this.#expectations.push({
+				kind: "header",
+				headerName: args[0],
+				expectedValueOrMatcher: args[1],
+			});
+		}
+
+		return this;
+	}
+
+	async then<TResult1 = Response, TResult2 = never>(
+		onfulfilled?: ((value: Response) => TResult1 | PromiseLike<TResult1>) | undefined | null,
+		onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | undefined | null
+	): Promise<TResult1 | TResult2> {
+		try {
+			const method = this.#requestInit.method?.toUpperCase() ?? "GET";
+			const res = await app.request(this.#path, this.#requestInit);
+			const messagePreamble = `[${method} ${this.#path}]`;
+
+			if (method === "HEAD") {
+				// HEAD must always have an empty body
+				const message = `${messagePreamble} Response payload`;
+				expect(await res.text(), message).toBe("");
+			}
+
+			for (const expectation of this.#expectations) {
+				switch (expectation.kind) {
+					case "body": {
+						if (method === "HEAD") {
+							// Body expectations don't work on HEAD requests.
+							expect.fail("Cannot expect a body payload on a HEAD request.");
+							break;
+						}
+
+						const message = `${messagePreamble} Response payload`;
+						expect(await res.json(), message).toMatchObject(expectation.expectedValue);
+						break;
+					}
+
+					case "header": {
+						const name = expectation.headerName;
+						const expectedValue = expectation.expectedValueOrMatcher;
+
+						const message = `${messagePreamble} Response header '${name}'`;
+						const actualValue = res.headers.get(name);
+						if (typeof expectedValue === "string") {
+							expect(actualValue, message).toBe(expectedValue);
+						} else {
+							expect(actualValue, message).toMatch(expectedValue);
+						}
+						break;
+					}
+
+					case "status": {
+						const message = `${messagePreamble} Response status`;
+						expect(res.status, message).toBe(expectation.expectedStatus);
+						break;
+					}
+
+					default:
+						throw new UnreachableCaseError(expectation);
+				}
+			}
+
+			if (!onfulfilled) return res as TResult1; // TResult1 === Response if no `onfulfilled` is given
+			return onfulfilled(res);
+		} catch (error) {
+			if (!onrejected) throw error;
+			return onrejected(error);
+		}
+	}
+}
+//#endregion
+
+// eslint-disable-next-line @typescript-eslint/promise-function-async
+function request(method: HTTPMethod, path: string): Test {
+	const tester = new Test(pathJoin("/api", path), method);
+
+	if (method === "OPTIONS") {
 		// CORS doesn't allow any of the security headers
-		return _request(app)[m](path);
+		return tester;
 	}
 
 	// eslint-disable-next-line @typescript-eslint/return-await
 	return (
-		_request(app)
-			[m](path)
-
-			// Headers:
-
-			// ** CORS **
-			.expect("Access-Control-Allow-Headers", AllowedHeaders)
-			.expect("Access-Control-Allow-Credentials", "true")
+		tester
+			// Common Headers:
 
 			// ** Security **
 			.expect("Strict-Transport-Security", "max-age=15552000; includeSubDomains")
@@ -84,12 +235,15 @@ function request(method: HTTPMethod, path: string): _request.Test {
 
 describe("Routes", () => {
 	describe("unknown path", () => {
-		const BadMethods = ["HEAD", "GET", "POST", "PUT", "DELETE", "PATCH"] as const;
-		test.each(BadMethods)("%s answers 404", async m => {
-			const method = m.toLowerCase() as Lowercase<typeof m>;
-			await _request(app) //
-				[method]("/nop")
-				.expect(404);
+		const BadMethods = ["GET", "POST", "PUT", "DELETE", "PATCH"] as const;
+		test.each(BadMethods)("%s answers 404", async method => {
+			await new Test(pathJoin("/api", "/nop"), method)
+				.expect(404)
+				.expect({ message: "No such path '/api/nop'", code: "not-found" });
+		});
+
+		test("HEAD answers 404 and no body", async () => {
+			await new Test(pathJoin("/api", "/nop"), "HEAD").expect(404);
 		});
 	});
 
@@ -97,35 +251,49 @@ describe("Routes", () => {
 		const PATH = "/v0/";
 
 		// Since all CORS behaviors are the same regardless of path, we'll test them at the root only (for now).
+		const allowedHeaders = [
+			"X-CSRF-Token",
+			"X-Requested-With",
+			"Accept",
+			"Accept-Version",
+			"Content-Length",
+			"Content-MD5",
+			"Content-Type",
+			"Date",
+			"X-Api-Version",
+		] as const;
 
 		test("OPTIONS answers CORS headers for request without origin", async () => {
-			await request("OPTIONS", PATH).expect(204);
+			await request("OPTIONS", PATH)
+				.expect(204)
+				.expect("Access-Control-Allow-Headers", allowedHeaders.join(","))
+				.expect("Access-Control-Allow-Credentials", "true");
 		});
 
 		test("OPTIONS answers 502 for an invalid origin", async () => {
 			const Origin = "bad";
-			await _request(app) //
-				.options(PATH)
+			await request("OPTIONS", PATH)
 				.set("Origin", Origin)
-				.expect(502);
-			// .expect({ code: "bad-gateway" }); // FIXME: Express hasn't been sending these
+				.expect(502)
+				.expect({ code: "bad-gateway" });
 		});
 
 		test("OPTIONS answers 502 for an unknown origin", async () => {
 			const Origin = "https://www.example.com";
-			await _request(app) //
-				.options(PATH)
+			await request("OPTIONS", PATH)
 				.set("Origin", Origin)
-				.expect(502);
-			// .expect({ code: "bad-gateway" }); // FIXME: Express hasn't been sending these
+				.expect(502)
+				.expect({ code: "bad-gateway" });
 		});
 
 		test("OPTIONS answers CORS headers for valid origin", async () => {
 			const Origin = "http://localhost";
 			await request("OPTIONS", PATH)
 				.set("Origin", Origin)
+				.expect(204)
 				.expect("Access-Control-Allow-Origin", Origin)
-				.expect(204);
+				.expect("Access-Control-Allow-Headers", allowedHeaders.join(","))
+				.expect("Access-Control-Allow-Credentials", "true");
 		});
 
 		test("GET answers 200 and sample json", async () => {
@@ -133,9 +301,12 @@ describe("Routes", () => {
 				.expect("Content-Type", /json/u)
 				.expect(200)
 				.expect({ message: "lol" });
+			await request("HEAD", PATH) //
+				.expect("Content-Type", /json/u)
+				.expect(200);
 		});
 
-		const BadMethods = ["HEAD", "POST", "PUT", "DELETE", "PATCH"] as const;
+		const BadMethods = ["POST", "PUT", "DELETE", "PATCH"] as const;
 		test.each(BadMethods)("%s answers 405", async method => {
 			await request(method, PATH).expect(405);
 		});
@@ -149,9 +320,12 @@ describe("Routes", () => {
 				.expect("Content-Type", /json/u)
 				.expect(200)
 				.expect({ message: "Pong!" });
+			await request("HEAD", PATH) //
+				.expect("Content-Type", /json/u)
+				.expect(200);
 		});
 
-		const BadMethods = ["HEAD", "POST", "PUT", "DELETE", "PATCH"] as const;
+		const BadMethods = ["POST", "PUT", "DELETE", "PATCH"] as const;
 		test.each(BadMethods)("%s answers 405", async method => {
 			await request(method, PATH).expect(405);
 		});
@@ -165,9 +339,12 @@ describe("Routes", () => {
 				.expect("Content-Type", /json/u)
 				.expect(200)
 				.expect({ message: `Recorded Finance Server v${version}`, version });
+			await request("HEAD", PATH) //
+				.expect("Content-Type", /json/u)
+				.expect(200);
 		});
 
-		const BadMethods = ["HEAD", "POST", "PUT", "DELETE", "PATCH"] as const;
+		const BadMethods = ["POST", "PUT", "DELETE", "PATCH"] as const;
 		test.each(BadMethods)("%s answers 405", async method => {
 			await request(method, PATH).expect(405);
 		});
@@ -189,42 +366,70 @@ describe("Routes", () => {
 			expectInaction();
 		});
 
-		test("POST answers 400 to missing 'account' and 'password' fields", async () => {
-			await request("POST", PATH)
+		test("POST answers 400 to missing payload", async () => {
+			await request("POST", PATH) //
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message: "Invalid HTTP header: 'Content-Type=undefined'; expected 'application/json'",
+					code: "unknown",
+				});
+			expectInaction();
+		});
+
+		test("POST answers 400 to missing 'account' and 'password' fields", async () => {
+			await request("POST", PATH) //
+				.send({})
+				.expect(400)
+				.expect({
+					message: "At path: account -- Expected a string, but received: undefined",
+					code: "unknown",
+				});
 			expectInaction();
 		});
 
 		test("POST answers 400 to missing 'account'", async () => {
-			await request("POST", PATH)
+			await request("POST", PATH) //
 				.send({ password: "nonempty" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message: "At path: account -- Expected a string, but received: undefined",
+					code: "unknown",
+				});
 			expectInaction();
 		});
 
 		test("POST answers 400 to missing 'password'", async () => {
-			await request("POST", PATH)
+			await request("POST", PATH) //
 				.send({ account: "nonempty" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message: "At path: password -- Expected a string, but received: undefined",
+					code: "unknown",
+				});
 			expectInaction();
 		});
 
 		test("POST answers 400 to empty 'account'", async () => {
-			await request("POST", PATH)
+			await request("POST", PATH) //
 				.send({ account: "", password: "nonempty" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message:
+						"At path: account -- Expected a string with a length between `1` and `191` but received one with a length of `0`",
+					code: "unknown",
+				});
 			expectInaction();
 		});
 
 		test("POST answers 400 to empty 'password'", async () => {
-			await request("POST", PATH)
+			await request("POST", PATH) //
 				.send({ account: "nonempty", password: "" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message:
+						"At path: password -- Expected a string with a length between `1` and `65535` but received one with a length of `0`",
+					code: "unknown",
+				});
 			expectInaction();
 		});
 
@@ -252,24 +457,24 @@ describe("Routes", () => {
 
 		test("POST answers 200 for new account", async () => {
 			const account = userWithTotp.currentAccountId;
-			const response = await request("POST", PATH)
+			await request("POST", PATH)
 				.send({ account, password: "nonempty" })
 				// .expect("Set-Cookie", /sessionToken/u) // TODO: Separate `setSession` enough that we can check that a cookie was set
-				.expect(200);
-			expect(response.body).toStrictEqual({
-				access_token: mockJwt.DEFAULT_MOCK_ACCESS_TOKEN,
-				pubnub_cipher_key: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
-				pubnub_token: mockJwt.DEFAULT_MOCK_PUBNUB_TOKEN,
-				uid: expect.stringContaining("") as string, // this is randomly generated
-				totalSpace: 0,
-				usedSpace: 0,
-				message: "Success!",
-			});
+				.expect(200)
+				.expect({
+					access_token: mockJwt.DEFAULT_MOCK_ACCESS_TOKEN,
+					pubnub_cipher_key: mockGenerators.DEFAULT_MOCK_AES_CIPHER_KEY,
+					pubnub_token: mockJwt.DEFAULT_MOCK_PUBNUB_TOKEN,
+					uid: expect.stringContaining("") as string, // this is randomly generated
+					totalSpace: 0,
+					usedSpace: 0,
+					message: "Success!",
+				});
 			expect(mockGenerators.generateSalt).toHaveBeenCalledOnce();
 			expect(mockGenerators.generateHash).toHaveBeenCalledOnce();
 			expect(mockGenerators.generateAESCipherKey).toHaveBeenCalledOnce();
 			expect(mockWrite.upsertUser).toHaveBeenCalledOnce();
-			expect(mockWrite.upsertUser).toHaveBeenCalledWith({
+			expect(mockWrite.upsertUser).toHaveBeenCalledWith(expect.objectContaining({}), {
 				uid: expect.stringContaining("") as UID,
 				currentAccountId: account,
 				passwordHash: mockGenerators.DEFAULT_MOCK_HASH,
@@ -295,47 +500,75 @@ describe("Routes", () => {
 			await request(method, PATH).expect(405);
 		});
 
-		test("answers 400 to missing 'account' and 'password' fields", async () => {
-			await request("POST", PATH)
+		test("POST answers 400 to missing payload", async () => {
+			await request("POST", PATH) //
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message: "Invalid HTTP header: 'Content-Type=undefined'; expected 'application/json'",
+					code: "unknown",
+				});
 			expectInaction();
 		});
 
-		test("answers 400 to missing 'account'", async () => {
-			await request("POST", PATH)
+		test("answers 400 to missing 'account' and 'password' fields", async () => {
+			await request("POST", PATH) //
+				.send({})
+				.expect(400)
+				.expect({
+					message: "At path: account -- Expected a string, but received: undefined",
+					code: "unknown",
+				});
+			expectInaction();
+		});
+
+		test("POST answers 400 to missing 'account'", async () => {
+			await request("POST", PATH) //
 				.send({ password: "nonempty" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message: "At path: account -- Expected a string, but received: undefined",
+					code: "unknown",
+				});
 			expectInaction();
 		});
 
-		test("answers 400 to missing 'password'", async () => {
-			await request("POST", PATH)
+		test("POST answers 400 to missing 'password'", async () => {
+			await request("POST", PATH) //
 				.send({ account: "nonempty" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message: "At path: password -- Expected a string, but received: undefined",
+					code: "unknown",
+				});
 			expectInaction();
 		});
 
-		test("answers 400 to empty 'account'", async () => {
-			await request("POST", PATH)
+		test("POST answers 400 to empty 'account'", async () => {
+			await request("POST", PATH) //
 				.send({ account: "", password: "nonempty" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message:
+						"At path: account -- Expected a string with a length between `1` and `191` but received one with a length of `0`",
+					code: "unknown",
+				});
 			expectInaction();
 		});
 
-		test("answers 400 to empty 'password'", async () => {
-			await request("POST", PATH)
+		test("POST answers 400 to empty 'password'", async () => {
+			await request("POST", PATH) //
 				.send({ account: "nonempty", password: "" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message:
+						"At path: password -- Expected a string with a length between `1` and `65535` but received one with a length of `0`",
+					code: "unknown",
+				});
 			expectInaction();
 		});
 
 		// Same as wrong password
-		test("answers 403 when account is not known", async () => {
+		test("POST answers 403 when account is not known", async () => {
 			await request("POST", PATH)
 				.send({ account: "nonempty", password: "nonempty" })
 				.expect(403)
@@ -345,7 +578,7 @@ describe("Routes", () => {
 		});
 
 		// Same as account doesn't exist
-		test("answers 403 when password is not correct", async () => {
+		test("POST answers 403 when password is not correct", async () => {
 			const user = userWithoutTotp;
 			mockRead.userWithAccountId.mockResolvedValueOnce(user);
 			await request("POST", PATH)
@@ -356,7 +589,7 @@ describe("Routes", () => {
 			expect(mockGenerators.compare).toHaveBeenCalledOnce();
 		});
 
-		test("answers 200 when password is correct and TOTP is needed", async () => {
+		test("POST answers 200 when password is correct and TOTP is needed", async () => {
 			const user = userWithTotp;
 			mockRead.userWithAccountId.mockResolvedValueOnce(user);
 			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true));
@@ -375,7 +608,7 @@ describe("Routes", () => {
 				});
 		});
 
-		test("answers 200 when password is correct and TOTP is not needed", async () => {
+		test("POST answers 200 when password is correct and TOTP is not needed", async () => {
 			const user = userWithoutTotp;
 			mockRead.userWithAccountId.mockResolvedValueOnce(user);
 			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true));
@@ -404,18 +637,36 @@ describe("Routes", () => {
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
-		test("POST answers 400 to missing 'token'", async () => {
-			await request("POST", PATH)
+		test("POST answers 400 to missing parameters", async () => {
+			await request("POST", PATH) //
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message: "Invalid HTTP header: 'Content-Type=undefined'; expected 'application/json'",
+					code: "unknown",
+				});
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("POST answers 400 to missing 'token'", async () => {
+			await request("POST", PATH) //
+				.send({})
+				.expect(400)
+				.expect({
+					message:
+						"At path: token -- Expected a value of type `TOTPToken`, but received: `undefined`",
+					code: "unknown",
+				});
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
 		test("POST answers 400 to empty 'token'", async () => {
-			await request("POST", PATH)
+			await request("POST", PATH) //
 				.send({ token: "" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message: 'At path: token -- Expected a value of type `TOTPToken`, but received: `""`',
+					code: "unknown",
+				});
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
@@ -489,7 +740,7 @@ describe("Routes", () => {
 					message: "Success!",
 				});
 			expect(mockWrite.upsertUser).toHaveBeenCalledOnce();
-			expect(mockWrite.upsertUser).toHaveBeenCalledWith({
+			expect(mockWrite.upsertUser).toHaveBeenCalledWith(expect.objectContaining({}), {
 				...user,
 				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN, // FIXME: This is weird. Shouldn't the seed != the token?
 				requiredAddtlAuth: ["totp"],
@@ -511,7 +762,7 @@ describe("Routes", () => {
 					message: "Success!",
 				});
 			expect(mockWrite.upsertUser).toHaveBeenCalledOnce();
-			expect(mockWrite.upsertUser).toHaveBeenCalledWith({
+			expect(mockWrite.upsertUser).toHaveBeenCalledWith(expect.objectContaining({}), {
 				...user,
 				mfaRecoverySeed: null,
 			});
@@ -521,7 +772,7 @@ describe("Routes", () => {
 	describe("/v0/totp/secret", () => {
 		const PATH = "/v0/totp/secret";
 
-		const BadMethods = ["HEAD", "POST", "PUT", "PATCH"] as const;
+		const BadMethods = ["POST", "PUT", "PATCH"] as const;
 		test.each(BadMethods)("%s answers 405", async method => {
 			await request(method, PATH).expect(405);
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
@@ -529,6 +780,7 @@ describe("Routes", () => {
 
 		test("GET answers 403 if no session", async () => {
 			await request("GET", PATH).expect(403);
+			await request("HEAD", PATH).expect(403);
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
@@ -537,6 +789,7 @@ describe("Routes", () => {
 			await request("GET", PATH)
 				.expect(409)
 				.expect({ message: "You already have TOTP authentication enabled", code: "totp-conflict" });
+			await request("HEAD", PATH).expect(409);
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
@@ -545,6 +798,7 @@ describe("Routes", () => {
 			await request("GET", PATH)
 				.expect(409)
 				.expect({ message: "You already have TOTP authentication enabled", code: "totp-conflict" });
+			await request("HEAD", PATH).expect(409);
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
@@ -558,48 +812,86 @@ describe("Routes", () => {
 				.expect(200)
 				.expect({ secret: mockTotp.DEFAULT_MOCK_OTP_SECUET_URI, message: "Success!" });
 			expect(mockWrite.upsertUser).toHaveBeenCalledOnce();
-			expect(mockWrite.upsertUser).toHaveBeenCalledWith({
+			expect(mockWrite.upsertUser).toHaveBeenCalledWith(expect.objectContaining({}), {
 				...user,
 				totpSeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
 			});
 		});
 
-		test("DELETE answers 400 without 'password' and 'token'", async () => {
-			await request("DELETE", PATH)
+		test("HEAD answers 200, and does nothing", async () => {
+			const user = {
+				...userWithoutTotp,
+				mfaRecoverySeed: mockGenerators.DEFAULT_MOCK_SECURE_TOKEN,
+			};
+			setAuth(user);
+			await request("HEAD", PATH).expect(200);
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("DELETE answers 400 without parameters", async () => {
+			await request("DELETE", PATH) //
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message: "Invalid HTTP header: 'Content-Type=undefined'; expected 'application/json'",
+					code: "unknown",
+				});
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("DELETE answers 400 without 'password' and 'token'", async () => {
+			await request("DELETE", PATH) //
+				.send({})
+				.expect(400)
+				.expect({
+					message: "At path: password -- Expected a string, but received: undefined",
+					code: "unknown",
+				});
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
 		test("DELETE answers 400 without 'password'", async () => {
-			await request("DELETE", PATH)
+			await request("DELETE", PATH) //
 				.send({ token: "nonempty" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message: "At path: password -- Expected a string, but received: undefined",
+					code: "unknown",
+				});
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
 		test("DELETE answers 400 without 'token'", async () => {
-			await request("DELETE", PATH)
+			await request("DELETE", PATH) //
 				.send({ password: "nonempty" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message:
+						"At path: token -- Expected a value of type `TOTPToken`, but received: `undefined`",
+					code: "unknown",
+				});
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
 		test("DELETE answers 400 with empty 'token'", async () => {
-			await request("DELETE", PATH)
+			await request("DELETE", PATH) //
 				.send({ password: "nonempty", token: "" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message: 'At path: token -- Expected a value of type `TOTPToken`, but received: `""`',
+					code: "unknown",
+				});
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
 		test("DELETE answers 400 with empty 'password'", async () => {
-			await request("DELETE", PATH)
+			await request("DELETE", PATH) //
 				.send({ password: "", token: "nonempty" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message:
+						"At path: password -- Expected a string with a length between `1` and `65535` but received one with a length of `0`",
+					code: "unknown",
+				});
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
@@ -649,7 +941,7 @@ describe("Routes", () => {
 				.expect(200)
 				.expect({ message: "Success!" });
 			expect(mockWrite.upsertUser).toHaveBeenCalledOnce();
-			expect(mockWrite.upsertUser).toHaveBeenCalledWith({
+			expect(mockWrite.upsertUser).toHaveBeenCalledWith(expect.objectContaining({}), {
 				...user,
 				totpSeed: null,
 				mfaRecoverySeed: null,
@@ -689,7 +981,7 @@ describe("Routes", () => {
 	describe("/v0/session", () => {
 		const PATH = "/v0/session";
 
-		const BadMethods = ["HEAD", "POST", "PUT", "DELETE", "PATCH"] as const;
+		const BadMethods = ["POST", "PUT", "DELETE", "PATCH"] as const;
 		test.each(BadMethods)("%s answers 405", async method => {
 			await request(method, PATH).expect(405);
 		});
@@ -699,6 +991,9 @@ describe("Routes", () => {
 				.expect("Content-Type", /json/u)
 				.expect(403)
 				.expect({ message: "Unauthorized", code: "missing-token" });
+			await request("HEAD", PATH) //
+				.expect("Content-Type", /json/u)
+				.expect(403);
 			expect(mockRead.jwtExistsInDatabase).not.toHaveBeenCalled();
 		});
 
@@ -707,7 +1002,7 @@ describe("Routes", () => {
 		test("GET answers 403 with expired Bearer token", async () => {
 			const Authorization = "TEST_EXP" as JWT;
 			const user = userWithoutTotp;
-			mockJwt.jwtFromRequest.mockReturnValueOnce(Authorization);
+			mockJwt.jwtFromRequest.mockResolvedValueOnce(Authorization);
 			mockJwt.verifyJwt.mockRejectedValueOnce(new jsonwebtoken.JsonWebTokenError("This is a test"));
 			mockRead.jwtExistsInDatabase.mockResolvedValueOnce(true);
 			mockRead.userWithUid.mockResolvedValueOnce(user);
@@ -716,6 +1011,10 @@ describe("Routes", () => {
 				.expect("Content-Type", /json/u)
 				.expect(403)
 				.expect({ message: "You must sign in again in order to proceed", code: "expired-token" });
+			await request("HEAD", PATH)
+				.set("Authorization", `Bearer ${Authorization}`)
+				.expect("Content-Type", /json/u)
+				.expect(403);
 			expect(mockRead.jwtExistsInDatabase).not.toHaveBeenCalled();
 		});
 
@@ -736,6 +1035,9 @@ describe("Routes", () => {
 					usedSpace: 0,
 					message: "Success!",
 				});
+			await request("HEAD", PATH) //
+				.expect("Content-Type", /json/u)
+				.expect(200);
 			expect(mockRead.jwtExistsInDatabase).not.toHaveBeenCalled();
 		});
 	});
@@ -759,10 +1061,10 @@ describe("Routes", () => {
 
 		test("POST answers 200 and blacklists the JWT", async () => {
 			const token = "auth-token-12345" as JWT;
-			mockJwt.jwtFromRequest.mockReturnValueOnce(token);
+			mockJwt.jwtFromRequest.mockResolvedValueOnce(token);
 			await request("POST", PATH).expect(200).expect({ message: "Success!" });
 			expect(mockJwt.addJwtToBlacklist).toHaveBeenCalledOnce();
-			expect(mockJwt.addJwtToBlacklist).toHaveBeenCalledWith(token);
+			expect(mockJwt.addJwtToBlacklist).toHaveBeenCalledWith(expect.objectContaining({}), token);
 			expect(mockJwt.killSession).toHaveBeenCalledOnce();
 		});
 	});
@@ -776,42 +1078,70 @@ describe("Routes", () => {
 			expect(mockWrite.destroyUser).not.toHaveBeenCalled();
 		});
 
-		test("POST answers 400 without 'account' or 'password'", async () => {
-			await request("POST", PATH)
+		test("POST answers 400 without parameters", async () => {
+			await request("POST", PATH) //
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message: "Invalid HTTP header: 'Content-Type=undefined'; expected 'application/json'",
+					code: "unknown",
+				});
+			expect(mockWrite.destroyUser).not.toHaveBeenCalled();
+		});
+
+		test("POST answers 400 without 'account' or 'password'", async () => {
+			await request("POST", PATH) //
+				.send({})
+				.expect(400)
+				.expect({
+					message: "At path: account -- Expected a string, but received: undefined",
+					code: "unknown",
+				});
 			expect(mockWrite.destroyUser).not.toHaveBeenCalled();
 		});
 
 		test("POST answers 400 without 'account'", async () => {
-			await request("POST", PATH)
+			await request("POST", PATH) //
 				.send({ password: "nonempty" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message: "At path: account -- Expected a string, but received: undefined",
+					code: "unknown",
+				});
 			expect(mockWrite.destroyUser).not.toHaveBeenCalled();
 		});
 
 		test("POST answers 400 without 'password'", async () => {
-			await request("POST", PATH)
+			await request("POST", PATH) //
 				.send({ account: "nonempty" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message: "At path: password -- Expected a string, but received: undefined",
+					code: "unknown",
+				});
 			expect(mockWrite.destroyUser).not.toHaveBeenCalled();
 		});
 
 		test("POST answers 400 with empty 'account'", async () => {
-			await request("POST", PATH)
+			await request("POST", PATH) //
 				.send({ account: "", password: "nonempty" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message:
+						"At path: account -- Expected a string with a length between `1` and `191` but received one with a length of `0`",
+					code: "unknown",
+				});
 			expect(mockWrite.destroyUser).not.toHaveBeenCalled();
 		});
 
 		test("POST answers 400 with empty 'password'", async () => {
-			await request("POST", PATH)
+			await request("POST", PATH) //
 				.send({ account: "nonempty", password: "" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message:
+						"At path: password -- Expected a string with a length between `1` and `65535` but received one with a length of `0`",
+					code: "unknown",
+				});
 			expect(mockWrite.destroyUser).not.toHaveBeenCalled();
 		});
 
@@ -844,7 +1174,7 @@ describe("Routes", () => {
 				.expect(200)
 				.expect({ message: "Success!" });
 			expect(mockWrite.destroyUser).toHaveBeenCalledOnce();
-			expect(mockWrite.destroyUser).toHaveBeenCalledWith(user.uid);
+			expect(mockWrite.destroyUser).toHaveBeenCalledWith(expect.objectContaining({}), user.uid);
 		});
 
 		test("POST answers 403 if TOTP is required and not provided", async () => {
@@ -864,10 +1194,13 @@ describe("Routes", () => {
 			mockRead.userWithAccountId.mockResolvedValueOnce(user);
 			mockGenerators.compare.mockImplementationOnce(() => Promise.resolve(true)); // password good
 
-			await request("POST", PATH)
+			await request("POST", PATH) //
 				.send({ account: "nonempty", password: "nonempty", token: "" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message: 'At path: token -- Expected a value of type `TOTPToken`, but received: `""`',
+					code: "unknown",
+				});
 			expect(mockWrite.destroyUser).not.toHaveBeenCalled();
 		});
 
@@ -894,7 +1227,7 @@ describe("Routes", () => {
 				.expect(200)
 				.expect({ message: "Success!" });
 			expect(mockWrite.destroyUser).toHaveBeenCalledOnce();
-			expect(mockWrite.destroyUser).toHaveBeenCalledWith(user.uid);
+			expect(mockWrite.destroyUser).toHaveBeenCalledWith(expect.objectContaining({}), user.uid);
 		});
 	});
 
@@ -907,82 +1240,126 @@ describe("Routes", () => {
 			expect(mockWrite.destroyUser).not.toHaveBeenCalled();
 		});
 
-		test("POST answers 400 without 'account', 'password', or 'newpassword'", async () => {
-			await request("POST", PATH)
+		test("POST answers 400 without parameters", async () => {
+			await request("POST", PATH) //
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message: "Invalid HTTP header: 'Content-Type=undefined'; expected 'application/json'",
+					code: "unknown",
+				});
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("POST answers 400 without 'account', 'password', or 'newpassword'", async () => {
+			await request("POST", PATH) //
+				.send({})
+				.expect(400)
+				.expect({
+					message: "At path: account -- Expected a string, but received: undefined",
+					code: "unknown",
+				});
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
 		test("POST answers 400 without 'password' or 'newpassword'", async () => {
-			await request("POST", PATH)
+			await request("POST", PATH) //
 				.send({ account: "nonempty" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message: "At path: password -- Expected a string, but received: undefined",
+					code: "unknown",
+				});
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
 		test("POST answers 400 without 'account' or 'newpassword'", async () => {
-			await request("POST", PATH)
+			await request("POST", PATH) //
 				.send({ password: "nonempty" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message: "At path: account -- Expected a string, but received: undefined",
+					code: "unknown",
+				});
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
 		test("POST answers 400 without 'account' or 'password'", async () => {
-			await request("POST", PATH)
+			await request("POST", PATH) //
 				.send({ newpassword: "nonempty" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message: "At path: account -- Expected a string, but received: undefined",
+					code: "unknown",
+				});
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
 		test("POST answers 400 without 'account'", async () => {
-			await request("POST", PATH)
+			await request("POST", PATH) //
 				.send({ password: "nonempty", newpassword: "nonempty" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message: "At path: account -- Expected a string, but received: undefined",
+					code: "unknown",
+				});
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
 		test("POST answers 400 without 'password'", async () => {
-			await request("POST", PATH)
+			await request("POST", PATH) //
 				.send({ account: "nonempty", newpassword: "nonempty" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message: "At path: password -- Expected a string, but received: undefined",
+					code: "unknown",
+				});
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
 		test("POST answers 400 without 'newpassword'", async () => {
-			await request("POST", PATH)
+			await request("POST", PATH) //
 				.send({ account: "nonempty", password: "nonempty" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message: "At path: newpassword -- Expected a string, but received: undefined",
+					code: "unknown",
+				});
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
 		test("POST answers 400 with empty 'account'", async () => {
-			await request("POST", PATH)
+			await request("POST", PATH) //
 				.send({ account: "", password: "nonempty", newpassword: "nonempty" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message:
+						"At path: account -- Expected a string with a length between `1` and `191` but received one with a length of `0`",
+					code: "unknown",
+				});
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
 		test("POST answers 400 with empty 'password'", async () => {
-			await request("POST", PATH)
+			await request("POST", PATH) //
 				.send({ account: "nonempty", password: "", newpassword: "nonempty" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message:
+						"At path: password -- Expected a string with a length between `1` and `65535` but received one with a length of `0`",
+					code: "unknown",
+				});
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
 		test("POST answers 400 with empty 'newpassword'", async () => {
-			await request("POST", PATH)
+			await request("POST", PATH) //
 				.send({ account: "nonempty", password: "nonempty", newpassword: "" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message:
+						"At path: newpassword -- Expected a string with a length between `1` and `65535` but received one with a length of `0`",
+					code: "unknown",
+				});
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
@@ -1022,7 +1399,7 @@ describe("Routes", () => {
 				.expect(200)
 				.expect({ message: "Success!" });
 			expect(mockWrite.upsertUser).toHaveBeenCalledOnce();
-			expect(mockWrite.upsertUser).toHaveBeenCalledWith({
+			expect(mockWrite.upsertUser).toHaveBeenCalledWith(expect.objectContaining({}), {
 				...user,
 				passwordSalt,
 				passwordHash,
@@ -1030,10 +1407,13 @@ describe("Routes", () => {
 		});
 
 		test("POST answers 400 if token is empty", async () => {
-			await request("POST", PATH)
+			await request("POST", PATH) //
 				.send({ account: "nonempty", password: "nonempty", newpassword: "nonempty", token: "" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message: 'At path: token -- Expected a value of type `TOTPToken`, but received: `""`',
+					code: "unknown",
+				});
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
@@ -1090,7 +1470,7 @@ describe("Routes", () => {
 				.expect(200)
 				.expect({ message: "Success!" });
 			expect(mockWrite.upsertUser).toHaveBeenCalledOnce();
-			expect(mockWrite.upsertUser).toHaveBeenCalledWith({
+			expect(mockWrite.upsertUser).toHaveBeenCalledWith(expect.objectContaining({}), {
 				...user,
 				passwordSalt,
 				passwordHash,
@@ -1107,34 +1487,57 @@ describe("Routes", () => {
 			expect(mockWrite.destroyUser).not.toHaveBeenCalled();
 		});
 
-		test("POST answers 400 without 'account', 'newaccount', or 'password'", async () => {
-			await request("POST", PATH)
+		test("POST answers 400 without parameters", async () => {
+			await request("POST", PATH) //
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message: "Invalid HTTP header: 'Content-Type=undefined'; expected 'application/json'",
+					code: "unknown",
+				});
+			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
+		});
+
+		test("POST answers 400 without 'account', 'newaccount', or 'password'", async () => {
+			await request("POST", PATH) //
+				.send({})
+				.expect(400)
+				.expect({
+					message: "At path: account -- Expected a string, but received: undefined",
+					code: "unknown",
+				});
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
 		test("POST answers 400 without 'newaccount' or 'password'", async () => {
-			await request("POST", PATH)
+			await request("POST", PATH) //
 				.send({ account: "nonempty" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message: "At path: newaccount -- Expected a string, but received: undefined",
+					code: "unknown",
+				});
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
 		test("POST answers 400 without 'account' or 'newaccount'", async () => {
-			await request("POST", PATH)
+			await request("POST", PATH) //
 				.send({ password: "nonempty" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message: "At path: account -- Expected a string, but received: undefined",
+					code: "unknown",
+				});
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
 		test("POST answers 400 without 'account' or 'password'", async () => {
-			await request("POST", PATH)
+			await request("POST", PATH) //
 				.send({ newaccount: "nonempty" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message: "At path: account -- Expected a string, but received: undefined",
+					code: "unknown",
+				});
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
@@ -1142,7 +1545,10 @@ describe("Routes", () => {
 			await request("POST", PATH)
 				.send({ newaccount: "nonempty", password: "nonempty" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message: "At path: account -- Expected a string, but received: undefined",
+					code: "unknown",
+				});
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
@@ -1150,39 +1556,57 @@ describe("Routes", () => {
 			await request("POST", PATH)
 				.send({ account: "nonempty", password: "nonempty" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message: "At path: newaccount -- Expected a string, but received: undefined",
+					code: "unknown",
+				});
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
 		test("POST answers 400 without 'password'", async () => {
-			await request("POST", PATH)
+			await request("POST", PATH) //
 				.send({ account: "nonempty", newaccount: "nonempty" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message: "At path: password -- Expected a string, but received: undefined",
+					code: "unknown",
+				});
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
 		test("POST answers 400 with empty 'account'", async () => {
-			await request("POST", PATH)
+			await request("POST", PATH) //
 				.send({ account: "", newaccount: "nonempty", password: "nonempty" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message:
+						"At path: account -- Expected a string with a length between `1` and `191` but received one with a length of `0`",
+					code: "unknown",
+				});
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
 		test("POST answers 400 with empty 'newaccount'", async () => {
-			await request("POST", PATH)
+			await request("POST", PATH) //
 				.send({ account: "nonempty", newaccount: "", password: "nonempty" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message:
+						"At path: newaccount -- Expected a string with a length between `1` and `191` but received one with a length of `0`",
+					code: "unknown",
+				});
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
 		test("POST answers 400 with empty 'password'", async () => {
-			await request("POST", PATH)
+			await request("POST", PATH) //
 				.send({ account: "nonempty", newaccount: "nonempty", password: "" })
 				.expect(400)
-				.expect({ message: "Improper parameter types", code: "unknown" });
+				.expect({
+					message:
+						"At path: password -- Expected a string with a length between `1` and `65535` but received one with a length of `0`",
+					code: "unknown",
+				});
 			expect(mockWrite.upsertUser).not.toHaveBeenCalled();
 		});
 
@@ -1218,7 +1642,7 @@ describe("Routes", () => {
 				.expect(200)
 				.expect({ message: "Success!" });
 			expect(mockWrite.upsertUser).toHaveBeenCalledOnce();
-			expect(mockWrite.upsertUser).toHaveBeenCalledWith({
+			expect(mockWrite.upsertUser).toHaveBeenCalledWith(expect.objectContaining({}), {
 				...user,
 				currentAccountId: newaccount,
 			});
@@ -1269,7 +1693,7 @@ describe("Routes", () => {
 				.expect(200)
 				.expect({ message: "Success!" });
 			expect(mockWrite.upsertUser).toHaveBeenCalledOnce();
-			expect(mockWrite.upsertUser).toHaveBeenCalledWith({
+			expect(mockWrite.upsertUser).toHaveBeenCalledWith(expect.objectContaining({}), {
 				...user,
 				currentAccountId: newaccount,
 			});
@@ -1311,6 +1735,7 @@ describe("Routes", () => {
 
 		test("POST answers 400 if the body is not an array of write batches", async () => {
 			setAuth(userWithoutTotp);
+			await request("POST", PATH).expect(400);
 			await request("POST", PATH).send("").expect(400);
 			await request("POST", PATH).send('""').expect(400);
 			await request("POST", PATH).send("0").expect(400);
@@ -1370,7 +1795,7 @@ describe("Routes", () => {
 			await request("POST", PATH).send(batch).expect(200);
 			expect(mockWrite.deleteDocuments).not.toHaveBeenCalled();
 			expect(mockWrite.setDocuments).toHaveBeenCalledOnce();
-			expect(mockWrite.setDocuments).toHaveBeenCalledWith(updates);
+			expect(mockWrite.setDocuments).toHaveBeenCalledWith(expect.objectContaining({}), updates);
 		});
 
 		test.each(counts)("POST answers 200 for a batch of %d 'delete' operations", async count => {
@@ -1388,7 +1813,7 @@ describe("Routes", () => {
 			});
 			await request("POST", PATH).send(batch).expect(200);
 			expect(mockWrite.deleteDocuments).toHaveBeenCalledOnce();
-			expect(mockWrite.deleteDocuments).toHaveBeenCalledWith(refs);
+			expect(mockWrite.deleteDocuments).toHaveBeenCalledWith(expect.objectContaining({}), refs);
 			expect(mockWrite.setDocuments).not.toHaveBeenCalled();
 		});
 
@@ -1473,7 +1898,7 @@ describe("Routes", () => {
 				});
 				await request("POST", PATH).send(batch).expect(200);
 				expect(mockWrite.deleteDocuments).toHaveBeenCalledOnce();
-				expect(mockWrite.deleteDocuments).toHaveBeenCalledWith(refs);
+				expect(mockWrite.deleteDocuments).toHaveBeenCalledWith(expect.objectContaining({}), refs);
 				expect(mockWrite.setDocuments).not.toHaveBeenCalled();
 			}
 		);
@@ -1492,6 +1917,7 @@ describe("Routes", () => {
 			await request("GET", path)
 				.expect(404)
 				.expect({ message: "No data found", code: "not-found" });
+			await request("HEAD", path).expect(404);
 			expect(mockRead.fetchDbCollection).not.toHaveBeenCalled();
 		});
 
@@ -1501,6 +1927,7 @@ describe("Routes", () => {
 			await request("GET", path)
 				.expect(404)
 				.expect({ message: "No data found", code: "not-found" });
+			await request("HEAD", path).expect(404);
 			expect(mockRead.fetchDbCollection).not.toHaveBeenCalled();
 		});
 
@@ -1522,7 +1949,7 @@ describe("Routes", () => {
 		const user = userWithoutTotp;
 		const PATH = pathForUid(user.uid);
 
-		const BadMethods = ["HEAD", "POST", "PUT", "PATCH"] as const;
+		const BadMethods = ["POST", "PUT", "PATCH"] as const;
 		test.each(BadMethods)("%s answers 405", async method => {
 			await request(method, PATH).expect(405);
 			expect(mockRead.fetchDbCollection).not.toHaveBeenCalled();
@@ -1532,6 +1959,7 @@ describe("Routes", () => {
 			await request("GET", PATH)
 				.expect(403)
 				.expect({ message: "Unauthorized", code: "missing-token" });
+			await request("HEAD", PATH).expect(403);
 			expect(mockRead.fetchDbCollection).not.toHaveBeenCalled();
 		});
 
@@ -1539,12 +1967,19 @@ describe("Routes", () => {
 			setAuth(user);
 			const path = pathForUid("someone-else");
 			await request("GET", path).expect(403).expect({ message: "Unauthorized", code: "not-owner" });
+			await request("HEAD", path).expect(403);
 			expect(mockRead.fetchDbCollection).not.toHaveBeenCalled();
 		});
 
 		test("GET answers 200 and the empty collection's contents", async () => {
 			setAuth(user);
 			await request("GET", PATH).expect(200).expect({ message: "Success!", data: [] });
+			expect(mockRead.fetchDbCollection).toHaveBeenCalledOnce();
+		});
+
+		test("HEAD answers 200 for an empty collection", async () => {
+			setAuth(user);
+			await request("HEAD", PATH).expect(200);
 			expect(mockRead.fetchDbCollection).toHaveBeenCalledOnce();
 		});
 
@@ -1560,6 +1995,19 @@ describe("Routes", () => {
 			await request("GET", PATH)
 				.expect(200)
 				.expect({ message: "Success!", data: [testDoc] });
+			expect(mockRead.fetchDbCollection).toHaveBeenCalledOnce();
+		});
+
+		test("HEAD answers 200 for a collection with data", async () => {
+			setAuth(user);
+			const testDoc: IdentifiedDataItem = {
+				_id: "testDoc1",
+				ciphertext: "lorem ipsum",
+				cryption: "v0",
+				objectType: "lol",
+			};
+			mockRead.fetchDbCollection.mockResolvedValueOnce([testDoc]);
+			await request("HEAD", PATH).expect(200);
 			expect(mockRead.fetchDbCollection).toHaveBeenCalledOnce();
 		});
 
@@ -1601,16 +2049,20 @@ describe("Routes", () => {
 			await request("GET", path)
 				.expect(404)
 				.expect({ message: "No data found", code: "not-found" });
+			await request("HEAD", path).expect(404);
 			expect(mockRead.fetchDbDoc).not.toHaveBeenCalled();
 		});
 
 		test.each(allCollectionIds)(
-			"GET answers 200 and an empty document for the special \".websocket\" endpoint in the '%s' collection",
+			"GET answers 426 at the special \".websocket\" endpoint in the '%s' collection",
 			async collectionId => {
 				setAuth(user);
 				const path = pathForUidCollDoc(user.uid, collectionId, ".websocket");
-				await request("GET", path).expect(200).expect({ message: "Success!", data: null });
-				expect(mockRead.fetchDbDoc).toHaveBeenCalledOnce();
+				await request("GET", path)
+					.expect(426)
+					.expect({ message: "Expected websocket", code: "unknown" });
+				await request("HEAD", path).expect(426);
+				expect(mockRead.fetchDbDoc).not.toHaveBeenCalled();
 			}
 		);
 
@@ -1678,7 +2130,7 @@ describe("Routes", () => {
 		};
 		const PATH = pathForUidDoc(user.uid, testDocumentId);
 
-		const BadMethods = ["HEAD", "PUT", "PATCH"] as const;
+		const BadMethods = ["PUT", "PATCH"] as const;
 		test.each(BadMethods)("%s answers 405", async method => {
 			await request(method, PATH).expect(405);
 			expect(mockRead.fetchDbDoc).not.toHaveBeenCalled();
@@ -1688,6 +2140,7 @@ describe("Routes", () => {
 			await request("GET", PATH)
 				.expect(403)
 				.expect({ message: "Unauthorized", code: "missing-token" });
+			await request("HEAD", PATH).expect(403);
 			expect(mockRead.fetchDbDoc).not.toHaveBeenCalled();
 		});
 
@@ -1695,6 +2148,7 @@ describe("Routes", () => {
 			setAuth(user);
 			const path = pathForUidDoc("someone-else", testDocumentId);
 			await request("GET", path).expect(403).expect({ message: "Unauthorized", code: "not-owner" });
+			await request("HEAD", path).expect(403);
 			expect(mockRead.fetchDbDoc).not.toHaveBeenCalled();
 		});
 
@@ -1702,6 +2156,13 @@ describe("Routes", () => {
 			setAuth(user);
 			mockRead.fetchDbDoc.mockResolvedValueOnce({ ref, data: null });
 			await request("GET", PATH).expect(200).expect({ message: "Success!", data: null });
+			expect(mockRead.fetchDbDoc).toHaveBeenCalledOnce();
+		});
+
+		test("HEAD answers 200 if the document does not exist", async () => {
+			setAuth(user);
+			mockRead.fetchDbDoc.mockResolvedValueOnce({ ref, data: null });
+			await request("HEAD", PATH).expect(200);
 			expect(mockRead.fetchDbDoc).toHaveBeenCalledOnce();
 		});
 
@@ -1715,6 +2176,19 @@ describe("Routes", () => {
 			};
 			mockRead.fetchDbDoc.mockResolvedValueOnce({ ref, data });
 			await request("GET", PATH).expect(200).expect({ message: "Success!", data });
+			expect(mockRead.fetchDbDoc).toHaveBeenCalledOnce();
+		});
+
+		test("HEAD answers 200 for a document", async () => {
+			setAuth(user);
+			const data: Identified<AnyData> = {
+				_id: ref.id,
+				ciphertext: "lorem ipsum",
+				cryption: "v0",
+				objectType: "lol",
+			};
+			mockRead.fetchDbDoc.mockResolvedValueOnce({ ref, data });
+			await request("HEAD", PATH).expect(200);
 			expect(mockRead.fetchDbDoc).toHaveBeenCalledOnce();
 		});
 
@@ -1736,13 +2210,28 @@ describe("Routes", () => {
 			expect(mockWrite.setDocument).not.toHaveBeenCalled();
 		});
 
+		test("POST answers 400 to missing data", async () => {
+			setAuth(user);
+			await request("POST", PATH) //
+				.expect(400)
+				.expect({
+					message: "Invalid HTTP header: 'Content-Type=undefined'; expected 'application/json'",
+					code: "unknown",
+				});
+			expect(mockWrite.setDocument).not.toHaveBeenCalled();
+		});
+
 		test("POST answers 400 to badly-formatted data", async () => {
 			setAuth(user);
 			const badData = {};
-			await request("POST", PATH)
+			await request("POST", PATH) //
 				.send(badData)
 				.expect(400)
-				.expect({ message: "Invalid data", code: "unknown" });
+				.expect({
+					message:
+						"Expected the value to satisfy a union of `object | object`, but received: [object Object]",
+					code: "unknown",
+				});
 			expect(mockWrite.setDocument).not.toHaveBeenCalled();
 		});
 
@@ -1785,7 +2274,7 @@ describe("Routes", () => {
 		};
 		const PATH = pathForUidDocKey(user.uid, testDocumentId, testDocumentId);
 
-		const BadMethods = ["HEAD", "PUT", "PATCH"] as const;
+		const BadMethods = ["PUT", "PATCH"] as const;
 		test.each(BadMethods)("%s answers 405", async method => {
 			await request(method, PATH).expect(405);
 			expect(mockRead.fetchFileData).not.toHaveBeenCalled();
@@ -1795,6 +2284,7 @@ describe("Routes", () => {
 			await request("GET", PATH)
 				.expect(403)
 				.expect({ message: "Unauthorized", code: "missing-token" });
+			await request("HEAD", PATH).expect(403);
 			expect(mockRead.fetchFileData).not.toHaveBeenCalled();
 		});
 
@@ -1802,6 +2292,7 @@ describe("Routes", () => {
 			setAuth(user);
 			const path = pathForUidDocKey("someone-else", testDocumentId, testDocumentId);
 			await request("GET", path).expect(403).expect({ message: "Unauthorized", code: "not-owner" });
+			await request("HEAD", path).expect(403);
 			expect(mockRead.fetchFileData).not.toHaveBeenCalled();
 		});
 
@@ -1811,6 +2302,13 @@ describe("Routes", () => {
 			await request("GET", PATH)
 				.expect(404)
 				.expect({ message: "No data found", code: "not-found" });
+			expect(mockRead.fetchFileData).toHaveBeenCalledOnce();
+		});
+
+		test("HEAD answers 404 if the file does not exist", async () => {
+			setAuth(user);
+			mockRead.fetchFileData.mockResolvedValueOnce(null);
+			await request("HEAD", PATH).expect(404);
 			expect(mockRead.fetchFileData).toHaveBeenCalledOnce();
 		});
 
@@ -1824,6 +2322,13 @@ describe("Routes", () => {
 					// FIXME: We don't return ref.id here, we return the given file path. This is not useful behavior, since the client has this info already. Do something about this in v1?
 					data: { _id: refId, contents: fileData.contents.toString("utf8") },
 				});
+			expect(mockRead.fetchFileData).toHaveBeenCalledOnce();
+		});
+
+		test("HEAD answers 200 for a file", async () => {
+			setAuth(user);
+			mockRead.fetchFileData.mockResolvedValueOnce(fileData);
+			await request("HEAD", PATH).expect(200);
 			expect(mockRead.fetchFileData).toHaveBeenCalledOnce();
 		});
 
@@ -1845,17 +2350,32 @@ describe("Routes", () => {
 			expect(mockWrite.upsertFileData).not.toHaveBeenCalled();
 		});
 
-		test("POST answers 400 if no file is provided", async () => {
+		test("POST answers 400 if no data is provided", async () => {
 			setAuth(user);
-			await request("POST", PATH)
+			await request("POST", PATH) //
 				.expect(400)
-				.expect({ message: "You must include a file to store", code: "unknown" });
+				.expect({
+					message: "Invalid HTTP header: 'Content-Type=undefined'; expected 'multipart/form-data'",
+					code: "unknown",
+				});
 			expect(mockWrite.upsertFileData).not.toHaveBeenCalled();
 		});
 
-		test("POST answers 400 if the filename contains '..'", async () => {
+		test("POST answers 400 if the wrong kind of data is provided", async () => {
 			setAuth(user);
-			const path = pathForUidDocKey(user.uid, testDocumentId, "..");
+			await request("POST", PATH) //
+				.send({})
+				.expect(400)
+				.expect({
+					message:
+						"Invalid HTTP header: 'Content-Type=application/json'; expected 'multipart/form-data'",
+					code: "unknown",
+				});
+		});
+
+		test("POST answers 400 if the filename contains an encoded '/' character", async () => {
+			setAuth(user);
+			const path = pathForUidDocKey(user.uid, testDocumentId, "foo%2Fbar");
 			await request("POST", path) //
 				.attach("file", fileData.contents, "foo.json")
 				.expect(400)

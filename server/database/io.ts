@@ -1,8 +1,9 @@
+import type { Context } from "hono";
 import type { Logger } from "../logger";
 import type { Prisma } from "@prisma/client";
-import type { URL } from "node:url";
 import { logger as defaultLogger } from "../logger";
 import { PrismaClient } from "@prisma/client";
+import { requireEnv } from "../environment";
 
 export type { FileData, PrismaPromise, User as RawUser } from "@prisma/client";
 
@@ -13,7 +14,7 @@ export type LogDefinition = Prisma.LogDefinition;
 export type LogEvent = Prisma.LogEvent;
 
 // TODO: Use "@planetscale/database" directly, without storing the client in global scope, for "serverless" support
-const dataSources = new Map<URL | "default", DatabaseClient>();
+const dataSources = new Map<URL, DatabaseClient>();
 
 const logOptions = [
 	{
@@ -41,6 +42,11 @@ export interface DataSourceOptions {
 	databaseUrl?: URL;
 
 	/**
+	 * The request context that initiated the database connection.
+	 */
+	context: Pick<Context<Env>, "env">;
+
+	/**
 	 * The logger to use. Set to `null` to disable logging. Defaults to the system console.
 	 */
 	logger?: Logger | null;
@@ -51,22 +57,19 @@ export interface DataSourceOptions {
  *
  * @param options Options that define the behavior of the data source.
  */
-export function dataSource(options?: DataSourceOptions): PrismaClient {
-	const { databaseUrl, logger = defaultLogger } = options ?? {};
-	let source = dataSources.get(databaseUrl ?? "default");
+export function dataSource(options: DataSourceOptions): PrismaClient {
+	const { context: c, databaseUrl: dbUrl, logger = defaultLogger } = options;
+	const databaseUrl = dbUrl ?? new URL(requireEnv(c, "DATABASE_URL"));
+	let source = dataSources.get(databaseUrl);
 	if (source) return source;
 
 	// Start connecting to the database
 	source = new PrismaClient({
-		datasources: databaseUrl
-			? // Override the configured data source URL, use the given URL instead:
-			  {
-					db: {
-						url: databaseUrl.href,
-					},
-			  }
-			: // Use the configured URL by default:
-			  undefined,
+		datasources: {
+			db: {
+				url: databaseUrl.href,
+			},
+		},
 		log: [...logOptions],
 	});
 
@@ -125,7 +128,7 @@ export function dataSource(options?: DataSourceOptions): PrismaClient {
 	});
 
 	// Remember this client for later
-	dataSources.set(databaseUrl ?? "default", source);
+	dataSources.set(databaseUrl, source);
 
 	return source;
 }

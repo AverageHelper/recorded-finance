@@ -1,5 +1,5 @@
-import { asyncWrapper } from "../asyncWrapper";
-import { Router } from "express";
+import { badMethodFallback } from "../helpers/apiHandler";
+import { Hono } from "hono";
 import { throttle } from "./throttle";
 
 import * as join from "../api/v0/join";
@@ -14,23 +14,31 @@ import * as updateaccountid from "../api/v0/updateaccountid";
 
 // TODO: Implement WebAuthn (and test passkey support!)
 
-/**
- * Routes and middleware for a basic authentication flow. Installs a
- * `context` property on the request object that includes the caller's
- * authorized user ID.
- *
- * @see https://thecodebarbarian.com/oauth-with-node-js-and-express.html
- */
-export function auth(): Router {
-	return Router()
-		.all("/join", throttle(), asyncWrapper(join.POST))
-		.all("/login", throttle(), asyncWrapper(login.POST))
-		.get("/totp/secret", /* throttle(), */ asyncWrapper(totpSecret.GET))
-		.all("/totp/secret", throttle(), asyncWrapper(totpSecret.DELETE))
-		.all("/totp/validate", throttle(), asyncWrapper(totpValidate.POST))
-		.all("/session", /* throttle(), */ asyncWrapper(session.GET))
-		.all("/logout", throttle(), asyncWrapper(logout.POST))
-		.all("/leave", throttle(), asyncWrapper(leave.POST))
-		.all("/updatepassword", throttle(), asyncWrapper(updatepassword.POST))
-		.all("/updateaccountid", throttle(), asyncWrapper(updateaccountid.POST));
-}
+export const auth = new Hono<Env>()
+	.post("/join", throttle, join.POST)
+	.all(badMethodFallback)
+
+	.post("/login", throttle, login.POST)
+	.all(badMethodFallback)
+
+	.get("/totp/secret", /* throttle, */ totpSecret.GET)
+	.delete(throttle, totpSecret.DELETE)
+	.all(badMethodFallback)
+
+	.post("/totp/validate", throttle, totpValidate.POST)
+	.all(badMethodFallback)
+
+	.get("/session", /* throttle, */ session.GET)
+	.all(badMethodFallback)
+
+	.post("/logout", throttle, logout.POST)
+	.all(badMethodFallback)
+
+	.post("/leave", throttle, leave.POST)
+	.all(badMethodFallback)
+
+	.post("/updatepassword", throttle, updatepassword.POST)
+	.all(badMethodFallback)
+
+	.post("/updateaccountid", throttle, updateaccountid.POST)
+	.all(badMethodFallback);

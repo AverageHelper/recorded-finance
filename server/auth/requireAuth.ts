@@ -1,19 +1,19 @@
+import type { Context } from "hono";
 import type { MFAOption, User } from "../database/schemas";
-import { assertSchema, jwtPayload } from "../database/schemas";
+import { assert, StructError } from "superstruct";
 import { BadRequestError } from "../errors/BadRequestError";
 import { blacklistHasJwt, jwtFromRequest, verifyJwt } from "./jwt";
 import { InternalError } from "../errors/InternalError";
 import { logger } from "../logger";
+import { jwtPayload } from "../database/schemas";
 import { NotFoundError } from "../errors/NotFoundError";
-import { pathSegments } from "../helpers/pathSegments";
-import { StructError } from "superstruct";
 import { timingSafeEqual } from "./generators";
 import { UnauthorizedError } from "../errors/UnauthorizedError";
 import { userWithUid } from "../database/read";
 import _jwt from "jsonwebtoken";
 
 // FIXME: Not sure why, but tests fail unless we do this:
-const { JsonWebTokenError } = _jwt;
+const { JsonWebTokenError, TokenExpiredError } = _jwt;
 
 interface Metadata {
 	/** The user's auth data. */
@@ -26,30 +26,34 @@ interface Metadata {
 /**
  * Retrieves user metadata from the request headers and session cookies in the request.
  */
-export async function metadataFromRequest(req: APIRequest, res: APIResponse): Promise<Metadata> {
-	const token = jwtFromRequest(req, res);
+export async function metadataFromRequest(c: Context<Env>): Promise<Metadata> {
+	const token = await jwtFromRequest(c);
 	if (token === null) {
 		logger.debug("Request has no JWT");
 		throw new UnauthorizedError("missing-token");
 	}
-	if (await blacklistHasJwt(token)) {
+	if (await blacklistHasJwt(c, token)) {
 		logger.debug("Request has a blacklisted JWT");
 		throw new UnauthorizedError("expired-token");
 	}
 
-	const payload = await verifyJwt(token).catch((error: unknown) => {
-		if (error instanceof JsonWebTokenError) {
-			// TODO: Check specifically for `TokenExpiredError`
-			logger.debug(`JWT failed to verify because ${error.message}`);
+	const payload = await verifyJwt(c, token).catch((error: unknown) => {
+		if (
+			error instanceof JsonWebTokenError ||
+			error instanceof TokenExpiredError ||
+			error instanceof StructError ||
+			error instanceof TypeError
+		) {
+			logger.debug("JWT failed to verify because:", error.message);
 			throw new UnauthorizedError("expired-token");
 		} else {
-			logger.error(`JWT failed to verify due to an unknown error:`, error);
+			logger.error("JWT failed to verify due to an unknown error:", error);
 			throw new InternalError({ code: "unknown" });
 		}
 	});
 
 	try {
-		assertSchema(payload, jwtPayload);
+		assert(payload, jwtPayload);
 	} catch (error) {
 		if (error instanceof StructError) {
 			logger.debug(`JWT payload failed to verify: ${error.message}`);
@@ -65,19 +69,15 @@ export async function metadataFromRequest(req: APIRequest, res: APIResponse): Pr
 
 	// NOTE: We need a full user-fetch here so we know we're working with a real user.
 	// You might be tempted to slim this down to just passing the UID through, but don't.
-	const user = await userWithUid(uid);
+	const user = await userWithUid(c, uid);
 	if (!user) throw new NotFoundError();
 
 	return { user, validatedWithMfa };
 }
 
 /** Asserts that the calling user is authorized to access the requested resource. */
-export async function requireAuth(
-	req: APIRequest,
-	res: APIResponse,
-	assertCallerIsOwner: boolean
-): Promise<User> {
-	const { user, validatedWithMfa } = await metadataFromRequest(req, res);
+export async function requireAuth(c: Context<Env, ":uid">): Promise<User> {
+	const { user, validatedWithMfa } = await metadataFromRequest(c);
 
 	if (
 		user.requiredAddtlAuth?.includes("totp") === true && // req totp
@@ -86,11 +86,9 @@ export async function requireAuth(
 		throw new UnauthorizedError("missing-token");
 	}
 
-	if (assertCallerIsOwner) {
-		const { uid } = pathSegments(req, "uid");
-		if (!timingSafeEqual(uid, user.uid)) {
-			throw new UnauthorizedError("not-owner");
-		}
+	const uid = c.req.param("uid");
+	if (!timingSafeEqual(uid, user.uid)) {
+		throw new UnauthorizedError("not-owner");
 	}
 
 	return user;

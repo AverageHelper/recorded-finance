@@ -369,7 +369,7 @@ export function onSnapshot<T extends NonNullable<unknown>>(
 		pubnub.subscribe({ channels: [channel] });
 		pubnub.addListener(listener);
 
-		// Run an initial fetch, just like Express used to, since the Vercel back-end doesn't do that for us
+		// Run an initial fetch, just like we used to, since the Vercel back-end doesn't do that for us
 		switch (queryOrReference.type) {
 			case "collection":
 				void handleFetchError(
@@ -412,7 +412,7 @@ export function onSnapshot<T extends NonNullable<unknown>>(
 		return unsubscribe;
 	}
 
-	// ** WebSockets (Express)
+	// ** WebSockets (Node)
 	const uid = db.currentUser.uid;
 	const baseUrl = new URL(`wss://${db.url.hostname}:${db.url.port}`);
 	let url: URL;

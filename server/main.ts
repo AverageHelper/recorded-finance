@@ -1,16 +1,17 @@
 import "source-map-support/register";
-import { asyncWrapper } from "./asyncWrapper";
 import { auth } from "./auth";
+import { badMethodFallback, errorHandler } from "./helpers/apiHandler";
 import { cors } from "./cors";
 import { db } from "./db";
+import { headers } from "./responses";
+import { Hono } from "hono";
+import { honoWs } from "./networking/websockets";
+import { logger as reqLogger } from "hono/logger";
 import { logger } from "./logger";
 import { NotFoundError } from "./errors/NotFoundError";
-import { respondError } from "./responses";
+import { serve } from "@hono/node-server";
 import { version as appVersion } from "./version";
-// import csurf from "csurf"; // TODO: Might be important later
-import express from "express";
-import expressWs from "express-ws";
-import helmet from "helmet";
+// import csurf from "csurf"; // TODO: Might be important later; see https://medium.com/@brakdemir/csrf-prevention-on-node-js-express-without-csurf-da5d9e6272ad
 
 import * as lol from "./api/v0";
 import * as ping from "./api/v0/ping";
@@ -19,26 +20,37 @@ import * as serverVersion from "./api/v0/version";
 // eslint-disable-next-line unicorn/numeric-separators-style
 const PORT = 40850;
 
-export const app = express()
-	.use(helmet()) // also disables 'x-powered-by' header
-	.use(cors());
+export const app = new Hono<Env>()
+	.basePath("/api")
+	.use("*", reqLogger(logger.info))
+	.use("*", cors)
+	.use("*", headers)
 
-expressWs(app); // Set up websocket support. This is the reason our endpoint declarations need to be functions and not `const` declarations
+	// Routes
+	.get("/v0/", lol.GET)
+	.all(badMethodFallback)
 
-app
-	.all("/v0/", asyncWrapper(lol.GET))
-	.all("/v0/ping", asyncWrapper(ping.GET))
-	.all("/v0/version", asyncWrapper(serverVersion.GET))
-	.set("trust proxy", 1) // trust first proxy
-	.use(express.json({ limit: "5mb" }))
-	.use(express.urlencoded({ limit: "5mb", extended: true }))
-	.use("/v0/", auth()) // Auth endpoints
-	.use("/v0/db", db()) // Database endpoints (checks auth)
-	.use((req, res) => {
-		// Custom 404
-		respondError(res, new NotFoundError());
+	.get("/v0/ping", ping.GET)
+	.all(badMethodFallback)
+
+	.get("/v0/version", serverVersion.GET)
+	.all(badMethodFallback)
+
+	.route("/v0/", auth) // Auth endpoints
+	.route("/v0/db", db) // Database endpoints (checks auth)
+
+	// All other paths answer 404:
+	.notFound(c => {
+		throw new NotFoundError(`No such path '${c.req.path}'`);
+	})
+
+	// Catch errors thrown from endpoints:
+	.onError(errorHandler);
+
+if (process.env["NODE_ENV"] !== "test") {
+	const server = serve({ port: PORT, fetch: app.fetch }, info => {
+		logger.info(`Recorded Finance storage server v${appVersion} listening on port ${info.port}`);
 	});
 
-app.listen(PORT, () => {
-	logger.info(`Recorded Finance storage server v${appVersion} listening on port ${PORT}`);
-});
+	honoWs(server); // Set up websocket support.
+}

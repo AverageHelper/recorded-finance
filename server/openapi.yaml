@@ -158,7 +158,7 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: "Improper parameter types"
+                    example: "At path: account -- Expected a nonempty string but received an empty one"
         409:
           description: An account with the given ID already exists
           content:
@@ -271,7 +271,7 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: "Improper parameter types"
+                    example: "At path: account -- Expected a nonempty string but received an empty one"
         403:
           description: The given passphrase does not match, or the given account does
             not exist
@@ -360,7 +360,7 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: "Improper parameter types"
+                    example: "At path: token -- Expected a nonempty string but received an empty one"
         403:
           description: The given token is invalid, or a valid session token was not provided.
           content:
@@ -642,7 +642,7 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: "Improper parameter types"
+                    example: "At path: account -- Expected a nonempty string but received an empty one"
         403:
           description: The given passphrase does not match, a required TOTP token was not provided, or the given account does not exist.
           content:
@@ -715,7 +715,7 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: "Improper parameter types"
+                    example: "At path: account -- Expected a nonempty string but received an empty one"
         403:
           description: The given passphrase does not match, a required TOTP token was not provided, or the given account does not exist.
           content:
@@ -784,7 +784,7 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: "Improper parameter types"
+                    example: "At path: account -- Expected a nonempty string but received an empty one"
         403:
           description: The given passphrase does not match, a required TOTP token was not provided, or the given account does not exist.
           content:

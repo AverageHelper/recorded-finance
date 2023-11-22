@@ -32,7 +32,7 @@ export default defineConfig({
 			sourceMap: !isProduction,
 		}), // translate TypeScript to JS
 		commonjs({ transformMixedEsModules: true }), // translate CommonJS to ESM
-		json(), // translate JSON ("express" requires this for its status messages)
+		json(), // translate JSON
 
 		// Find external dependencies
 		nodeResolve({

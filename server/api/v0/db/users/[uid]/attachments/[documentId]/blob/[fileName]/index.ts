@@ -1,24 +1,19 @@
-import type { Params } from "./Params";
+import type { Context } from "hono";
 import type { UID } from "../../../../../../../../../database/schemas";
-import type {
-	Request as ExpressRequest,
-	RequestHandler,
-	Response as ExpressResponse,
-} from "express";
 import { apiHandler, dispatchRequests } from "../../../../../../../../../helpers/apiHandler";
 import { BadRequestError } from "../../../../../../../../../errors/BadRequestError";
+import { dataResponse, successResponse } from "../../../../../../../../../responses";
 import { destroyFileData, upsertFileData } from "../../../../../../../../../database/write";
 import { fetchFileData, statsForUser } from "../../../../../../../../../database/read";
 import { logger } from "../../../../../../../../../logger";
-import { maxSpacePerUser, MAX_FILE_BYTES } from "../../../../../../../../../auth/limits";
+import { maxStorageSpacePerUser, MAX_FILE_BYTES } from "../../../../../../../../../auth/limits";
 import { NotEnoughRoomError } from "../../../../../../../../../errors/NotEnoughRoomError";
 import { NotFoundError } from "../../../../../../../../../errors/NotFoundError";
-import { pathSegments } from "../../../../../../../../../helpers/pathSegments";
 import { requireAuth } from "../../../../../../../../../auth/requireAuth";
-import { respondData, respondSuccess } from "../../../../../../../../../responses";
 import { sep as pathSeparator } from "node:path";
 import { simplifiedByteCount } from "../../../../../../../../../transformers/simplifiedByteCount";
-import multer, { memoryStorage } from "multer";
+
+const PATH = "/api/v0/db/users/:uid/attachments/:documentId/blob/:fileName";
 
 /**
  * Asserts that the given value is a valid file path segment.
@@ -34,7 +29,9 @@ function assertPathSegment(value: string, name: "uid"): UID;
 function assertPathSegment(value: string, name: string): string;
 
 function assertPathSegment(value: string, name: string): string {
-	// Make sure value doesn't contain a path separator
+	// Make sure value doesn't contain a path separator.
+	// Hono will likely treat a path value of `..` as the previous route position,
+	// but good to make sure here too.
 	if (value.includes(pathSeparator) || value.includes(".."))
 		throw new BadRequestError(
 			`${name} cannot contain a '${pathSeparator}' character or a parent directory marker`
@@ -46,8 +43,12 @@ function assertPathSegment(value: string, name: string): string {
 /**
  * Ensures that the appropriate parameters are present and valid file path segments.
  */
-function requireFilePathParameters(req: APIRequest): Required<Params> {
-	const { uid, documentId, fileName } = pathSegments(req, "uid", "documentId", "fileName");
+function requireFilePathParameters(
+	c: Context<Env, typeof PATH>
+): Required<{ uid: UID; documentId: string; fileName: string }> {
+	const uid = c.req.param("uid");
+	const documentId = c.req.param("documentId");
+	const fileName = c.req.param("fileName");
 
 	return {
 		uid: assertPathSegment(uid, "uid"),
@@ -56,80 +57,68 @@ function requireFilePathParameters(req: APIRequest): Required<Params> {
 	};
 }
 
-interface FileData {
-	contents: string;
-	_id: string;
-}
+export const GET = apiHandler(PATH, "GET", null, async c => {
+	await requireAuth(c);
+	const { uid: userId, fileName } = requireFilePathParameters(c);
 
-export const GET = apiHandler("GET", async (req, res) => {
-	await requireAuth(req, res, true);
-	const { uid: userId, fileName } = requireFilePathParameters(req);
-
-	const file = await fetchFileData(userId, fileName);
+	const file = await fetchFileData(c, userId, fileName);
 	if (file === null) throw new NotFoundError();
 
-	const contents = file.contents.toString("utf8");
-	respondData<FileData>(res, {
-		contents,
+	return dataResponse(c, {
+		contents: file.contents.toString("utf8"),
 		_id: fileName,
 	});
 });
 
-export const POST = apiHandler("POST", async (req, res) => {
-	await requireAuth(req, res, true);
+export const POST = apiHandler(PATH, "POST", "form-data", async c => {
+	await requireAuth(c);
 
-	// Mimic Multer's middleware environment (see https://stackoverflow.com/a/68882562)
-	const upload = multer({
-		storage: memoryStorage(),
-		limits: {
-			fileSize: MAX_FILE_BYTES, // 4.2 MB
-			files: 1,
-		},
-	}).single("file") as RequestHandler<{ [key: string]: string }>;
-	await new Promise(resolve => {
-		upload(req as ExpressRequest, res as ExpressResponse, resolve);
-	});
+	// TODO: When we move to Cloudflare, the `File` global will become available
+	const upload = await c.req.parseBody<Record<string, string | Blob | Array<string | Blob>>>();
+	const file = upload["file"];
+	if (!file || Array.isArray(file)) throw new BadRequestError("You must include a file to store");
 
-	// We assume multer would install the `file` on a Vercel request the same as on Express
-	const file = (req as ExpressRequest).file;
-	if (!file) throw new BadRequestError("You must include a file to store");
+	// File must be under ~4.2 MB
+	const fileContents =
+		typeof file === "string" ? Buffer.from(file) : Buffer.from(await file.text());
 
-	const { uid: userId, fileName } = requireFilePathParameters(req);
+	if (Buffer.byteLength(fileContents) > MAX_FILE_BYTES) {
+		throw new BadRequestError("File is too large.");
+	}
 
-	const { totalSpace, usedSpace } = await statsForUser(userId);
+	const { uid: userId, fileName } = requireFilePathParameters(c);
+
+	const { totalSpace, usedSpace } = await statsForUser(c, userId);
 	const userSizeDesc = simplifiedByteCount(usedSpace);
-	const maxSpacDesc = simplifiedByteCount(maxSpacePerUser);
+	const maxSpacDesc = simplifiedByteCount(maxStorageSpacePerUser(c));
 	logger.debug(`User ${userId} has used ${userSizeDesc} of ${maxSpacDesc}`);
 
 	const remainingSpace = totalSpace - usedSpace;
 	if (remainingSpace <= 0) throw new NotEnoughRoomError();
 
-	const contents = file.buffer; // this better be utf8
-	await upsertFileData({ userId, fileName, contents });
+	const contents = fileContents; // this better be utf8
+	await upsertFileData(c, { userId, fileName, contents });
 
 	{
-		const { totalSpace, usedSpace } = await statsForUser(userId);
-		respondSuccess(res, { totalSpace, usedSpace });
+		const { totalSpace, usedSpace } = await statsForUser(c, userId);
+		return successResponse(c, { totalSpace, usedSpace });
 	}
 });
 
-export const DELETE = apiHandler("DELETE", async (req, res) => {
-	await requireAuth(req, res, true);
-	const params = pathSegments(req, "uid", "documentId", "fileName");
+export const DELETE = apiHandler(PATH, "DELETE", null, async c => {
+	await requireAuth(c);
+	const { uid: userId, fileName } = requireFilePathParameters(c);
 
-	const userId = params.uid;
-
-	const { fileName } = requireFilePathParameters(req);
-	await destroyFileData(userId, fileName);
+	await destroyFileData(c, userId, fileName);
 
 	// Report the user's new usage
-	const { totalSpace, usedSpace } = await statsForUser(userId);
+	const { totalSpace, usedSpace } = await statsForUser(c, userId);
 	const userSizeDesc = simplifiedByteCount(usedSpace);
-	const maxSpacDesc = simplifiedByteCount(maxSpacePerUser);
+	const maxSpacDesc = simplifiedByteCount(maxStorageSpacePerUser(c));
 	logger.debug(`User ${userId} has used ${userSizeDesc} of ${maxSpacDesc}`);
 
 	// When done, get back to the caller with new stats
-	respondSuccess(res, { totalSpace, usedSpace });
+	return successResponse(c, { totalSpace, usedSpace });
 });
 
-export default dispatchRequests({ GET, POST, DELETE });
+export default dispatchRequests(PATH, { GET, POST, DELETE });

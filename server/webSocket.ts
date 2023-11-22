@@ -1,79 +1,75 @@
-import type { Infer } from "superstruct";
-import type { ReadonlyDeep } from "type-fest";
 import type { Unsubscribe } from "./database/read";
-import type { User } from "./database/schemas";
-import type { WebsocketRequestHandler } from "express-ws";
-import { array, enums, nullable, object, optional, union } from "superstruct";
+import { allCollectionIds, identifiedDataItem, nonemptyString } from "./database/schemas";
+import { array, enums, literal, nullable, object, union, validate } from "superstruct";
+import { BadRequestError } from "./errors/BadRequestError";
 import { CollectionReference, DocumentReference } from "./database/references";
 import { logger } from "./logger";
 import { requireAuth } from "./auth/requireAuth";
 import { watchUpdatesToCollection, watchUpdatesToDocument } from "./database/read";
 import { WebSocketCode } from "./networking/WebSocketCode";
 import { ws } from "./networking/websockets";
-import {
-	allCollectionIds,
-	identifiedDataItem,
-	is,
-	nonemptyString,
-	uidSchema,
-} from "./database/schemas";
 
-const watcherData = object({
-	message: nonemptyString,
-	dataType: enums(["single", "multiple"] as const),
-	data: nullable(union([array(identifiedDataItem), identifiedDataItem])),
-});
+type WebSocketPaths =
+	| "/users/:uid/:collectionId/.websocket"
+	| "/users/:uid/:collectionId/:documentId/.websocket";
 
-type WatcherData = Infer<typeof watcherData>;
-
-export const webSocket: WebsocketRequestHandler = ws(
+export const webSocket: APIRequestHandler<WebSocketPaths> = ws(
 	// interactions
 	{
-		stop(tbd): tbd is "STOP" {
-			return tbd === "STOP";
-		},
-		data(tbd): tbd is ReadonlyDeep<WatcherData> {
-			return is(tbd, watcherData);
-		},
+		stop: literal("STOP"),
+
+		data: union([
+			object({
+				message: nonemptyString,
+				dataType: literal("single"),
+				data: nullable(identifiedDataItem),
+			}),
+			object({
+				message: nonemptyString,
+				dataType: literal("multiple"),
+				data: nullable(array(identifiedDataItem)),
+			}),
+		]),
 	},
-	// params
-	object({
-		uid: uidSchema,
-		collectionId: enums(allCollectionIds),
-		documentId: optional(nullable(nonemptyString)),
-	}),
-	// start
-	async (context, params) => {
-		const { req, onClose, onMessage, send, close } = context;
-		const { collectionId, documentId = null } = params;
 
-		let user: User;
+	// authenticate
+	async c => {
+		const _collectionId = c.req.param("collectionId");
+		const _documentId = c.req.param("documentId");
 
-		// FIXME: Wish I could get request cookies here without corresponding response.
-		// This leans a lot on implementation detail which may change later.
-		// Options:
-		// - Fork `cookies` to add a proper fallback when `res` is not provided
-		// - Parse, verify, and read cookies myself, manually
-		// - Don't use `express-ws`, use a third-party event delivery service like with Vercel
-		const fakeRes = {
-			getHeader: () => [],
-			setHeader: () => fakeRes,
-		} as unknown as APIResponse;
+		const [collectionIdError, collectionId] = validate(_collectionId, enums(allCollectionIds));
+		const [documentIdError, documentId] = validate(_documentId ?? null, nullable(nonemptyString));
+
+		if (collectionIdError) {
+			throw new BadRequestError(collectionIdError.message);
+		}
+		if (documentIdError) {
+			throw new BadRequestError(documentIdError.message);
+		}
+
+		const params = { collectionId, documentId } as const;
+
 		try {
 			logger.debug("[WebSocket] Checking auth state...");
-			user = await requireAuth(req, fakeRes, true);
+			const user = await requireAuth(c); // FIXME: Apparently this is suboptimal. Use the `Sec-Websocket-Protocol` header instead of `Cookie`. See https://stackoverflow.com/a/77060459
 			logger.debug("[WebSocket] Success! User is logged in.");
-		} catch {
+			return [user, params];
+		} catch (error) {
 			logger.debug("[WebSocket] Fail! User is not logged in.");
-			close(WebSocketCode.VIOLATED_CONTRACT, "You must be logged in to access user data");
-			return;
+			throw error;
 		}
+	},
+
+	// start
+	connection => {
+		const { context: c, user, params, onClose, onMessage, send, close } = connection;
+		const { collectionId, documentId = null } = params;
 
 		const collection = new CollectionReference(user, collectionId);
 		let unsubscribe: Unsubscribe;
 		if (documentId !== null) {
 			const ref = new DocumentReference(collection, documentId);
-			unsubscribe = watchUpdatesToDocument(ref, data => {
+			unsubscribe = watchUpdatesToDocument(c, ref, data => {
 				logger.debug(`Got update for document at ${ref.path}`);
 				send("data", {
 					message: "Here's your data",
@@ -82,7 +78,7 @@ export const webSocket: WebsocketRequestHandler = ws(
 				});
 			});
 		} else {
-			unsubscribe = watchUpdatesToCollection(collection, data => {
+			unsubscribe = watchUpdatesToCollection(c, collection, data => {
 				logger.debug(`Got update for collection at ${collection.path}`);
 				send("data", {
 					message: "Here's your data",

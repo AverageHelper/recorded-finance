@@ -132,8 +132,8 @@ beforeEach(() => {
 	fetchDbCollection.mockResolvedValue([]);
 	userWithUid.mockResolvedValue(null);
 	userWithAccountId.mockResolvedValue(null);
-	fetchDbDoc.mockImplementation(ref => Promise.resolve({ ref, data: null }));
-	fetchDbDocs.mockImplementation(refs =>
+	fetchDbDoc.mockImplementation((c, ref) => Promise.resolve({ ref, data: null }));
+	fetchDbDocs.mockImplementation((c, refs) =>
 		Promise.resolve(
 			(refs as ReadonlyNonEmptyArray<DocumentReference>).map(ref => ({
 				ref,

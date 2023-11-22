@@ -8,7 +8,7 @@ import { t } from "../i18n";
 import { UnexpectedResponseError } from "./errors";
 import {
 	array,
-	assert as assertSchema,
+	assert,
 	boolean,
 	define,
 	enums,
@@ -101,7 +101,7 @@ const rawServerResponse = type({
 
 export function assertRawServerResponse(tbd: unknown): asserts tbd is RawServerResponse {
 	try {
-		assertSchema(tbd, rawServerResponse);
+		assert(tbd, rawServerResponse);
 	} catch (error) {
 		let response: string;
 		if (error instanceof StructError) {
@@ -129,7 +129,7 @@ export type FileData = Infer<typeof fileData>;
 
 export function assertFileData(tbd: unknown): asserts tbd is FileData {
 	try {
-		assertSchema(tbd, fileData);
+		assert(tbd, fileData);
 	} catch (error) {
 		let response: string;
 		if (error instanceof StructError) {

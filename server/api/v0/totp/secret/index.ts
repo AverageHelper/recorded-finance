@@ -1,19 +1,20 @@
 import { apiHandler, dispatchRequests } from "../../../../helpers/apiHandler";
-import { BadRequestError } from "../../../../errors/BadRequestError";
 import { ConflictError } from "../../../../errors/ConflictError";
 import { compare, generateSecureToken } from "../../../../auth/generators";
 import { generateTOTPSecretURI, verifyTOTP } from "../../../../auth/totp";
-import { is, type } from "superstruct";
 import { metadataFromRequest } from "../../../../auth/requireAuth";
-import { respondSuccess } from "../../../../responses";
+import { type } from "superstruct";
+import { successResponse } from "../../../../responses";
 import { nonemptyLargeString, totpToken } from "../../../../database/schemas";
 import { UnauthorizedError } from "../../../../errors/UnauthorizedError";
 import { upsertUser } from "../../../../database/write";
 
-export const GET = apiHandler("GET", async (req, res) => {
+const PATH = "/api/v0/totp/secret";
+
+export const GET = apiHandler(PATH, "GET", null, async c => {
 	// ** TOTP Registration
 
-	const { user, validatedWithMfa } = await metadataFromRequest(req, res);
+	const { user, validatedWithMfa } = await metadataFromRequest(c);
 	const uid = user.uid;
 	const accountId = user.currentAccountId;
 
@@ -24,13 +25,16 @@ export const GET = apiHandler("GET", async (req, res) => {
 		throw new ConflictError("totp-conflict", "You already have TOTP authentication enabled");
 	}
 
+	// GET implicitly handles HEAD; don't do anything destructive:
+	if (c.req.method === "HEAD") return successResponse(c);
+
 	// Generate and store the new secret
 	const totpSeed = generateSecureToken(15);
-	const secret = generateTOTPSecretURI(accountId, totpSeed);
+	const secret = generateTOTPSecretURI(c, accountId, totpSeed);
 
 	// We should not lock in the secret until the user hits /totp/validate with that secret.
 	// Just set the secret, not the 2fa requirement
-	await upsertUser({
+	await upsertUser(c, {
 		currentAccountId: accountId,
 		mfaRecoverySeed: user.mfaRecoverySeed ?? null,
 		passwordHash: user.passwordHash,
@@ -41,26 +45,24 @@ export const GET = apiHandler("GET", async (req, res) => {
 		uid,
 	});
 
-	respondSuccess(res, { secret });
+	return successResponse(c, { secret });
 });
 
-export const DELETE = apiHandler("DELETE", async (req, res) => {
-	const reqBody = type({
-		password: nonemptyLargeString,
-		token: totpToken,
-	});
-	if (!is(req.body, reqBody)) {
-		throw new BadRequestError("Improper parameter types");
-	}
+const reqBody = type({
+	password: nonemptyLargeString,
+	token: totpToken,
+});
 
+export const DELETE = apiHandler(PATH, "DELETE", reqBody, async c => {
 	// ** TOTP Un-registration
 
-	const { user /* validatedWithMfa */ } = await metadataFromRequest(req, res);
+	const { user /* validatedWithMfa */ } = await metadataFromRequest(c);
 	const uid = user.uid;
 	const accountId = user.currentAccountId;
 
-	const givenPassword = req.body.password;
-	const token = req.body.token;
+	const body = c.req.valid("json");
+	const givenPassword = body.password;
+	const token = body.token;
 
 	// Validate the user's passphrase
 	const isPasswordGood = await compare(givenPassword, user.passwordHash);
@@ -70,10 +72,9 @@ export const DELETE = apiHandler("DELETE", async (req, res) => {
 
 	// If the user has no secret, treat the secret as deleted and return 200
 	if (user.totpSeed === null || user.totpSeed === undefined) {
-		respondSuccess(res);
-		return;
+		return successResponse(c);
 	}
-	const secret = generateTOTPSecretURI(user.currentAccountId, user.totpSeed);
+	const secret = generateTOTPSecretURI(c, user.currentAccountId, user.totpSeed);
 
 	// Re-validate TOTP
 	const isCodeGood = verifyTOTP(token, secret);
@@ -82,7 +83,7 @@ export const DELETE = apiHandler("DELETE", async (req, res) => {
 	}
 
 	// Delete the secret and disable 2FA
-	await upsertUser({
+	await upsertUser(c, {
 		currentAccountId: accountId,
 		mfaRecoverySeed: null,
 		passwordHash: user.passwordHash,
@@ -94,7 +95,7 @@ export const DELETE = apiHandler("DELETE", async (req, res) => {
 	});
 
 	// TODO: Re-issue an auth token with updated validatedWithMfa information
-	respondSuccess(res);
+	return successResponse(c);
 });
 
-export default dispatchRequests({ GET, DELETE });
+export default dispatchRequests(PATH, { GET, DELETE });

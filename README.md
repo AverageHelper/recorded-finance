@@ -49,7 +49,7 @@ See [the server's README](/server/README.md) for info on that.
 ```sh
 # .env
 
-# Where your server lives (optional for Vercel, required with Express)
+# Where your server lives (optional for Vercel, required with self-hosted instance)
 VITE_PLATFORM_SERVER_URL={your storage server URL}:40850
 
 # Enables the "Login" menu item (optional, defaults to "true")
@@ -58,7 +58,7 @@ VITE_ENABLE_LOGIN=true
 # Enables the "signup" behaviors (optional, defaults to "false")
 VITE_ENABLE_SIGNUP=false
 
-# Optional if the back-end runs on Express, required with Vercel
+# Optional if the back-end runs on Node, required with Vercel
 VITE_PUBNUB_SUBSCRIBE_KEY={your subscribe key from PubNub}
 ```
 

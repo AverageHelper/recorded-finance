@@ -1,7 +1,6 @@
 import type { TOTPSecretUri } from "./totp";
 import type { TOTPSeed, TOTPToken } from "../database/schemas";
 import { describe, expect, test, vi } from "vitest";
-import { URL } from "node:url";
 import totpGenerator from "totp-generator";
 
 vi.mock("./jwt");
@@ -21,9 +20,18 @@ describe("TOTP", () => {
 	const secretUri = new URL(
 		`otpauth://totp/RecordedFinance:${accountId}?algorithm=SHA1&digits=6&issuer=RecordedFinance&period=30&secret=${secret}`
 	);
+	const context = { env: process.env };
+
+	function secretWithContext(seed: TOTPSeed): TOTPSecretUri {
+		return generateSecret(context, seed);
+	}
+
+	function secretUriWithContext(accountId: string, seed: TOTPSeed): TOTPSecretUri {
+		return generateTOTPSecretURI(context, accountId, seed);
+	}
 
 	test("secret generator throws if the seed is empty", () => {
-		expect(() => generateSecret("" as TOTPSeed)).toThrow(TypeError);
+		expect(() => secretWithContext("" as TOTPSeed)).toThrow(TypeError);
 	});
 
 	test.each`
@@ -37,8 +45,8 @@ describe("TOTP", () => {
 	`(
 		"generates a secret, stable for a given seed",
 		({ seed, result }: { seed: TOTPSeed; result: TOTPSecretUri }) => {
-			const secret1 = generateSecret(seed);
-			const secret2 = generateSecret(seed);
+			const secret1 = secretWithContext(seed);
+			const secret2 = secretWithContext(seed);
 			expect(secret1).toHaveLength(21);
 			expect(secret1).toBe(result);
 			expect(secret2).toBe(secret1);
@@ -56,8 +64,8 @@ describe("TOTP", () => {
 	`(
 		"generates a secret URI, stable for a given seed",
 		({ seed, secret }: { seed: TOTPSeed; secret: TOTPSecretUri }) => {
-			const uri = new URL(generateTOTPSecretURI(accountId, seed));
-			const uri2 = new URL(generateTOTPSecretURI(accountId, seed));
+			const uri = new URL(secretUriWithContext(accountId, seed));
+			const uri2 = new URL(secretUriWithContext(accountId, seed));
 			expect(uri2.href).toBe(uri.href);
 
 			// assert a standard URI of the format described at https://github.com/google/google-authenticator/wiki/Key-Uri-Format
@@ -78,11 +86,11 @@ describe("TOTP", () => {
 	);
 
 	test("uri generator throws if the seed is empty", () => {
-		expect(() => generateTOTPSecretURI("bob", "" as TOTPSeed)).toThrow(TypeError);
+		expect(() => secretUriWithContext("bob", "" as TOTPSeed)).toThrow(TypeError);
 	});
 
 	test("uri generator throws if the accountId is empty", () => {
-		expect(() => generateTOTPSecretURI("", "lol" as TOTPSeed)).toThrow(TypeError);
+		expect(() => secretUriWithContext("", "lol" as TOTPSeed)).toThrow(TypeError);
 	});
 
 	const timesAndTokens = [

@@ -1,31 +1,29 @@
 import { apiHandler, dispatchRequests } from "../../../helpers/apiHandler";
-import { BadRequestError } from "../../../errors/BadRequestError";
 import { compare } from "../../../auth/generators";
 import { destroyUser } from "../../../database/write";
 import { generateTOTPSecretURI, verifyTOTP } from "../../../auth/totp";
-import { is, optional, type } from "superstruct";
-import { respondSuccess } from "../../../responses";
+import { optional, type } from "superstruct";
+import { successResponse } from "../../../responses";
 import { nonemptyLargeString, nonemptyString, totpToken } from "../../../database/schemas";
 import { UnauthorizedError } from "../../../errors/UnauthorizedError";
 import { userWithAccountId } from "../../../database/read";
 
-export const POST = apiHandler("POST", async (req, res) => {
-	const reqBody = type({
-		account: nonemptyString,
-		password: nonemptyLargeString,
-		token: optional(totpToken),
-	});
+const PATH = "/api/v0/leave";
 
-	if (!is(req.body, reqBody)) {
-		throw new BadRequestError("Improper parameter types");
-	}
+const reqBody = type({
+	account: nonemptyString,
+	password: nonemptyLargeString,
+	token: optional(totpToken),
+});
 
+export const POST = apiHandler(PATH, "POST", reqBody, async c => {
 	// Ask for full credentials, so we aren't leaning on a repeatable token
-	const givenAccountId = req.body.account; // TODO: Get this from auth state instead
-	const givenPassword = req.body.password;
+	const body = c.req.valid("json");
+	const givenAccountId = body.account; // TODO: Get this from auth state instead
+	const givenPassword = body.password;
 
 	// ** Get credentials
-	const storedUser = await userWithAccountId(givenAccountId);
+	const storedUser = await userWithAccountId(c, givenAccountId);
 	if (!storedUser) {
 		throw new UnauthorizedError("wrong-credentials");
 	}
@@ -42,19 +40,19 @@ export const POST = apiHandler("POST", async (req, res) => {
 		storedUser.requiredAddtlAuth?.includes("totp") === true
 	) {
 		// TOTP is required
-		const token = req.body.token;
+		const token = body.token;
 
 		if (typeof token !== "string") throw new UnauthorizedError("missing-mfa-credentials");
 
-		const secret = generateTOTPSecretURI(storedUser.currentAccountId, storedUser.totpSeed);
+		const secret = generateTOTPSecretURI(c, storedUser.currentAccountId, storedUser.totpSeed);
 		const isValid = verifyTOTP(token, secret);
 		if (!isValid) throw new UnauthorizedError("wrong-mfa-credentials");
 	}
 
 	// ** Delete the user
-	await destroyUser(storedUser.uid);
+	await destroyUser(c, storedUser.uid);
 
-	respondSuccess(res);
+	return successResponse(c);
 });
 
-export default dispatchRequests({ POST });
+export default dispatchRequests(PATH, { POST });

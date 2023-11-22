@@ -1,9 +1,9 @@
+import type { Context } from "hono";
 import type { Opaque } from "type-fest";
 import type { TOTPSeed, TOTPToken } from "../database/schemas";
 import { createHmac } from "node:crypto";
 import { persistentSecret } from "./jwt";
 import { timingSafeEqual } from "./generators";
-import { URL } from "node:url";
 import _base32Decode from "base32-decode";
 import _base32Encode from "base32-encode";
 
@@ -12,10 +12,16 @@ type Base32Variant = Parameters<typeof _base32Decode>[1];
 const variant: Base32Variant = "RFC3548";
 const algorithm = "SHA1";
 
+/**
+ * Returns the plain version of the given base32-encoded data.
+ */
 export function base32Decode(data: TOTPSecretUri): ArrayBuffer {
 	return _base32Decode(data, variant);
 }
 
+/**
+ * Returns the base32-encoded form of the given plain data.
+ */
 export function base32Encode(
 	data: ArrayBuffer | Int8Array | Uint8Array | Uint8ClampedArray
 ): TOTPSecretUri {
@@ -63,7 +69,9 @@ interface GeneratorOptions {
 	window?: number;
 }
 
-/** Generates a TOTP code from the given secret value. */
+/**
+ * Generates a TOTP code from the given secret value.
+ */
 export function generateTOTP(base32Secret: TOTPSecretUri, options?: GeneratorOptions): TOTPToken {
 	const { now = Date.now(), window = 0 } = options ?? {};
 	const counter = Math.floor(now / 30_000);
@@ -120,18 +128,23 @@ export function verifyTOTP(
  * the given account ID may use to generate one-time auth codes. The secret
  * is stable for a given `seed` and `AUTH_SECRET`.
  *
+ * @param c The request context.
  * @param accountId A string that identifies the user account. This value may
  *  be user-provided. This value is not used to create the user's TOTP secret.
  * @param seed The value used in combination with the server's `AUTH_SECRET`
  *  to generate the user's TOTP secret.
  */
-export function generateTOTPSecretURI(accountId: string, seed: TOTPSeed): TOTPSecretUri {
+export function generateTOTPSecretURI(
+	c: Pick<Context<Env>, "env">,
+	accountId: string,
+	seed: TOTPSeed
+): TOTPSecretUri {
 	if (!accountId) throw new TypeError("accountId cannot be empty");
 
 	const issuer = "RecordedFinance";
 	const digits = 6; // number of digits
 	const period = 30; // seconds
-	const secret = generateSecret(seed);
+	const secret = generateSecret(c, seed);
 
 	const configUri = new URL(`otpauth://totp/${issuer}:${accountId}`);
 	configUri.searchParams.set("algorithm", algorithm);
@@ -148,14 +161,15 @@ export function generateTOTPSecretURI(accountId: string, seed: TOTPSeed): TOTPSe
  * encoded in base 32, that isstable for a given `seed` param and
  * `AUTH_SECRET` env variable.
  *
+ * @param c The request context.
  * @param seed The value used in combination with the server's `AUTH_SECRET`
  *  environment variable to generate the random string.
  */
-export function generateSecret(seed: TOTPSeed): TOTPSecretUri {
+export function generateSecret(c: Pick<Context<Env>, "env">, seed: TOTPSeed): TOTPSecretUri {
 	if (seed === "") throw new TypeError("seed cannot be empty");
 
 	// Mix the secret and the seed together
-	const hmac = createHmac(algorithm, persistentSecret);
+	const hmac = createHmac(algorithm, persistentSecret(c));
 	hmac.update(Buffer.from(seed));
 	const digest = hmac.digest();
 

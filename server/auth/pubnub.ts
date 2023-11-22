@@ -1,4 +1,5 @@
 import type { CollectionReference, DocumentReference } from "../database/references";
+import type { Context } from "hono";
 import type { IdentifiedDataItem, PubNubToken, UID, User } from "../database/schemas";
 import { logger } from "../logger";
 import { requireEnv } from "../environment";
@@ -7,10 +8,12 @@ import PubNub from "pubnub";
 /**
  * Publishes a write event for the given collection to PubNub.
  *
+ * @param c The request context.
  * @param ref The collection that was written to.
  * @param newData The new data in the collection.
  */
 export async function publishWriteForRef(
+	c: Pick<Context<Env>, "env">,
 	ref: CollectionReference,
 	newData: ReadonlyArray<IdentifiedDataItem>
 ): Promise<void>;
@@ -18,24 +21,27 @@ export async function publishWriteForRef(
 /**
  * Publishes a write event for the given document to PubNub.
  *
+ * @param c The request context.
  * @param ref The document that was written to.
  * @param newData The new data in the document, or `null` if the document was deleted.
  */
 export async function publishWriteForRef(
+	c: Pick<Context<Env>, "env">,
 	ref: DocumentReference,
 	newData: IdentifiedDataItem | null
 ): Promise<void>;
 
 export async function publishWriteForRef(
+	c: Pick<Context<Env>, "env">,
 	ref: CollectionReference | DocumentReference,
 	newData: ReadonlyArray<IdentifiedDataItem> | IdentifiedDataItem | null
 ): Promise<void> {
-	// TODO: This should be a no-op when we're in Express
+	// TODO: This should be a no-op when we're in Node
 
 	const channel = pubNubChannelNameForRef(ref);
 	logger.debug(`Posting write for channel '${channel}'...`);
 	try {
-		await pubnubForUser(ref.user, (pubnub, cipherKey) => {
+		await pubnubForUser(c, ref.user, (pubnub, cipherKey) => {
 			const message = pubnub.encrypt(
 				JSON.stringify({
 					message: "Here's your data",
@@ -77,9 +83,10 @@ function pubNubChannelNameForRef(ref: CollectionReference | DocumentReference): 
  * last as long as the session does, and should be revoked when the
  * session ends.
  */
-export async function newPubNubTokenForUser(user: User): Promise<PubNubToken> {
+export async function newPubNubTokenForUser(c: Context<Env>, user: User): Promise<PubNubToken> {
 	const uid = user.uid;
 	return await pubnubForUser(
+		c,
 		user,
 		pubnub =>
 			// Grant permission to the UID to use PubNub for this document
@@ -108,8 +115,12 @@ export async function newPubNubTokenForUser(user: User): Promise<PubNubToken> {
  * Revokes the given PubNub access token. Once the token has been revoked,
  * it cannot be re-enabled or re-used to establish future connections.
  */
-export async function revokePubNubToken(token: PubNubToken, uid: UID): Promise<void> {
-	await pubnubForUser(uid, async pubnub => {
+export async function revokePubNubToken(
+	c: Context<Env>,
+	token: PubNubToken,
+	uid: UID
+): Promise<void> {
+	await pubnubForUser(c, uid, async pubnub => {
 		try {
 			pubnub.parseToken(token);
 		} catch {
@@ -124,6 +135,7 @@ export async function revokePubNubToken(token: PubNubToken, uid: UID): Promise<v
  * Creates a {@link PubNub} client instance for the given user. The client
  * is destroyed immediately after the callback resolves or rejects.
  *
+ * @param c The request context.
  * @param userOrUid The user or the ID of the user whose personal cipher
  * key to use in transmitting messages.
  * @param cb A callback that receives a {@link PubNub} instance for
@@ -132,11 +144,12 @@ export async function revokePubNubToken(token: PubNubToken, uid: UID): Promise<v
  * @returns The value returned by the callback.
  */
 async function pubnubForUser<T>(
+	c: Pick<Context<Env>, "env">,
 	userOrUid: User | UID,
 	cb: (pubnub: PubNub, cipherKey: string) => T | Promise<T>
 ): Promise<T> {
 	const { userWithUid } = await import("../database/read");
-	const user = typeof userOrUid === "string" ? await userWithUid(userOrUid) : userOrUid;
+	const user = typeof userOrUid === "string" ? await userWithUid(c, userOrUid) : userOrUid;
 	if (!user)
 		throw new TypeError(
 			`No user exists with uid '${typeof userOrUid === "string" ? userOrUid : "<unknown>"}'`
@@ -145,9 +158,9 @@ async function pubnubForUser<T>(
 
 	// This should be the only PubNub instance for the calling user
 	const pubnub = new PubNub({
-		secretKey: requireEnv("PUBNUB_SECRET_KEY"), // only used on the server
-		publishKey: requireEnv("PUBNUB_PUBLISH_KEY"), // shared by client and server
-		subscribeKey: requireEnv("PUBNUB_SUBSCRIBE_KEY"), // shared by client and server
+		secretKey: requireEnv(c, "PUBNUB_SECRET_KEY"), // only used on the server
+		publishKey: requireEnv(c, "PUBNUB_PUBLISH_KEY"), // shared by client and server
+		subscribeKey: requireEnv(c, "PUBNUB_SUBSCRIBE_KEY"), // shared by client and server
 		userId: "server", // clients shouldn't use this UUID
 		ssl: true,
 	});

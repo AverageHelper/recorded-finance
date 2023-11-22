@@ -1,32 +1,30 @@
 import type { MFAOption } from "../../../database/schemas";
 import { apiHandler, dispatchRequests } from "../../../helpers/apiHandler";
-import { BadRequestError } from "../../../errors/BadRequestError";
 import { compare } from "../../../auth/generators";
-import { is, type } from "superstruct";
 import { logger } from "../../../logger";
 import { newAccessTokens, setSession } from "../../../auth/jwt";
-import { nonemptyString, nonemptyLargeString } from "../../../database/schemas";
-import { respondSuccess } from "../../../responses";
+import { nonemptyLargeString, nonemptyString } from "../../../database/schemas";
+import { type } from "superstruct";
 import { statsForUser, userWithAccountId } from "../../../database/read";
+import { successResponse } from "../../../responses";
 import { UnauthorizedError } from "../../../errors/UnauthorizedError";
 
-export const POST = apiHandler("POST", async (req, res) => {
-	const reqBody = type({
-		account: nonemptyString,
-		password: nonemptyLargeString,
-	});
+const PATH = "/api/v0/login";
 
-	if (!is(req.body, reqBody)) {
-		throw new BadRequestError("Improper parameter types");
-	}
+const reqBody = type({
+	account: nonemptyString,
+	password: nonemptyLargeString,
+});
 
+export const POST = apiHandler(PATH, "POST", reqBody, async c => {
 	// ** Create a JWT for the caller to use later
 
-	const givenAccountId = req.body.account;
-	const givenPassword = req.body.password;
+	const body = c.req.valid("json");
+	const givenAccountId = body.account;
+	const givenPassword = body.password;
 
 	// ** Get credentials
-	const user = await userWithAccountId(givenAccountId);
+	const user = await userWithAccountId(c, givenAccountId);
 	if (!user) {
 		logger.debug(`Found no user under account ${JSON.stringify(givenAccountId)}`);
 		throw new UnauthorizedError("wrong-credentials");
@@ -49,11 +47,11 @@ export const POST = apiHandler("POST", async (req, res) => {
 	// ** Generate an auth token and send it along
 	const uid = user.uid;
 	const pubnub_cipher_key = user.pubnubCipherKey;
-	const { access_token, pubnub_token } = await newAccessTokens(user, []);
-	const { totalSpace, usedSpace } = await statsForUser(uid);
+	const { access_token, pubnub_token } = await newAccessTokens(c, user, []);
+	const { totalSpace, usedSpace } = await statsForUser(c, uid);
 
-	setSession(req, res, access_token);
-	respondSuccess(res, {
+	await setSession(c, access_token);
+	return successResponse(c, {
 		access_token,
 		pubnub_token,
 		pubnub_cipher_key,
@@ -64,4 +62,4 @@ export const POST = apiHandler("POST", async (req, res) => {
 	});
 });
 
-export default dispatchRequests({ POST });
+export default dispatchRequests(PATH, { POST });

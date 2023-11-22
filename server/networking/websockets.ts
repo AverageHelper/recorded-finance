@@ -1,22 +1,31 @@
-import type { Request as ExpressRequest } from "express";
-import type { Struct } from "superstruct";
-import type { ValueIteratorTypeGuard } from "../database/schemas";
-import type { WebsocketRequestHandler } from "express-ws";
+import type { Context } from "hono";
+import type { Server as HTTPServer } from "node:http";
+import type { Infer, Struct } from "superstruct";
+import type { ReadonlyDeep } from "type-fest";
+import type { ServerType } from "@hono/node-server/dist/types";
+import type { User } from "../database/schemas";
 import type { WebSocket } from "ws";
-import { assertSchema, isObject } from "../database/schemas";
+import { WebSocketServer } from "ws";
+import { InternalError } from "../errors/InternalError";
+import { literal, type, unknown, validate } from "superstruct";
 import { isWebSocketCode, WebSocketCode } from "./WebSocketCode";
 import { logger } from "../logger";
-import { StructError } from "superstruct";
+import { UpgradeRequiredError } from "../errors/UpgradeRequiredError";
 import { WebSocketError } from "../errors/WebSocketError";
+import { HttpStatusCode } from "../helpers/HttpStatusCode";
 
-/** The type that a type guard is checking. */
-type TypeFromGuard<G> = G extends ValueIteratorTypeGuard<unknown, infer T> ? T : never;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type WebSocketMessages = Record<string, Struct<any, any>>;
 
-type WebSocketMessages = Record<string, ValueIteratorTypeGuard<unknown, unknown>>;
+interface WebSocketUtils<T extends WebSocketMessages, Params extends object> {
+	/** The context of the request that initiated the connection. */
+	context: Context<Env>;
 
-interface WebSocketUtils<T extends WebSocketMessages> {
-	/** The request that started the connection. */
-	req: ExpressRequest;
+	/** The logged-in user. Only authenticated users may start WebSocket connections. */
+	user: User;
+
+	/** Params to the connection, usually derived from the request path. */
+	params: Params;
 
 	/**
 	 * Registers a function to be called when the connection closes.
@@ -28,13 +37,10 @@ interface WebSocketUtils<T extends WebSocketMessages> {
 	 * Registers a function to be called when the client sends
 	 * a message via the websocket.
 	 */
-	onMessage: <K extends keyof T, G extends T[K]>(
-		name: K,
-		cb: (data: TypeFromGuard<G>) => void
-	) => void;
+	onMessage: <K extends keyof T, G extends T[K]>(name: K, cb: (data: Infer<G>) => void) => void;
 
 	/** Sends a message to the client via the websocket. */
-	send: <K extends keyof T, G extends T[K]>(name: K, data: TypeFromGuard<G>) => void;
+	send: <K extends keyof T, G extends T[K]>(name: K, data: ReadonlyDeep<Infer<G>>) => void;
 
 	/** Closes the websocket. */
 	close: (code: WebSocketCode, reason: string) => void;
@@ -43,40 +49,54 @@ interface WebSocketUtils<T extends WebSocketMessages> {
 /**
  * Constructs a type-safe websocket interface.
  *
- * @param req The request that started the connection.
+ * @param user The user who initiated the connection.
+ * @param params Params to the connection, usually derived from the request path.
  * @param ws The {@link WebSocket} instance by which to send and receive messages.
  * @param interactions The types of interactions expected to be sent over the connection.
  *
  * @returns An object with utility functions to use to interact with the client.
  */
-export function wsFactory<T extends WebSocketMessages>(
-	req: ExpressRequest,
+export function wsFactory<T extends WebSocketMessages, Params extends object>(
+	context: Context<Env>,
+	user: User,
+	params: Params,
 	ws: WebSocket,
 	interactions: T
-): WebSocketUtils<T> {
+): WebSocketUtils<T, Params> {
 	interface _WebSocketMessage<M extends keyof T> {
 		name: M;
-		data: TypeFromGuard<T[M]>;
+		data: Infer<T[M]>;
 	}
 
-	function isWebSocketMessage<M extends keyof T>(
+	function assertWebSocketMessage<M extends keyof T>(
 		name: M,
 		tbd: unknown
-	): tbd is _WebSocketMessage<M> {
-		if (
-			!isObject(tbd) || //
-			!("name" in tbd) ||
-			!("data" in tbd) ||
-			tbd["name"] !== name
-		)
-			return false;
+	): asserts tbd is _WebSocketMessage<M> {
+		const webSocketMessage = type({
+			name: literal(name as string),
+			data: unknown(),
+		});
+
+		const [error, message] = validate(tbd, webSocketMessage, { coerce: true });
+		if (error) {
+			logger.warn("[WebSocket]", error);
+			throw new WebSocketError(WebSocketCode.WRONG_MESSAGE_TYPE, error.message);
+		}
 
 		// check name
 		const guard = interactions[name];
-		if (!guard) return false;
+		if (!guard) {
+			const error = `Unknown interaction name '${String(name)}'`;
+			logger.warn("[WebSocket]", error);
+			throw new WebSocketError(WebSocketCode.WRONG_MESSAGE_TYPE, error);
+		}
 
 		// check data
-		return guard(tbd["data"]);
+		const [dataError] = validate(message.data, guard, { coerce: true });
+		if (dataError) {
+			logger.warn("[WebSocket]", dataError);
+			throw new WebSocketError(WebSocketCode.VIOLATED_CONTRACT, dataError.message);
+		}
 	}
 
 	function close(ws: WebSocket, code: WebSocketCode, reason: string): void {
@@ -120,7 +140,9 @@ export function wsFactory<T extends WebSocketMessages>(
 
 	// Application-layer communications
 	return {
-		req,
+		context,
+		user,
+		params,
 
 		onClose(cb): void {
 			ws.on("close", (code, reason) => {
@@ -147,8 +169,7 @@ export function wsFactory<T extends WebSocketMessages>(
 			ws.on("message", msg => {
 				try {
 					const message = JSON.parse((msg as Buffer).toString()) as unknown;
-					if (!isWebSocketMessage(name, message))
-						throw new WebSocketError(WebSocketCode.WRONG_MESSAGE_TYPE, "Improper message");
+					assertWebSocketMessage(name, message);
 
 					cb(message.data);
 				} catch (error) {
@@ -176,26 +197,67 @@ export function wsFactory<T extends WebSocketMessages>(
 	};
 }
 
-export function ws<P, T extends WebSocketMessages>(
-	interactions: T,
-	params: Struct<P>,
-	start: (context: WebSocketUtils<T>, params: P) => void | Promise<void>
-): WebsocketRequestHandler {
-	return function webSocket(ws, req, next): void {
-		const context = wsFactory(req, ws, interactions);
+/** The Node webserver. This handle is used for attaching a WebSocketServer object. */
+let _server: HTTPServer | undefined;
 
-		// Ensure valid input
-		try {
-			assertSchema(req.params, params);
-		} catch (error) {
-			if (error instanceof StructError) {
-				return context.close(WebSocketCode.VIOLATED_CONTRACT, error.message);
-			}
-			logger.error("Unknown error trying to validate WebSocket inputs:", error);
-			return context.close(WebSocketCode.UNEXPECTED_CONDITION, "Internal error");
+/**
+ * Bootstraps a WebSocket server.
+ *
+ * @param server The result of calling Hono's `serve` function on a Hono instance.
+ */
+export function honoWs(server: ServerType): void {
+	if (_server) throw new TypeError("You must only call `honoWs` once.");
+	if (!("maxHeadersCount" in server)) throw new TypeError("Wrong server type.");
+	_server = server;
+}
+
+/**
+ * Creates a WebSocket request handler interface.
+ *
+ * @param interactions The kinds of interactions which should be allowed on the connection.
+ * @param beforeStart A function that's called before setting up the socket connection. Errors
+ *   thrown here will be forwarded to the caller as HTTP errors, like a normal request. Must return
+ *   an authorized {@link User} object and validated params for context.
+ * @param start A function that's called just after the connection starts. Errors thrown here
+ *   will close the socket connection and
+ * @returns An API request handler.
+ */
+export function ws<P extends string, Params extends object, T extends WebSocketMessages>(
+	interactions: T,
+	beforeStart: (context: Context<Env, P>) => [User, Params] | Promise<[User, Params]>,
+	start: (connection: WebSocketUtils<T, Params>) => void
+): APIRequestHandler<P> {
+	return async function webSocket(c): Promise<Response> {
+		const upgradeHeader = c.req.header("Upgrade");
+		if (upgradeHeader !== "websocket") {
+			throw new UpgradeRequiredError();
 		}
 
-		// eslint-disable-next-line promise/prefer-await-to-then, promise/no-callback-in-promise
-		Promise.resolve(start(context, req.params)).then(next).catch(next);
+		if (!_server) {
+			throw new TypeError("Tried to execute a WebSocket endpoint before `honoWs` was called.");
+		}
+
+		const [user, params] = await beforeStart(c);
+
+		// See https://github.com/honojs/hono/issues/1153#issuecomment-1785070637
+		const wss = new WebSocketServer({ server: _server });
+		wss.on("connection", socket => {
+			const connection = wsFactory(c, user, params, socket, interactions);
+			try {
+				start(connection);
+			} catch (error) {
+				if (error instanceof WebSocketError) {
+					connection.close(error.code, error.reason);
+				} else if (error instanceof InternalError) {
+					connection.close(WebSocketCode.UNEXPECTED_CONDITION, error.message);
+				} else {
+					connection.close(WebSocketCode.UNEXPECTED_CONDITION, "Internal error");
+				}
+			}
+		});
+
+		return new Response(null, {
+			status: HttpStatusCode.SWITCHING_PROTOCOLS,
+		});
 	};
 }

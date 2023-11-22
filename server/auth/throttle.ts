@@ -1,5 +1,4 @@
-import type { RequestHandler } from "express";
-import { asyncWrapper } from "../asyncWrapper";
+import { BadRequestError } from "../errors/BadRequestError";
 import { env } from "../environment";
 import { RateLimiterMemory, RateLimiterRes } from "rate-limiter-flexible";
 import { ThrottledError } from "../errors/ThrottledError";
@@ -15,31 +14,31 @@ const points = 10; // 10 tries
 const duration = 10 * 60; // per 10 minutes
 const blockDuration = 10 * 60; // block for 10 mins after points run out
 
-// FIXME: We shouldn't use RateLimiterMemory in production
+// FIXME: We shouldn't use RateLimiterMemory in production, especially on Cloudflare
 const rateLimiter = new RateLimiterMemory({ points, duration, blockDuration });
 
 /**
- * Returns middleware that prevents an IP address from sending more than
+ * Middleware that prevents an IP address from sending more than
  * 10 requests in 10 minutes.
  */
-export function throttle(): RequestHandler {
-	return asyncWrapper(async (req, res, next) => {
-		if (env("NODE_ENV") === "test") {
-			// Test mode. Skip throttle
-			next();
-			return;
-		}
+export const throttle: APIRequestMiddleware<"*"> = async function throttle(c, next) {
+	if (env(c, "NODE_ENV") === "test") {
+		// Test mode. Skip throttle
+		await next();
+		return;
+	}
 
-		const remoteIp = req.ip;
-		try {
-			await rateLimiter.consume(remoteIp);
-			next();
-		} catch (error) {
-			if (error instanceof RateLimiterRes) {
-				next(new ThrottledError(error));
-			} else {
-				next(error);
-			}
+	// Works on Vercel, but not Node
+	const remoteIp = c.req.header("x-forwarded-for"); // Use 'CF-Connecting-IP’ in Cloudflare
+	if (!remoteIp) throw new BadRequestError("Missing 'X-Forwarded-For' header.");
+
+	try {
+		await rateLimiter.consume(remoteIp);
+		await next();
+	} catch (error) {
+		if (error instanceof RateLimiterRes) {
+			throw new ThrottledError(error);
 		}
-	});
-}
+		throw error;
+	}
+};

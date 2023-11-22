@@ -1,110 +1,134 @@
-import type { DocumentData, UID } from "./database/schemas";
-import { describeCode, HttpStatusCode } from "./helpers/HttpStatusCode";
-import { InternalError } from "./errors/InternalError";
+import type { Context } from "hono";
+import type { DocumentData, Primitive, UID } from "./database/schemas";
+import type { InternalError } from "./errors/InternalError";
+import type { ReadonlyDeep } from "type-fest";
+import { HttpStatusCode } from "./helpers/HttpStatusCode";
+import { secureHeaders } from "hono/secure-headers";
 
 /**
- * Sets common headers on the given API response handle.
+ * Middleware that applies basic security headers to requests.
+ */
+export const headers = secureHeaders({
+	reportingEndpoints: [
+		{
+			name: "GitHub",
+			url: "https://github.com/RecordedFinance/recorded-finance/security/advisories/new",
+		},
+	],
+	contentSecurityPolicy: {
+		defaultSrc: ["'self'"],
+		baseUri: ["'self'"],
+		objectSrc: ["'none'"],
+		scriptSrcAttr: ["'none'"],
+		upgradeInsecureRequests: [],
+	},
+});
+
+function applyCommonHeaders(c: Context<Env>): void {
+	const CommonHeaders = {
+		// ** Security **
+		"Permissions-Policy":
+			"accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), camera=(), clipboard-read=(), clipboard-write=(), cross-origin-isolated=(), display-capture=(), document-domain=(), encrypted-media=(), execution-while-not-rendered=(), execution-while-out-of-viewport=(), fullscreen=*, gamepad=(), geolocation=(), gyroscope=(), identity-credentials-get=(), idle-detection=(), interest-cohort=(), keyboard-map=(), local-fonts=(), magnetometer=(), microphone=(), midi=(), navigation-override=(), payment=(), picture-in-picture=*, publickey-credentials-create=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), speaker-selection=(), storage-access=(), sync-xhr=(), usb=(), web-share=*, xr-spatial-tracking=()",
+
+		// ** Miscellaneous **
+		"Cache-Control": "no-store",
+		"X-Clacks-Overhead": "GNU Terry Pratchett",
+	} as const;
+
+	for (const [name, value] of Object.entries(CommonHeaders)) {
+		c.header(name, value);
+	}
+}
+
+/**
+ * Creates and returns an HTTP 200 response with no data.
  *
- * @param res The response on which to set the headers.
- * @returns The same API response handle, modified with the common headers.
+ * @param c The request context.
  */
-function setCommonHeaders(res: APIResponse): APIResponse {
-	// These should be set in vercel.json too, for frontend headers:
-	return (
-		res
-			// CORS headers should have be set elsewhere, either before or after this call.
-
-			// ** Security **
-			.setHeader("Strict-Transport-Security", "max-age=15552000; includeSubDomains")
-			.setHeader("X-Content-Type-Options", "nosniff")
-			.setHeader(
-				"Content-Security-Policy",
-				"default-src 'self'; base-uri 'self'; object-src 'none'; script-src-attr 'none'; upgrade-insecure-requests"
-			)
-			.setHeader("X-Frame-Options", "SAMEORIGIN")
-			.setHeader("Referrer-Policy", "no-referrer")
-			.setHeader(
-				"Permissions-Policy",
-				"accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), camera=(), clipboard-read=(), clipboard-write=(), cross-origin-isolated=(), display-capture=(), document-domain=(), encrypted-media=(), execution-while-not-rendered=(), execution-while-out-of-viewport=(), fullscreen=*, gamepad=(), geolocation=(), gyroscope=(), identity-credentials-get=(), idle-detection=(), interest-cohort=(), keyboard-map=(), local-fonts=(), magnetometer=(), microphone=(), midi=(), navigation-override=(), payment=(), picture-in-picture=*, publickey-credentials-create=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), speaker-selection=(), storage-access=(), sync-xhr=(), usb=(), web-share=*, xr-spatial-tracking=()"
-			)
-
-			// ** Miscellaneous **
-			// See https://stackoverflow.com/a/54337073 for why "Vary: *" is necessary for Safari
-			.setHeader("Vary", "*")
-			.setHeader("Cache-Control", "no-store")
-			.setHeader("X-Clacks-Overhead", "GNU Terry Pratchett")
-	);
+export function okResponse(c: Context<Env>): Response {
+	applyCommonHeaders(c);
+	return c.newResponse(null, HttpStatusCode.OK);
 }
 
 /**
- * Sends HTTP 200, then ends the connection.
+ * Creates and returns an HTTP 204 response with no data.
+ *
+ * @param c The request context.
  */
-export function respondOk(res: APIResponse): void {
-	// Only works on HTTP versions older than HTTP/2 (for now).
-	res.statusMessage = describeCode(HttpStatusCode.OK);
-	setCommonHeaders(res);
-	res.status(HttpStatusCode.OK).end();
+export function okCorsResponse(c: Context<Env>): Response {
+	return c.newResponse(null, HttpStatusCode.NO_CONTENT);
 }
 
 /**
- * Sends HTTP 200 and a JSON value that includes the given `message`
- * string and other given key-value pairs, then ends the connection.
+ * Creates and returns an HTTP 200 response with a JSON value that includes
+ * the given `message` string and other given key-value pairs.
+ *
+ * @param c The request context.
+ * @param message The text of the message to send.
+ * @param additionalValues Key-value pairs that should be sent alongside the message.
  */
-export function respondMessage(
-	res: APIResponse,
+export function messageResponse(
+	c: Context<Env>,
 	message: string,
 	additionalValues?: Record<string, string | number | null | ReadonlyArray<string | number>>
-): void {
-	// Only works on HTTP versions older than HTTP/2 (for now).
-	res.statusMessage = describeCode(HttpStatusCode.OK);
-	setCommonHeaders(res);
-	res.json({ ...additionalValues, message }).end();
+): Response {
+	applyCommonHeaders(c);
+	return c.json({ ...additionalValues, message }, HttpStatusCode.OK);
 }
 
 /**
- * Sends HTTP 200 and a JSON value that includes the given key-value pairs, then ends the connection.
+ * Creates and returns an HTTP 200 response with a JSON value that includes
+ * the given key-value pairs.
+ *
+ * @param c The request context.
+ * @param additionalValues Key-value pairs that should be sent alongside the success message.
  */
-export function respondSuccess(
-	res: APIResponse,
+export function successResponse(
+	c: Context<Env>,
 	additionalValues?: Record<string, string | number | null | ReadonlyArray<string | number>>
-): void {
-	// Only works on HTTP versions older than HTTP/2 (for now).
-	res.statusMessage = describeCode(HttpStatusCode.OK);
-	setCommonHeaders(res);
-	res.json({ ...additionalValues, message: "Success!" }).end();
+): Response {
+	applyCommonHeaders(c);
+	return c.json({ ...additionalValues, message: "Success!" }, HttpStatusCode.OK);
 }
 
 /**
- * Sends HTTP 200 and a JSON value that contains the given data, then ends the connection.
+ * Creates and returns an HTTP 200 response with a JSON value that contains the given data.
+ *
+ * @param c The request context.
+ * @param data The data to send to the caller.
  */
-export function respondData<T extends { _id: string } | { uid: UID }>(
-	res: APIResponse,
-	data: DocumentData<T> | ReadonlyArray<DocumentData<T>> | null
-): void {
-	// Only works on HTTP versions older than HTTP/2 (for now).
-	res.statusMessage = describeCode(HttpStatusCode.OK);
-	setCommonHeaders(res);
-	res
-		.json({ message: "Success!", data }) // TODO: Should this go down as a multipart thingthing instead?
-		.end();
+export function dataResponse<
+	T extends Record<string, Primitive> & ({ _id: string } | { uid: UID }),
+>(
+	c: Context<Env>,
+	data: ReadonlyDeep<DocumentData<T>> | ReadonlyArray<ReadonlyDeep<DocumentData<T>>> | null
+): Response {
+	applyCommonHeaders(c);
+	return c.json({ message: "Success!", data }, HttpStatusCode.OK);
+}
+
+function isArray(tbd: string | number | ReadonlyArray<string>): tbd is ReadonlyArray<string> {
+	return Array.isArray(tbd);
 }
 
 /**
- * Sends an HTTP response as defined by the given error, then ends the connection.
+ * Creates and returns an HTTP response described by the given error.
+ *
+ * @param c The request context.
+ * @param error The error to send to the caller.
  */
-export function respondError(res: APIResponse, err: InternalError): void {
-	// Only works on HTTP versions older than HTTP/2 (for now).
-	res.statusMessage = describeCode(err.status);
-	setCommonHeaders(res);
-	err.headers.forEach((value, name) => {
-		res.setHeader(name, value);
+export function errorResponse(c: Context<Env>, error: InternalError): Response {
+	error.headers.forEach((value, name) => {
+		if (isArray(value)) {
+			value.forEach(value => {
+				c.header(name, value, { append: true });
+			});
+		} else if (typeof value === "string") {
+			c.header(name, value);
+		} else {
+			c.header(name, `${value}`);
+		}
 	});
-	res.status(err.status).json({ message: err.message, code: err.code }).end();
-}
-
-/**
- * Sends HTTP 500, then ends the connection.
- */
-export function respondInternalError(res: APIResponse): void {
-	respondError(res, new InternalError({ code: "unknown" }));
+	applyCommonHeaders(c);
+	return c.json({ message: error.message, code: error.code }, error.status);
 }

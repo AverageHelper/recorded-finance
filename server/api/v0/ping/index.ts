@@ -1,8 +1,10 @@
 import { apiHandler, dispatchRequests } from "../../../helpers/apiHandler";
-import { respondMessage } from "../../../responses";
+import { messageResponse } from "../../../responses";
 
-export const GET = apiHandler("GET", (req, res) => {
-	respondMessage(res, "Pong!");
+const PATH = "/api/v0/ping";
+
+export const GET = apiHandler(PATH, "GET", null, c => {
+	return messageResponse(c, "Pong!");
 });
 
-export default dispatchRequests({ GET });
+export default dispatchRequests(PATH, { GET });

@@ -22,7 +22,7 @@ $ npm -v && node -v
 v18.17.1
 ```
 
-The server supports self-hosting out of the box using Express. If you wish to host the back-end using Vercel Serverless Functions, you should set up an account with [Vercel](https://vercel.com) and [PubNub](https://www.pubnub.com).
+The server supports self-hosting out of the box. If you wish to host the back-end using Vercel Serverless Functions, you should set up an account with [Vercel](https://vercel.com) and [PubNub](https://www.pubnub.com).
 
 ### Compile and Run the Server
 
@@ -51,13 +51,13 @@ MAX_BYTES={the total number of bytes that file attachments are permitted to occu
 # optional, defaults to 20000000000 (20 GB)
 
 PUBNUB_PUBLISH_KEY={publish key given by PubNub}
-# optional with Express, required with Vercel, key given by PubNub
+# optional with Node, required with Vercel, key given by PubNub's dashboard
 
 PUBNUB_SUBSCRIBE_KEY={subscribe key given by PubNub}
-# optional with Express, required with Vercel, key given by PubNub
+# optional with Node, required with Vercel, key given by PubNub's dashboard
 
 PUBNUB_SECRET_KEY={secret key given by PubNub}
-# optional with Express, required with Vercel, key given by PubNub
+# optional with Node, required with Vercel, key given by PubNub's dashboard
 ```
 
 Run these commands to compile and run

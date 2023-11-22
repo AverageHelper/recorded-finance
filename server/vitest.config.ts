@@ -14,7 +14,7 @@ export default defineConfig({
 		coverage: {
 			enabled: true,
 			all: true,
-			provider: "istanbul",
+			provider: "istanbul", // FIXME: v8 should work, but gets confused with some endpoint files
 			reportsDirectory: "coverage",
 			exclude: ["scripts/**/*", "vitest.config"],
 		},

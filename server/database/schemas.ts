@@ -5,7 +5,6 @@ import type { Opaque } from "type-fest";
 import { UnreachableCaseError } from "../errors/UnreachableCaseError";
 import {
 	array,
-	assert,
 	define,
 	enums,
 	intersection,
@@ -29,37 +28,12 @@ const LARGE_MAX_CHARS = 65_535; // When we override to TEXT
 // Copied from lodash
 export type ValueIteratorTypeGuard<T, S extends T> = (value: T) => value is S;
 
-function isArray(tbd: unknown): tbd is Array<unknown> {
-	// Compare with lodash
-	return Array.isArray(tbd);
-}
-
-export function isArrayOf<T>(
-	tbd: unknown,
-	elementGuard: ValueIteratorTypeGuard<unknown, T>
-): tbd is Array<T> {
-	return isArray(tbd) && tbd.every(elementGuard);
-}
-
 export function isNonEmptyArray<T>(tbd: ReadonlyArray<T>): tbd is ReadonlyNonEmptyArray<T>;
 
 export function isNonEmptyArray<T>(tbd: Array<T>): tbd is NonEmptyArray<T>;
 
 export function isNonEmptyArray<T>(tbd: ReadonlyArray<T>): tbd is NonEmptyArray<T> {
 	return tbd.length > 0;
-}
-
-export function isObject(tbd: unknown): tbd is Record<string, unknown> {
-	return typeof tbd === "object" && tbd !== null && !Array.isArray(tbd);
-}
-
-/**
- * Throws a {@link StructError} if the given value does not
- * match the given schema.
- */
-export function assertSchema<T>(tbd: unknown, schema: Struct<T>): asserts tbd is T {
-	const [error] = schema.validate(tbd);
-	if (error) throw error;
 }
 
 const mfaOptions = ["totp"] as const;
@@ -104,10 +78,6 @@ export const jwtPayload = type({
 
 export type JwtPayload = Infer<typeof jwtPayload>;
 
-export function assertJwtPayload(tbd: unknown): asserts tbd is JwtPayload {
-	return assert(tbd, jwtPayload);
-}
-
 /**
  * A hashed value, usually a password.
  */
@@ -133,10 +103,6 @@ const totpSeed = define<TOTPSeed>("TOTPSeed", v => is(v, nonemptyString));
  */
 export type TOTPToken = Opaque<string, "TOTPToken">;
 export const totpToken = define<TOTPToken>("TOTPToken", v => is(v, nonemptyString));
-
-export function isTotpToken(tbd: unknown): tbd is TOTPToken {
-	return is(tbd, totpToken);
-}
 
 /**
  * A key used to encrypt PubNub messages before sending them to PubNub's service.
@@ -243,28 +209,20 @@ export type DocumentData<T> = {
 	[K in keyof T]: Primitive;
 };
 
-const dataItem = object({
+export const dataItem = object({
 	ciphertext: nonemptyLargeString,
 	objectType: nonemptyString,
 	cryption: optional(enums(["v0", "v1"] as const)),
 });
 export type DataItem = Infer<typeof dataItem>;
 
-export function isDataItem(tbd: unknown): tbd is DataItem {
-	return is(tbd, dataItem);
-}
-
-const userKeys = object({
+export const userKeys = object({
 	dekMaterial: nonemptyLargeString,
 	passSalt: salt,
 	oldDekMaterial: optional(nonemptyLargeString),
 	oldPassSalt: optional(salt),
 });
 export type UserKeys = Infer<typeof userKeys>;
-
-export function isUserKeys(tbd: unknown): tbd is UserKeys {
-	return is(tbd, userKeys);
-}
 
 export const allCollectionIds = [
 	"accounts",
@@ -283,13 +241,7 @@ export function isCollectionId(tbd: string): tbd is CollectionID {
 }
 
 /** A subset of {@link CollectionID} that's used as a discriminator for DataItem collections. */
-export type DataItemKey =
-	| "accounts"
-	| "attachments"
-	| "locations"
-	| "tags"
-	| "transactions"
-	| "users";
+export type DataItemKey = Exclude<CollectionID, "keys">;
 
 export function isDataItemKey(id: CollectionID): id is DataItemKey {
 	switch (id) {
@@ -326,12 +278,8 @@ const deleteBatch = object({
 	ref: documentRef,
 });
 
-const documentWriteBatch = union([setBatch, deleteBatch]);
+export const documentWriteBatch = union([setBatch, deleteBatch]);
 export type DocumentWriteBatch = Infer<typeof documentWriteBatch>;
-
-export function isDocumentWriteBatch(tbd: unknown): tbd is DocumentWriteBatch {
-	return is(tbd, documentWriteBatch);
-}
 
 const identified = type({
 	_id: nonemptyString,

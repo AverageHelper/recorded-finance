@@ -8,10 +8,12 @@ import { CollectionReference } from "../database/references";
 import inquirer from "inquirer";
 import ora from "ora";
 
+const c = { env: process.env as Env["Bindings"] };
+
 async function main(): Promise<void> {
 	const loadSpinner = ora("Reading '/database/users'").start();
 
-	const uids = await Promise.all(await listAllUserIds(null));
+	const uids = await Promise.all(await listAllUserIds(c, null));
 	loadSpinner.succeed();
 
 	uid: while (true) {
@@ -35,7 +37,7 @@ async function main(): Promise<void> {
 			}
 
 			const userSpinner = ora(`Reading '/database/users/${uid}'`).start();
-			const user = await userWithUid(uid, null);
+			const user = await userWithUid(c, uid, null);
 			if (!user) {
 				userSpinner.fail(`No user found for that UID.`);
 				continue uid;
@@ -45,7 +47,7 @@ async function main(): Promise<void> {
 			const ref = new CollectionReference(user, collectionId);
 			const colSpinner = ora(`Reading '/database/${ref.path}'`).start();
 
-			const collection = await fetchDbCollection(ref, null);
+			const collection = await fetchDbCollection(c, ref, null);
 
 			if (!isNonEmptyArray(collection)) {
 				colSpinner.succeed(`Reading '/database/${ref.path}'\nNo documents`);
