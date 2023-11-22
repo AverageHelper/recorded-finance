@@ -1,4 +1,4 @@
-import type { ErrorHandler, ValidationTargets } from "hono";
+import type { ErrorHandler, NotFoundHandler, ValidationTargets } from "hono";
 import type { Infer, Struct } from "superstruct";
 import { assertMethod } from "./assertMethod";
 import { BadMethodError } from "../errors/BadMethodError";
