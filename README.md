@@ -87,7 +87,7 @@ DO NOT FORGET your ACCOUNT ID or PASSWORD. If you do, your data is irretrievably
 
 ## Contributing
 
-This project is entirely open source. Do with it what you will. If you're willing to help me improve this project, consider [filing an issue](https://github.com/RecordedFinance/recorded-finance/issues/new/choose).
+This project is entirely open source. Do with it what you will. If you're willing to help me improve this project, consider [filing an issue](https://codeberg.org/RecordedFinance/recorded-finance/issues/new/choose).
 
 See [CONTRIBUTING.md](/CONTRIBUTING.md) for ways to contribute.
 
@@ -116,7 +116,7 @@ While our cookies indeed deal with the user's login "session," [GDPR.edu](https:
 
 ### How do releases work?
 
-The manual way is complicated: add a version entry to [CHANGELOG.md](/CHANGELOG.md), straighten out the not-yet-valid URLs in the changelog footer, update [package.json](/package.json) and [package-lock.json](/package-lock.json) (the latter using `npm i`), then merge the PR, then copy the changelog entry to cut a new [Release](https://github.com/RecordedFinance/recorded-finance/releases) and tag using GitHub's UI. The changelog's version links now point to the relevant newly-created tags.
+The manual way is complicated: add a version entry to [CHANGELOG.md](/CHANGELOG.md), straighten out the not-yet-valid URLs in the changelog footer, update [package.json](/package.json) and [package-lock.json](/package-lock.json) (the latter using `npm i`), then merge the PR, then copy the changelog entry to cut a new [Release](https://codeberg.org/RecordedFinance/recorded-finance/releases) and tag using Codeberg's UI. The changelog's version links now point to the relevant newly-created tags.
 
 I've missed some steps before. For example, version [0.9.0](/CHANGELOG.md#090---2022-07-12) didn't originally have a tag, so related comparison links were broken. Not ideal. Since we use [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), we can automate most of our release steps, as follows:
 
@@ -126,7 +126,7 @@ I've missed some steps before. For example, version [0.9.0](/CHANGELOG.md#090---
 4. I push a PR.
    - The CI (Continuous Integration) bots check that there's a new version in the changelog, and if so, check that I've run `npm run release` on the branch. (The usual CI checks also occur.)
 5. I merge the PR.
-   - The CD (Continuous Deployment) bots dispatch a new git tag and GitHub Release using the content of the [CHANGELOG.md](/CHANGELOG.md).
+   - The CD (Continuous Deployment) bots dispatch a new git tag and Forgejo Release using the content of the [CHANGELOG.md](/CHANGELOG.md).
 
 Once the release is tagged and deployed, it's up to server maintainers (including me) to pull down the latest changes. I might do something about that later.
 
@@ -145,6 +145,8 @@ Google Analytics is spoopy as heck, and even [illegal in the EU](https://noyb.eu
 I have a long wishlist for this project. In no particular order:
 
 - [x] Move repo to our own GitHub org
+- [x] [Switch to Codeberg](https://giveupgithub.org)
+- [ ] Move repo to our own Forgejo instance
 - [ ] Separate the "website" from the "app" to make self-hosting easier
 - [ ] Standard API evolution protocol (deprecation and obsoleting of old API versions)
 - [ ] API v1

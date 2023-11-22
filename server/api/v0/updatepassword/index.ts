@@ -1,18 +1,18 @@
 import { apiHandler } from "../../../helpers/apiHandler";
 import { compare, generateHash, generateSalt } from "../../../auth/generators";
 import { generateTOTPSecretURI, verifyTOTP } from "../../../auth/totp";
-import { nonempty, optional, string, type } from "superstruct";
+import { nonemptyLargeString, nonemptyString, totpToken } from "../../../database/schemas";
+import { optional, type } from "superstruct";
 import { successResponse } from "../../../responses";
-import { totpToken } from "../../../database/schemas";
 import { UnauthorizedError } from "../../../errors/UnauthorizedError";
 import { upsertUser } from "../../../database/write";
 import { userWithAccountId } from "../../../database/read";
 
 const PATH = "/api/v0/updatepassword";
 const reqBody = type({
-	account: nonempty(string()),
-	password: nonempty(string()),
-	newpassword: nonempty(string()),
+	account: nonemptyString,
+	password: nonemptyLargeString,
+	newpassword: nonemptyLargeString,
 	token: optional(totpToken),
 });
 

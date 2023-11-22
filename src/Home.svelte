@@ -76,8 +76,8 @@
 			<I18N keypath="home.open-source.pr">
 				<!-- issue -->
 				<OutLink to={repoNewIssue}>{$_("home.open-source.issue")}</OutLink>
-				<!-- github -->
-				<OutLink to={repoMain}>{$_("home.open-source.github")}</OutLink>
+				<!-- codeberg -->
+				<OutLink to={repoMain}>{$_("home.open-source.codeberg")}</OutLink>
 			</I18N>
 			{$_("home.open-source.let-me-know")}
 		</p>

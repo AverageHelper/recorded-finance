@@ -23,8 +23,8 @@ export const GET = apiHandler(PATH, "GET", null, async c => {
 	return successResponse(c, {
 		account,
 		access_token,
-		pubnub_cipher_key,
 		pubnub_token,
+		pubnub_cipher_key,
 		requiredAddtlAuth,
 		uid,
 		totalSpace,

@@ -311,7 +311,7 @@ describe("Routes", () => {
 			await request("GET", PATH)
 				.expect("Content-Type", /json/u)
 				.expect(200)
-				.expect({ message: `Recorded Finance v${version}`, version });
+				.expect({ message: `Recorded Finance Server v${version}`, version });
 		});
 
 		const BadMethods = ["HEAD", "POST", "PUT", "DELETE", "PATCH"] as const;

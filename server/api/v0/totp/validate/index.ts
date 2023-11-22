@@ -83,8 +83,8 @@ export const POST = apiHandler(PATH, "POST", reqBody, async c => {
 	if (recovery_token !== null) {
 		return successResponse(c, {
 			access_token,
-			pubnub_cipher_key,
 			pubnub_token,
+			pubnub_cipher_key,
 			recovery_token,
 			uid,
 			totalSpace,
@@ -94,8 +94,8 @@ export const POST = apiHandler(PATH, "POST", reqBody, async c => {
 
 	return successResponse(c, {
 		access_token,
-		pubnub_cipher_key,
 		pubnub_token,
+		pubnub_cipher_key,
 		uid,
 		totalSpace,
 		usedSpace,

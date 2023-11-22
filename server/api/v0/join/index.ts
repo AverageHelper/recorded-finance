@@ -2,12 +2,13 @@ import type { UID, User } from "../../../database/schemas";
 import { apiHandler } from "../../../helpers/apiHandler";
 import { DuplicateAccountError } from "../../../errors/DuplicateAccountError";
 import { generateAESCipherKey, generateHash, generateSalt } from "../../../auth/generators";
-import { nonempty, string, type } from "superstruct";
 import { maxTotalUsers } from "../../../auth/limits";
 import { newAccessTokens, setSession } from "../../../auth/jwt";
+import { nonemptyLargeString, nonemptyString } from "../../../database/schemas";
 import { NotEnoughUserSlotsError } from "../../../errors/NotEnoughUserSlotsError";
 import { numberOfUsers, statsForUser, userWithAccountId } from "../../../database/read";
 import { successResponse } from "../../../responses";
+import { type } from "superstruct";
 import { upsertUser } from "../../../database/write";
 
 /**
@@ -21,12 +22,14 @@ function newDocumentId(): UID {
 
 const PATH = "/api/v0/join";
 const reqBody = type({
-	account: nonempty(string()),
-	password: nonempty(string()),
+	account: nonemptyString,
+	password: nonemptyLargeString,
 });
 
 export const POST = apiHandler(PATH, "POST", reqBody, async c => {
-	const { account: givenAccountId, password: givenPassword } = c.req.valid("json");
+	const body = c.req.valid("json");
+	const givenAccountId = body.account;
+	const givenPassword = body.password;
 
 	// ** Make sure we arent' full
 	const limit = maxTotalUsers(c);
@@ -63,8 +66,8 @@ export const POST = apiHandler(PATH, "POST", reqBody, async c => {
 	await setSession(c, access_token);
 	return successResponse(c, {
 		access_token,
-		pubnub_cipher_key: pubnubCipherKey,
 		pubnub_token,
+		pubnub_cipher_key: pubnubCipherKey,
 		uid,
 		totalSpace,
 		usedSpace,

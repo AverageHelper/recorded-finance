@@ -2,10 +2,10 @@ import { apiHandler } from "../../../../helpers/apiHandler";
 import { ConflictError } from "../../../../errors/ConflictError";
 import { compare, generateSecureToken } from "../../../../auth/generators";
 import { generateTOTPSecretURI, verifyTOTP } from "../../../../auth/totp";
-import { nonempty, string, type } from "superstruct";
 import { metadataFromRequest } from "../../../../auth/requireAuth";
+import { nonemptyLargeString, totpToken } from "../../../../database/schemas";
 import { successResponse } from "../../../../responses";
-import { totpToken } from "../../../../database/schemas";
+import { type } from "superstruct";
 import { UnauthorizedError } from "../../../../errors/UnauthorizedError";
 import { upsertUser } from "../../../../database/write";
 
@@ -46,7 +46,7 @@ export const GET = apiHandler(PATH, "GET", null, async c => {
 });
 
 const reqBody = type({
-	password: nonempty(string()),
+	password: nonemptyLargeString,
 	token: totpToken,
 });
 export const DELETE = apiHandler(PATH, "DELETE", reqBody, async c => {

@@ -2,15 +2,15 @@ openapi: 3.0.1
 info:
   title: Recorded Finance Auth/Storage Server
   version: 0.8.6
-  description: This is the Recorded Finance Server. All the server does is store data given to it by the client. The server controls access to the data with basic password-based auth with optional time-based multi-factor auth. The Recorded Finance client does most of the hard work of encrypting the user's data. You can read Recorded Finance's source code on [GitHub](https://github.com/RecordedFinance/recorded-finance).
+  description: This is the Recorded Finance Server. All the server does is store data given to it by the client. The server controls access to the data with basic password-based auth with optional time-based multi-factor auth. The Recorded Finance client does most of the hard work of encrypting the user's data. You can read Recorded Finance's source code on [Codeberg](https://codeberg.org/RecordedFinance/recorded-finance).
   license:
     name: GNU General Public License v3.0
-    url: https://github.com/RecordedFinance/recorded-finance/blob/main/LICENSE
+    url: https://codeberg.org/RecordedFinance/recorded-finance/src/branch/main/LICENSE
 externalDocs:
   description: Find out more about Recorded Finance
   url: https://recorded.finance
 servers:
-  - url: https://recorded.finance/api/
+  - url: https://recorded.finance/api
 tags:
   - name: misc
     description: Make sure everything works
@@ -19,12 +19,13 @@ tags:
   - name: database
     description: Arbitrary persistent data storage
 paths:
-  "/v0/":
+  "/v0":
     get:
       tags:
         - misc
       summary: Get back a silly response
       operationId: silly
+      security: [] # No security, public info
       responses:
         200:
           description: The server works
@@ -32,6 +33,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [message]
                 properties:
                   message:
                     type: string
@@ -43,6 +45,7 @@ paths:
         - misc
       summary: Make sure the server is working
       operationId: ping
+      security: [] # No security, public info
       responses:
         200:
           description: The server works
@@ -50,6 +53,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [message]
                 properties:
                   message:
                     type: string
@@ -61,6 +65,7 @@ paths:
         - misc
       summary: Get the server's version information
       operationId: version
+      security: [] # No security, public info
       responses:
         200:
           description: Gets the server's current version.
@@ -68,13 +73,14 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [version, message]
                 properties:
                   version:
                     type: string
-                    example: "0.3.0"
+                    example: "1.3.0"
                   message:
                     type: string
-                    example: "Recorded Finance v0.3.0"
+                    example: "Recorded Finance Server v1.3.0"
 
   "/v0/join":
     post:
@@ -82,23 +88,25 @@ paths:
         - auth
       summary: Create a new account
       operationId: create-account
+      security: [] # No security, credentials passed in body
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              required:
-                - account
-                - password
               type: object
+              required: [account, password]
               properties:
                 account:
                   type: string
+                  minLength: 1
                   maxLength: 191
                   description: An identifier (or username) chosen for the user's account.
                     The user may change this later.
                 password:
                   type: string
+                  minLength: 1
+                  maxLength: 65535
                   description: A passphrase to access the user's account. The user may change this later.
       responses:
         200:
@@ -107,6 +115,14 @@ paths:
             application/json:
               schema:
                 type: object
+                required:
+                  - message
+                  - access_token
+                  - pubnub_token
+                  - pubnub_cipher_key
+                  - uid
+                  - totalSpace
+                  - usedSpace
                 properties:
                   message:
                     type: string
@@ -138,17 +154,18 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [message]
                 properties:
                   message:
                     type: string
-                    enum:
-                      - "Improper parameter types"
+                    example: "Improper parameter types"
         409:
           description: An account with the given ID already exists
           content:
             application/json:
               schema:
                 type: object
+                required: [code, message]
                 properties:
                   code:
                     type: string
@@ -156,14 +173,14 @@ paths:
                       - "account-conflict"
                   message:
                     type: string
-                    enum:
-                      - "An account with that ID already exists"
+                    example: "An account with that ID already exists"
         423:
           description: We aren't accepting new users right now.
           content:
             application/json:
               schema:
                 type: object
+                required: [code, message]
                 properties:
                   code:
                     type: string
@@ -178,22 +195,24 @@ paths:
         - auth
       summary: Get an auth token for an existing account.
       operationId: login-account
+      security: [] # No security, credentials passed in body
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              required:
-                - account
-                - password
+              required: [account, password]
               type: object
               properties:
                 account:
                   type: string
+                  minLength: 1
                   maxLength: 191
                   description: An identifier (or username) chosen for the user's account.
                 password:
                   type: string
+                  minLength: 1
+                  maxLength: 65535
                   description: A passphrase to access the user's account.
       responses:
         200:
@@ -202,6 +221,15 @@ paths:
             application/json:
               schema:
                 type: object
+                required:
+                  - message
+                  - access_token
+                  - pubnub_token
+                  - pubnub_cipher_key
+                  - validate
+                  - uid
+                  - totalSpace
+                  - usedSpace
                 properties:
                   message:
                     type: string
@@ -239,11 +267,11 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [message]
                 properties:
                   message:
                     type: string
-                    enum:
-                      - "Improper parameter types"
+                    example: "Improper parameter types"
         403:
           description: The given passphrase does not match, or the given account does
             not exist
@@ -251,6 +279,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [code, message]
                 properties:
                   code:
                     type: string
@@ -258,8 +287,7 @@ paths:
                       - "wrong-credentials"
                   message:
                     type: string
-                    enum:
-                      - "Incorrect account ID or passphrase"
+                    example: "Incorrect account ID or passphrase"
   "/v0/totp/validate":
     post:
       tags:
@@ -273,9 +301,8 @@ paths:
         content:
           application/json:
             schema:
-              required:
-                - token
               type: object
+              required: [token]
               properties:
                 token:
                   type: string
@@ -287,6 +314,14 @@ paths:
             application/json:
               schema:
                 type: object
+                required:
+                  - message
+                  - access_token
+                  - pubnub_token
+                  - pubnub_cipher_key
+                  - uid
+                  - totalSpace
+                  - usedSpace
                 properties:
                   message:
                     type: string
@@ -301,7 +336,7 @@ paths:
                   pubnub_cipher_key:
                     type: string
                     description: Cipher key that the user should use to decrypt PubNub messages.
-                  recovery_token:
+                  recovery_token: # optional
                     type: string
                     description: A recovery code that will be a valid TOTP code exactly once. Only provided if this is the first time this TOTP secret was validated. The user should keep this value safe, as it allows anyone with the user's password access to the account.
                   uid:
@@ -321,17 +356,18 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [message]
                 properties:
                   message:
                     type: string
-                    enum:
-                      - "Improper parameter types"
+                    example: "Improper parameter types"
         403:
           description: The given token is invalid, or a valid session token was not provided.
           content:
             application/json:
               schema:
                 type: object
+                required: [code]
                 properties:
                   code:
                     type: string
@@ -345,6 +381,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [code]
                 properties:
                   code:
                     type: string
@@ -365,6 +402,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [message, secret]
                 properties:
                   message:
                     type: string
@@ -379,6 +417,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [code]
                 properties:
                   code:
                     type: string
@@ -391,6 +430,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [code]
                 properties:
                   code:
                     type: string
@@ -408,13 +448,13 @@ paths:
         content:
           application/json:
             schema:
-              required:
-                - password
-                - token
               type: object
+              required: [password, token]
               properties:
                 password:
                   type: string
+                  minLength: 1
+                  maxLength: 65535
                   description: The passphrase to access the account.
                 token:
                   type: string
@@ -426,17 +466,30 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [message]
                 properties:
                   message:
                     type: string
                     enum:
                       - "Success!"
+        400:
+          description: Missing one or more required parameters.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                properties:
+                  message:
+                    type: string
+                    example: "Improper parameter types"
         403:
           description: The caller did not send valid session cookies, or the password was invalid.
           content:
             application/json:
               schema:
                 type: object
+                required: [code]
                 properties:
                   code:
                     type: string
@@ -460,6 +513,16 @@ paths:
             application/json:
               schema:
                 type: object
+                required:
+                  - message
+                  - account
+                  - access_token
+                  - pubnub_token
+                  - pubnub_cipher_key
+                  - requiredAddtlAuth
+                  - uid
+                  - totalSpace
+                  - usedSpace
                 properties:
                   message:
                     type: string
@@ -500,6 +563,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [code]
                 properties:
                   code:
                     type: string
@@ -522,6 +586,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [message]
                 properties:
                   message:
                     type: string
@@ -533,15 +598,14 @@ paths:
         - auth
       summary: Destroy the user's data and account credentials.
       operationId: leave-forever
+      security: [] # No security, credentials passed in body
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              required:
-                - account
-                - password
               type: object
+              required: [account, password]
               properties:
                 account:
                   type: string
@@ -549,8 +613,10 @@ paths:
                   description: The identifier for the user's account.
                 password:
                   type: string
+                  minLength: 1
+                  maxLength: 65535
                   description: The passphrase to access the account.
-                token:
+                token: # optional
                   type: string
                   description: The TOTP token. Required if the user's account requires TOTP 2FA.
       responses:
@@ -560,6 +626,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [message]
                 properties:
                   message:
                     type: string
@@ -571,17 +638,18 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [message]
                 properties:
                   message:
                     type: string
-                    enum:
-                      - "Improper parameter types"
+                    example: "Improper parameter types"
         403:
           description: The given passphrase does not match, a required TOTP token was not provided, or the given account does not exist.
           content:
             application/json:
               schema:
                 type: object
+                required: [code, message]
                 properties:
                   code:
                     type: string
@@ -598,16 +666,14 @@ paths:
         - auth
       summary: Change the user's password.
       operationId: change-password
+      security: [] # No security, credentials passed in body
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              required:
-                - account
-                - password
-                - newpassword
               type: object
+              required: [account, password, newpassword]
               properties:
                 account:
                   type: string
@@ -615,12 +681,16 @@ paths:
                   description: The identifier for the user's account.
                 password:
                   type: string
+                  minLength: 1
+                  maxLength: 65535
                   description: The current passphrase to access the account.
-                token:
+                token: # optional
                   type: string
                   description: The TOTP token. Required if the user's account requires TOTP 2FA.
                 newpassword:
                   type: string
+                  minLength: 1
+                  maxLength: 65535
                   description: The new passphrase to access the account from now on.
       responses:
         200:
@@ -629,6 +699,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [message]
                 properties:
                   message:
                     type: string
@@ -640,17 +711,18 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [message]
                 properties:
                   message:
                     type: string
-                    enum:
-                      - "Improper parameter types"
+                    example: "Improper parameter types"
         403:
           description: The given passphrase does not match, a required TOTP token was not provided, or the given account does not exist.
           content:
             application/json:
               schema:
                 type: object
+                required: [code, message]
                 properties:
                   code:
                     type: string
@@ -667,16 +739,14 @@ paths:
         - auth
       summary: Change the user's account ID.
       operationId: change-account-id
+      security: [] # No security, credentials passed in body
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              required:
-                - account
-                - newaccount
-                - password
               type: object
+              required: [account, newaccount, password]
               properties:
                 account:
                   type: string
@@ -688,7 +758,7 @@ paths:
                 password:
                   type: string
                   description: The current passphrase to access the account.
-                token:
+                token: # optional
                   type: string
                   description: The TOTP token. Required if the user's account requires TOTP 2FA.
       responses:
@@ -698,6 +768,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [message]
                 properties:
                   message:
                     type: string
@@ -709,17 +780,18 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [message]
                 properties:
                   message:
                     type: string
-                    enum:
-                      - "Improper parameter types"
+                    example: "Improper parameter types"
         403:
           description: The given passphrase does not match, a required TOTP token was not provided, or the given account does not exist.
           content:
             application/json:
               schema:
                 type: object
+                required: [code, message]
                 properties:
                   code:
                     type: string
@@ -745,13 +817,12 @@ paths:
           application/json:
             schema:
               type: array
+              minItems: 0
+              maxItems: 500
               items:
                 oneOf:
                   - type: object
-                    required:
-                      - type
-                      - ref
-                      - data
+                    required: [type, ref, data]
                     properties:
                       type:
                         type: string
@@ -759,9 +830,7 @@ paths:
                           - set
                       ref:
                         type: object
-                        required:
-                          - collectionId
-                          - documentId
+                        required: [collectionId, documentId]
                         properties:
                           collectionId:
                             $ref: "#/components/schemas/CollectionID"
@@ -770,9 +839,7 @@ paths:
                       data:
                         $ref: "#/components/schemas/DataItem"
                   - type: object
-                    required:
-                      - type
-                      - ref
+                    required: [type, ref]
                     properties:
                       type:
                         type: string
@@ -780,9 +847,7 @@ paths:
                           - delete
                       ref:
                         type: object
-                        required:
-                          - collectionId
-                          - documentId
+                        required: [collectionId, documentId]
                         properties:
                           collectionId:
                             $ref: "#/components/schemas/CollectionID"
@@ -795,6 +860,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [message, totalSpace, usedSpace]
                 properties:
                   message:
                     type: string
@@ -814,17 +880,18 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [message]
                 properties:
                   message:
                     type: string
-                    enum:
-                      - "Invalid data"
+                    example: "Invalid data"
         403:
           description: The caller does not have permission to access the resource
           content:
             application/json:
               schema:
                 type: object
+                required: [code]
                 properties:
                   code:
                     type: string
@@ -838,6 +905,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [code, message]
                 properties:
                   code:
                     type: string
@@ -845,8 +913,7 @@ paths:
                       - "not-found"
                   message:
                     type: string
-                    enum:
-                      - "No data found"
+                    example: "No data found"
     parameters:
       - name: uid
         in: path
@@ -869,8 +936,7 @@ paths:
             application/json:
               schema:
                 type: object
-                required:
-                  - data
+                required: [data]
                 properties:
                   data:
                     type: array
@@ -878,10 +944,7 @@ paths:
                       oneOf:
                         # TODO: Instead link to Keys and DataItem
                         - type: object
-                          required:
-                            - _id
-                            - dekMaterial
-                            - passSalt
+                          required: [_id, dekMaterial, passSalt]
                           properties:
                             _id:
                               type: string
@@ -895,11 +958,7 @@ paths:
                             oldPassSalt:
                               type: string
                         - type: object
-                          required:
-                            - _id
-                            - ciphertext
-                            - objectType
-                            - cryption
+                          required: [_id, ciphertext, objectType, cryption]
                           properties:
                             _id:
                               type: string
@@ -918,6 +977,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [code]
                 properties:
                   code:
                     type: string
@@ -931,6 +991,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [code, message]
                 properties:
                   code:
                     type: string
@@ -938,8 +999,7 @@ paths:
                       - "not-found"
                   message:
                     type: string
-                    enum:
-                      - "No data found"
+                    example: "No data found"
     delete:
       tags:
         - database
@@ -954,6 +1014,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [message, totalSpace, usedSpace]
                 properties:
                   message:
                     type: string
@@ -973,6 +1034,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [code]
                 properties:
                   code:
                     type: string
@@ -986,6 +1048,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [code, message]
                 properties:
                   code:
                     type: string
@@ -993,8 +1056,7 @@ paths:
                       - "not-found"
                   message:
                     type: string
-                    enum:
-                      - "No data found"
+                    example: "No data found"
     parameters:
       - name: uid
         in: path
@@ -1023,18 +1085,14 @@ paths:
             application/json:
               schema:
                 type: object
-                required:
-                  - data
+                required: [data]
                 properties:
                   data:
                     oneOf:
                       # TODO: Instead link to Keys and DataItem
                       - type: object
                         nullable: true
-                        required:
-                          - _id
-                          - dekMaterial
-                          - passSalt
+                        required: [_id, dekMaterial, passSalt]
                         properties:
                           _id:
                             type: string
@@ -1043,17 +1101,13 @@ paths:
                             type: string
                           passSalt:
                             type: string
-                          oldDekMaterial:
+                          oldDekMaterial: # optional
                             type: string
-                          oldPassSalt:
+                          oldPassSalt: # optional
                             type: string
                       - type: object
                         nullable: true
-                        required:
-                          - _id
-                          - ciphertext
-                          - objectType
-                          - cryption
+                        required: [_id, ciphertext, objectType, cryption]
                         properties:
                           _id:
                             type: string
@@ -1072,6 +1126,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [code]
                 properties:
                   code:
                     type: string
@@ -1085,6 +1140,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [code, message]
                 properties:
                   code:
                     type: string
@@ -1092,8 +1148,7 @@ paths:
                       - "not-found"
                   message:
                     type: string
-                    enum:
-                      - "No data found"
+                    example: "No data found"
     post:
       tags:
         - database
@@ -1116,6 +1171,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [message, totalSpace, usedSpace]
                 properties:
                   message:
                     type: string
@@ -1135,17 +1191,18 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [message]
                 properties:
                   message:
                     type: string
-                    enum:
-                      - "Invalid data"
+                    example: "Invalid data"
         403:
           description: The caller does not have permission to access the resource
           content:
             application/json:
               schema:
                 type: object
+                required: [code]
                 properties:
                   code:
                     type: string
@@ -1159,6 +1216,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [code, message]
                 properties:
                   code:
                     type: string
@@ -1166,8 +1224,7 @@ paths:
                       - "not-found"
                   message:
                     type: string
-                    enum:
-                      - "No data found"
+                    example: "No data found"
     delete:
       tags:
         - database
@@ -1182,6 +1239,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [message, totalSpace, usedSpace]
                 properties:
                   message:
                     type: string
@@ -1201,6 +1259,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [code]
                 properties:
                   code:
                     type: string
@@ -1214,6 +1273,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [code, message]
                 properties:
                   code:
                     type: string
@@ -1221,8 +1281,7 @@ paths:
                       - "not-found"
                   message:
                     type: string
-                    enum:
-                      - "No data found"
+                    example: "No data found"
     parameters:
       - name: uid
         in: path
@@ -1257,6 +1316,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [message, data]
                 properties:
                   message:
                     type: string
@@ -1264,6 +1324,7 @@ paths:
                       - "Success!"
                   data:
                     type: object
+                    required: [contents, _id]
                     properties:
                       contents:
                         type: string
@@ -1275,17 +1336,18 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [message]
                 properties:
                   message:
                     type: string
-                    enum:
-                      - "Your UID or that file name don't add up to a valid path"
+                    example: "Your UID or that file name don't add up to a valid path"
         403:
           description: The caller does not have permission to access the resource
           content:
             application/json:
               schema:
                 type: object
+                required: [code]
                 properties:
                   code:
                     type: string
@@ -1299,6 +1361,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [code, message]
                 properties:
                   code:
                     type: string
@@ -1306,8 +1369,7 @@ paths:
                       - "not-found"
                   message:
                     type: string
-                    enum:
-                      - "No data found"
+                    example: "No data found"
     post:
       tags:
         - database
@@ -1321,12 +1383,11 @@ paths:
           multipart/form-data:
             schema:
               type: object
-              required:
-                - file
+              required: [file]
               properties:
                 file:
                   type: string
-                  format: binary
+                  format: binary # utf-8
       responses:
         200:
           description: Operation successful
@@ -1334,6 +1395,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [message, totalSpace, usedSpace]
                 properties:
                   message:
                     type: string
@@ -1353,17 +1415,18 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [message]
                 properties:
                   message:
                     type: string
-                    enum:
-                      - "Your UID or that file name don't add up to a valid path"
+                    example: "Your UID or that file name don't add up to a valid path"
         403:
           description: The caller does not have permission to access the resource
           content:
             application/json:
               schema:
                 type: object
+                required: [code]
                 properties:
                   code:
                     type: string
@@ -1377,6 +1440,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [code, message]
                 properties:
                   code:
                     type: string
@@ -1384,14 +1448,14 @@ paths:
                       - "not-found"
                   message:
                     type: string
-                    enum:
-                      - "No data found"
+                    example: "No data found"
         507:
           description: The user's storage quota has been exceeded. The user should delete some things before proceeding.
           content:
             application/json:
               schema:
                 type: object
+                required: [code, message]
                 properties:
                   code:
                     type: string
@@ -1414,6 +1478,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [message, totalSpace, usedSpace]
                 properties:
                   message:
                     type: string
@@ -1433,17 +1498,18 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [message]
                 properties:
                   message:
                     type: string
-                    enum:
-                      - "Your UID or that file name don't add up to a valid path"
+                    example: "Your UID or that file name don't add up to a valid path"
         403:
           description: The caller does not have permission to access the resource
           content:
             application/json:
               schema:
                 type: object
+                required: [code]
                 properties:
                   code:
                     type: string
@@ -1457,6 +1523,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [code, message]
                 properties:
                   code:
                     type: string
@@ -1464,8 +1531,7 @@ paths:
                       - "not-found"
                   message:
                     type: string
-                    enum:
-                      - "No data found"
+                    example: "No data found"
     parameters:
       - name: uid
         in: path
@@ -1489,9 +1555,7 @@ components:
   schemas:
     DataItem:
       type: object
-      required:
-        - ciphertext
-        - objectType
+      required: [ciphertext, objectType]
       properties:
         ciphertext:
           type: string
@@ -1506,13 +1570,11 @@ components:
           enum:
             - v0
             - v1
-          default: v0
+          default: v0 # TODO: Don't fall back like this, lol
           description: A string identifying the type of encryption used. Informs the client how to decrypt the data. The server does not care about this value, since it cannot decrypt the user's data anyway.
     Keys:
       type: object
-      required:
-        - dekMaterial
-        - passSalt
+      required: [dekMaterial, passSalt]
       properties:
         dekMaterial:
           type: string

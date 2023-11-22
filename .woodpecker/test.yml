@@ -1,0 +1,33 @@
+# On PR toward `main`: run builds, run tests, and deploy to staging
+
+when:
+  - event: manual
+  - event: pull_request
+    branch: main
+
+steps:
+  build_client:
+    name: Build Client
+    group: build
+    image: node:18
+    commands:
+      - npm ci
+      - npm run build:client
+    secrets: [vite_enable_login, vite_enable_signup]
+    environment:
+      - VITE_PUBNUB_SUBSCRIBE_KEY=foo
+
+  build_server:
+    name: Build Server
+    group: build
+    image: node:18
+    commands:
+      - cd server
+      - npm ci
+      - npm run build
+
+  test:
+    name: Tests
+    image: node:18
+    commands:
+      - npm test

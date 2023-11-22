@@ -8,7 +8,7 @@ The machine that stores stuff.
 
 This server doesn't do much on its own once you're authenticated. You give it data, and you ask for that data back. If you want to encrypt that data, do that yourself before you send it.
 
-The API is documented using [OpenAPI](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/RecordedFinance/recorded-finance/main/server/openapi.yaml).
+The API is documented using [OpenAPI](https://petstore.swagger.io/?url=https://recorded.finance/openapi.yaml).
 
 ## Setup
 
@@ -75,6 +75,6 @@ I recommend using something like [PM2](https://pm2.keymetrics.io) to run the ser
 
 ## Contributing
 
-This project is entirely open source. Do with it what you will. If you're willing to help me improve this project, consider [filing an issue](https://github.com/RecordedFinance/recorded-finance/issues/new/choose).
+This project is entirely open source. Do with it what you will. If you're willing to help me improve this project, consider [filing an issue](https://codeberg.org/RecordedFinance/recorded-finance/issues/new/choose).
 
 See [CONTRIBUTING.md](/CONTRIBUTING.md) for ways to contribute.

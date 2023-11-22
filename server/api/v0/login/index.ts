@@ -3,15 +3,16 @@ import { apiHandler } from "../../../helpers/apiHandler";
 import { compare } from "../../../auth/generators";
 import { logger } from "../../../logger";
 import { newAccessTokens, setSession } from "../../../auth/jwt";
-import { nonempty, string, type } from "superstruct";
+import { nonemptyString, nonemptyLargeString } from "../../../database/schemas";
 import { statsForUser, userWithAccountId } from "../../../database/read";
 import { successResponse } from "../../../responses";
+import { type } from "superstruct";
 import { UnauthorizedError } from "../../../errors/UnauthorizedError";
 
 const PATH = "/api/v0/login";
 const reqBody = type({
-	account: nonempty(string()),
-	password: nonempty(string()),
+	account: nonemptyString,
+	password: nonemptyLargeString,
 });
 
 export const POST = apiHandler(PATH, "POST", reqBody, async c => {
@@ -51,8 +52,8 @@ export const POST = apiHandler(PATH, "POST", reqBody, async c => {
 	await setSession(c, access_token);
 	return successResponse(c, {
 		access_token,
-		pubnub_cipher_key,
 		pubnub_token,
+		pubnub_cipher_key,
 		validate,
 		uid,
 		totalSpace,

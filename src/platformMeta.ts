@@ -1,13 +1,13 @@
 import { version } from "./version";
 
 /** Recorded Finance's repo homepage. */
-export const repoMain = "https://github.com/RecordedFinance/recorded-finance";
+export const repoMain = "https://codeberg.org/RecordedFinance/recorded-finance";
 
 /** Recorded Finance's homepage for filing new issues. */
 export const repoNewIssue = `${repoMain}/issues/new/choose` as const;
 
 /** Recorded Finance's repo URL for the current version tag. */
-export const repo = `${repoMain}/tree/v${version}` as const;
+export const repo = `${repoMain}/src/tag/v${version}` as const;
 
 /**
  * Returns our {@link repo} URL string with the given `hash` appended.
@@ -15,7 +15,7 @@ export const repo = `${repoMain}/tree/v${version}` as const;
  * @example
  * ```ts
  * repoReadmeHeading("why-use-cookies")
- * // Returns "https://github.com/RecordedFinance/recorded-finance/tree/v10.0.1/README.md#why-use-cookies"
+ * // Returns "https://codeberg.org/RecordedFinance/recorded-finance/src/tag/{version}/README.md#why-use-cookies"
  * ```
  */
 export function repoReadmeHeading<H extends string>(
@@ -30,7 +30,7 @@ export function repoReadmeHeading<H extends string>(
  * @example
  * ```ts
  * repoFile("LICENSE")
- * // Returns "https://github.com/RecordedFinance/recorded-finance/tree/v10.0.1/LICENSE"
+ * // Returns "https://codeberg.org/RecordedFinance/recorded-finance/src/tag/{version}/LICENSE"
  * ```
  */
 export function repoFile<P extends string>(path: P): `${typeof repo}/${typeof path}` {
