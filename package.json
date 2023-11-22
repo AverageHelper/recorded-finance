@@ -25,7 +25,7 @@
 		"lint:fix": "npm run api:generate && npm run export-version && npm run lintonly -- --fix",
 		"lintonly": "./node_modules/.bin/eslint . --ext .js,.ts",
 		"export-version": "./node_modules/.bin/genversion ./src/version.ts -esd",
-		"create-release-env": "./node_modules/.bin/ts-node --esm ./scripts/createReleaseEnv.ts"
+		"create-release": "./node_modules/.bin/ts-node --esm ./scripts/createRelease.ts"
 	},
 	"type": "module",
 	"dependencies": {
