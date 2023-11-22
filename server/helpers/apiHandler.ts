@@ -3,11 +3,14 @@ import type { Infer, Struct } from "superstruct";
 import { assertMethod } from "./assertMethod";
 import { BadMethodError } from "../errors/BadMethodError";
 import { BadRequestError } from "../errors/BadRequestError";
+import { cors } from "../cors";
 import { handle as vercel } from "@hono/node-server/vercel";
 import { Hono } from "hono";
-import { errorResponse } from "../responses";
+import { errorResponse, headers } from "../responses";
 import { InternalError } from "../errors/InternalError";
 import { logger } from "../logger";
+import { logger as reqLogger } from "hono/logger";
+import { NotFoundError } from "../errors/NotFoundError";
 import { requireAuth } from "../auth/requireAuth";
 import { validate } from "superstruct";
 
@@ -63,11 +66,15 @@ export function dispatchRequests<P extends string>(
 		}
 	};
 
-	const app = new Hono<Env>()
+	const app = new Hono<Env>({ strict: false })
+		.use("*", reqLogger(logger.info))
+		.use("*", cors)
+		.use("*", headers)
 		.get(path, handler)
 		.delete(handler)
 		.post(handler)
 		.all(badMethodFallback)
+		.notFound(notFoundFallback)
 		.onError(errorHandler);
 
 	return vercel(app);
@@ -153,6 +160,10 @@ export const badMethodFallback: APIRequestHandler<string> = () => {
 export const assertOwnership: APIRequestMiddleware<":uid"> = async (c, next) => {
 	await requireAuth(c);
 	await next();
+};
+
+export const notFoundFallback: NotFoundHandler<Env> = c => {
+	throw new NotFoundError(`No such path '${c.req.path}'`);
 };
 
 export const errorHandler: ErrorHandler<Env> = (error, c) => {

@@ -14,7 +14,7 @@ import * as updateaccountid from "../api/v0/updateaccountid";
 
 // TODO: Implement WebAuthn (and test passkey support!)
 
-export const auth = new Hono<Env>()
+export const auth = new Hono<Env>({ strict: false })
 	.post("/join", throttle, join.POST)
 	.all(badMethodFallback)
 

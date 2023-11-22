@@ -6,7 +6,7 @@ import * as dataBatch from "./api/v0/db/users/[uid]";
 import * as dataCollection from "./api/v0/db/users/[uid]/[collectionId]";
 import * as dataDocument from "./api/v0/db/users/[uid]/[collectionId]/[documentId]";
 
-export const db = new Hono<Env>()
+export const db = new Hono<Env>({ strict: false })
 	.post("/users/:uid", assertOwnership, dataBatch.POST)
 	.all(badMethodFallback)
 
