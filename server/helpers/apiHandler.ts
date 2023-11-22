@@ -103,45 +103,53 @@ export function apiHandler<
 	cb: APIRequestHandler<P, V>
 ): APIRequestHandler<P, V> {
 	return async c => {
-		if (c.req.method.toUpperCase() === "OPTIONS") {
-			throw new TypeError("Received OPTIONS request that should have been handled previously.");
-		}
+		// FIXME: Hono's onError handler should do this. Why we need try/catch?
+		try {
+			if (c.req.method.toUpperCase() === "OPTIONS") {
+				throw new TypeError("Received OPTIONS request that should have been handled previously.");
+			}
 
-		assertMethod(c.req.method, method);
+			assertMethod(c.req.method, method);
 
-		if (struct === null) {
-			// No body is expected. Send context as-is:
-			return await cb(c);
-		}
+			if (struct === null) {
+				// No body is expected. Send context as-is:
+				return await cb(c);
+			}
 
-		// Body is expected. Ensure the header is consistent
-		const contentType = c.req.header("Content-Type");
+			// Body is expected. Ensure the header is consistent
+			const contentType = c.req.header("Content-Type");
 
-		if (struct === "form-data") {
-			if (!contentType || !contentType.includes("multipart/form-data")) {
+			if (struct === "form-data") {
+				if (!contentType || !contentType.includes("multipart/form-data")) {
+					throw new BadRequestError(
+						`Invalid HTTP header: 'Content-Type=${contentType}'; expected 'multipart/form-data'`
+					);
+				}
+				return await cb(c);
+			}
+
+			if (!contentType || !contentType.startsWith("application/json")) {
 				throw new BadRequestError(
-					`Invalid HTTP header: 'Content-Type=${contentType}'; expected 'multipart/form-data'`
+					`Invalid HTTP header: 'Content-Type=${contentType}'; expected 'application/json'`
 				);
 			}
+
+			// Validate request body:
+			const data = await c.req.json<unknown>(); // TODO: If this fails, we should return 400, not 500
+
+			const [error, value] = validate(data, struct, { coerce: true });
+			if (error) {
+				throw new BadRequestError(error.message);
+			}
+			c.req.addValidatedData("json", value as object);
+
 			return await cb(c);
+		} catch (error) {
+			if (error instanceof Error) {
+				return errorHandler(error, c);
+			}
+			throw error;
 		}
-
-		if (!contentType || !contentType.startsWith("application/json")) {
-			throw new BadRequestError(
-				`Invalid HTTP header: 'Content-Type=${contentType}'; expected 'application/json'`
-			);
-		}
-
-		// Validate request body:
-		const data = await c.req.json<unknown>(); // TODO: If this fails, we should return 400, not 500
-
-		const [error, value] = validate(data, struct, { coerce: true });
-		if (error) {
-			throw new BadRequestError(error.message);
-		}
-		c.req.addValidatedData("json", value as object);
-
-		return await cb(c);
 	};
 }
 
@@ -154,7 +162,7 @@ export const assertOwnership: APIRequestMiddleware<":uid"> = async (c, next) => 
 	await next();
 };
 
-export const errorHandler: ErrorHandler<Env> = (error: unknown, c) => {
+export const errorHandler: ErrorHandler<Env> = (error, c) => {
 	// Our own errors should be returned directly:
 	if (error instanceof InternalError) {
 		logger.debug(`Sending response [${error.status} (${error.code}): ${error.message}]`);
