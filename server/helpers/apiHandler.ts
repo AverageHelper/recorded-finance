@@ -137,7 +137,12 @@ export function apiHandler<
 		}
 
 		// Validate request body:
-		const data = await c.req.json<unknown>(); // TODO: If this fails, we should return 400, not 500
+		let data: unknown;
+		try {
+			data = await c.req.json();
+		} catch {
+			throw new BadRequestError("Expected JSON in request body");
+		}
 
 		const [error, value] = validate(data, struct, { coerce: true });
 		if (error) {

@@ -376,6 +376,17 @@ describe("Routes", () => {
 			expectInaction();
 		});
 
+		test("POST answers 400 to missing payload with 'Content-Type' header", async () => {
+			await request("POST", PATH) //
+				.set("Content-Type", "application/json")
+				.expect(400)
+				.expect({
+					message: "Expected JSON in request body",
+					code: "unknown",
+				});
+			expectInaction();
+		});
+
 		test("POST answers 400 to missing 'account' and 'password' fields", async () => {
 			await request("POST", PATH) //
 				.send({})
