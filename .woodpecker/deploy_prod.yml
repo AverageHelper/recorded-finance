@@ -10,7 +10,7 @@ steps:
   build_client:
     name: Build Client
     group: build
-    image: node:18
+    image: node:20
     commands:
       - npm ci
       - npm run build:client
@@ -19,7 +19,7 @@ steps:
   build_server:
     name: Build Server
     group: build
-    image: node:18
+    image: node:20
     commands:
       - cd server
       - npm ci
@@ -28,7 +28,7 @@ steps:
 
   deploy:
     name: Deploy Preview # We'll manually promote the build to production if it works
-    image: node:18
+    image: node:20
     commands:
       # Pull Vercel Environment Information
       - cd server

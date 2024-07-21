@@ -11,36 +11,21 @@ import type {
 import { beforeEach, vi } from "vitest";
 import { DEFAULT_MOCK_SECURE_TOKEN } from "./generators";
 
-export const base32Decode = vi.fn<
-	Parameters<typeof _base32Decode>,
-	ReturnType<typeof _base32Decode>
->();
+export const base32Decode = vi.fn<typeof _base32Decode>();
 
-export const base32Encode = vi.fn<
-	Parameters<typeof _base32Encode>,
-	ReturnType<typeof _base32Encode>
->();
+export const base32Encode = vi.fn<typeof _base32Encode>();
 
 export const DEFAULT_MOCK_TOTP_CODE = "000000" as TOTPToken;
 
-export const generateTOTP = vi.fn<
-	Parameters<typeof _generateTOTP>,
-	ReturnType<typeof _generateTOTP>
->();
+export const generateTOTP = vi.fn<typeof _generateTOTP>();
 
-export const verifyTOTP = vi.fn<Parameters<typeof _verifyTOTP>, ReturnType<typeof _verifyTOTP>>();
+export const verifyTOTP = vi.fn<typeof _verifyTOTP>();
 
 export const DEFAULT_MOCK_OTP_SECUET_URI = "otpauth://totp/test:test" as TOTPSecretUri;
 
-export const generateTOTPSecretURI = vi.fn<
-	Parameters<typeof _generateTOTPSecretURI>,
-	ReturnType<typeof _generateTOTPSecretURI>
->();
+export const generateTOTPSecretURI = vi.fn<typeof _generateTOTPSecretURI>();
 
-export const generateSecret = vi.fn<
-	Parameters<typeof _generateSecret>,
-	ReturnType<typeof _generateSecret>
->();
+export const generateSecret = vi.fn<typeof _generateSecret>();
 
 beforeEach(() => {
 	base32Decode.mockReturnValue(new ArrayBuffer(0));

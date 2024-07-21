@@ -1,6 +1,6 @@
-#!/usr/bin/env ts-node
+#!/usr/bin/env tsx
 
-import "../helpers/assertTsNode";
+import "../helpers/assertTsx";
 import type { CollectionID, IdentifiedDataItem, UID } from "../database/schemas";
 import { allCollectionIds, isNonEmptyArray } from "../database/schemas";
 import { fetchDbCollection, listAllUserIds, userWithUid } from "../database/read";

@@ -5,7 +5,7 @@
 	"description": "A Svelte app for managing monetary assets.",
 	"scripts": {
 		"start": "cd server && npm start",
-		"release": "./node_modules/.bin/ts-node --esm ./scripts/release.ts",
+		"release": "./node_modules/.bin/tsx ./scripts/release.ts",
 		"serve": "./node_modules/.bin/vite preview --open",
 		"test": "npm run test:client && npm run test:server",
 		"test:client": "npm run api:generate && npm run export-version && ./node_modules/.bin/vitest run",
@@ -25,7 +25,7 @@
 		"lint:fix": "npm run api:generate && npm run export-version && npm run lintonly -- --fix",
 		"lintonly": "./node_modules/.bin/eslint . --ext .js,.ts",
 		"export-version": "./node_modules/.bin/genversion ./src/version.ts -esd",
-		"create-release": "./node_modules/.bin/ts-node --esm ./scripts/createRelease.ts"
+		"create-release": "./node_modules/.bin/tsx ./scripts/createRelease.ts"
 	},
 	"type": "module",
 	"dependencies": {
@@ -41,7 +41,7 @@
 		"fuse.js": "6.6.2",
 		"lodash-es": "4.17.21",
 		"oazapfts": "4.3.3",
-		"pubnub": "7.3.0",
+		"pubnub": "7.6.3",
 		"qrcode": "1.5.1",
 		"superstruct": "1.0.3",
 		"svelte-i18n": "3.4.0",
@@ -88,10 +88,10 @@
 		"svelte": "3.55.1",
 		"svelte-check": "3.0.2",
 		"svelte-preprocess": "5.0.0",
-		"ts-node": "10.9.1",
+		"tsx": "4.16.2",
 		"type-fest": "3.6.1",
 		"typescript": "4.9.4",
-		"vite": "4.4.7",
+		"vite": "4.5.3",
 		"vite-plugin-environment": "1.1.2",
 		"vite-tsconfig-paths": "3.5.0",
 		"vitest": "0.34.6"

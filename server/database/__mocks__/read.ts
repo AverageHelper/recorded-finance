@@ -22,97 +22,43 @@ import type {
 import type { DocumentReference } from "../references";
 import { beforeEach, vi } from "vitest";
 
-export const statsForUser = vi.fn<
-	Parameters<typeof _statsForUser>,
-	ReturnType<typeof _statsForUser>
->();
+export const statsForUser = vi.fn<typeof _statsForUser>();
 
-export const numberOfUsers = vi.fn<
-	Parameters<typeof _numberOfUsers>,
-	ReturnType<typeof _numberOfUsers>
->();
+export const numberOfUsers = vi.fn<typeof _numberOfUsers>();
 
-export const listAllUserIds = vi.fn<
-	Parameters<typeof _listAllUserIds>,
-	ReturnType<typeof _listAllUserIds>
->();
+export const listAllUserIds = vi.fn<typeof _listAllUserIds>();
 
-export const fetchFileData = vi.fn<
-	Parameters<typeof _fetchFileData>,
-	ReturnType<typeof _fetchFileData>
->();
+export const fetchFileData = vi.fn<typeof _fetchFileData>();
 
-export const totalSizeOfFile = vi.fn<
-	Parameters<typeof _totalSizeOfFile>,
-	ReturnType<typeof _totalSizeOfFile>
->();
+export const totalSizeOfFile = vi.fn<typeof _totalSizeOfFile>();
 
-export const totalSizeOfFilesForUser = vi.fn<
-	Parameters<typeof _totalSizeOfFilesForUser>,
-	ReturnType<typeof _totalSizeOfFilesForUser>
->();
+export const totalSizeOfFilesForUser = vi.fn<typeof _totalSizeOfFilesForUser>();
 
-export const countFileBlobsForUser = vi.fn<
-	Parameters<typeof _countFileBlobsForUser>,
-	ReturnType<typeof _countFileBlobsForUser>
->();
+export const countFileBlobsForUser = vi.fn<typeof _countFileBlobsForUser>();
 
-export const jwtExistsInDatabase = vi.fn<
-	Parameters<typeof _jwtExistsInDatabase>,
-	ReturnType<typeof _jwtExistsInDatabase>
->();
+export const jwtExistsInDatabase = vi.fn<typeof _jwtExistsInDatabase>();
 
-export const numberOfExpiredJwts = vi.fn<
-	Parameters<typeof _numberOfExpiredJwts>,
-	ReturnType<typeof _numberOfExpiredJwts>
->();
+export const numberOfExpiredJwts = vi.fn<typeof _numberOfExpiredJwts>();
 
-export const countRecordsInCollection = vi.fn<
-	Parameters<typeof _countRecordsInCollection>,
-	ReturnType<typeof _countRecordsInCollection>
->();
+export const countRecordsInCollection = vi.fn<typeof _countRecordsInCollection>();
 
-export const fetchDbCollection = vi.fn<
-	Parameters<typeof _fetchDbCollection>,
-	ReturnType<typeof _fetchDbCollection>
->();
+export const fetchDbCollection = vi.fn<typeof _fetchDbCollection>();
 
-export const userWithUid = vi.fn<
-	Parameters<typeof _userWithUid>,
-	ReturnType<typeof _userWithUid>
->();
+export const userWithUid = vi.fn<typeof _userWithUid>();
 
-export const userWithAccountId = vi.fn<
-	Parameters<typeof _userWithAccountId>,
-	ReturnType<typeof _userWithAccountId>
->();
+export const userWithAccountId = vi.fn<typeof _userWithAccountId>();
 
-export const fetchDbDoc = vi.fn<Parameters<typeof _fetchDbDoc>, ReturnType<typeof _fetchDbDoc>>();
+export const fetchDbDoc = vi.fn<typeof _fetchDbDoc>();
 
-export const fetchDbDocs = vi.fn<
-	Parameters<typeof _fetchDbDocs>,
-	ReturnType<typeof _fetchDbDocs>
->();
+export const fetchDbDocs = vi.fn<typeof _fetchDbDocs>();
 
-export const watchUpdatesToDocument = vi.fn<
-	Parameters<typeof _watchUpdatesToDocument>,
-	ReturnType<typeof _watchUpdatesToDocument>
->();
+export const watchUpdatesToDocument = vi.fn<typeof _watchUpdatesToDocument>();
 
-export const watchUpdatesToCollection = vi.fn<
-	Parameters<typeof _watchUpdatesToCollection>,
-	ReturnType<typeof _watchUpdatesToCollection>
->();
+export const watchUpdatesToCollection = vi.fn<typeof _watchUpdatesToCollection>();
 
-export const informWatchersForDocument = vi.fn<
-	Parameters<typeof _informWatchersForDocument>,
-	ReturnType<typeof _informWatchersForDocument>
->();
+export const informWatchersForDocument = vi.fn<typeof _informWatchersForDocument>();
 
-export const informWatchersForCollection = vi.fn<
-	Parameters<typeof _informWatchersForCollection>,
-	ReturnType<typeof _informWatchersForCollection>
->();
+export const informWatchersForCollection = vi.fn<typeof _informWatchersForCollection>();
 
 // FIXME: We can't see `NonEmptyArray` in here for some reason, so we must redefine the type locally
 type NonEmptyArray<T> = [T, ...Array<T>];

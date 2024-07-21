@@ -1,34 +1,43 @@
 <script lang="ts">
 	import { _, locale } from "../i18n";
-	import NopLink from "./NopLink.svelte";
-
 	export let title: string;
-
-	let isOpen = false;
-
-	function toggle() {
-		isOpen = !isOpen;
-	}
 </script>
 
-<NopLink
-	bold
-	ariaLabel={isOpen
-		? null
-		: $_("actions.more-info-about", {
-				values: { topic: title.toLocaleLowerCase($locale.code) },
-		  })}
-	on:click={toggle}
-	>{title}{#if isOpen}:{:else}...{/if}</NopLink
->
-
-{#if isOpen}
+<details>
+	<summary
+		aria-label={$_("actions.more-info-about", {
+			values: { topic: title.toLocaleLowerCase($locale.code) },
+		})}>{title}</summary
+	>
 	<aside>
 		<slot />
 	</aside>
-{/if}
+</details>
 
 <style lang="scss">
+	@use "styles/colors" as *;
+
+	/* Match the style from before, when we used <NopLink> and {#if} */
+	details {
+		summary {
+			font-weight: bold;
+			color: color($link);
+			display: block; /* Removes disclosure triangle */
+
+			&:hover {
+				text-decoration: underline;
+			}
+
+			&::after {
+				content: "...";
+			}
+		}
+
+		&[open] summary::after {
+			content: ":";
+		}
+	}
+
 	aside {
 		padding-left: 16pt;
 	}

@@ -1,6 +1,6 @@
-#!/usr/bin/env ts-node
+#!/usr/bin/env tsx
 
-import "../helpers/assertTsNode";
+import "../helpers/assertTsx";
 import type { CollectionID, UID } from "../database/schemas";
 import { allCollectionIds } from "../database/schemas";
 import { CollectionReference } from "../database/references";

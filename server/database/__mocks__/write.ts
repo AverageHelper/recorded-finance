@@ -17,77 +17,35 @@ import type {
 } from "../write";
 import { beforeEach, vi } from "vitest";
 
-export const upsertFileData = vi.fn<
-	Parameters<typeof _upsertFileData>,
-	ReturnType<typeof _upsertFileData>
->();
+export const upsertFileData = vi.fn<typeof _upsertFileData>();
 
-export const destroyFileData = vi.fn<
-	Parameters<typeof _destroyFileData>,
-	ReturnType<typeof _destroyFileData>
->();
+export const destroyFileData = vi.fn<typeof _destroyFileData>();
 
-export const addJwtToDatabase = vi.fn<
-	Parameters<typeof _addJwtToDatabase>,
-	ReturnType<typeof _addJwtToDatabase>
->();
+export const addJwtToDatabase = vi.fn<typeof _addJwtToDatabase>();
 
-export const purgeExpiredJwts = vi.fn<
-	Parameters<typeof _purgeExpiredJwts>,
-	ReturnType<typeof _purgeExpiredJwts>
->();
+export const purgeExpiredJwts = vi.fn<typeof _purgeExpiredJwts>();
 
-export const upsertUser = vi.fn<Parameters<typeof _upsertUser>, ReturnType<typeof _upsertUser>>();
+export const upsertUser = vi.fn<typeof _upsertUser>();
 
-export const destroyUser = vi.fn<
-	Parameters<typeof _destroyUser>,
-	ReturnType<typeof _destroyUser>
->();
+export const destroyUser = vi.fn<typeof _destroyUser>();
 
-export const upsertDbDocs = vi.fn<
-	Parameters<typeof _upsertDbDocs>,
-	ReturnType<typeof _upsertDbDocs>
->();
+export const upsertDbDocs = vi.fn<typeof _upsertDbDocs>();
 
-export const deleteDbDocs = vi.fn<
-	Parameters<typeof _deleteDbDocs>,
-	ReturnType<typeof _deleteDbDocs>
->();
+export const deleteDbDocs = vi.fn<typeof _deleteDbDocs>();
 
-export const deleteDbDoc = vi.fn<
-	Parameters<typeof _deleteDbDoc>,
-	ReturnType<typeof _deleteDbDoc>
->();
+export const deleteDbDoc = vi.fn<typeof _deleteDbDoc>();
 
-export const deleteDbCollection = vi.fn<
-	Parameters<typeof _deleteDbCollection>,
-	ReturnType<typeof _deleteDbCollection>
->();
+export const deleteDbCollection = vi.fn<typeof _deleteDbCollection>();
 
-export const deleteDocuments = vi.fn<
-	Parameters<typeof _deleteDocuments>,
-	ReturnType<typeof _deleteDocuments>
->();
+export const deleteDocuments = vi.fn<typeof _deleteDocuments>();
 
-export const deleteDocument = vi.fn<
-	Parameters<typeof _deleteDocument>,
-	ReturnType<typeof _deleteDocument>
->();
+export const deleteDocument = vi.fn<typeof _deleteDocument>();
 
-export const deleteCollection = vi.fn<
-	Parameters<typeof _deleteCollection>,
-	ReturnType<typeof _deleteCollection>
->();
+export const deleteCollection = vi.fn<typeof _deleteCollection>();
 
-export const setDocuments = vi.fn<
-	Parameters<typeof _setDocuments>,
-	ReturnType<typeof _setDocuments>
->();
+export const setDocuments = vi.fn<typeof _setDocuments>();
 
-export const setDocument = vi.fn<
-	Parameters<typeof _setDocument>,
-	ReturnType<typeof _setDocument>
->();
+export const setDocument = vi.fn<typeof _setDocument>();
 
 beforeEach(() => {
 	upsertFileData.mockResolvedValue({ size: 0 });

@@ -1,4 +1,4 @@
-#!/usr/bin/env ts-node
+#!/usr/bin/env tsx
 
 import { parser as changelogParser } from "keep-a-changelog";
 import { readFileSync } from "node:fs";
