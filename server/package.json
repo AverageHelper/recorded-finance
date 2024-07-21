@@ -26,7 +26,7 @@
 	"type": "commonjs",
 	"main": "./dist/server.js",
 	"engines": {
-		"node": "^20.5.1"
+		"node": "20.x"
 	},
 	"dependencies": {
 		"@prisma/client": "4.3.1",
