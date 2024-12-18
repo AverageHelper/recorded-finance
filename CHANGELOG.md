@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Use simpler HTML+CSS instead of JS for `InfoDrawer`.
 - Replace `ts-node` with the much more stable `tsx`.
-- Updated back-end engine to Node 20
+- Updated back-end engine to Node 20.
+- Changed internet domain to [accountable.average.name](https://accountable.average.name).
 
 ## [0.18.12] - 2023-11-10
 ### Changed
@@ -136,7 +137,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.16.2] - 2023-01-29
 ### Added
-- [security.txt](https://recorded.finance/.well-known/security.txt) file based on the spec described in [securitytxt.org](https://securitytxt.org).
+- [security.txt](https://codeberg.org/RecordedFinance/recorded-finance/src/branch/main/public/.well-known/security.txt) file based on the spec described in [securitytxt.org](https://securitytxt.org).
 
 ### Changed
 - Our pipeline now only deploys to production if we've cut a new semver version.

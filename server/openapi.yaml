@@ -8,9 +8,9 @@ info:
     url: https://codeberg.org/RecordedFinance/recorded-finance/src/branch/main/LICENSE
 externalDocs:
   description: Find out more about Recorded Finance
-  url: https://recorded.finance
+  url: https://accountable.average.name
 servers:
-  - url: https://recorded.finance/api
+  - url: https://accountable.average.name/api
 tags:
   - name: misc
     description: Make sure everything works
@@ -101,7 +101,8 @@ paths:
                   type: string
                   minLength: 1
                   maxLength: 191
-                  description: An identifier (or username) chosen for the user's account.
+                  description:
+                    An identifier (or username) chosen for the user's account.
                     The user may change this later.
                 password:
                   type: string
@@ -273,7 +274,8 @@ paths:
                     type: string
                     example: "Improper parameter types"
         403:
-          description: The given passphrase does not match, or the given account does
+          description:
+            The given passphrase does not match, or the given account does
             not exist
           content:
             application/json:

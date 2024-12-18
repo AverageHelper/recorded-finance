@@ -1,18 +1,14 @@
 # Please use this form if you are comfortable using GitHub
 Contact: https://github.com/RecordedFinance/recorded-finance/security/advisories/new
 
-# Otherwise, please use PGP at this email address.
-# If you are not comfortable using PGP, please say so in your email report.
-Contact: mailto:security@recorded.finance
-
-# Our OpenPGP key
-Encryption: https://keys.openpgp.org/vks/v1/by-fingerprint/B538EC90D2E4A997E4EE3852B673552B3C21FBCE
+# Otherwise, please use this email address.
+Contact: mailto:recorded.finance@box.average.name
 
 Preferred-Languages: en
 
 # Our security policy
 Policy: https://github.com/RecordedFinance/recorded-finance/security/policy
 
-Canonical: https://recorded.finance/.well-known/security.txt
+Canonical: https://accountable.average.name/.well-known/security.txt
 
 Expires: 2024-06-01T06:00:00.000Z
