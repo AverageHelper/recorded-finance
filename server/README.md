@@ -2,6 +2,7 @@
 
 The machine that stores stuff.
 
+> [!WARNING]
 > This project is undergoing rapid development and should be considered experimental. Use it at your own risk. 🤙
 
 ## API
