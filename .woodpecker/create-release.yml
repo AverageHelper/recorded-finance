@@ -13,4 +13,6 @@ steps:
     commands:
       - npm ci
       - npm run create-release # Creates tag and release
-    secrets: [codeberg_access_token]
+    environment:
+      CODEBERG_ACCESS_TOKEN:
+        from_secret: codeberg_access_token

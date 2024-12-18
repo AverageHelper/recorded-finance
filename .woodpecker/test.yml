@@ -8,18 +8,19 @@ when:
 steps:
   build_client:
     name: Build Client
-    group: build
     image: node:20
     commands:
       - npm ci
       - npm run build:client
-    secrets: [vite_enable_login, vite_enable_signup]
     environment:
-      - VITE_PUBNUB_SUBSCRIBE_KEY=foo
+      VITE_PUBNUB_SUBSCRIBE_KEY: foo
+      VITE_ENABLE_LOGIN:
+        from_secret: vite_enable_login
+      VITE_ENABLE_SIGNUP:
+        from_secret: vite_enable_signup
 
   build_server:
     name: Build Server
-    group: build
     image: node:20
     commands:
       - cd server
@@ -28,6 +29,7 @@ steps:
 
   test:
     name: Tests
+    depends_on: [build_client, build_server]
     image: node:20
     commands:
       - npm test
