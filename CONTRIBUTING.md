@@ -8,7 +8,7 @@ Our app currently only makes sense in United States English. We're
 tooled to support any language and locale, if only we have translations
 set up and installed.
 
-The [English strings file](/src/locales/en-US.json) defines the keys
+The [English strings file](src/locales/en-US.json) defines the keys
 the app needs translated.
 
 To update an existing translation:
@@ -22,13 +22,13 @@ To create a translation for a language which we don't yet support:
 
 1. Start a fork as you would normally do when contributing to a project.
 2. Create a new file of the same format.
-3. Reference your new strings file in the [i18n index file](/src/i18n.ts).
+3. Reference your new strings file in the [i18n index file](src/i18n.ts).
 4. Start translating! Test your work using `npm run dev:client`.
 5. Create a Pull Request as described [below](#pull-requests).
 
 ## Issues
 
-[Issues](https://codeberg.org/RecordedFinance/recorded-finance/issues/new/choose) are very valuable to this project.
+[Issues](https://git.average.name/AverageHelper/recorded-finance/issues/new) are very valuable to this project.
 
 - Ideas are a valuable source of contributions others can make
 - Problems show where this project is lacking
@@ -79,5 +79,5 @@ The aim of this project is:
 
 ### Does it follow the contributor covenant?
 
-This repository has a [code of conduct](/CODE_OF_CONDUCT.md), I will
+This repository has a [code of conduct](CODE_OF_CONDUCT.md), I will
 remove things that do not respect it.

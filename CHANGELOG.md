@@ -137,7 +137,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.16.2] - 2023-01-29
 ### Added
-- [security.txt](https://codeberg.org/RecordedFinance/recorded-finance/src/branch/main/public/.well-known/security.txt) file based on the spec described in [securitytxt.org](https://securitytxt.org).
+- [security.txt](src/branch/main/public/.well-known/security.txt) file based on the spec described in [securitytxt.org](https://securitytxt.org).
 
 ### Changed
 - Our pipeline now only deploys to production if we've cut a new semver version.
@@ -205,7 +205,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.14.2] - 2022-11-09
 ### Changed
-- We now generate client-side API interfaces from the server's [OpenAPI spec](/server/openapi.yaml). This means better static assurances that we're doing stuff correctly on the front-end. (Still gotta keep the spec up with the back-end logic tho).
+- We now generate client-side API interfaces from the server's [OpenAPI spec](server/openapi.yaml). This means better static assurances that we're doing stuff correctly on the front-end. (Still gotta keep the spec up with the back-end logic tho).
 - Clearer OpenAPI spec with regard to batch writes.
 
 ### Security
@@ -215,7 +215,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - All API endpoints now support being run as Vercel serverless functions.
 - When running under Vercel, the server cannot handle WebSocket requests directly. Clients must use the `PubNub` client to subscribe to event channels.
-- Server administrators who wish to host on Vercel should set up a PubNub account, as described in the server's [README](/server/README.md#prerequesites).
+- Server administrators who wish to host on Vercel should set up a PubNub account, as described in the server's [README](server/README.md#prerequesites).
 
 ### Fixed
 - Fixed an issue where requesting deletion of the user's personal preference documents would inadvertently erase every user's data.
@@ -225,7 +225,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.14.0] - 2022-10-02
 ### Changed
-- The server's `DB` environment variable is now ignored. All persistent data now lives on the database identified by the value of the server's `DATABASE_URL` environment variable. [See the README](/server/README.md) for details.
+- The server's `DB` environment variable is now ignored. All persistent data now lives on the database identified by the value of the server's `DATABASE_URL` environment variable. [See the README](server/README.md) for details.
 - Reorganized API implementations for better parity between [SvelteKit](https://kit.svelte.dev/docs/routing#server) and Express server.
 - Moved JWT early-expiration to the database. Logout operations should now be safe between server restarts.
 
@@ -249,7 +249,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - BREAKING: We now use MySQL as our database. Accountable's hosted solution will (probably) use [PlanetScale](https://planetscale.com/), but feel free to point your own Accountable instance at whatever database server you want.
-- BREAKING: The server now requires the `DATABASE_URL` environment variable to be set. See the [README](/server/README.md) for details.
+- BREAKING: The server now requires the `DATABASE_URL` environment variable to be set. See the [README](server/README.md) for details.
 - Attachments are no longer stored as local files. These are now limited to 4.2 MB, and stored in the database with everything else. The abstraction is arranged such that other storage adapters may be emplaced, but for now, this should suffice for most encrypted files the size of receipt images.
 
 ### Removed
@@ -260,7 +260,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Server endpoints to support TOTP 2FA. See our [API documentation](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/RecordedFinance/recorded-finance/HEAD/server/openapi.yaml) for details.
 
 ### Changed
-- BREAKING: The server now requires the `AUTH_SECRET` environment variable to be set. This value should be randomly generated (perhaps using a [password generator](https://bitwarden.com/password-generator/)) and kept safe. This value lets the server sign JWTs and generate user secrets. See the [README](/server/README.md) for info.
+- BREAKING: The server now requires the `AUTH_SECRET` environment variable to be set. This value should be randomly generated (perhaps using a [password generator](https://bitwarden.com/password-generator/)) and kept safe. This value lets the server sign JWTs and generate user secrets. See the [README](server/README.md) for info.
 - The client now accepts "extra" values from server responses. This way, old clients can still talk to new server instances without much issue.
 
 ### Fixed
@@ -273,7 +273,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.11.2] - 2022-09-09
 ### Added
-- Automated our release process and changelog handling. This changelog entry is a test that I only need to add an entry here for a release to be automatically deployed. The [Releases](https://github.com/RecordedFinance/recorded-finance/releases) view should automatically see this entry.
+- Automated our release process and changelog handling. This changelog entry is a test that I only need to add an entry here for a release to be automatically deployed. The [Releases](https://git.average.name/AverageHelper/recorded-finance/releases) view should automatically see this entry.
 
 ### Changed
 - Updated some CI/CD analysis tools.
@@ -312,7 +312,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.10.0] - 2022-08-05
 ### Changed
 - Ported front-end code from Vue to Svelte. It's [pretty cool](https://svelte.dev/).
-  - I want to experiment with Accountable under different front-end paradigms. So far, I've used [Flutter](https://github.com/AverageHelper/accountable-flutter), [Vue](https://github.com/AverageHelper/accountable-vue), and now [Svelte](https://github.com/RecordedFinance/recorded-finance). This version is the Svelte port.
+  - I want to experiment with Accountable under different front-end paradigms. So far, I've used [Flutter](https://github.com/AverageHelper/accountable-flutter), [Vue](https://github.com/AverageHelper/accountable-vue), and now [Svelte](https://git.average.name/AverageHelper/recorded-finance). This version is the Svelte port.
   - Svelte differs from Vue in that Svelte is a compiler, not a runtime. The bundled output contains only code needed for each component to work. There's no virtual DOM, but there's also no helpful front-end safety net.
   - Eventually, I plan to separate the back-end code from the front-end, so I'm not duplicating that part across several front-end repositories.
 
@@ -526,79 +526,79 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial commit
 
-[Unreleased]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.12...HEAD
-[0.18.12]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.11...v0.18.12
-[0.18.11]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.10...v0.18.11
-[0.18.10]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.9...v0.18.10
-[0.18.9]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.8...v0.18.9
-[0.18.8]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.7...v0.18.8
-[0.18.7]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.6...v0.18.7
-[0.18.6]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.5...v0.18.6
-[0.18.5]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.4...v0.18.5
-[0.18.4]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.3...v0.18.4
-[0.18.3]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.2...v0.18.3
-[0.18.2]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.1...v0.18.2
-[0.18.1]: https://github.com/RecordedFinance/recorded-finance/compare/v0.18.0...v0.18.1
-[0.18.0]: https://github.com/RecordedFinance/recorded-finance/compare/v0.17.0...v0.18.0
-[0.17.0]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.8...v0.17.0
-[0.16.8]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.7...v0.16.8
-[0.16.7]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.6...v0.16.7
-[0.16.6]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.5...v0.16.6
-[0.16.5]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.4...v0.16.5
-[0.16.4]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.3...v0.16.4
-[0.16.3]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.2...v0.16.3
-[0.16.2]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.1...v0.16.2
-[0.16.1]: https://github.com/RecordedFinance/recorded-finance/compare/v0.16.0...v0.16.1
-[0.16.0]: https://github.com/RecordedFinance/recorded-finance/compare/v0.15.3...v0.16.0
-[0.15.3]: https://github.com/RecordedFinance/recorded-finance/compare/v0.15.2...v0.15.3
-[0.15.2]: https://github.com/RecordedFinance/recorded-finance/compare/v0.15.1...v0.15.2
-[0.15.1]: https://github.com/RecordedFinance/recorded-finance/compare/v0.15.0...v0.15.1
-[0.15.0]: https://github.com/RecordedFinance/recorded-finance/compare/v0.14.6...v0.15.0
-[0.14.6]: https://github.com/RecordedFinance/recorded-finance/compare/v0.14.5...v0.14.6
-[0.14.5]: https://github.com/RecordedFinance/recorded-finance/compare/v0.14.4...v0.14.5
-[0.14.4]: https://github.com/RecordedFinance/recorded-finance/compare/v0.14.3...v0.14.4
-[0.14.3]: https://github.com/RecordedFinance/recorded-finance/compare/v0.14.2...v0.14.3
-[0.14.2]: https://github.com/RecordedFinance/recorded-finance/compare/v0.14.1...v0.14.2
-[0.14.1]: https://github.com/RecordedFinance/recorded-finance/compare/v0.14.0...v0.14.1
-[0.14.0]: https://github.com/RecordedFinance/recorded-finance/compare/v0.13.2...v0.14.0
-[0.13.2]: https://github.com/RecordedFinance/recorded-finance/compare/v0.13.1...v0.13.2
-[0.13.1]: https://github.com/RecordedFinance/recorded-finance/compare/v0.13.0...v0.13.1
-[0.13.0]: https://github.com/RecordedFinance/recorded-finance/compare/v0.12.0...v0.13.0
-[0.12.0]: https://github.com/RecordedFinance/recorded-finance/compare/v0.11.3...v0.12.0
-[0.11.3]: https://github.com/RecordedFinance/recorded-finance/compare/v0.11.2...v0.11.3
-[0.11.2]: https://github.com/RecordedFinance/recorded-finance/compare/v0.11.1...v0.11.2
-[0.11.1]: https://github.com/RecordedFinance/recorded-finance/compare/v0.11.0...v0.11.1
-[0.11.0]: https://github.com/RecordedFinance/recorded-finance/compare/v0.10.2...v0.11.0
-[0.10.2]: https://github.com/RecordedFinance/recorded-finance/compare/v0.10.1...v0.10.2
-[0.10.1]: https://github.com/RecordedFinance/recorded-finance/compare/v0.10.0...v0.10.1
-[0.10.0]: https://github.com/RecordedFinance/recorded-finance/compare/v0.9.1...v0.10.0
-[0.9.1]: https://github.com/RecordedFinance/recorded-finance/compare/v0.9.0...v0.9.1
-[0.9.0]: https://github.com/RecordedFinance/recorded-finance/compare/v0.8.1...v0.9.0
-[0.8.1]: https://github.com/RecordedFinance/recorded-finance/compare/v0.8.0...v0.8.1
-[0.8.0]: https://github.com/RecordedFinance/recorded-finance/compare/v0.7.0...v0.8.0
-[0.7.0]: https://github.com/RecordedFinance/recorded-finance/compare/v0.6.4...v0.7.0
-[0.6.4]: https://github.com/RecordedFinance/recorded-finance/compare/v0.6.3...v0.6.4
-[0.6.3]: https://github.com/RecordedFinance/recorded-finance/compare/v0.6.2...v0.6.3
-[0.6.2]: https://github.com/RecordedFinance/recorded-finance/compare/v0.6.1...v0.6.2
-[0.6.1]: https://github.com/RecordedFinance/recorded-finance/compare/v0.6.0...v0.6.1
-[0.6.0]: https://github.com/RecordedFinance/recorded-finance/compare/v0.5.7...v0.6.0
-[0.5.7]: https://github.com/RecordedFinance/recorded-finance/compare/v0.5.6...v0.5.7
-[0.5.6]: https://github.com/RecordedFinance/recorded-finance/compare/v0.5.5...v0.5.6
-[0.5.5]: https://github.com/RecordedFinance/recorded-finance/compare/v0.5.4...v0.5.5
-[0.5.4]: https://github.com/RecordedFinance/recorded-finance/compare/v0.5.3...v0.5.4
-[0.5.3]: https://github.com/RecordedFinance/recorded-finance/compare/v0.5.2...v0.5.3
-[0.5.2]: https://github.com/RecordedFinance/recorded-finance/compare/v0.5.1...v0.5.2
-[0.5.1]: https://github.com/RecordedFinance/recorded-finance/compare/v0.5.0...v0.5.1
-[0.5.0]: https://github.com/RecordedFinance/recorded-finance/compare/v0.4.3...v0.5.0
-[0.4.3]: https://github.com/RecordedFinance/recorded-finance/compare/v0.4.2...v0.4.3
-[0.4.2]: https://github.com/RecordedFinance/recorded-finance/compare/v0.4.1...v0.4.2
-[0.4.1]: https://github.com/RecordedFinance/recorded-finance/compare/v0.4.0...v0.4.1
-[0.4.0]: https://github.com/RecordedFinance/recorded-finance/compare/v0.3.4...v0.4.0
-[0.3.4]: https://github.com/RecordedFinance/recorded-finance/compare/v0.3.3...v0.3.4
-[0.3.3]: https://github.com/RecordedFinance/recorded-finance/compare/v0.3.2...v0.3.3
-[0.3.2]: https://github.com/RecordedFinance/recorded-finance/compare/v0.3.1...v0.3.2
-[0.3.1]: https://github.com/RecordedFinance/recorded-finance/compare/v0.3.0...v0.3.1
-[0.3.0]: https://github.com/RecordedFinance/recorded-finance/compare/v0.2.0...v0.3.0
-[0.2.0]: https://github.com/RecordedFinance/recorded-finance/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/RecordedFinance/recorded-finance/compare/v0.0.0...v0.1.0
-[0.0.0]: https://github.com/RecordedFinance/recorded-finance/releases/tag/v0.0.0
+[Unreleased]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.18.12...HEAD
+[0.18.12]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.18.11...v0.18.12
+[0.18.11]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.18.10...v0.18.11
+[0.18.10]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.18.9...v0.18.10
+[0.18.9]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.18.8...v0.18.9
+[0.18.8]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.18.7...v0.18.8
+[0.18.7]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.18.6...v0.18.7
+[0.18.6]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.18.5...v0.18.6
+[0.18.5]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.18.4...v0.18.5
+[0.18.4]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.18.3...v0.18.4
+[0.18.3]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.18.2...v0.18.3
+[0.18.2]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.18.1...v0.18.2
+[0.18.1]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.18.0...v0.18.1
+[0.18.0]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.17.0...v0.18.0
+[0.17.0]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.16.8...v0.17.0
+[0.16.8]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.16.7...v0.16.8
+[0.16.7]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.16.6...v0.16.7
+[0.16.6]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.16.5...v0.16.6
+[0.16.5]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.16.4...v0.16.5
+[0.16.4]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.16.3...v0.16.4
+[0.16.3]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.16.2...v0.16.3
+[0.16.2]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.16.1...v0.16.2
+[0.16.1]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.16.0...v0.16.1
+[0.16.0]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.15.3...v0.16.0
+[0.15.3]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.15.2...v0.15.3
+[0.15.2]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.15.1...v0.15.2
+[0.15.1]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.15.0...v0.15.1
+[0.15.0]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.14.6...v0.15.0
+[0.14.6]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.14.5...v0.14.6
+[0.14.5]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.14.4...v0.14.5
+[0.14.4]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.14.3...v0.14.4
+[0.14.3]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.14.2...v0.14.3
+[0.14.2]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.14.1...v0.14.2
+[0.14.1]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.14.0...v0.14.1
+[0.14.0]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.13.2...v0.14.0
+[0.13.2]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.13.1...v0.13.2
+[0.13.1]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.13.0...v0.13.1
+[0.13.0]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.12.0...v0.13.0
+[0.12.0]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.11.3...v0.12.0
+[0.11.3]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.11.2...v0.11.3
+[0.11.2]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.11.1...v0.11.2
+[0.11.1]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.11.0...v0.11.1
+[0.11.0]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.10.2...v0.11.0
+[0.10.2]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.10.1...v0.10.2
+[0.10.1]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.10.0...v0.10.1
+[0.10.0]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.9.1...v0.10.0
+[0.9.1]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.9.0...v0.9.1
+[0.9.0]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.8.1...v0.9.0
+[0.8.1]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.8.0...v0.8.1
+[0.8.0]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.7.0...v0.8.0
+[0.7.0]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.6.4...v0.7.0
+[0.6.4]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.6.3...v0.6.4
+[0.6.3]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.6.2...v0.6.3
+[0.6.2]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.6.1...v0.6.2
+[0.6.1]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.6.0...v0.6.1
+[0.6.0]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.5.7...v0.6.0
+[0.5.7]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.5.6...v0.5.7
+[0.5.6]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.5.5...v0.5.6
+[0.5.5]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.5.4...v0.5.5
+[0.5.4]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.5.3...v0.5.4
+[0.5.3]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.5.2...v0.5.3
+[0.5.2]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.5.1...v0.5.2
+[0.5.1]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.5.0...v0.5.1
+[0.5.0]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.4.3...v0.5.0
+[0.4.3]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.4.2...v0.4.3
+[0.4.2]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.4.1...v0.4.2
+[0.4.1]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.4.0...v0.4.1
+[0.4.0]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.3.4...v0.4.0
+[0.3.4]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.3.3...v0.3.4
+[0.3.3]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.3.2...v0.3.3
+[0.3.2]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.3.1...v0.3.2
+[0.3.1]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.3.0...v0.3.1
+[0.3.0]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.2.0...v0.3.0
+[0.2.0]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.1.0...v0.2.0
+[0.1.0]: https://git.average.name/AverageHelper/recorded-finance/compare/v0.0.0...v0.1.0
+[0.0.0]: https://git.average.name/AverageHelper/recorded-finance/releases/tag/v0.0.0

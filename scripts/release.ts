@@ -7,7 +7,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { URL } from "node:url";
 import semver from "semver";
 
-// Fixes the changelog's footer links and bumps the `version` in [package.json](/package.json) and [package-lock.json](/package-lock.json).
+// Fixes the changelog's footer links and bumps the `version` in package.json and package-lock.json.
 // This script may be run repeatedly on the same project.
 
 const { parse: parseSemVer } = semver;

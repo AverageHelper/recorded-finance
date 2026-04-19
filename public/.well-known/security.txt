@@ -1,14 +1,11 @@
-# Please use this form if you are comfortable using GitHub
-Contact: https://github.com/RecordedFinance/recorded-finance/security/advisories/new
-
-# Otherwise, please use this email address.
+# Please use this email address
 Contact: mailto:recorded.finance@box.average.name
 
 Preferred-Languages: en
 
 # Our security policy
-Policy: https://github.com/RecordedFinance/recorded-finance/security/policy
+Policy: https://git.average.name/AverageHelper/recorded-finance/src/branch/main/SECURITY.md
 
 Canonical: https://accountable.average.name/.well-known/security.txt
 
-Expires: 2024-06-01T06:00:00.000Z
+Expires: 2027-01-01T06:00:00.000Z

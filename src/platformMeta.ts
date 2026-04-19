@@ -1,7 +1,7 @@
 import { version } from "./version";
 
 /** Recorded Finance's repo homepage. */
-export const repoMain = "https://codeberg.org/RecordedFinance/recorded-finance";
+export const repoMain = "https://git.average.name/AverageHelper/recorded-finance";
 
 /** Recorded Finance's homepage for filing new issues. */
 export const repoNewIssue = `${repoMain}/issues/new/choose` as const;
@@ -15,7 +15,7 @@ export const repo = `${repoMain}/src/tag/v${version}` as const;
  * @example
  * ```ts
  * repoReadmeHeading("why-use-cookies")
- * // Returns "https://codeberg.org/RecordedFinance/recorded-finance/src/tag/{version}/README.md#why-use-cookies"
+ * // Returns "https://git.average.name/AverageHelper/recorded-finance/src/tag/{version}/README.md#why-use-cookies"
  * ```
  */
 export function repoReadmeHeading<H extends string>(
@@ -30,7 +30,7 @@ export function repoReadmeHeading<H extends string>(
  * @example
  * ```ts
  * repoFile("LICENSE")
- * // Returns "https://codeberg.org/RecordedFinance/recorded-finance/src/tag/{version}/LICENSE"
+ * // Returns "https://git.average.name/AverageHelper/recorded-finance/src/tag/{version}/LICENSE"
  * ```
  */
 export function repoFile<P extends string>(path: P): `${typeof repo}/${typeof path}` {
