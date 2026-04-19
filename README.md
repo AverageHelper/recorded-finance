@@ -2,6 +2,7 @@
 
 A Svelte app for managing monetary assets. All data is encrypted client-side and stored on a server that you control.
 
+> [!CAUTION]
 > This project is basically on hold. I have decided to use a spreadsheet instead. This project isn't really fit for anything, and should be considered experimental at best. Use it at your own risk. 🤙
 >
 > Keep an eye on [CHANGELOG.md](CHANGELOG.md) for breaking changes as they happen.
